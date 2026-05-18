@@ -75,7 +75,15 @@ export const fetchVehicles = async () => {
     console.error('Error fetching vehicles:', error)
     return []
   }
-  return data || []
+  
+  // Ensure all vehicles have the required fields with defaults
+  return (data || []).map(vehicle => ({
+    ...vehicle,
+    totalRentalDays: vehicle.totalRentalDays ?? 0,
+    totalRevenue: vehicle.totalRevenue ?? 0,
+    profit: vehicle.profit ?? 0,
+    maintenanceCost: vehicle.maintenanceCost ?? 0,
+  }))
 }
 
 export const fetchCustomers = async () => {
