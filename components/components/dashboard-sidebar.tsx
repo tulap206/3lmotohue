@@ -5,6 +5,7 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
+import { UsersManagementIcon } from "@/components/icons/users-icon"
 import {
   Bike,
   ClipboardList,
@@ -14,7 +15,7 @@ import {
   LogOut,
   Menu,
   Settings,
-  Users as UsersIcon,
+  Users,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -64,7 +65,7 @@ const menuItems = [
   {
     title: "Người dùng",
     href: "/dashboard/users",
-    icon: UsersIcon,
+    icon: UsersManagementIcon,
     color: "text-cyan-500",
   },
 ]
