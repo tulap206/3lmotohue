@@ -1216,6 +1216,15 @@ export default function VehiclesPage() {
           onClose={() => setLightboxImage(null)} 
         />
       )}
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setIsAddDialogOpen(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40 hover:scale-110"
+        title="Thêm xe mới"
+      >
+        <Plus className="w-8 h-8" />
+      </button>
     </div>
   )
 }
