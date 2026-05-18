@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useAuth, AccessLog } from "@/contexts/auth-context"
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { 
   Search, 
   History, 
-  User, 
   LogIn, 
   LogOut, 
   Plus, 
@@ -21,12 +20,20 @@ import {
   Users,
   ClipboardList,
   Filter,
-  Calendar,
-  Clock,
-  ChevronLeft,
-  ChevronRight,
-  Settings
+  Settings,
+  RefreshCw
 } from "lucide-react"
+
+interface AccessLog {
+  id: string
+  username: string
+  displayName: string
+  action: string
+  module: string
+  details: string
+  timestamp: string
+  ipAddress?: string
+}
 
 const actionIconMap: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
   "Đăng nhập": { icon: LogIn, color: "text-emerald-600", bgColor: "bg-emerald-50" },
@@ -40,19 +47,52 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
 const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> = {
   "Hệ thống": { icon: Settings, color: "text-gray-600" },
   "Quản lý xe": { icon: Bike, color: "text-blue-600" },
-  "Khách thuê": { icon: Users, color: "text-emerald-600" },
+  "Quản lý khách hàng": { icon: Users, color: "text-emerald-600" },
   "Đơn thuê": { icon: ClipboardList, color: "text-amber-600" },
   "Báo cáo": { icon: FileText, color: "text-violet-600" },
+  "Lịch sử truy cập": { icon: History, color: "text-purple-600" },
+  "Quản lý người dùng": { icon: Users, color: "text-cyan-600" },
 }
 
 export default function AccessHistoryPage() {
-  const { accessLogs } = useAuth()
+  const [accessLogs, setAccessLogs] = useState<AccessLog[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterAccount, setFilterAccount] = useState<string>("all")
   const [filterModule, setFilterModule] = useState<string>("all")
   const [filterAction, setFilterAction] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
+
+  // Load logs from Supabase
+  useEffect(() => {
+    loadAccessLogs()
+  }, [])
+
+  const loadAccessLogs = async () => {
+    try {
+      setLoading(true)
+      console.log("📋 Loading access logs from Supabase...")
+
+      const { data, error } = await supabase
+        .from("access_logs")
+        .select("*")
+        .order("timestamp", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching logs:", error)
+        setAccessLogs([])
+      } else {
+        console.log("📋 Logs loaded:", data?.length || 0, "records")
+        setAccessLogs(data || [])
+      }
+    } catch (error) {
+      console.error("Failed to load access logs:", error)
+      setAccessLogs([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Get unique values for filters
   const accounts = Array.from(new Set(accessLogs.map(log => log.username)))
@@ -80,244 +120,229 @@ export default function AccessHistoryPage() {
     currentPage * itemsPerPage
   )
 
-  // Group logs by date
-  const groupedLogs = paginatedLogs.reduce((groups, log) => {
-    const timestamp = new Date(log.timestamp)
-    const dateKey = timestamp.toLocaleDateString("vi-VN", { 
-      weekday: "long", 
-      year: "numeric", 
-      month: "long", 
-      day: "numeric" 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
     })
-    if (!groups[dateKey]) {
-      groups[dateKey] = []
-    }
-    groups[dateKey].push(log)
-    return groups
-  }, {} as Record<string, AccessLog[]>)
-
-  const formatTime = (date: Date | string) => {
-    const d = new Date(date)
-    return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
   }
 
-  const getActionStyle = (action: string) => {
-    return actionIconMap[action] || { icon: Eye, color: "text-gray-600", bgColor: "bg-gray-100" }
-  }
-
-  const getModuleStyle = (module: string) => {
-    return moduleIconMap[module] || { icon: FileText, color: "text-gray-600" }
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">Lịch sử truy cập</h1>
-          <p className="text-gray-500 mt-1">Theo dõi tất cả hoạt động trong hệ thống</p>
+          <h1 className="text-3xl font-bold text-gray-900">Lịch Sử Truy Cập</h1>
+          <p className="text-gray-600 mt-1">Theo dõi tất cả hoạt động trong hệ thống</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <History className="w-4 h-4" />
-          <span>Tổng: {filteredLogs.length} hoạt động</span>
-        </div>
+        <Button
+          onClick={loadAccessLogs}
+          variant="outline"
+          className="gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Làm mới
+        </Button>
       </div>
 
       {/* Filters */}
-      <Card className="bg-white border-0 card-shadow rounded-2xl">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            Bộ lọc
-          </CardTitle>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Lọc Lịch Sử</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Tìm kiếm..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  setCurrentPage(1)
-                }}
-                className="pl-10 bg-gray-50 border-gray-200 rounded-xl"
-              />
+        <CardContent className="space-y-4">
+          <div className="flex gap-2 items-center">
+            <Search className="w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Tìm kiếm theo tên, username, hoặc chi tiết..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="flex-1"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Tài Khoản</label>
+              <Select value={filterAccount} onValueChange={(value) => {
+                setFilterAccount(value)
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất Cả Tài Khoản</SelectItem>
+                  {accounts.map(account => (
+                    <SelectItem key={account} value={account}>
+                      {account}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Filter by account */}
-            <Select value={filterAccount} onValueChange={(value) => { setFilterAccount(value); setCurrentPage(1) }}>
-              <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
-                <User className="w-4 h-4 mr-2 text-gray-400" />
-                <SelectValue placeholder="Tài khoản" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-gray-200 rounded-xl">
-                <SelectItem value="all">Tất cả tài khoản</SelectItem>
-                {accounts.map(account => (
-                  <SelectItem key={account} value={account}>{account}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Mục</label>
+              <Select value={filterModule} onValueChange={(value) => {
+                setFilterModule(value)
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất Cả Mục</SelectItem>
+                  {modules.map(module => (
+                    <SelectItem key={module} value={module}>
+                      {module}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* Filter by module */}
-            <Select value={filterModule} onValueChange={(value) => { setFilterModule(value); setCurrentPage(1) }}>
-              <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
-                <SelectValue placeholder="Module" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-gray-200 rounded-xl">
-                <SelectItem value="all">Tất cả module</SelectItem>
-                {modules.map(module => (
-                  <SelectItem key={module} value={module}>{module}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Filter by action type */}
-            <Select value={filterAction} onValueChange={(value) => { setFilterAction(value); setCurrentPage(1) }}>
-              <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
-                <SelectValue placeholder="Loại thao tác" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-gray-200 rounded-xl">
-                <SelectItem value="all">Tất cả thao tác</SelectItem>
-                {actions.map(action => (
-                  <SelectItem key={action} value={action}>{action}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Hành Động</label>
+              <Select value={filterAction} onValueChange={(value) => {
+                setFilterAction(value)
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất Cả Hành Động</SelectItem>
+                  {actions.map(action => (
+                    <SelectItem key={action} value={action}>
+                      {action}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Activity Log */}
-      <Card className="bg-white border-0 card-shadow rounded-2xl">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-600">Tổng Logs</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{accessLogs.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-600">Kết Quả Tìm Kiếm</p>
+            <p className="text-3xl font-bold text-blue-600 mt-2">{filteredLogs.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-600">Người Dùng Duy Nhất</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">{accounts.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Logs Table */}
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-800">Nhật ký hoạt động</CardTitle>
-          <CardDescription className="text-gray-500">
-            Hiển thị {paginatedLogs.length} / {filteredLogs.length} hoạt động
+          <CardTitle>Chi Tiết Hoạt Động</CardTitle>
+          <CardDescription>
+            Hiển thị {paginatedLogs.length} trên {filteredLogs.length} kết quả
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0 sm:p-6">
+        <CardContent>
           {filteredLogs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <History className="w-12 h-12 mb-3 opacity-50" />
-              <p>Chưa có hoạt động nào được ghi nhận</p>
-              <p className="text-sm mt-1">Hãy thực hiện các thao tác trên hệ thống để xem lịch sử</p>
+            <div className="text-center py-12 text-gray-500">
+              <History className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>Không có dữ liệu lịch sử</p>
             </div>
           ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedLogs).map(([date, dateLogs]) => (
-                <div key={date}>
-                  {/* Date header */}
-                  <div className="flex items-center gap-2 px-4 sm:px-0 mb-3">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-600">{date}</span>
-                  </div>
+            <div className="space-y-3 overflow-x-auto">
+              {paginatedLogs.map((log) => {
+                const actionConfig = actionIconMap[log.action]
+                const moduleConfig = moduleIconMap[log.module]
+                const ActionIcon = actionConfig?.icon || Eye
+                const ModuleIcon = moduleConfig?.icon || Settings
 
-                  {/* Logs for this date */}
-                  <div className="divide-y divide-gray-100">
-                    {dateLogs.map((log) => {
-                      const actionStyle = getActionStyle(log.action)
-                      const moduleStyle = getModuleStyle(log.module)
-                      const ActionIcon = actionStyle.icon
-                      const ModuleIcon = moduleStyle.icon
+                return (
+                  <div
+                    key={log.id}
+                    className={`flex items-start gap-4 p-4 rounded-lg border ${actionConfig?.bgColor || "bg-gray-50"}`}
+                  >
+                    <div className={`flex-shrink-0 p-2 rounded-lg ${actionConfig?.bgColor}`}>
+                      <ActionIcon className={`w-5 h-5 ${actionConfig?.color || "text-gray-600"}`} />
+                    </div>
 
-                      return (
-                        <div 
-                          key={log.id} 
-                          className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors"
-                        >
-                          {/* Action Icon */}
-                          <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${actionStyle.bgColor} flex items-center justify-center`}>
-                            <ActionIcon className={`w-5 h-5 ${actionStyle.color}`} />
-                          </div>
-
-                          {/* Log Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-medium text-gray-800">{log.displayName}</span>
-                                  <span className="text-xs text-gray-400">({log.username})</span>
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${actionStyle.bgColor} ${actionStyle.color}`}>
-                                    {log.action}
-                                  </span>
-                                  <span className={`inline-flex items-center gap-1 text-xs ${moduleStyle.color}`}>
-                                    <ModuleIcon className="w-3 h-3" />
-                                    {log.module}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-600 mt-1">{log.details}</p>
-                                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {formatTime(log.timestamp)}
-                                  </span>
-                                  <span>IP: {log.ipAddress}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-gray-900">{log.displayName}</span>
+                        <span className="text-sm text-gray-600">({log.username})</span>
+                        <span className="font-medium text-gray-700">{log.action}</span>
+                        <div className="flex items-center gap-1">
+                          <ModuleIcon className={`w-4 h-4 ${moduleConfig?.color || "text-gray-600"}`} />
+                          <span className="text-sm text-gray-600">{log.module}</span>
                         </div>
-                      )
-                    })}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{log.details}</p>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                        <span>{formatDate(log.timestamp)}</span>
+                        {log.ipAddress && <span>• IP: {log.ipAddress}</span>}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
+            </div>
+          )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-100">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg border-gray-200"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let page: number
-                      if (totalPages <= 5) {
-                        page = i + 1
-                      } else if (currentPage <= 3) {
-                        page = i + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i
-                      } else {
-                        page = currentPage - 2 + i
-                      }
-                      return (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="icon"
-                          className={`h-8 w-8 rounded-lg ${
-                            currentPage === page 
-                              ? "bg-blue-500 text-white hover:bg-blue-600" 
-                              : "border-gray-200"
-                          }`}
-                          onClick={() => setCurrentPage(page)}
-                        >
-                          {page}
-                        </Button>
-                      )
-                    })}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg border-gray-200"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <p className="text-sm text-gray-600">
+                Trang {currentPage} / {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                  size="sm"
+                >
+                  Trước
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                  size="sm"
+                >
+                  Tiếp
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
