@@ -655,6 +655,8 @@ export default function VehiclesPage() {
                               size="icon"
                               className="h-8 w-8 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50"
                               onClick={() => openDetailDialog(vehicle)}
+                              disabled
+                              title="Chi tiết xe (tạm vô hiệu hóa)"
                             >
                               <Eye className="h-4 w-4" />
                               <span className="sr-only">Chi tiết</span>
@@ -758,6 +760,8 @@ export default function VehiclesPage() {
                         size="icon"
                         className="h-8 w-8 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50"
                         onClick={() => openDetailDialog(vehicle)}
+                        disabled
+                        title="Chi tiết xe (tạm vô hiệu hóa)"
                       >
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">Chi tiết</span>
