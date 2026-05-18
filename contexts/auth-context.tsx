@@ -118,10 +118,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const addAccessLog = (action: string, module: string, details: string) => {
+  const addAccessLog = async (action: string, module: string, details: string) => {
     if (!user) return
     
-    const newLog: AccessLog = {
+    const newLog = {
+      username: user.username,
+      displayName: user.displayName,
+      action,
+      module,
+      details,
+      timestamp: new Date().toISOString(),
+    }
+    
+    try {
+      // Save to Supabase
+      const { error } = await (await import("@/lib/supabase")).supabase
+        .from("access_logs")
+        .insert([newLog])
+      
+      if (error) {
+        console.error("❌ Error logging to Supabase:", error)
+      } else {
+        console.log("✅ Logged to Supabase:", newLog)
+      }
+    } catch (error) {
+      console.error("Exception logging:", error)
+    }
+    
+    // Also update local state
+    const localLog: AccessLog = {
       id: Date.now().toString(),
       userId: user.id,
       username: user.username,
@@ -134,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     setAccessLogs(prev => {
-      const updated = [newLog, ...prev]
+      const updated = [localLog, ...prev]
       localStorage.setItem("3l_moto_access_logs", JSON.stringify(updated))
       return updated
     })
