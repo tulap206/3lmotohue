@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuth }
+import { logVehicleAction } from "@/contexts/auth-context"
 import { fetchVehicles } from "@/lib/supabase"
+import { logVehicleAction } from "@/lib/logging"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
