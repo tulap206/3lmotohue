@@ -244,28 +244,6 @@ export default function AccessHistoryPage() {
         </CardContent>
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-600">Tổng Logs</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{accessLogs.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-600">Kết Quả Tìm Kiếm</p>
-            <p className="text-3xl font-bold text-blue-600 mt-2">{filteredLogs.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-600">Người Dùng Duy Nhất</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">{accounts.length}</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Logs Table */}
       <Card>
         <CardHeader>
