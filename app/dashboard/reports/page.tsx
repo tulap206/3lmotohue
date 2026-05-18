@@ -44,11 +44,19 @@ export default function ReportsPage() {
   const loadReportData = async () => {
     try {
       setLoading(true)
+      console.log("📊 Loading report data from Supabase...")
+      
       const [customers, vehicles, rentals] = await Promise.all([
         fetchCustomers(),
         fetchVehicles(),
         fetchRentals(),
       ])
+
+      console.log("📊 Data loaded:", { 
+        customersCount: customers.length, 
+        vehiclesCount: vehicles.length, 
+        rentalsCount: rentals.length 
+      })
 
       // Calculate statistics
       const totalCustomers = customers.length
@@ -58,6 +66,8 @@ export default function ReportsPage() {
       // Revenue & Profit calculations
       const totalRevenue = rentals.reduce((sum, r) => sum + (r.totalPrice || 0), 0)
       const totalProfit = vehicles.reduce((sum, v) => sum + (v.profit || 0), 0)
+      
+      console.log("💰 Calculations:", { totalRevenue, totalProfit, rentalsLength: rentals.length })
       const activeRentals = rentals.filter((r) => r.status === "active").length
       const vehiclesInMaintenance = vehicles.filter((v) => v.status === "maintenance").length
 
@@ -94,6 +104,14 @@ export default function ReportsPage() {
         }))
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5)
+
+      console.log("📈 Report data prepared:", {
+        totalCustomers,
+        totalVehicles,
+        totalRentals,
+        totalRevenue,
+        topVehiclesCount: vehicleRentals.length,
+      })
 
       setReportData({
         totalCustomers,
