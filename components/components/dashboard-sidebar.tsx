@@ -14,7 +14,7 @@ import {
   LogOut,
   Menu,
   Settings,
-  Users,
+  Users as UsersIcon,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -29,36 +29,43 @@ const menuItems = [
     title: "Tổng quan",
     href: "/dashboard",
     icon: LayoutDashboard,
+    color: "text-blue-500",
   },
   {
     title: "Quản lý xe",
     href: "/dashboard/vehicles",
     icon: Bike,
+    color: "text-purple-500",
   },
   {
     title: "Khách thuê",
     href: "/dashboard/customers",
     icon: Users,
+    color: "text-green-500",
   },
   {
     title: "Đơn thuê",
     href: "/dashboard/orders",
     icon: ClipboardList,
+    color: "text-orange-500",
   },
   {
     title: "Báo cáo",
     href: "/dashboard/reports",
     icon: FileText,
+    color: "text-pink-500",
   },
   {
     title: "Lịch sử truy cập",
     href: "/dashboard/access-history",
     icon: History,
+    color: "text-indigo-500",
   },
   {
     title: "Người dùng",
     href: "/dashboard/users",
-    icon: Users,
+    icon: UsersIcon,
+    color: "text-cyan-500",
   },
 ]
 
@@ -119,7 +126,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
                 )}
                 title={item.title}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className={`w-5 h-5 ${item.color}`} />
               </Link>
             )
           })}
