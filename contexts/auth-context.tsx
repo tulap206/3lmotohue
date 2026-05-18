@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { logger } from "@/lib/logger"
 
 export type UserRole = "admin" | "staff"
 
@@ -166,96 +167,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500))
-    
     const foundUser = USERS.find(u => u.username === username && u.password === password)
     
     if (foundUser) {
       setUser(foundUser.user)
       localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
-      
-      // Log login action
-      const loginLog: AccessLog = {
-        id: Date.now().toString(),
-        userId: foundUser.user.id,
-        username: foundUser.user.username,
-        displayName: foundUser.user.displayName,
-        action: "Đăng nhập",
-        module: "Hệ thống",
-        details: `Đăng nhập thành công vào hệ thống`,
-        ipAddress: getClientIP(),
-        timestamp: new Date(),
-      }
-      
-      setAccessLogs(prev => {
-        const updated = [loginLog, ...prev]
-        localStorage.setItem("3l_moto_access_logs", JSON.stringify(updated))
-        return updated
-      })
-
-      // Also save to Supabase
-      try {
-        const { supabase } = await import("@/lib/supabase")
-        await supabase.from("access_logs").insert([
-          {
-            username: foundUser.user.username,
-            displayName: foundUser.user.displayName,
-            action: "Đăng nhập",
-            module: "Hệ thống",
-            details: `Đăng nhập thành công vào hệ thống`,
-            timestamp: new Date().toISOString(),
-          },
-        ])
-      } catch (error) {
-        console.error("Failed to log to Supabase:", error)
-      }
-      
+      // Log to Supabase
+      logger.login(foundUser.user.username, foundUser.user.displayName)
       return { success: true }
     }
-    
     return { success: false, error: "Tên đăng nhập hoặc mật khẩu không đúng" }
   }
 
   const logout = () => {
     if (user) {
-      // Log logout action
-      const logoutLog: AccessLog = {
-        id: Date.now().toString(),
-        userId: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        action: "Đăng xuất",
-        module: "Hệ thống",
-        details: `Đăng xuất khỏi hệ thống`,
-        ipAddress: getClientIP(),
-        timestamp: new Date(),
-      }
-      
-      setAccessLogs(prev => {
-        const updated = [logoutLog, ...prev]
-        localStorage.setItem("3l_moto_access_logs", JSON.stringify(updated))
-        return updated
-      })
-
-      // Also save to Supabase
-      try {
-        const { supabase } = await import("@/lib/supabase")
-        supabase.from("access_logs").insert([
-          {
-            username: user.username,
-            displayName: user.displayName,
-            action: "Đăng xuất",
-            module: "Hệ thống",
-            details: `Đăng xuất khỏi hệ thống`,
-            timestamp: new Date().toISOString(),
-          },
-        ]).catch(error => console.error("Failed to log to Supabase:", error))
-      } catch (error) {
-        console.error("Failed to log to Supabase:", error)
-      }
+      // Log to Supabase
+      logger.logout(user.username, user.displayName)
     }
-    
     setUser(null)
     localStorage.removeItem("3l_moto_user")
   }

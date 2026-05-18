@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
+import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -169,7 +170,7 @@ const vehiclesData: Vehicle[] = [
 ]
 
 export default function OrdersPage() {
-  const { addAccessLog } = useAuth()
+  const { addAccessLog, user } = useAuth()
   const [orders, setOrders] = useState<RentalOrder[]>(initialOrders)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -244,7 +245,7 @@ export default function OrdersPage() {
       createdAt: new Date().toLocaleDateString("vi-VN"),
     }
     setOrders([newOrder, ...orders])
-    addAccessLog("Thêm mới", "Đơn thuê", `Tạo đơn thuê mới: ${newOrder.id} - ${customer.name} thuê ${vehicle.name}`)
+    if (user) logger.addRental(user.username, user.displayName, customer.name, vehicle.name)
     resetForm()
   }
 
@@ -291,7 +292,7 @@ export default function OrdersPage() {
     }
 
     setOrders(orders.map((o) => (o.id === editingOrder.id ? updatedOrder : o)))
-    addAccessLog("Chỉnh sửa", "Đơn thuê", `Sửa đơn thuê: ${editingOrder.id}`)
+    if (user) logger.editRental(user.username, user.displayName, customer.name, vehicle.name)
     setIsEditDialogOpen(false)
     setEditingOrder(null)
   }
@@ -311,14 +312,8 @@ export default function OrdersPage() {
       // pending và active chưa có doanh thu
       
       setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus, revenue } : o)))
-      
-      const statusLabels: Record<string, string> = {
-        pending: "Chờ nhận xe",
-        active: "Đang thuê", 
-        completed: "Hoàn thành",
-        cancelled: "Đã hủy"
-      }
-      addAccessLog("Chỉnh sửa", "Đơn thuê", `Cập nhật trạng thái đơn ${orderId}: ${statusLabels[newStatus]}`)
+      const statusLabels: Record<string, string> = { pending: "Chờ nhận xe", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }
+      if (user) logger.log(user.username, user.displayName, 'Chỉnh sửa', 'Đơn thuê', `Cập nhật đơn ${orderId}: ${statusLabels[newStatus]}`)
     }
   }
 

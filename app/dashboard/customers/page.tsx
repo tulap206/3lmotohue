@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchCustomers } from "@/lib/supabase"
-import { logCustomerAction } from "@/lib/logging"
+import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -154,7 +154,7 @@ export default function CustomersPage() {
           .eq('id', editingCustomer.id)
         
         if (error) throw error
-        logCustomerAction(addAccessLog, "Chỉnh sửa", formData.name, `${formData.phone} - ${formData.address}`)
+        if (user) logger.editCustomer(user.username, user.displayName, formData.name)
       } else {
         const { error } = await supabase
           .from('customers')
@@ -174,7 +174,7 @@ export default function CustomersPage() {
           }])
         
         if (error) throw error
-        logCustomerAction(addAccessLog, "Thêm mới", formData.name, `${formData.phone} - ${formData.address}`)
+        if (user) logger.addCustomer(user.username, user.displayName, formData.name, formData.phone)
       }
       
       const updatedCustomers = await fetchCustomers()
@@ -235,7 +235,7 @@ export default function CustomersPage() {
       if (error) throw error
       
       if (customerToDelete) {
-        logCustomerAction(addAccessLog, "Xóa", customerToDelete.name, customerToDelete.phone)
+        if (user) logger.deleteCustomer(user.username, user.displayName, customerToDelete.name)
       }
       
       const updatedCustomers = await fetchCustomers()

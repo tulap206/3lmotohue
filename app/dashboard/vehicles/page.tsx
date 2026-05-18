@@ -5,7 +5,7 @@ import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchVehicles } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
-import { logVehicleAction } from "@/lib/logging"
+import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -236,14 +236,7 @@ export default function VehiclesPage() {
           alert(`❌ Lỗi: ${error.message}`)
         } else {
           setVehicles([...vehicles, vehicle])
-          logVehicleAction(
-            addAccessLog,
-            "Thêm mới",
-            vehicle.name,
-            vehicle.licensePlate,
-            `Giá: ${vehicle.pricePerDay} VNĐ/ngày, Ảnh: ${vehicleImageUrls.length} + ${documentImageUrls.length}`,
-            user ? { username: user.username, displayName: user.displayName } : undefined
-          )
+          if (user) logger.addVehicle(user.username, user.displayName, vehicle.name, vehicle.licensePlate)
           setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
           setIsAddDialogOpen(false)
         }
@@ -293,7 +286,7 @@ export default function VehiclesPage() {
   const handleEditVehicle = async () => {
     if (editingVehicle) {
       try {
-        const { error } = await (await import("@/lib/supabase")).supabase
+        const { error } = await supabase
           .from('vehicles')
           .update(editingVehicle)
           .eq('id', editingVehicle.id)
@@ -302,7 +295,7 @@ export default function VehiclesPage() {
           console.error("Error updating vehicle:", error)
         } else {
           setVehicles(vehicles.map((v) => (v.id === editingVehicle.id ? editingVehicle : v)))
-          addAccessLog("Chỉnh sửa", "Quản lý xe", `Sửa thông tin xe: ${editingVehicle.name} (${editingVehicle.licensePlate})`)
+          if (user) logger.editVehicle(user.username, user.displayName, editingVehicle.name, editingVehicle.licensePlate)
           setIsEditDialogOpen(false)
           setEditingVehicle(null)
         }
@@ -315,7 +308,7 @@ export default function VehiclesPage() {
   const handleDeleteVehicle = async (id: string) => {
     const vehicleToDelete = vehicles.find((v) => v.id === id)
     try {
-      const { error } = await (await import("@/lib/supabase")).supabase
+      const { error } = await supabase
         .from('vehicles')
         .delete()
         .eq('id', id)
@@ -324,8 +317,8 @@ export default function VehiclesPage() {
         console.error("Error deleting vehicle:", error)
       } else {
         setVehicles(vehicles.filter((v) => v.id !== id))
-        if (vehicleToDelete) {
-          addAccessLog("Xóa", "Quản lý xe", `Xóa xe: ${vehicleToDelete.name} (${vehicleToDelete.licensePlate})`)
+        if (vehicleToDelete && user) {
+          logger.deleteVehicle(user.username, user.displayName, vehicleToDelete.name, vehicleToDelete.licensePlate)
         }
       }
     } catch (error) {
