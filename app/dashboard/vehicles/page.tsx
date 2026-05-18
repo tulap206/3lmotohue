@@ -120,7 +120,6 @@ interface Vehicle {
   purchasePrice: number
   totalRevenue: number
   profit: number
-  maintenanceCost: number
   notes: string
   vehicleImages: string[]
   documentImages: string[]
@@ -210,7 +209,6 @@ export default function VehiclesPage() {
         totalRentalDays: 0,
         totalRevenue: 0,
         profit: 0,
-        maintenanceCost: 0,
         vehicleImages: newVehicle.vehicleImages,
         documentImages: newVehicle.documentImages,
       }
@@ -910,16 +908,6 @@ export default function VehiclesPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-maintenanceCost" className="text-gray-600">Phí bảo trì (VND)</Label>
-                  <Input
-                    id="edit-maintenanceCost"
-                    type="number"
-                    value={editingVehicle.maintenanceCost}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, maintenanceCost: parseInt(e.target.value) || 0 })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
-                  />
-                </div>
-                <div className="grid gap-2">
                   <Label htmlFor="edit-status" className="text-gray-600">Trạng thái</Label>
                   <Select
                     value={editingVehicle.status}
@@ -1084,10 +1072,6 @@ export default function VehiclesPage() {
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500">Số ngày đã cho thuê</p>
                   <p className="text-sm font-medium text-gray-800">{viewingVehicle.totalRentalDays} ngày</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Phí bảo trì</p>
-                  <p className="text-sm font-medium text-amber-600">{formatPrice(viewingVehicle.maintenanceCost)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500">Tổng thu</p>
