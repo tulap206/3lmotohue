@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchRentals, fetchCustomers, fetchVehicles } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -170,12 +169,8 @@ const vehiclesData: Vehicle[] = [
 ]
 
 export default function OrdersPage() {
-  const { user, addAccessLog } = useAuth()
-  const [mounted, setMounted] = useState(false)
-  const [orders, setOrders] = useState<RentalOrder[]>([])
-  const [customersData, setCustomersData] = useState<Customer[]>([])
-  const [vehiclesData, setVehiclesData] = useState<Vehicle[]>([])
-  const [loading, setLoading] = useState(true)
+  const { addAccessLog } = useAuth()
+  const [orders, setOrders] = useState<RentalOrder[]>(initialOrders)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -203,29 +198,6 @@ export default function OrdersPage() {
     status: "pending" as RentalOrder["status"],
   })
 
-  // Load data from Supabase on component mount
-  useEffect(() => {
-    setMounted(true)
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        const [rentalsData, customersData, vehiclesData] = await Promise.all([
-          fetchRentals(),
-          fetchCustomers(),
-          fetchVehicles(),
-        ])
-        setOrders(rentalsData)
-        setCustomersData(customersData)
-        setVehiclesData(vehiclesData)
-      } catch (error) {
-        console.error("Failed to load data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadData()
-  }, [])
-
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -242,48 +214,38 @@ export default function OrdersPage() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const customer = customersData.find((c) => c.id === formData.customerId)
     const vehicle = vehiclesData.find((v) => v.id === formData.vehicleId)
     
     if (!customer || !vehicle) return
 
-    try {
-      const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
-      const totalPrice = totalDays * vehicle.pricePerDay
+    const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
+    const totalPrice = totalDays * vehicle.pricePerDay
 
-      // Insert rental to Supabase
-      const { error } = await supabase
-        .from('rentals')
-        .insert([{
-          customerId: customer.id,
-          customerName: customer.name,
-          vehicleId: vehicle.id,
-          vehicleName: vehicle.name,
-          licensePlate: vehicle.licensePlate,
-          startDate: new Date(formData.startDate).toLocaleDateString("vi-VN"),
-          endDate: new Date(formData.endDate).toLocaleDateString("vi-VN"),
-          totalDays,
-          pricePerDay: vehicle.pricePerDay,
-          totalPrice,
-          deposit: parseInt(formData.deposit),
-          extraFees: 0,
-          notes: "",
-          revenue: 0,
-          status: "pending",
-        }])
-      
-      if (error) throw error
-      
-      // Reload orders
-      const updatedOrders = await fetchRentals()
-      setOrders(updatedOrders)
-      addAccessLog("Thêm mới", "Đơn thuê", `Tạo đơn thuê mới - ${customer.name} thuê ${vehicle.name}`)
-      resetForm()
-    } catch (error) {
-      console.error("Error creating rental:", error)
+    const newOrder: RentalOrder = {
+      id: `DH${String(orders.length + 1).padStart(3, "0")}`,
+      customerId: customer.id,
+      customerName: customer.name,
+      vehicleId: vehicle.id,
+      vehicleName: vehicle.name,
+      licensePlate: vehicle.licensePlate,
+      startDate: new Date(formData.startDate).toLocaleDateString("vi-VN"),
+      endDate: new Date(formData.endDate).toLocaleDateString("vi-VN"),
+      totalDays,
+      pricePerDay: vehicle.pricePerDay,
+      totalPrice,
+      deposit: parseInt(formData.deposit),
+      extraFees: 0,
+      notes: "",
+      revenue: 0, // Chưa có doanh thu khi mới tạo đơn
+      status: "pending",
+      createdAt: new Date().toLocaleDateString("vi-VN"),
     }
+    setOrders([newOrder, ...orders])
+    addAccessLog("Thêm mới", "Đơn thuê", `Tạo đơn thuê mới: ${newOrder.id} - ${customer.name} thuê ${vehicle.name}`)
+    resetForm()
   }
 
   const resetForm = () => {

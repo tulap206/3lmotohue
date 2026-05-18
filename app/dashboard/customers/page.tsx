@@ -136,7 +136,6 @@ export default function CustomersPage() {
     e.preventDefault()
     try {
       if (editingCustomer) {
-        // Update existing customer
         const { error } = await supabase
           .from('customers')
           .update({
@@ -156,7 +155,6 @@ export default function CustomersPage() {
         if (error) throw error
         addAccessLog("Chỉnh sửa", "Khách thuê", `Sửa thông tin khách: ${formData.name} (${formData.phone})`)
       } else {
-        // Insert new customer
         const { error } = await supabase
           .from('customers')
           .insert([{
@@ -178,18 +176,11 @@ export default function CustomersPage() {
         addAccessLog("Thêm mới", "Khách thuê", `Thêm khách hàng mới: ${formData.name} (${formData.phone})`)
       }
       
-      // Reload customers list
       const updatedCustomers = await fetchCustomers()
       setCustomers(updatedCustomers)
       resetForm()
-      
-      // Show success message
-      const message = editingCustomer ? "Cập nhật khách hàng thành công!" : "Thêm khách hàng thành công!"
-      console.log(message)
     } catch (error) {
       console.error("Error saving customer:", error)
-      const errorMsg = error instanceof Error ? error.message : "Lỗi khi lưu khách hàng"
-      console.error(errorMsg)
     }
   }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchVehicles } from "@/lib/supabase"
+import { fetchVehicles } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -190,29 +190,34 @@ export default function VehiclesPage() {
 
   const handleAddVehicle = async () => {
     if (newVehicle.name && newVehicle.licensePlate && newVehicle.pricePerDay) {
+      const vehicle: Vehicle = {
+        id: Date.now().toString(),
+        name: newVehicle.name,
+        licensePlate: newVehicle.licensePlate,
+        color: newVehicle.color,
+        pricePerDay: parseInt(newVehicle.pricePerDay),
+        currentKm: parseInt(newVehicle.currentKm) || 0,
+        purchasePrice: parseInt(newVehicle.purchasePrice) || 0,
+        notes: newVehicle.notes,
+        status: newVehicle.status,
+        totalRentalDays: 0,
+        totalRevenue: 0,
+        profit: 0,
+        maintenanceCost: 0,
+        vehicleImages: newVehicle.vehicleImages,
+        documentImages: newVehicle.documentImages,
+      }
+      
       try {
-        const { error } = await supabase
+        const { error } = await (await import("@/lib/supabase")).supabase
           .from('vehicles')
-          .insert([{
-            name: newVehicle.name,
-            licensePlate: newVehicle.licensePlate,
-            color: newVehicle.color,
-            pricePerDay: parseInt(newVehicle.pricePerDay),
-            currentKm: parseInt(newVehicle.currentKm) || 0,
-            purchasePrice: parseInt(newVehicle.purchasePrice) || 0,
-            notes: newVehicle.notes,
-            status: newVehicle.status,
-            vehicleImages: newVehicle.vehicleImages,
-            documentImages: newVehicle.documentImages,
-          }])
+          .insert([vehicle])
         
         if (error) {
           console.error("Error adding vehicle:", error)
         } else {
-          // Reload vehicles from Supabase
-          const updated = await fetchVehicles()
-          setVehicles(updated)
-          addAccessLog("Thêm mới", "Quản lý xe", `Thêm xe mới: ${newVehicle.name} (${newVehicle.licensePlate})`)
+          setVehicles([...vehicles, vehicle])
+          addAccessLog("Thêm mới", "Quản lý xe", `Thêm xe mới: ${vehicle.name} (${vehicle.licensePlate})`)
           setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", currentKm: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
           setIsAddDialogOpen(false)
         }
@@ -270,27 +275,15 @@ export default function VehiclesPage() {
   const handleEditVehicle = async () => {
     if (editingVehicle) {
       try {
-        const { error } = await supabase
+        const { error } = await (await import("@/lib/supabase")).supabase
           .from('vehicles')
-          .update({
-            name: editingVehicle.name,
-            licensePlate: editingVehicle.licensePlate,
-            color: editingVehicle.color,
-            pricePerDay: editingVehicle.pricePerDay,
-            currentKm: editingVehicle.currentKm,
-            purchasePrice: editingVehicle.purchasePrice,
-            notes: editingVehicle.notes,
-            status: editingVehicle.status,
-            vehicleImages: editingVehicle.vehicleImages,
-            documentImages: editingVehicle.documentImages,
-          })
+          .update(editingVehicle)
           .eq('id', editingVehicle.id)
         
         if (error) {
           console.error("Error updating vehicle:", error)
         } else {
-          const updated = await fetchVehicles()
-          setVehicles(updated)
+          setVehicles(vehicles.map((v) => (v.id === editingVehicle.id ? editingVehicle : v)))
           addAccessLog("Chỉnh sửa", "Quản lý xe", `Sửa thông tin xe: ${editingVehicle.name} (${editingVehicle.licensePlate})`)
           setIsEditDialogOpen(false)
           setEditingVehicle(null)
@@ -304,7 +297,7 @@ export default function VehiclesPage() {
   const handleDeleteVehicle = async (id: string) => {
     const vehicleToDelete = vehicles.find((v) => v.id === id)
     try {
-      const { error } = await supabase
+      const { error } = await (await import("@/lib/supabase")).supabase
         .from('vehicles')
         .delete()
         .eq('id', id)
@@ -312,8 +305,7 @@ export default function VehiclesPage() {
       if (error) {
         console.error("Error deleting vehicle:", error)
       } else {
-        const updated = await fetchVehicles()
-        setVehicles(updated)
+        setVehicles(vehicles.filter((v) => v.id !== id))
         if (vehicleToDelete) {
           addAccessLog("Xóa", "Quản lý xe", `Xóa xe: ${vehicleToDelete.name} (${vehicleToDelete.licensePlate})`)
         }
