@@ -55,7 +55,7 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-6"
+      className="min-h-screen flex items-center justify-center p-6 relative"
       style={{
         backgroundImage: 'url(/login-bg.png)',
         backgroundSize: 'cover',
@@ -63,13 +63,13 @@ export default function LoginPage() {
         backgroundAttachment: 'fixed',
       }}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      {/* Blurred + Transparent Overlay */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-md" />
       
       <div className="relative w-full max-w-sm z-10">
         {/* Logo and Brand */}
         <div className="flex flex-col items-center mb-10">
-          <div className="relative w-20 h-20 mb-5">
+          <div className="relative w-24 h-24 mb-6">
             <Image
               src="/logo.jpg"
               alt="3L Moto Logo"
@@ -78,8 +78,8 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-800">3L Moto</h1>
-          <p className="text-gray-500 text-sm mt-1">Hệ thống quản lý cho thuê xe máy</p>
+          <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-lg">3L Moto</h1>
+          <p className="text-white text-lg mt-2 drop-shadow-md font-medium">Hệ thống quản lý cho thuê xe máy</p>
         </div>
 
         {/* Login Card */}
@@ -171,7 +171,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400 mt-8">
+        <p className="text-center text-sm font-semibold text-white drop-shadow-lg mt-10">
           3L Moto Huế - By Phan Lê Tự Lập
         </p>
       </div>
