@@ -116,7 +116,7 @@ interface Vehicle {
   color: string
   pricePerDay: number
   status: VehicleStatus
-  currentKm: number
+  current_km: number
   totalRentalDays: number
   purchasePrice: number
   totalRevenue: number
@@ -157,7 +157,7 @@ export default function VehiclesPage() {
     licensePlate: "",
     color: "",
     pricePerDay: "",
-    currentKm: "",
+    current_km: "",
     purchasePrice: "",
     notes: "",
     status: "available" as VehicleStatus,
@@ -219,7 +219,7 @@ export default function VehiclesPage() {
           licensePlate: newVehicle.licensePlate,
           color: newVehicle.color,
           pricePerDay: parseInt(newVehicle.pricePerDay),
-          currentKm: parseInt(newVehicle.currentKm) || 0,
+          current_km: parseInt(newVehicle.current_km) || 0,
           purchasePrice: parseInt(newVehicle.purchasePrice) || 0,
           notes: newVehicle.notes,
           status: newVehicle.status,
@@ -243,7 +243,7 @@ export default function VehiclesPage() {
             vehicle.licensePlate,
             `Giá: ${vehicle.pricePerDay} VNĐ/ngày, Ảnh: ${vehicleImageUrls.length} + ${documentImageUrls.length}`
           )
-          setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", currentKm: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
+          setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
           setIsAddDialogOpen(false)
         }
       } catch (error) {
@@ -414,13 +414,13 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="currentKm" className="text-gray-600">Số KM hiện tại</Label>
+                  <Label htmlFor="current_km" className="text-gray-600">Số KM hiện tại</Label>
                   <Input
-                    id="currentKm"
+                    id="current_km"
                     type="number"
                     placeholder="VD: 15000"
-                    value={newVehicle.currentKm}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, currentKm: e.target.value })}
+                    value={newVehicle.current_km}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
                     className="bg-gray-50 border-gray-200 rounded-xl"
                   />
                 </div>
@@ -854,12 +854,12 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-currentKm" className="text-gray-600">Số KM hiện tại</Label>
+                  <Label htmlFor="edit-current_km" className="text-gray-600">Số KM hiện tại</Label>
                   <Input
-                    id="edit-currentKm"
+                    id="edit-current_km"
                     type="number"
-                    value={editingVehicle.currentKm}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, currentKm: parseInt(e.target.value) || 0 })}
+                    value={editingVehicle.current_km}
+                    onChange={(e) => setEditingVehicle({ ...editingVehicle, current_km: parseInt(e.target.value) || 0 })}
                     className="bg-gray-50 border-gray-200 rounded-xl"
                   />
                 </div>
@@ -1047,7 +1047,7 @@ export default function VehiclesPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500">Số KM hiện tại</p>
-                  <p className="text-sm font-medium text-gray-800">{viewingVehicle.currentKm.toLocaleString("vi-VN")} km</p>
+                  <p className="text-sm font-medium text-gray-800">{viewingVehicle.current_km.toLocaleString("vi-VN")} km</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500">Giá mua xe</p>
