@@ -13,7 +13,7 @@ export interface Vehicle {
   color: string
   pricePerDay: number
   status: "available" | "rented" | "maintenance"
-  currentKm: number
+  current_km: number
   purchasePrice: number
   notes: string
   vehicleImages: string[]
@@ -21,7 +21,6 @@ export interface Vehicle {
   totalRentalDays?: number
   totalRevenue?: number
   profit?: number
-  maintenanceCost?: number
   created_at?: string
 }
 
@@ -82,7 +81,6 @@ export const fetchVehicles = async () => {
     totalRentalDays: vehicle.totalRentalDays ?? 0,
     totalRevenue: vehicle.totalRevenue ?? 0,
     profit: vehicle.profit ?? 0,
-    maintenanceCost: vehicle.maintenanceCost ?? 0,
   }))
 }
 
