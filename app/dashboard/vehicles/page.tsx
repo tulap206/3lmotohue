@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchVehicles } from "@/lib/supabase"
+import { uploadMultipleImages } from "@/lib/storage"
 import { logVehicleAction } from "@/lib/logging"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -118,6 +119,8 @@ interface Vehicle {
   currentKm: number
   purchasePrice: number
   notes: string
+  vehicleImages?: string[]
+  documentImages?: string[]
 }
 
 const statusConfig: Record<VehicleStatus, { label: string; className: string }> = {
@@ -155,6 +158,8 @@ export default function VehiclesPage() {
     purchasePrice: "",
     notes: "",
     status: "available" as VehicleStatus,
+    vehicleImages: [] as File[],
+    documentImages: [] as File[],
   })
 
   useEffect(() => {
@@ -188,6 +193,28 @@ export default function VehiclesPage() {
     }
 
     try {
+      // Upload images if any
+      let vehicleImageUrls: string[] = []
+      let documentImageUrls: string[] = []
+
+      if (newVehicle.vehicleImages.length > 0) {
+        console.log("📸 Uploading vehicle images...")
+        vehicleImageUrls = await uploadMultipleImages(
+          newVehicle.vehicleImages,
+          "vehicles",
+          "vehicle-images"
+        )
+      }
+
+      if (newVehicle.documentImages.length > 0) {
+        console.log("📄 Uploading document images...")
+        documentImageUrls = await uploadMultipleImages(
+          newVehicle.documentImages,
+          "vehicles",
+          "document-images"
+        )
+      }
+
       const vehicleData = {
         name: newVehicle.name,
         licensePlate: newVehicle.licensePlate,
@@ -197,6 +224,8 @@ export default function VehiclesPage() {
         purchasePrice: parseInt(newVehicle.purchasePrice) || 0,
         notes: newVehicle.notes,
         status: newVehicle.status,
+        vehicleImages: vehicleImageUrls,
+        documentImages: documentImageUrls,
       }
 
       console.log("📝 Adding vehicle:", vehicleData)
@@ -224,7 +253,7 @@ export default function VehiclesPage() {
         "Thêm mới",
         newVehicle.name,
         newVehicle.licensePlate,
-        `Giá: ${newVehicle.pricePerDay} VNĐ/ngày`
+        `Giá: ${newVehicle.pricePerDay} VNĐ/ngày, Ảnh: ${vehicleImageUrls.length} xe + ${documentImageUrls.length} giấy`
       )
 
       // Reset form & close dialog
