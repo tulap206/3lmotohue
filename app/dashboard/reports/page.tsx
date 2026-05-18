@@ -1,5 +1,6 @@
 "use client"
 
+// Force cache bust - v2024.05.18.01
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { fetchCustomers, fetchVehicles, fetchRentals } from "@/lib/supabase"
