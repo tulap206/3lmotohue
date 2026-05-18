@@ -3,7 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Create client with schema validation disabled
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+  },
+  // Disable schema caching
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+})
 
 // Types
 export interface Vehicle {
