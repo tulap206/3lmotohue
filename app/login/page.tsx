@@ -54,8 +54,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center gradient-bg p-6">
-      <div className="relative w-full max-w-sm">
+    <div 
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{
+        backgroundImage: 'url(/login-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40" />
+      
+      <div className="relative w-full max-w-sm z-10">
         {/* Logo and Brand */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative w-20 h-20 mb-5">
@@ -161,7 +172,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-8">
-          3L Moto v1.0
+          3L Moto Huế - By Phan Lê Tự Lập
         </p>
       </div>
     </div>
