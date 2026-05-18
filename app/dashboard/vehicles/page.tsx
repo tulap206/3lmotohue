@@ -888,7 +888,13 @@ export default function VehiclesPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                  <Label htmlFor="edit-notes" className="text-gray-600">Ghi chú</Label>
+                  <textarea
+                    id="edit-notes"
+                    value={editingVehicle.notes}
+                    onChange={(e) => setEditingVehicle({ ...editingVehicle, notes: e.target.value })}
+                    className="bg-gray-50 border-gray-200 rounded-xl p-3 border resize-none"
+                    rows={3}
                   />
                 </div>
                 <div className="grid gap-2">

@@ -1,14 +1,14 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+// import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/contexts/auth-context'
 import './globals.css'
 
-const inter = Inter({ 
-  subsets: ["latin", "vietnamese"],
-  display: 'swap',
-  variable: '--font-inter',
-});
+// const inter = Inter({ 
+//   subsets: ["latin", "vietnamese"],
+//   display: 'swap',
+//   variable: '--font-inter',
+//});
 
 export const metadata: Metadata = {
   title: '3L Moto - Quản lý cho thuê xe máy',
@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className={inter.variable}>
+    <html lang="vi" className="">
       <body className="font-sans antialiased bg-background min-h-screen">
         <AuthProvider>
           {children}
