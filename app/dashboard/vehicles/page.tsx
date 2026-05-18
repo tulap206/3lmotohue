@@ -214,8 +214,7 @@ export default function VehiclesPage() {
           )
         }
 
-        const vehicle: Vehicle = {
-          id: Date.now().toString(),
+        const vehicle: any = {
           name: newVehicle.name,
           licensePlate: newVehicle.licensePlate,
           color: newVehicle.color,
@@ -224,9 +223,6 @@ export default function VehiclesPage() {
           purchasePrice: parseInt(newVehicle.purchasePrice) || 0,
           notes: newVehicle.notes,
           status: newVehicle.status,
-          totalRentalDays: 0,
-          totalRevenue: 0,
-          profit: 0,
           vehicleImages: vehicleImageUrls,
           documentImages: documentImageUrls,
         }
