@@ -1,9 +1,10 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/auth-context"
+import { fetchCustomers, fetchVehicles, fetchRentals } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { TrendingUp, TrendingDown, Bike, Users, ClipboardList, DollarSign, Wallet, MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -14,329 +15,229 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  PieChart,
-  Pie,
   Cell,
 } from "recharts"
 
-const monthlyRevenue = [
-  { month: "T1", revenue: 32000000, profit: 12800000 },
-  { month: "T2", revenue: 38000000, profit: 15200000 },
-  { month: "T3", revenue: 42000000, profit: 16800000 },
-  { month: "T4", revenue: 39000000, profit: 15600000 },
-  { month: "T5", revenue: 45200000, profit: 18600000 },
-  { month: "T6", revenue: 0, profit: 0 },
-]
-
-const dailyRentals = [
-  { day: "T2", rentals: 8 },
-  { day: "T3", rentals: 12 },
-  { day: "T4", rentals: 10 },
-  { day: "T5", rentals: 15 },
-  { day: "T6", rentals: 18 },
-  { day: "T7", rentals: 22 },
-  { day: "CN", rentals: 20 },
-]
-
-const vehicleTypeDistribution = [
-  { name: "Tay ga", value: 55, color: "#3b82f6" },
-  { name: "Côn tay", value: 30, color: "#10b981" },
-  { name: "Số", value: 15, color: "#f59e0b" },
-]
-
-const topPerformingVehicles = [
-  { name: "Honda SH 150i", rentals: 45, revenue: 13500000, profit: 5400000 },
-  { name: "Yamaha Exciter 150", rentals: 38, revenue: 9500000, profit: 3800000 },
-  { name: "Honda Vision", rentals: 32, revenue: 6400000, profit: 2560000 },
-  { name: "Honda Wave Alpha", rentals: 28, revenue: 4200000, profit: 1890000 },
-  { name: "Yamaha NVX 155", rentals: 25, revenue: 7000000, profit: 2800000 },
-]
-
-const stats = [
-  {
-    title: "Doanh thu",
-    value: "45.2M",
-    change: "+12.5%",
-    changeType: "positive",
-    icon: DollarSign,
-    description: "Tháng này",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-500",
-  },
-  {
-    title: "Lợi nhuận",
-    value: "18.6M",
-    change: "+8.2%",
-    changeType: "positive",
-    icon: Wallet,
-    description: "Biên LN 41.2%",
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-500",
-  },
-  {
-    title: "Đơn thuê",
-    value: "128",
-    change: "+8.3%",
-    changeType: "positive",
-    icon: ClipboardList,
-    description: "Tháng này",
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-500",
-  },
-  {
-    title: "Khách mới",
-    value: "24",
-    change: "+15.2%",
-    changeType: "positive",
-    icon: Users,
-    description: "Tháng này",
-    iconBg: "bg-violet-50",
-    iconColor: "text-violet-500",
-  },
-  {
-    title: "Tỉ lệ thuê",
-    value: "66.7%",
-    change: "-2.1%",
-    changeType: "negative",
-    icon: Bike,
-    description: "32/48 xe",
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-500",
-  },
-]
+interface ReportData {
+  totalCustomers: number
+  totalVehicles: number
+  totalRentals: number
+  totalRevenue: number
+  totalProfit: number
+  activeRentals: number
+  vehiclesInMaintenance: number
+  monthlyRevenue: Array<{ month: string; revenue: number; profit: number }>
+  topVehicles: Array<{ name: string; rentals: number; revenue: number; profit: number }>
+}
 
 export default function ReportsPage() {
-  const [period, setPeriod] = useState("month")
+  const { addAccessLog } = useAuth()
+  const [reportData, setReportData] = useState<ReportData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadReportData()
+    addAccessLog("Xem", "Báo cáo", "Xem báo cáo tổng quan")
+  }, [])
+
+  const loadReportData = async () => {
+    try {
+      setLoading(true)
+      const [customers, vehicles, rentals] = await Promise.all([
+        fetchCustomers(),
+        fetchVehicles(),
+        fetchRentals(),
+      ])
+
+      // Calculate statistics
+      const totalCustomers = customers.length
+      const totalVehicles = vehicles.length
+      const totalRentals = rentals.length
+
+      // Revenue & Profit calculations
+      const totalRevenue = rentals.reduce((sum, r) => sum + (r.totalPrice || 0), 0)
+      const totalProfit = vehicles.reduce((sum, v) => sum + (v.profit || 0), 0)
+      const activeRentals = rentals.filter((r) => r.status === "active").length
+      const vehiclesInMaintenance = vehicles.filter((v) => v.status === "maintenance").length
+
+      // Monthly revenue (grouping by month from rental dates)
+      const monthlyData: Record<string, { revenue: number; profit: number }> = {}
+      rentals.forEach((rental) => {
+        if (rental.startDate) {
+          const date = new Date(rental.startDate)
+          const monthKey = `T${date.getMonth() + 1}`
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { revenue: 0, profit: 0 }
+          }
+          monthlyData[monthKey].revenue += rental.totalPrice || 0
+        }
+      })
+
+      const monthlyRevenue = [
+        { month: "T1", revenue: monthlyData["T1"]?.revenue || 0, profit: monthlyData["T1"]?.profit || 0 },
+        { month: "T2", revenue: monthlyData["T2"]?.revenue || 0, profit: monthlyData["T2"]?.profit || 0 },
+        { month: "T3", revenue: monthlyData["T3"]?.revenue || 0, profit: monthlyData["T3"]?.profit || 0 },
+        { month: "T4", revenue: monthlyData["T4"]?.revenue || 0, profit: monthlyData["T4"]?.profit || 0 },
+        { month: "T5", revenue: monthlyData["T5"]?.revenue || 0, profit: monthlyData["T5"]?.profit || 0 },
+        { month: "T6", revenue: monthlyData["T6"]?.revenue || 0, profit: monthlyData["T6"]?.profit || 0 },
+      ]
+
+      // Top performing vehicles
+      const vehicleRentals = vehicles
+        .map((v) => ({
+          name: v.name,
+          licensePlate: v.licensePlate,
+          rentals: v.totalRentalDays || 0,
+          revenue: v.totalRevenue || 0,
+          profit: v.profit || 0,
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5)
+
+      setReportData({
+        totalCustomers,
+        totalVehicles,
+        totalRentals,
+        totalRevenue,
+        totalProfit,
+        activeRentals,
+        vehiclesInMaintenance,
+        monthlyRevenue,
+        topVehicles: vehicleRentals,
+      })
+    } catch (error) {
+      console.error("Failed to load report data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="pt-6 h-24 bg-gray-200 rounded"></CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (!reportData) {
+    return (
+      <div className="p-6">
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="pt-6">
+            <p className="text-red-700">Không thể tải dữ liệu báo cáo</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const stats = [
+    {
+      title: "Doanh Thu",
+      value: `${(reportData.totalRevenue / 1000000).toFixed(1)}M`,
+      change: `${reportData.totalRentals} đơn`,
+      icon: DollarSign,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-500",
+    },
+    {
+      title: "Lợi Nhuận",
+      value: `${(reportData.totalProfit / 1000000).toFixed(1)}M`,
+      change: `${reportData.totalProfit > 0 ? "↑" : "↓"}`,
+      icon: Wallet,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-500",
+    },
+    {
+      title: "Tổng Xe",
+      value: reportData.totalVehicles.toString(),
+      change: `${reportData.activeRentals} đang thuê`,
+      icon: Bike,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
+    },
+    {
+      title: "Tổng Khách",
+      value: reportData.totalCustomers.toString(),
+      change: `${reportData.totalRentals} lượt thuê`,
+      icon: Users,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-500",
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-800">Báo cáo</h1>
-          <p className="text-gray-500 text-sm mt-1">Thống kê và phân tích hoạt động kinh doanh</p>
-        </div>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-full sm:w-40 bg-white border-gray-200 rounded-xl text-gray-700">
-            <SelectValue placeholder="Chọn kỳ báo cáo" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl bg-white border-gray-200">
-            <SelectItem value="week">Tuần này</SelectItem>
-            <SelectItem value="month">Tháng này</SelectItem>
-            <SelectItem value="quarter">Quý này</SelectItem>
-            <SelectItem value="year">Năm nay</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
+    <div className="p-6 space-y-6">
       {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
-        {stats.map((stat) => (
-          <Card key={stat.title} className="bg-white border-0 card-shadow rounded-2xl hover-lift">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className={`p-2 rounded-xl ${stat.iconBg}`}>
-                    <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
-                  </div>
-                  <span className="text-xs font-medium text-gray-500">{stat.title}</span>
-                </div>
-                <button className="text-gray-400 hover:text-gray-600">
-                  <MoreVertical className="w-3 h-3" />
-                </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, idx) => (
+          <Card key={idx}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <div className={`${stat.iconBg} p-2 rounded-lg`}>
+                <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
               </div>
-              <div className="text-xl font-bold text-gray-800">{stat.value}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <span className={`text-xs font-medium ${stat.changeType === "positive" ? "text-emerald-500" : "text-red-500"}`}>
-                  {stat.change}
-                </span>
-                <span className="text-xs text-gray-400">{stat.description}</span>
-              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Revenue & Profit Chart */}
-        <Card className="bg-white border-0 card-shadow rounded-2xl">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold text-gray-800">Doanh thu & Lợi nhuận</CardTitle>
-                <CardDescription className="text-gray-400 text-sm">6 tháng gần nhất</CardDescription>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span className="text-xs text-gray-500">Doanh thu</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs text-gray-500">Lợi nhuận</span>
-                </div>
-              </div>
-            </div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Monthly Revenue */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Doanh Thu Theo Tháng</CardTitle>
+            <CardDescription>Doanh thu hàng tháng năm nay</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyRevenue}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                  <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis
-                    stroke="#9ca3af"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
-                    labelStyle={{ color: "#374151" }}
-                    formatter={(value: number, name: string) => [
-                      `${(value / 1000000).toFixed(1)}M VND`,
-                      name === "revenue" ? "Doanh thu" : "Lợi nhuận"
-                    ]}
-                  />
-                  <Bar dataKey="revenue" fill="#3b82f6" radius={[6, 6, 0, 0]} name="revenue" />
-                  <Bar dataKey="profit" fill="#10b981" radius={[6, 6, 0, 0]} name="profit" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={reportData.monthlyRevenue}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip
+                  formatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                  }}
+                />
+                <Bar dataKey="revenue" fill="#3b82f6" name="Doanh Thu" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Daily Rentals Chart */}
-        <Card className="bg-white border-0 card-shadow rounded-2xl">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold text-gray-800">Lượt thuê theo ngày</CardTitle>
-                <CardDescription className="text-gray-400 text-sm">Trong tuần</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-blue-500">128</span>
-                <span className="text-xs text-gray-400">Tổng</span>
-              </div>
-            </div>
+        {/* Top Vehicles */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Xe Top Doanh Thu</CardTitle>
+            <CardDescription>5 xe có doanh thu cao nhất</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dailyRentals}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                  <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
-                    labelStyle={{ color: "#374151" }}
-                    formatter={(value: number) => [value, "Lượt thuê"]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="rentals"
-                    stroke="#3b82f6"
-                    strokeWidth={2.5}
-                    dot={{ fill: "#3b82f6", strokeWidth: 0, r: 4 }}
-                    activeDot={{ r: 6, fill: "#3b82f6" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Vehicle Type Distribution */}
-        <Card className="bg-white border-0 card-shadow rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-gray-800">Phân bố loại xe</CardTitle>
-            <CardDescription className="text-gray-400 text-sm">Tỉ lệ các loại xe</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-52">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={vehicleTypeDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {vehicleTypeDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
-                    formatter={(value: number) => [`${value}%`, "Tỉ lệ"]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-4 mt-2">
-              {vehicleTypeDistribution.map((item) => (
-                <div key={item.name} className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-xs text-gray-500">{item.name}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Performing Vehicles */}
-        <Card className="lg:col-span-2 bg-white border-0 card-shadow rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-gray-800">Xe được thuê nhiều nhất</CardTitle>
-            <CardDescription className="text-gray-400 text-sm">Top 5 xe có lượt thuê cao nhất tháng</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {topPerformingVehicles.map((vehicle, index) => (
-                <div key={vehicle.name} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-500 text-sm font-bold">
-                    {index + 1}
+            <div className="space-y-4">
+              {reportData.topVehicles.map((vehicle, idx) => (
+                <div key={idx} className="flex items-center justify-between border-b pb-3 last:border-b-0">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-gray-900">{vehicle.name}</p>
+                    <p className="text-xs text-gray-500">{vehicle.rentals} lần thuê</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-gray-800 truncate">{vehicle.name}</p>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-800 font-semibold">{(vehicle.revenue / 1000000).toFixed(1)}M</p>
-                        <p className="text-xs text-emerald-500">+{(vehicle.profit / 1000000).toFixed(1)}M</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-blue-500 rounded-full"
-                          style={{ width: `${(vehicle.rentals / 45) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-400 w-12 text-right">{vehicle.rentals} lượt</span>
-                    </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-sm">{(vehicle.revenue / 1000000).toFixed(1)}M</p>
+                    <p className="text-xs text-gray-500">{(vehicle.profit / 1000000).toFixed(1)}M LN</p>
                   </div>
                 </div>
               ))}
@@ -344,6 +245,33 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Summary Card */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-blue-600" />
+            Tóm Tắt Báo Cáo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-gray-700 space-y-2">
+          <p>
+            • <span className="font-semibold">Tổng doanh thu:</span> {(reportData.totalRevenue / 1000000).toFixed(1)}M VNĐ từ {reportData.totalRentals} đơn thuê
+          </p>
+          <p>
+            • <span className="font-semibold">Lợi nhuận ròng:</span> {(reportData.totalProfit / 1000000).toFixed(1)}M VNĐ
+          </p>
+          <p>
+            • <span className="font-semibold">Tỷ lệ lợi nhuận:</span> {reportData.totalRevenue > 0 ? ((reportData.totalProfit / reportData.totalRevenue) * 100).toFixed(1) : 0}%
+          </p>
+          <p>
+            • <span className="font-semibold">Xe đang hoạt động:</span> {reportData.activeRentals} / {reportData.totalVehicles}
+          </p>
+          <p>
+            • <span className="font-semibold">Xe bảo trì:</span> {reportData.vehiclesInMaintenance} chiếc
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
