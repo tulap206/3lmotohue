@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+set timeout 180
+log_file /tmp/gh-auth-device.log
+spawn /opt/homebrew/bin/gh auth login -h github.com -p https -w --skip-ssh-key
+expect {
+  "Authenticate Git with your GitHub credentials?" {
+    send "Y\r"
+    exp_continue
+  }
+  -re {! Enter the code: ([A-Z0-9-]+)} {
+    set code $expect_out(1,string)
+    puts "\nGH_DEVICE_CODE=$code\n"
+    exp_continue
+  }
+  -re {https://github.com/login/device} {
+    exp_continue
+  }
+  "Logged in as" {
+    puts "\nGH_AUTH_SUCCESS\n"
+  }
+  eof
+}
