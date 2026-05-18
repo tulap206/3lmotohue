@@ -32,23 +32,51 @@ export interface LogEntry {
 }
 
 /**
+ * Log a user action to Supabase
+ */
+async function logToSupabase(username: string, displayName: string, action: string, module: string, details: string) {
+  try {
+    const { supabase } = await import("@/lib/supabase")
+    await supabase.from("access_logs").insert([
+      {
+        username,
+        displayName,
+        action,
+        module,
+        details,
+        timestamp: new Date().toISOString(),
+      },
+    ])
+  } catch (error) {
+    console.error("Failed to log to Supabase:", error)
+  }
+}
+
+/**
  * Log a user action
  * @param addAccessLog - The addAccessLog function from useAuth
  * @param action - Type of action
  * @param module - Module/section where action occurred
  * @param details - Detailed description of what was done
+ * @param user - Current user object (optional, for Supabase logging)
  */
 export function logUserAction(
   addAccessLog: (action: string, module: string, details: string) => void,
   action: ActionType,
   module: ModuleType,
-  details: string
+  details: string,
+  user?: { username: string; displayName: string }
 ) {
   // Add user context if available
   const timestamp = new Date().toLocaleTimeString("vi-VN")
   const fullDetails = `${details} [${timestamp}]`
   
   addAccessLog(action, module, fullDetails)
+  
+  // Also log to Supabase if user provided
+  if (user) {
+    logToSupabase(user.username, user.displayName, action, module, fullDetails)
+  }
   
   // Also log to console for debugging
   console.log(`[${action}] ${module}: ${details}`)
@@ -61,13 +89,14 @@ export function logCustomerAction(
   addAccessLog: (action: string, module: string, details: string) => void,
   action: ActionType,
   customerName: string,
-  details?: string
+  details?: string,
+  user?: { username: string; displayName: string }
 ) {
   const desc = details 
     ? `${action} khách hàng: ${customerName} - ${details}`
     : `${action} khách hàng: ${customerName}`
   
-  logUserAction(addAccessLog, action, "Quản lý khách hàng", desc)
+  logUserAction(addAccessLog, action, "Quản lý khách hàng", desc, user)
 }
 
 /**
@@ -78,13 +107,14 @@ export function logVehicleAction(
   action: ActionType,
   vehicleName: string,
   licensePlate: string,
-  details?: string
+  details?: string,
+  user?: { username: string; displayName: string }
 ) {
   const desc = details
     ? `${action} xe: ${vehicleName} (${licensePlate}) - ${details}`
     : `${action} xe: ${vehicleName} (${licensePlate})`
   
-  logUserAction(addAccessLog, action, "Quản lý xe", desc)
+  logUserAction(addAccessLog, action, "Quản lý xe", desc, user)
 }
 
 /**
@@ -95,11 +125,12 @@ export function logRentalAction(
   action: ActionType,
   customerName: string,
   vehicleName: string,
-  details?: string
+  details?: string,
+  user?: { username: string; displayName: string }
 ) {
   const desc = details
     ? `${action} đơn thuê: ${customerName} - ${vehicleName} - ${details}`
     : `${action} đơn thuê: ${customerName} - ${vehicleName}`
   
-  logUserAction(addAccessLog, action, "Đơn thuê", desc)
+  logUserAction(addAccessLog, action, "Đơn thuê", desc, user)
 }

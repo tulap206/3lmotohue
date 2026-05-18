@@ -193,6 +193,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("3l_moto_access_logs", JSON.stringify(updated))
         return updated
       })
+
+      // Also save to Supabase
+      try {
+        const { supabase } = await import("@/lib/supabase")
+        await supabase.from("access_logs").insert([
+          {
+            username: foundUser.user.username,
+            displayName: foundUser.user.displayName,
+            action: "Đăng nhập",
+            module: "Hệ thống",
+            details: `Đăng nhập thành công vào hệ thống`,
+            timestamp: new Date().toISOString(),
+          },
+        ])
+      } catch (error) {
+        console.error("Failed to log to Supabase:", error)
+      }
       
       return { success: true }
     }
@@ -220,6 +237,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("3l_moto_access_logs", JSON.stringify(updated))
         return updated
       })
+
+      // Also save to Supabase
+      try {
+        const { supabase } = await import("@/lib/supabase")
+        supabase.from("access_logs").insert([
+          {
+            username: user.username,
+            displayName: user.displayName,
+            action: "Đăng xuất",
+            module: "Hệ thống",
+            details: `Đăng xuất khỏi hệ thống`,
+            timestamp: new Date().toISOString(),
+          },
+        ]).catch(error => console.error("Failed to log to Supabase:", error))
+      } catch (error) {
+        console.error("Failed to log to Supabase:", error)
+      }
     }
     
     setUser(null)

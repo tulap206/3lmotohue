@@ -241,7 +241,8 @@ export default function VehiclesPage() {
             "Thêm mới",
             vehicle.name,
             vehicle.licensePlate,
-            `Giá: ${vehicle.pricePerDay} VNĐ/ngày, Ảnh: ${vehicleImageUrls.length} + ${documentImageUrls.length}`
+            `Giá: ${vehicle.pricePerDay} VNĐ/ngày, Ảnh: ${vehicleImageUrls.length} + ${documentImageUrls.length}`,
+            user ? { username: user.username, displayName: user.displayName } : undefined
           )
           setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
           setIsAddDialogOpen(false)
