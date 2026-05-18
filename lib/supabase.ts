@@ -67,7 +67,7 @@ export interface Rental {
 export const fetchVehicles = async () => {
   const { data, error } = await supabase
     .from('vehicles')
-    .select('*')
+    .select('id,name,licensePlate,color,pricePerDay,status,current_km,purchasePrice,notes,vehicleImages,documentImages,totalRentalDays,totalRevenue,profit,created_at')
     .order('created_at', { ascending: false })
   
   if (error) {
