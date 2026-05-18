@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { useAuth }
-import { logVehicleAction } from "@/contexts/auth-context"
-import { fetchVehicles } from "@/lib/supabase"
+import { useAuth } from "@/contexts/auth-context"
+import { supabase, fetchVehicles } from "@/lib/supabase"
 import { logVehicleAction } from "@/lib/logging"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -191,9 +190,15 @@ export default function VehiclesPage() {
   })
 
   const handleAddVehicle = async () => {
-    if (newVehicle.name && newVehicle.licensePlate && newVehicle.pricePerDay) {
-      const vehicle: Vehicle = {
-        id: Date.now().toString(),
+    if (!newVehicle.name || !newVehicle.licensePlate || !newVehicle.pricePerDay) {
+      alert("❌ Vui lòng điền đầy đủ thông tin (Tên, Biển số, Giá)")
+      return
+    }
+
+    try {
+      alert("⏳ Đang thêm xe...")
+      
+      const vehicleData = {
         name: newVehicle.name,
         licensePlate: newVehicle.licensePlate,
         color: newVehicle.color,
@@ -209,23 +214,53 @@ export default function VehiclesPage() {
         vehicleImages: newVehicle.vehicleImages,
         documentImages: newVehicle.documentImages,
       }
-      
-      try {
-        const { error } = await (await import("@/lib/supabase")).supabase
-          .from('vehicles')
-          .insert([vehicle])
-        
-        if (error) {
-          console.error("Error adding vehicle:", error)
-        } else {
-          setVehicles([...vehicles, vehicle])
-          addAccessLog("Thêm mới", "Quản lý xe", `Thêm xe mới: ${vehicle.name} (${vehicle.licensePlate})`)
-          setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", currentKm: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
-          setIsAddDialogOpen(false)
-        }
-      } catch (error) {
-        console.error("Error adding vehicle:", error)
+
+      console.log("📝 Adding vehicle:", vehicleData)
+
+      const { data, error } = await supabase
+        .from("vehicles")
+        .insert([vehicleData])
+        .select()
+
+      if (error) {
+        console.error("❌ Error adding vehicle:", error)
+        alert(`❌ Lỗi thêm xe: ${error.message}`)
+        return
       }
+
+      console.log("✅ Vehicle added:", data)
+      alert("✅ Thêm xe thành công!")
+      
+      // Reload vehicles list
+      const updatedVehicles = await fetchVehicles()
+      setVehicles(updatedVehicles)
+      
+      // Log action
+      logVehicleAction(
+        addAccessLog,
+        "Thêm mới",
+        newVehicle.name,
+        newVehicle.licensePlate,
+        `Giá: ${newVehicle.pricePerDay} VNĐ/ngày`
+      )
+
+      // Reset form
+      setNewVehicle({
+        name: "",
+        licensePlate: "",
+        color: "",
+        pricePerDay: "",
+        currentKm: "",
+        purchasePrice: "",
+        notes: "",
+        status: "available",
+        vehicleImages: [],
+        documentImages: []
+      })
+      setIsAddDialogOpen(false)
+    } catch (error) {
+      console.error("❌ Exception adding vehicle:", error)
+      alert(`❌ Lỗi: ${error instanceof Error ? error.message : "Unknown error"}`)
     }
   }
 
