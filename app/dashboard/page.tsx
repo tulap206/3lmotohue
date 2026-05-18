@@ -1,8 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Bike, Users, ClipboardList, TrendingUp, Wallet, MoreVertical } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Bike, Users, ClipboardList, TrendingUp, Wallet, Eye } from "lucide-react"
 import { fetchVehicles, fetchRentals } from "@/lib/supabase"
 
 interface DashboardStats {
@@ -21,14 +30,17 @@ interface RecentOrder {
 }
 
 interface TopVehicle {
+  id: string
   name: string
+  licensePlate: string
   rentals: number
   revenue: string
   profit: string
-  image: string
+  image?: string[]
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [stats, setStats] = useState<DashboardStats>({
     totalVehicles: 0,
     totalRevenue: 0,
@@ -38,6 +50,12 @@ export default function DashboardPage() {
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [topVehicles, setTopVehicles] = useState<TopVehicle[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Dialog states
+  const [selectedOrder, setSelectedOrder] = useState<RecentOrder | null>(null)
+  const [selectedVehicle, setSelectedVehicle] = useState<TopVehicle | null>(null)
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false)
+  const [isVehicleDialogOpen, setIsVehicleDialogOpen] = useState(false)
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -58,7 +76,7 @@ export default function DashboardPage() {
         })
 
         // Map recent rentals for display
-        const recent = rentals.slice(0, 4).map((r: any) => ({
+        const recent = rentals.slice(0, 5).map((r: any) => ({
           id: r.id,
           customer: r.customerName,
           vehicle: r.vehicleName,
@@ -69,16 +87,18 @@ export default function DashboardPage() {
 
         // Sort vehicles by rental count for top vehicles
         const vehiclesWithRentals = vehicles.map((v: any) => ({
+          id: v.id,
           name: v.name,
+          licensePlate: v.licensePlate,
           rentals: rentals.filter((r: any) => r.vehicleId === v.id && r.status === 'completed').length,
           revenue: `${((v.totalRevenue || 0) / 1000000).toFixed(1)}M`,
           profit: `${((v.profit || 0) / 1000000).toFixed(1)}M`,
-          image: "/logo.jpg",
+          image: v.vehicleImages || [],
         })).sort((a, b) => b.rentals - a.rentals).slice(0, 4)
 
         setTopVehicles(vehiclesWithRentals)
       } catch (error) {
-        console.error('Error loading dashboard data:', error)
+        console.error("Failed to load dashboard data:", error)
       } finally {
         setLoading(false)
       }
@@ -87,191 +107,329 @@ export default function DashboardPage() {
     loadDashboardData()
   }, [])
 
-  const statsDisplay = [
-    {
-      title: "Tổng số xe",
-      value: stats.totalVehicles.toString(),
-      change: "+4%",
-      changeType: "positive",
-      description: "Tháng này",
-      icon: Bike,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-500",
-    },
-    {
-      title: "Doanh thu",
-      value: `${(stats.totalRevenue / 1000000).toFixed(1)}M`,
-      change: "-6%",
-      changeType: "negative",
-      description: "Tháng này",
-      icon: TrendingUp,
-      iconBg: "bg-amber-50",
-      iconColor: "text-amber-500",
-    },
-    {
-      title: "Lợi nhuận",
-      value: `${(stats.totalProfit / 1000000).toFixed(1)}M`,
-      change: "-6%",
-      changeType: "negative",
-      description: "Tháng này",
-      icon: Wallet,
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-500",
-    },
-    {
-      title: "Đơn thuê",
-      value: stats.totalRentals.toString(),
-      change: "+8%",
-      changeType: "positive",
-      description: "Tháng này",
-      icon: ClipboardList,
-      iconBg: "bg-cyan-50",
-      iconColor: "text-cyan-500",
-    },
-  ]
+  const formatPrice = (value: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value)
+  }
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-2xl" />
-          ))}
+      <div className="p-6 space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-gray-200 rounded-lg"></div>
+          <div className="h-96 bg-gray-200 rounded-lg"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats Grid */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        {statsDisplay.map((stat) => (
-          <Card key={stat.title} className="bg-white border-0 card-shadow rounded-2xl hover-lift">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className={`p-2 rounded-xl ${stat.iconBg}`}>
-                    <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
-                  </div>
-                  <span className="text-sm font-medium text-gray-600">{stat.title}</span>
-                </div>
-                <button className="text-gray-400 hover:text-gray-600">
-                  <MoreVertical className="w-4 h-4" />
-                </button>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Tổng Quan</h1>
+        <p className="text-gray-600 mt-1">Xem tổng hợp thông tin hoạt động</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Vehicles */}
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => router.push("/dashboard/vehicles")}
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Tổng Số Xe</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalVehicles}</p>
               </div>
-              <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <span className={`text-sm font-medium ${stat.changeType === "positive" ? "text-emerald-500" : "text-red-500"}`}>
-                  {stat.change}
-                </span>
-                <span className="text-sm text-gray-400">{stat.description}</span>
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <Bike className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Rentals */}
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => router.push("/dashboard/orders")}
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Đơn Thuê</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalRentals}</p>
+              </div>
+              <div className="p-3 bg-amber-100 rounded-lg">
+                <ClipboardList className="w-6 h-6 text-amber-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Revenue */}
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => router.push("/dashboard/reports")}
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Doanh Thu</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">{formatPrice(stats.totalRevenue)}</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-lg">
+                <Wallet className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Profit */}
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => router.push("/dashboard/reports")}
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Lợi Nhuận</p>
+                <p className="text-2xl font-bold text-emerald-600 mt-2">{formatPrice(stats.totalProfit)}</p>
+              </div>
+              <div className="p-3 bg-emerald-100 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Rentals */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Đơn Thuê Gần Đây</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentOrders.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4">Không có đơn thuê</p>
+                ) : (
+                  recentOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      onClick={() => {
+                        setSelectedOrder(order)
+                        setIsOrderDialogOpen(true)
+                      }}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{order.customer}</p>
+                        <p className="text-sm text-gray-600">{order.vehicle}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">{order.price}/ngày</p>
+                        <p className="text-sm text-gray-600">{order.unit} ngày</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
-        ))}
+        </div>
+
+        {/* Top Vehicles */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Xe Thuê Nhiều</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {topVehicles.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4">Không có dữ liệu</p>
+                ) : (
+                  topVehicles.slice(0, 5).map((vehicle) => (
+                    <div
+                      key={vehicle.id}
+                      onClick={() => {
+                        setSelectedVehicle(vehicle)
+                        setIsVehicleDialogOpen(true)
+                      }}
+                      className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    >
+                      <p className="font-medium text-gray-900">{vehicle.name}</p>
+                      <p className="text-xs text-gray-600">{vehicle.licensePlate}</p>
+                      <p className="text-xs text-blue-600 font-semibold mt-1">{vehicle.rentals} lần thuê</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Orders */}
-        <Card className="lg:col-span-2 bg-white border-0 card-shadow rounded-2xl">
-          <div className="p-6">
-            <h3 className="text-base font-semibold text-gray-800 pb-4">Đơn thuê gần đây</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left">
-                    <th className="pb-3 text-xs font-medium text-gray-400 uppercase">Xe</th>
-                    <th className="pb-3 text-xs font-medium text-gray-400 uppercase">Ngày</th>
-                    <th className="pb-3 text-xs font-medium text-gray-400 uppercase">Giá</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {recentOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                            <Bike className="w-5 h-5 text-gray-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-800">{order.vehicle}</p>
-                            <p className="text-xs text-gray-400">{order.customer}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 text-sm text-gray-600">{order.unit} ngày</td>
-                      <td className="py-3 text-sm font-medium text-gray-800">{order.price}</td>
-                    </tr>
+      {/* Popular Vehicles */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Xe Cho Thuê Phổ Biến</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {topVehicles.map((vehicle) => (
+              <div
+                key={vehicle.id}
+                onClick={() => {
+                  setSelectedVehicle(vehicle)
+                  setIsVehicleDialogOpen(true)
+                }}
+                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              >
+                {/* Image */}
+                <div className="aspect-video bg-gray-200 overflow-hidden">
+                  {vehicle.image && vehicle.image.length > 0 ? (
+                    <img
+                      src={vehicle.image[0]}
+                      alt={vehicle.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
+                      <Bike className="w-12 h-12 text-gray-600" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="p-4">
+                  <p className="font-semibold text-gray-900">{vehicle.name}</p>
+                  <p className="text-sm text-gray-600">{vehicle.licensePlate}</p>
+                  
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-gray-600">Doanh Thu</p>
+                      <p className="font-semibold text-green-600">{vehicle.revenue}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Lợi Nhuận</p>
+                      <p className="font-semibold text-emerald-600">{vehicle.profit}</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedVehicle(vehicle)
+                      setIsVehicleDialogOpen(true)
+                    }}
+                    className="w-full mt-3 bg-blue-500 hover:bg-blue-600"
+                    size="sm"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Chi Tiết
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Order Detail Dialog */}
+      <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chi Tiết Đơn Thuê</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600">Khách Hàng</p>
+                <p className="font-semibold text-gray-900">{selectedOrder.customer}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Xe Thuê</p>
+                <p className="font-semibold text-gray-900">{selectedOrder.vehicle}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Giá Thuê</p>
+                <p className="font-semibold text-gray-900">{selectedOrder.price}/ngày</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Số Ngày</p>
+                <p className="font-semibold text-gray-900">{selectedOrder.unit} ngày</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Vehicle Detail Dialog */}
+      <Dialog open={isVehicleDialogOpen} onOpenChange={setIsVehicleDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Chi Tiết Xe</DialogTitle>
+          </DialogHeader>
+          {selectedVehicle && (
+            <div className="space-y-4">
+              {/* Image Gallery */}
+              {selectedVehicle.image && selectedVehicle.image.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedVehicle.image.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={`${selectedVehicle.name} ${idx + 1}`}
+                      className="w-full h-40 object-cover rounded-lg"
+                    />
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </Card>
+                </div>
+              )}
 
-        {/* Top Markets / Vehicles */}
-        <Card className="bg-white border-0 card-shadow rounded-2xl">
-          <div className="p-6">
-            <h3 className="text-base font-semibold text-gray-800 pb-4">Xe được thuê nhiều</h3>
-            <div className="space-y-3">
-              {topVehicles.map((vehicle, index) => (
-                <div key={vehicle.name} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
-                      {index + 1}
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">{vehicle.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-6">
-                      <svg viewBox="0 0 60 20" className="w-full h-full">
-                        <path
-                          d={`M0,${15 - index * 2} Q15,${10 - index} 30,${12 - index} T60,${8 + index}`}
-                          fill="none"
-                          stroke={index % 2 === 0 ? "#3b82f6" : "#f59e0b"}
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-800 w-12 text-right">{vehicle.rentals}</span>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Tên Xe</p>
+                  <p className="font-semibold text-gray-900">{selectedVehicle.name}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
+                <div>
+                  <p className="text-sm text-gray-600">Biển Số</p>
+                  <p className="font-semibold text-gray-900">{selectedVehicle.licensePlate}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Lần Thuê</p>
+                  <p className="font-semibold text-gray-900">{selectedVehicle.rentals}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Doanh Thu</p>
+                  <p className="font-semibold text-green-600">{selectedVehicle.revenue}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Lợi Nhuận</p>
+                  <p className="font-semibold text-emerald-600">{selectedVehicle.profit}</p>
+                </div>
+              </div>
 
-      {/* Top Selling Products / Vehicles Grid */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-gray-800">Xe cho thuê phổ biến</h2>
-          <select className="text-sm text-gray-500 bg-white border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
-            <option>Tháng này</option>
-            <option>Tuần này</option>
-            <option>Năm nay</option>
-          </select>
-        </div>
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          {topVehicles.map((vehicle, index) => (
-            <Card key={vehicle.name} className="bg-white border-0 card-shadow rounded-2xl hover-lift overflow-hidden">
-              <CardContent className="p-4">
-                <div className="mb-3">
-                  <p className="text-sm font-semibold text-gray-800">{vehicle.name}</p>
-                  <p className="text-xs text-gray-500">{vehicle.rentals} lượt thuê</p>
-                  <span className={`inline-block mt-1 text-xs font-medium ${index === 2 ? "text-red-500" : "text-emerald-500"}`}>
-                    {index === 2 ? "Hết xe" : "Còn xe"}
-                  </span>
-                </div>
-                <div className="h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center">
-                  <Bike className="w-12 h-12 text-gray-300" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+              <Button
+                onClick={() => {
+                  setIsVehicleDialogOpen(false)
+                  router.push("/dashboard/vehicles")
+                }}
+                className="w-full bg-blue-500 hover:bg-blue-600"
+              >
+                Xem Chi Tiết Đầy Đủ
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
