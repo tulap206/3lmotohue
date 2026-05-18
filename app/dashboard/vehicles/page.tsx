@@ -118,8 +118,6 @@ interface Vehicle {
   currentKm: number
   purchasePrice: number
   notes: string
-  vehicleImages: string[]
-  documentImages: string[]
 }
 
 const statusConfig: Record<VehicleStatus, { label: string; className: string }> = {
@@ -157,8 +155,6 @@ export default function VehiclesPage() {
     purchasePrice: "",
     notes: "",
     status: "available" as VehicleStatus,
-    vehicleImages: [] as string[],
-    documentImages: [] as string[],
   })
 
   useEffect(() => {
