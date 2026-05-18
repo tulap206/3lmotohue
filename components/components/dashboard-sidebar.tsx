@@ -55,6 +55,11 @@ const menuItems = [
     href: "/dashboard/access-history",
     icon: History,
   },
+  {
+    title: "Người dùng",
+    href: "/dashboard/users",
+    icon: Users,
+  },
 ]
 
 export function DashboardSidebar({ children }: SidebarProps) {
