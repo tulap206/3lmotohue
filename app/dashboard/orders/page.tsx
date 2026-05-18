@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
+import { supabase, fetchVehicles, fetchCustomers, fetchRentals } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -129,16 +130,6 @@ function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () =>
   )
 }
 
-const initialOrders: RentalOrder[] = [
-  { id: "DH001", customerId: "KH001", customerName: "Nguyễn Văn A", vehicleId: "XE001", vehicleName: "Honda SH 150i", licensePlate: "75AA-12345", startDate: "15/05/2026", endDate: "18/05/2026", totalDays: 3, pricePerDay: 300000, totalPrice: 900000, deposit: 500000, extraFees: 50000, notes: "Trả xe muộn 2 giờ", revenue: 0, status: "active", createdAt: "14/05/2026" },
-  { id: "DH002", customerId: "KH002", customerName: "Trần Thị B", vehicleId: "XE002", vehicleName: "Yamaha Exciter 150", licensePlate: "75B2-23456", startDate: "14/05/2026", endDate: "16/05/2026", totalDays: 2, pricePerDay: 250000, totalPrice: 500000, deposit: 300000, extraFees: 0, notes: "", revenue: 0, status: "active", createdAt: "13/05/2026" },
-  { id: "DH003", customerId: "KH003", customerName: "Lê Văn C", vehicleId: "XE003", vehicleName: "Honda Vision", licensePlate: "75C1-34567", startDate: "13/05/2026", endDate: "15/05/2026", totalDays: 2, pricePerDay: 200000, totalPrice: 400000, deposit: 200000, extraFees: 30000, notes: "Phí rửa xe", revenue: 400000, status: "completed", createdAt: "12/05/2026" },
-  { id: "DH004", customerId: "KH004", customerName: "Phạm Thị D", vehicleId: "XE004", vehicleName: "Honda Wave Alpha", licensePlate: "75D4-45678", startDate: "12/05/2026", endDate: "14/05/2026", totalDays: 2, pricePerDay: 150000, totalPrice: 300000, deposit: 150000, extraFees: 0, notes: "", revenue: 300000, status: "completed", createdAt: "11/05/2026" },
-  { id: "DH005", customerId: "KH005", customerName: "Hoàng Văn E", vehicleId: "XE005", vehicleName: "Yamaha NVX 155", licensePlate: "75E5-56789", startDate: "16/05/2026", endDate: "20/05/2026", totalDays: 4, pricePerDay: 280000, totalPrice: 1120000, deposit: 600000, extraFees: 0, notes: "Giao xe tại sân bay", revenue: 0, status: "pending", createdAt: "15/05/2026" },
-  { id: "DH006", customerId: "KH006", customerName: "Vũ Thị F", vehicleId: "XE006", vehicleName: "Honda Air Blade", licensePlate: "75G1-67890", startDate: "10/05/2026", endDate: "12/05/2026", totalDays: 2, pricePerDay: 220000, totalPrice: 440000, deposit: 250000, extraFees: 0, notes: "Khách hủy sát giờ giao xe", revenue: 250000, status: "cancelled", createdAt: "09/05/2026" },
-]
-
-const statusMap = {
   pending: { label: "Chờ nhận xe", className: "bg-amber-50 text-amber-600" },
   active: { label: "Đang thuê", className: "bg-blue-50 text-blue-600" },
   completed: { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-600" },
@@ -151,16 +142,6 @@ const vehicleStatusConfig = {
   maintenance: { label: "Bảo trì", className: "bg-amber-50 text-amber-600" },
 }
 
-const customersData: Customer[] = [
-  { id: "KH001", name: "Nguyễn Văn A", phone: "0901234567", facebook: "https://facebook.com/nguyenvana", address: "123 Nguyễn Huệ, Q.1, TP.HCM", idCard: "079123456789", totalRentals: 12, status: "active", createdAt: "01/01/2026", customerPhoto: [], cccdFront: [], cccdBack: [], licenseFront: [], licenseBack: [] },
-  { id: "KH002", name: "Trần Thị B", phone: "0912345678", facebook: "https://facebook.com/tranthib", address: "456 Lê Lợi, Q.3, TP.HCM", idCard: "079234567890", totalRentals: 8, status: "active", createdAt: "15/01/2026", customerPhoto: [], cccdFront: [], cccdBack: [], licenseFront: [], licenseBack: [] },
-  { id: "KH003", name: "Lê Văn C", phone: "0923456789", facebook: "https://facebook.com/levanc", address: "789 Hai Bà Trưng, Q.1, TP.HCM", idCard: "079345678901", totalRentals: 5, status: "active", createdAt: "20/02/2026", customerPhoto: [], cccdFront: [], cccdBack: [], licenseFront: [], licenseBack: [] },
-  { id: "KH004", name: "Phạm Thị D", phone: "0934567890", facebook: "https://facebook.com/phamthid", address: "321 Trần Hưng Đạo, Q.5, TP.HCM", idCard: "079456789012", totalRentals: 3, status: "inactive", createdAt: "10/03/2026", customerPhoto: [], cccdFront: [], cccdBack: [], licenseFront: [], licenseBack: [] },
-  { id: "KH005", name: "Hoàng Văn E", phone: "0945678901", facebook: "https://facebook.com/hoangvane", address: "654 CMT8, Q.10, TP.HCM", idCard: "079567890123", totalRentals: 15, status: "active", createdAt: "05/04/2026", customerPhoto: [], cccdFront: [], cccdBack: [], licenseFront: [], licenseBack: [] },
-  { id: "KH006", name: "Vũ Thị F", phone: "0956789012", facebook: "https://facebook.com/vuthif", address: "987 Nguyễn Trãi, Q.5, TP.HCM", idCard: "079678901234", totalRentals: 7, status: "active", createdAt: "22/04/2026", customerPhoto: [], cccdFront: [], cccdBack: [], licenseFront: [], licenseBack: [] },
-]
-
-const vehiclesData: Vehicle[] = [
   { id: "XE001", name: "Honda SH 150i", licensePlate: "75AA-12345", color: "Đen", pricePerDay: 300000, status: "rented", currentKm: 15200, purchasePrice: 95000000, notes: "Xe mới mua tháng 1/2024", vehicleImages: [], documentImages: [] },
   { id: "XE002", name: "Yamaha Exciter 150", licensePlate: "75B2-23456", color: "Đỏ đen", pricePerDay: 250000, status: "rented", currentKm: 22300, purchasePrice: 48000000, notes: "Thay nhớt mỗi 1500km", vehicleImages: [], documentImages: [] },
   { id: "XE003", name: "Honda Vision", licensePlate: "75C1-34567", color: "Trắng", pricePerDay: 200000, status: "available", currentKm: 18500, purchasePrice: 35000000, notes: "Xe tiết kiệm xăng", vehicleImages: [], documentImages: [] },
@@ -171,7 +152,10 @@ const vehiclesData: Vehicle[] = [
 
 export default function OrdersPage() {
   const { addAccessLog, user } = useAuth()
-  const [orders, setOrders] = useState<RentalOrder[]>(initialOrders)
+  const [orders, setOrders] = useState<RentalOrder[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -199,6 +183,28 @@ export default function OrdersPage() {
     status: "pending" as RentalOrder["status"],
   })
 
+  // Load data from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        const [vehiclesData, customersData, rentalsData] = await Promise.all([
+          fetchVehicles(),
+          fetchCustomers(),
+          fetchRentals(),
+        ])
+        setVehicles(vehiclesData || [])
+        setCustomers(customersData || [])
+        setOrders(rentalsData || [])
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -217,8 +223,8 @@ export default function OrdersPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const customer = customersData.find((c) => c.id === formData.customerId)
-    const vehicle = vehiclesData.find((v) => v.id === formData.vehicleId)
+    const customer = customers.find((c) => c.id === formData.customerId)
+    const vehicle = vehicles.find((v) => v.id === formData.vehicleId)
     
     if (!customer || !vehicle) return
 
@@ -273,8 +279,8 @@ export default function OrdersPage() {
     e.preventDefault()
     if (!editingOrder) return
 
-    const customer = customersData.find((c) => c.id === editFormData.customerId)
-    const vehicle = vehiclesData.find((v) => v.id === editFormData.vehicleId)
+    const customer = customers.find((c) => c.id === editFormData.customerId)
+    const vehicle = vehicles.find((v) => v.id === editFormData.vehicleId)
     
     if (!customer || !vehicle) return
 
@@ -318,17 +324,28 @@ export default function OrdersPage() {
   }
 
   const openCustomerDetail = (customerId: string) => {
-    const customer = customersData.find((c) => c.id === customerId)
+    const customer = customers.find((c) => c.id === customerId)
     if (customer) {
       setViewingCustomer(customer)
     }
   }
 
   const openVehicleDetail = (vehicleId: string) => {
-    const vehicle = vehiclesData.find((v) => v.id === vehicleId)
+    const vehicle = vehicles.find((v) => v.id === vehicleId)
     if (vehicle) {
       setViewingVehicle(vehicle)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -362,7 +379,7 @@ export default function OrdersPage() {
                     <SelectValue placeholder="Chọn khách hàng" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-200 rounded-xl">
-                    {customersData.map((customer) => (
+                    {customers.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id}>
                         {customer.name} ({customer.id})
                       </SelectItem>
@@ -381,7 +398,7 @@ export default function OrdersPage() {
                     <SelectValue placeholder="Chọn xe" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-200 rounded-xl">
-                    {vehiclesData.map((vehicle) => (
+                    {vehicles.map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id}>
                         {vehicle.name} - {vehicle.licensePlate} ({vehicle.pricePerDay.toLocaleString("vi-VN")}/ngày)
                       </SelectItem>
@@ -750,7 +767,7 @@ export default function OrdersPage() {
                   <SelectValue placeholder="Chọn khách hàng" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200 rounded-xl">
-                  {customersData.map((customer) => (
+                  {customers.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       {customer.name} ({customer.id})
                     </SelectItem>
@@ -769,7 +786,7 @@ export default function OrdersPage() {
                   <SelectValue placeholder="Chọn xe" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200 rounded-xl">
-                  {vehiclesData.map((vehicle) => (
+                  {vehicles.map((vehicle) => (
                     <SelectItem key={vehicle.id} value={vehicle.id}>
                       {vehicle.name} - {vehicle.licensePlate}
                     </SelectItem>
