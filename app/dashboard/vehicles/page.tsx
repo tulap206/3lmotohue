@@ -116,10 +116,7 @@ interface Vehicle {
   pricePerDay: number
   status: VehicleStatus
   currentKm: number
-  totalRentalDays: number
   purchasePrice: number
-  totalRevenue: number
-  profit: number
   notes: string
   vehicleImages: string[]
   documentImages: string[]
@@ -206,11 +203,6 @@ export default function VehiclesPage() {
         purchasePrice: parseInt(newVehicle.purchasePrice) || 0,
         notes: newVehicle.notes,
         status: newVehicle.status,
-        totalRentalDays: 0,
-        totalRevenue: 0,
-        profit: 0,
-        vehicleImages: newVehicle.vehicleImages,
-        documentImages: newVehicle.documentImages,
       }
 
       console.log("📝 Adding vehicle:", vehicleData)
@@ -1069,30 +1061,10 @@ export default function VehiclesPage() {
                   <p className="text-xs text-gray-500">Giá mua xe</p>
                   <p className="text-sm font-medium text-gray-800">{formatPrice(viewingVehicle.purchasePrice)}</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Số ngày đã cho thuê</p>
-                  <p className="text-sm font-medium text-gray-800">{viewingVehicle.totalRentalDays} ngày</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Tổng thu</p>
-                  <p className="text-sm font-medium text-emerald-600">{formatPrice(viewingVehicle.totalRevenue)}</p>
-                </div>
-                <div className="col-span-2 space-y-1">
-                  <p className="text-xs text-gray-500">Lợi nhuận</p>
-                  <p className="text-sm font-medium text-blue-600">{formatPrice(viewingVehicle.profit)}</p>
-                </div>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="text-xs text-gray-500 mb-2">Ghi chú</p>
                 <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-xl">{viewingVehicle.notes || "Không có ghi chú"}</p>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Tỷ suất lợi nhuận trên vốn:</span>
-                  <span className="font-semibold text-blue-600">
-                    {viewingVehicle.purchasePrice > 0 ? ((viewingVehicle.profit / viewingVehicle.purchasePrice) * 100).toFixed(1) : 0}%
-                  </span>
-                </div>
               </div>
 
               {/* Vehicle Images */}
