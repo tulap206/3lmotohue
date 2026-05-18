@@ -192,8 +192,6 @@ export default function VehiclesPage() {
     }
 
     try {
-      alert("⏳ Đang thêm xe...")
-      
       const vehicleData = {
         name: newVehicle.name,
         licensePlate: newVehicle.licensePlate,
@@ -219,7 +217,6 @@ export default function VehiclesPage() {
       }
 
       console.log("✅ Vehicle added:", data)
-      alert("✅ Thêm xe thành công!")
       
       // Reload vehicles list
       const updatedVehicles = await fetchVehicles()
@@ -234,7 +231,7 @@ export default function VehiclesPage() {
         `Giá: ${newVehicle.pricePerDay} VNĐ/ngày`
       )
 
-      // Reset form
+      // Reset form & close dialog
       setNewVehicle({
         name: "",
         licensePlate: "",
