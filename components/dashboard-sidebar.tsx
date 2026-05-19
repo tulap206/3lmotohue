@@ -191,8 +191,8 @@ export function DashboardSidebar({ children }: SidebarProps) {
           })}
         </nav>
 
-        {/* Bottom section */}
-        <div className="p-3 space-y-2 border-t border-gray-100">
+        {/* Bottom section - sticky at bottom */}
+        <div className="mt-auto p-3 space-y-2 border-t border-gray-100">
           {/* User Avatar - Clickable */}
           {user && (
             <button
