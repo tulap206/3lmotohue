@@ -175,17 +175,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    const foundUser = USERS.find(u => u.username === username && u.password === password)
-    
-    if (foundUser) {
-      setUser(foundUser.user)
-      localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
-      // Log to Supabase
-      logger.login(foundUser.user.username, foundUser.user.displayName)
-      return { success: true }
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Try Supabase first
+      const { supabase } = await import("@/lib/supabase")
+      const { data, error } = await supabase
+        .from("auth_users")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .single()
+
+      if (data) {
+        const userData: User = {
+          id: data.id,
+          username: data.username,
+          displayName: data.displayname,
+          role: data.role as UserRole,
+          permissions: {
+            canDelete: data.can_delete || false,
+          },
+        }
+        setUser(userData)
+        localStorage.setItem("3l_moto_user", JSON.stringify(userData))
+        logger.login(userData.username, userData.displayName)
+        console.log("✅ Logged in from Supabase")
+        return { success: true }
+      }
+
+      // Fallback to hardcoded users if not found in Supabase
+      console.log("⚠️ User not found in Supabase, trying hardcoded users...")
+      const foundUser = USERS.find(u => u.username === username && u.password === password)
+      
+      if (foundUser) {
+        setUser(foundUser.user)
+        localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
+        logger.login(foundUser.user.username, foundUser.user.displayName)
+        console.log("✅ Logged in from hardcoded users")
+        return { success: true }
+      }
+
+      return { success: false, error: "Tên đăng nhập hoặc mật khẩu không đúng" }
+    } catch (error) {
+      console.error("Login error:", error)
+      // Fallback to hardcoded users on error
+      const foundUser = USERS.find(u => u.username === username && u.password === password)
+      if (foundUser) {
+        setUser(foundUser.user)
+        localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
+        logger.login(foundUser.user.username, foundUser.user.displayName)
+        return { success: true }
+      }
+      return { success: false, error: "Lỗi đăng nhập" }
     }
-    return { success: false, error: "Tên đăng nhập hoặc mật khẩu không đúng" }
   }
 
   const logout = () => {
