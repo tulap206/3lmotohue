@@ -55,6 +55,11 @@ const menuItems = [
     href: "/dashboard/access-history",
     icon: History,
   },
+  {
+    title: "Cài đặt",
+    href: "/dashboard/settings",
+    icon: Settings,
+  },
 ]
 
 export function DashboardSidebar({ children }: SidebarProps) {
