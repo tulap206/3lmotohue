@@ -170,7 +170,13 @@ export default function VehiclesPage() {
       setIsLoading(true)
       try {
         const data = await fetchVehicles()
-        setVehicles(data)
+        // Sort by created_at descending (newest first) - client-side backup
+        const sorted = data.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0).getTime()
+          const dateB = new Date(b.created_at || 0).getTime()
+          return dateB - dateA // DESC (newest first)
+        })
+        setVehicles(sorted)
       } catch (error) {
         console.error("Failed to fetch vehicles:", error)
         setVehicles([])
@@ -235,7 +241,14 @@ export default function VehiclesPage() {
           console.error("Error adding vehicle:", error)
           alert(`❌ Lỗi: ${error.message}`)
         } else {
-          setVehicles([...vehicles, vehicle])
+          // Add new vehicle and sort (newest first)
+          const updated = [...vehicles, vehicle]
+          const sorted = updated.sort((a, b) => {
+            const dateA = new Date(a.created_at || 0).getTime()
+            const dateB = new Date(b.created_at || 0).getTime()
+            return dateB - dateA // DESC (newest first)
+          })
+          setVehicles(sorted)
           if (user) logger.addVehicle(user.username, user.displayName, vehicle.name, vehicle.licensePlate)
           setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
           setIsAddDialogOpen(false)

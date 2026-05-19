@@ -188,7 +188,14 @@ export default function OrdersPage() {
         ])
         setVehicles(vehiclesData || [])
         setCustomers(customersData || [])
-        setOrders(rentalsData || [])
+        
+        // Sort rentals by created_at descending (newest first) - client-side backup
+        const sortedRentals = (rentalsData || []).sort((a, b) => {
+          const dateA = new Date(a.created_at || 0).getTime()
+          const dateB = new Date(b.created_at || 0).getTime()
+          return dateB - dateA // DESC (newest first)
+        })
+        setOrders(sortedRentals)
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
