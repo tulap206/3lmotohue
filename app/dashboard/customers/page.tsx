@@ -30,6 +30,11 @@ interface Customer {
   totalrentals: number
   status: "active" | "inactive"
   createdat: string
+  customerPhoto?: string[]
+  cccdFront?: string[]
+  cccdBack?: string[]
+  licenseFront?: string[]
+  licenseBack?: string[]
 }
 
 export default function CustomersPage() {
@@ -47,6 +52,11 @@ export default function CustomersPage() {
     facebook: "",
     address: "",
     idcard: "",
+    customerPhoto: [] as string[],
+    cccdFront: [] as string[],
+    cccdBack: [] as string[],
+    licenseFront: [] as string[],
+    licenseBack: [] as string[],
   })
 
   // Load customers from Supabase
@@ -84,6 +94,11 @@ export default function CustomersPage() {
             facebook: formData.facebook,
             address: formData.address,
             idcard: formData.idcard,
+            customerPhoto: formData.customerPhoto,
+            cccdFront: formData.cccdFront,
+            cccdBack: formData.cccdBack,
+            licenseFront: formData.licenseFront,
+            licenseBack: formData.licenseBack,
           })
           .eq('id', editingCustomer.id)
         
@@ -100,6 +115,11 @@ export default function CustomersPage() {
             idcard: formData.idcard,
             totalrentals: 0,
             status: "active",
+            customerPhoto: formData.customerPhoto,
+            cccdFront: formData.cccdFront,
+            cccdBack: formData.cccdBack,
+            licenseFront: formData.licenseFront,
+            licenseBack: formData.licenseBack,
           }])
         
         if (error) throw error
@@ -116,7 +136,18 @@ export default function CustomersPage() {
   }
 
   const resetForm = () => {
-    setFormData({ name: "", phone: "", facebook: "", address: "", idcard: "" })
+    setFormData({ 
+      name: "", 
+      phone: "", 
+      facebook: "", 
+      address: "", 
+      idcard: "",
+      customerPhoto: [],
+      cccdFront: [],
+      cccdBack: [],
+      licenseFront: [],
+      licenseBack: [],
+    })
     setEditingCustomer(null)
   }
 
@@ -128,6 +159,11 @@ export default function CustomersPage() {
       facebook: customer.facebook,
       address: customer.address,
       idcard: customer.idcard,
+      customerPhoto: customer.customerPhoto || [],
+      cccdFront: customer.cccdFront || [],
+      cccdBack: customer.cccdBack || [],
+      licenseFront: customer.licenseFront || [],
+      licenseBack: customer.licenseBack || [],
     })
     setIsDialogOpen(true)
   }
@@ -239,6 +275,127 @@ export default function CustomersPage() {
                   required
                 />
               </div>
+              
+              {/* Image Upload Section */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <p className="font-medium text-gray-700">Thêm ảnh (tùy chọn)</p>
+                
+                <div className="space-y-2">
+                  <Label className="text-gray-600">Ảnh khách hàng</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (event) => {
+                          const base64 = event.target?.result as string
+                          setFormData({ ...formData, customerPhoto: [base64] })
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                  />
+                  {formData.customerPhoto?.length > 0 && (
+                    <img src={formData.customerPhoto[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600">Ảnh CCCD mặt trước</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (event) => {
+                          const base64 = event.target?.result as string
+                          setFormData({ ...formData, cccdFront: [base64] })
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                  />
+                  {formData.cccdFront?.length > 0 && (
+                    <img src={formData.cccdFront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600">Ảnh CCCD mặt sau</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (event) => {
+                          const base64 = event.target?.result as string
+                          setFormData({ ...formData, cccdBack: [base64] })
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                  />
+                  {formData.cccdBack?.length > 0 && (
+                    <img src={formData.cccdBack[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600">Ảnh GPLX mặt trước</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (event) => {
+                          const base64 = event.target?.result as string
+                          setFormData({ ...formData, licenseFront: [base64] })
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                  />
+                  {formData.licenseFront?.length > 0 && (
+                    <img src={formData.licenseFront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-600">Ảnh GPLX mặt sau</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (event) => {
+                          const base64 = event.target?.result as string
+                          setFormData({ ...formData, licenseBack: [base64] })
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                  />
+                  {formData.licenseBack?.length > 0 && (
+                    <img src={formData.licenseBack[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  )}
+                </div>
+              </div>
+              
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl">
                   Hủy
