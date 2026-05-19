@@ -104,11 +104,6 @@ export default function CustomersPage() {
     facebook: "",
     address: "",
     idCard: "",
-    customerPhoto: [] as string[],
-    cccdFront: [] as string[],
-    cccdBack: [] as string[],
-    licenseFront: [] as string[],
-    licenseBack: [] as string[],
   })
 
   useEffect(() => {
@@ -183,11 +178,6 @@ export default function CustomersPage() {
       facebook: "", 
       address: "", 
       idCard: "",
-      customerPhoto: [],
-      cccdFront: [],
-      cccdBack: [],
-      licenseFront: [],
-      licenseBack: [],
     })
     setEditingCustomer(null)
     setIsDialogOpen(false)
@@ -201,11 +191,6 @@ export default function CustomersPage() {
       facebook: customer.facebook,
       address: customer.address,
       idCard: customer.idCard,
-      customerPhoto: customer.customerPhoto,
-      cccdFront: customer.cccdFront,
-      cccdBack: customer.cccdBack,
-      licenseFront: customer.licenseFront,
-      licenseBack: customer.licenseBack,
     })
     setIsDialogOpen(true)
   }
@@ -440,11 +425,11 @@ export default function CustomersPage() {
 
               {/* Image Upload Sections */}
               <div className="space-y-4 pt-4 border-t border-gray-100">
-                <ImageUploadSection label="Ảnh khách hàng" field="customerPhoto" images={formData.customerPhoto} />
-                <ImageUploadSection label="Ảnh CCCD mặt trước" field="cccdFront" images={formData.cccdFront} />
-                <ImageUploadSection label="Ảnh CCCD mặt sau" field="cccdBack" images={formData.cccdBack} />
-                <ImageUploadSection label="Ảnh GPLX mặt trước" field="licenseFront" images={formData.licenseFront} />
-                <ImageUploadSection label="Ảnh GPLX mặt sau" field="licenseBack" images={formData.licenseBack} />
+//                 <ImageUploadSection label="Ảnh khách hàng" field="customerPhoto" images={formData.customerPhoto} />
+//                 <ImageUploadSection label="Ảnh CCCD mặt trước" field="cccdFront" images={formData.cccdFront} />
+//                 <ImageUploadSection label="Ảnh CCCD mặt sau" field="cccdBack" images={formData.cccdBack} />
+//                 <ImageUploadSection label="Ảnh GPLX mặt trước" field="licenseFront" images={formData.licenseFront} />
+//                 <ImageUploadSection label="Ảnh GPLX mặt sau" field="licenseBack" images={formData.licenseBack} />
               </div>
 
               <div className="flex justify-end gap-2 pt-4">

@@ -130,6 +130,7 @@ function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () =>
   )
 }
 
+const statusMap = {
   pending: { label: "Chờ nhận xe", className: "bg-amber-50 text-amber-600" },
   active: { label: "Đang thuê", className: "bg-blue-50 text-blue-600" },
   completed: { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-600" },
@@ -141,14 +142,6 @@ const vehicleStatusConfig = {
   rented: { label: "Đang thuê", className: "bg-blue-50 text-blue-600" },
   maintenance: { label: "Bảo trì", className: "bg-amber-50 text-amber-600" },
 }
-
-  { id: "XE001", name: "Honda SH 150i", licensePlate: "75AA-12345", color: "Đen", pricePerDay: 300000, status: "rented", currentKm: 15200, purchasePrice: 95000000, notes: "Xe mới mua tháng 1/2024", vehicleImages: [], documentImages: [] },
-  { id: "XE002", name: "Yamaha Exciter 150", licensePlate: "75B2-23456", color: "Đỏ đen", pricePerDay: 250000, status: "rented", currentKm: 22300, purchasePrice: 48000000, notes: "Thay nhớt mỗi 1500km", vehicleImages: [], documentImages: [] },
-  { id: "XE003", name: "Honda Vision", licensePlate: "75C1-34567", color: "Trắng", pricePerDay: 200000, status: "available", currentKm: 18500, purchasePrice: 35000000, notes: "Xe tiết kiệm xăng", vehicleImages: [], documentImages: [] },
-  { id: "XE004", name: "Honda Wave Alpha", licensePlate: "75D4-45678", color: "Xanh dương", pricePerDay: 150000, status: "available", currentKm: 45000, purchasePrice: 18000000, notes: "Xe số bền bỉ", vehicleImages: [], documentImages: [] },
-  { id: "XE005", name: "Yamaha NVX 155", licensePlate: "75E5-56789", color: "Xám", pricePerDay: 280000, status: "rented", currentKm: 12800, purchasePrice: 55000000, notes: "Xe thể thao", vehicleImages: [], documentImages: [] },
-  { id: "XE006", name: "Honda Air Blade", licensePlate: "75G1-67890", color: "Đen nhám", pricePerDay: 220000, status: "available", currentKm: 25600, purchasePrice: 42000000, notes: "Xe bền, ít hỏng vặt", vehicleImages: [], documentImages: [] },
-]
 
 export default function OrdersPage() {
   const { addAccessLog, user } = useAuth()
