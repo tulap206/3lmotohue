@@ -85,6 +85,70 @@ export default function CustomersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      let uploadedImages = {
+        customerPhoto: formData.customerPhoto,
+        cccdFront: formData.cccdFront,
+        cccdBack: formData.cccdBack,
+        licenseFront: formData.licenseFront,
+        licenseBack: formData.licenseBack,
+      }
+
+      // Upload images to Supabase Storage
+      const uploadImage = async (base64: string, folder: string, fileName: string) => {
+        if (!base64 || base64.length === 0) return null
+        
+        try {
+          // Convert base64 to blob
+          const base64Data = base64.split(',')[1]
+          const byteCharacters = atob(base64Data)
+          const byteNumbers = new Array(byteCharacters.length)
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i)
+          }
+          const byteArray = new Uint8Array(byteNumbers)
+          const blob = new Blob([byteArray], { type: 'image/jpeg' })
+
+          const path = `${folder}/${fileName}`
+          const { data, error } = await supabase.storage
+            .from('customer-documents')
+            .upload(path, blob, { upsert: true })
+
+          if (error) throw error
+          
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from('customer-documents')
+            .getPublicUrl(path)
+          
+          return urlData.publicUrl
+        } catch (error) {
+          console.error(`Error uploading ${fileName}:`, error)
+          return null
+        }
+      }
+
+      // Upload all images
+      if (formData.customerPhoto && formData.customerPhoto.length > 0) {
+        const url = await uploadImage(formData.customerPhoto[0], 'customer-photos', `${formData.name}-${Date.now()}.jpg`)
+        uploadedImages.customerPhoto = url ? [url] : []
+      }
+      if (formData.cccdFront && formData.cccdFront.length > 0) {
+        const url = await uploadImage(formData.cccdFront[0], 'cccd-front', `${formData.name}-front-${Date.now()}.jpg`)
+        uploadedImages.cccdFront = url ? [url] : []
+      }
+      if (formData.cccdBack && formData.cccdBack.length > 0) {
+        const url = await uploadImage(formData.cccdBack[0], 'cccd-back', `${formData.name}-back-${Date.now()}.jpg`)
+        uploadedImages.cccdBack = url ? [url] : []
+      }
+      if (formData.licenseFront && formData.licenseFront.length > 0) {
+        const url = await uploadImage(formData.licenseFront[0], 'license-front', `${formData.name}-license-front-${Date.now()}.jpg`)
+        uploadedImages.licenseFront = url ? [url] : []
+      }
+      if (formData.licenseBack && formData.licenseBack.length > 0) {
+        const url = await uploadImage(formData.licenseBack[0], 'license-back', `${formData.name}-license-back-${Date.now()}.jpg`)
+        uploadedImages.licenseBack = url ? [url] : []
+      }
+
       if (editingCustomer) {
         const { error } = await supabase
           .from('customers')
@@ -94,6 +158,11 @@ export default function CustomersPage() {
             facebook: formData.facebook,
             address: formData.address,
             idcard: formData.idcard,
+            customerPhoto: uploadedImages.customerPhoto,
+            cccdFront: uploadedImages.cccdFront,
+            cccdBack: uploadedImages.cccdBack,
+            licenseFront: uploadedImages.licenseFront,
+            licenseBack: uploadedImages.licenseBack,
           })
           .eq('id', editingCustomer.id)
         
@@ -110,6 +179,11 @@ export default function CustomersPage() {
             idcard: formData.idcard,
             totalrentals: 0,
             status: "active",
+            customerPhoto: uploadedImages.customerPhoto,
+            cccdFront: uploadedImages.cccdFront,
+            cccdBack: uploadedImages.cccdBack,
+            licenseFront: uploadedImages.licenseFront,
+            licenseBack: uploadedImages.licenseBack,
           }])
         
         if (error) throw error
