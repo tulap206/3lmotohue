@@ -221,6 +221,29 @@ export default function OrdersPage() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
+  const generateRentalId = (customerName: string, licensePlate: string, startDate: string) => {
+    // Remove Vietnamese diacritics and get last name
+    const removeVietnameseDiacritics = (str: string) => {
+      return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+    }
+
+    // Get last name (last word of customer name)
+    const nameParts = removeVietnameseDiacritics(customerName).trim().split(/\s+/)
+    const lastName = nameParts[nameParts.length - 1]
+
+    // Remove spaces and dashes from license plate
+    const cleanPlate = licensePlate.replace(/[\s-]/g, "")
+
+    // Format date DDMMYYYY from VI-VN format (DD/MM/YYYY)
+    const dateParts = startDate.split("/")
+    const dateFormatted = dateParts[0] + dateParts[1] + dateParts[2] // DD + MM + YYYY
+
+    return `${lastName}-${cleanPlate}-${dateFormatted}`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const customer = customers.find((c) => c.id === formData.customerId)
@@ -230,18 +253,21 @@ export default function OrdersPage() {
 
     const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
     const totalPrice = totalDays * vehicle.pricePerDay
+    const startDateVN = new Date(formData.startDate).toLocaleDateString("vi-VN")
+    const rentalId = generateRentalId(customer.name, vehicle.licensePlate, startDateVN)
 
     try {
       // Insert to Supabase
       const { data, error } = await supabase
         .from('rentals')
         .insert([{
+          id: rentalId,
           customerId: customer.id,
           customerName: customer.name,
           vehicleId: vehicle.id,
           vehicleName: vehicle.name,
           licensePlate: vehicle.licensePlate,
-          startDate: new Date(formData.startDate).toLocaleDateString("vi-VN"),
+          startDate: startDateVN,
           endDate: new Date(formData.endDate).toLocaleDateString("vi-VN"),
           totalDays,
           pricePerDay: vehicle.pricePerDay,
