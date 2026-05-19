@@ -96,16 +96,31 @@ export const fetchVehicles = async () => {
 }
 
 export const fetchCustomers = async () => {
-  const { data, error } = await supabase
-    .from('customers')
-    .select()
-    .order('createdat', { ascending: false })
-  
-  if (error) {
-    console.error('Error fetching customers:', error)
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select()
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      console.warn('Error with created_at sort, trying createdat:', error)
+      // Fallback: try createdat
+      const { data: data2, error: error2 } = await supabase
+        .from('customers')
+        .select()
+        .order('createdat', { ascending: false })
+      
+      if (error2) {
+        console.error('Error fetching customers:', error2)
+        return []
+      }
+      return data2 || []
+    }
+    return data || []
+  } catch (e) {
+    console.error('Exception fetching customers:', e)
     return []
   }
-  return data || []
 }
 
 export const fetchRentals = async () => {

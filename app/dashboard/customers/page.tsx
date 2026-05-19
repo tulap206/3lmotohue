@@ -119,7 +119,13 @@ export default function CustomersPage() {
       try {
         setLoading(true)
         const data = await fetchCustomers()
-        setCustomers(data)
+        // Sort by created_at or createdat descending (newest first) - client-side backup
+        const sorted = data.sort((a, b) => {
+          const dateA = new Date(a.createdat || a.created_at || 0).getTime()
+          const dateB = new Date(b.createdat || b.created_at || 0).getTime()
+          return dateB - dateA // DESC (newest first)
+        })
+        setCustomers(sorted)
       } catch (error) {
         console.error("Failed to load customers:", error)
       } finally {
@@ -274,7 +280,13 @@ export default function CustomersPage() {
       }
       
       const updatedCustomers = await fetchCustomers()
-      setCustomers(updatedCustomers)
+      // Sort by created_at or createdat descending (newest first)
+      const sorted = updatedCustomers.sort((a, b) => {
+        const dateA = new Date(a.createdat || a.created_at || 0).getTime()
+        const dateB = new Date(b.createdat || b.created_at || 0).getTime()
+        return dateB - dateA // DESC (newest first)
+      })
+      setCustomers(sorted)
       setIsDialogOpen(false)
       resetForm()
     } catch (error) {
