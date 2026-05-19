@@ -102,10 +102,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("*")
 
       if (error) {
-        console.error("Error fetching users:", error)
+        console.warn("⚠️ Error fetching users from Supabase, using fallback:", error.message)
         return USERS.map(u => u.user)
       }
 
+      if (!data || data.length === 0) {
+        console.warn("⚠️ No users found in Supabase, using fallback")
+        return USERS.map(u => u.user)
+      }
+
+      console.log("✅ Loaded users from Supabase:", data.length)
       return (data || []).map((u: any) => ({
         id: u.id,
         username: u.username,
@@ -116,42 +122,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       }))
     } catch (error) {
-      console.error("Exception fetching users:", error)
+      console.warn("⚠️ Exception fetching users, using fallback:", error)
       return USERS.map(u => u.user)
     }
   }
 
   useEffect(() => {
     const init = async () => {
-      // Load users
-      const users = await fetchUsers()
-      setAllUsers(users)
+      try {
+        // Load users
+        const users = await fetchUsers()
+        setAllUsers(users)
 
-      // Check for saved session
-      const savedUser = localStorage.getItem("3l_moto_user")
-      const savedLogs = localStorage.getItem("3l_moto_access_logs")
-      
-      if (savedUser) {
-        try {
-          setUser(JSON.parse(savedUser))
-        } catch {
-          localStorage.removeItem("3l_moto_user")
+        // Check for saved session
+        const savedUser = localStorage.getItem("3l_moto_user")
+        const savedLogs = localStorage.getItem("3l_moto_access_logs")
+        
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser))
+          } catch {
+            localStorage.removeItem("3l_moto_user")
+          }
         }
-      }
-      
-      if (savedLogs) {
-        try {
-          const parsedLogs = JSON.parse(savedLogs)
-          setAccessLogs(parsedLogs.map((log: AccessLog) => ({
-            ...log,
-            timestamp: new Date(log.timestamp)
-          })))
-        } catch {
-          localStorage.removeItem("3l_moto_access_logs")
+        
+        if (savedLogs) {
+          try {
+            const parsedLogs = JSON.parse(savedLogs)
+            setAccessLogs(parsedLogs.map((log: AccessLog) => ({
+              ...log,
+              timestamp: new Date(log.timestamp)
+            })))
+          } catch {
+            localStorage.removeItem("3l_moto_access_logs")
+          }
         }
+      } catch (error) {
+        console.error("❌ Error in init:", error)
+        // Fallback: load hardcoded users
+        setAllUsers(USERS.map(u => u.user))
+      } finally {
+        setIsLoading(false)
       }
-      
-      setIsLoading(false)
     }
 
     init()
