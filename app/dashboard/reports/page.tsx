@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet } from "lucide-react"
 import {
   BarChart,
@@ -27,10 +30,28 @@ interface ReportData {
   topVehicles: Array<{ name: string; rentals: number; revenue: number }>
 }
 
+interface Vehicle {
+  id: string
+  name: string
+  licensePlate: string
+  color: string
+  pricePerDay: number
+  status: string
+  current_km: number
+  purchasePrice: number
+  notes: string
+  totalRentalDays: number
+  totalRevenue: number
+  profit: number
+}
+
 export default function ReportsPage() {
+  const router = useRouter()
   const { addAccessLog } = useAuth()
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
 
   useEffect(() => {
     loadReportData()
@@ -226,7 +247,14 @@ export default function ReportsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
-          <Card key={idx}>
+          <Card 
+            key={idx}
+            className={stat.title === "Tổng Xe" || stat.title === "Tổng Khách" ? "cursor-pointer hover:shadow-lg transition" : ""}
+            onClick={() => {
+              if (stat.title === "Tổng Xe") router.push("/dashboard/vehicles")
+              if (stat.title === "Tổng Khách") router.push("/dashboard/customers")
+            }}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <div className={`${stat.iconBg} p-2 rounded-lg`}>
@@ -277,7 +305,23 @@ export default function ReportsPage() {
           {reportData.topVehicles.length > 0 ? (
             <div className="space-y-4">
               {reportData.topVehicles.map((vehicle, idx) => (
-                <div key={idx} className="flex items-center justify-between border-b pb-3 last:border-b-0">
+                <div 
+                  key={idx} 
+                  className="flex items-center justify-between border-b pb-3 last:border-b-0 cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+                  onClick={async () => {
+                    // Fetch full vehicle data
+                    const { data } = await supabase
+                      .from('vehicles')
+                      .select('*')
+                      .eq('name', vehicle.name)
+                      .single()
+                    
+                    if (data) {
+                      setSelectedVehicle(data)
+                      setIsDetailOpen(true)
+                    }
+                  }}
+                >
                   <div className="flex-1">
                     <p className="font-medium text-sm text-gray-900">{vehicle.name}</p>
                     <p className="text-xs text-gray-500">{vehicle.rentals} lần thuê</p>
@@ -295,6 +339,58 @@ export default function ReportsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Vehicle Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="bg-white rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-gray-800">Chi tiết xe</DialogTitle>
+            <DialogDescription className="text-gray-500">Thông tin chi tiết của xe</DialogDescription>
+          </DialogHeader>
+          {selectedVehicle && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500">Tên xe</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Biển số</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.licensePlate}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Màu sắc</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.color}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Giá/ngày</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.pricePerDay.toLocaleString()} VNĐ</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Trạng thái</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.status}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Km hiện tại</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.current_km} km</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Giá mua</p>
+                  <p className="font-medium text-gray-800">{(selectedVehicle.purchasePrice / 1000000).toFixed(1)}M VNĐ</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Doanh thu</p>
+                  <p className="font-medium text-gray-800">{(selectedVehicle.totalRevenue / 1000000).toFixed(1)}M VNĐ</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs text-gray-500">Ghi chú</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.notes || "Không có"}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Summary */}
       <Card className="bg-blue-50 border-blue-200">
