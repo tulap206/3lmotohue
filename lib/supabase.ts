@@ -98,7 +98,7 @@ export const fetchVehicles = async () => {
 export const fetchCustomers = async () => {
   const { data, error } = await supabase
     .from('customers')
-    .select('*')
+    .select('id,name,phone,facebook,address,idCard,totalRentals,status,createdAt,created_at')
     .order('created_at', { ascending: false })
   
   if (error) {
