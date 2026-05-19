@@ -191,8 +191,8 @@ export function DashboardSidebar({ children }: SidebarProps) {
           })}
         </nav>
 
-        {/* Bottom section - sticky at bottom */}
-        <div className="mt-auto p-3 space-y-2 border-t border-gray-100">
+        {/* Bottom section - compact spacing */}
+        <div className="p-2 space-y-1 border-t border-gray-100">
           {/* User Avatar - Clickable */}
           {user && (
             <button
@@ -213,10 +213,10 @@ export function DashboardSidebar({ children }: SidebarProps) {
             className={cn(
               "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto",
               pathname === "/dashboard/settings"
-                ? "sidebar-active"
-                : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                ? "bg-amber-50 text-amber-600 font-medium"
+                : "text-gray-400 hover:bg-amber-50 hover:text-amber-500"
             )}
-            title="Cài đặt"
+            title="Cài đặt - Sao lưu & Khôi phục"
           >
             <Settings className="w-5 h-5" />
           </Link>
