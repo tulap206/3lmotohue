@@ -140,6 +140,12 @@ export default function SettingsPage() {
   // Restore từ backup file
   const handleRestoreFromFile = async (fileUrl: string, fileName: string) => {
     try {
+      // Check admin permission
+      if (user?.role !== 'admin') {
+        setMessage({ type: 'error', text: '❌ Bạn không có quyền khôi phục dữ liệu' })
+        return
+      }
+
       setLoading(true)
       setMessage(null)
 
@@ -224,6 +230,13 @@ export default function SettingsPage() {
   // Restore từ file upload
   const handleRestoreFromUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
+      // Check admin permission
+      if (user?.role !== 'admin') {
+        setMessage({ type: 'error', text: '❌ Bạn không có quyền khôi phục dữ liệu' })
+        event.target.value = ""
+        return
+      }
+
       setLoading(true)
       setMessage(null)
 
@@ -378,19 +391,28 @@ export default function SettingsPage() {
               <p className="text-sm text-gray-600 mb-4">
                 Nhập dữ liệu từ file backup cá nhân
               </p>
-              <Button
-                onClick={() => {
-                  const input = document.createElement("input")
-                  input.type = "file"
-                  input.accept = ".json"
-                  input.onchange = (e) => handleRestoreFromUpload(e as any)
-                  input.click()
-                }}
-                disabled={loading}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white w-full"
-              >
-                {loading ? "Đang xử lý..." : "📤 Chọn file"}
-              </Button>
+              {user?.role !== 'admin' ? (
+                <Button
+                  disabled={true}
+                  className="bg-gray-300 text-gray-600 w-full cursor-not-allowed"
+                >
+                  🔒 Chỉ Admin có quyền
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    const input = document.createElement("input")
+                    input.type = "file"
+                    input.accept = ".json"
+                    input.onchange = (e) => handleRestoreFromUpload(e as any)
+                    input.click()
+                  }}
+                  disabled={loading}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white w-full"
+                >
+                  {loading ? "Đang xử lý..." : "📤 Chọn file"}
+                </Button>
+              )}
             </div>
           </div>
 
@@ -454,10 +476,11 @@ export default function SettingsPage() {
                           size="sm"
                           variant="default"
                           onClick={() => handleRestoreFromFile(file.url, file.name)}
-                          disabled={loading}
-                          className="bg-blue-500 hover:bg-blue-600"
+                          disabled={loading || user?.role !== 'admin'}
+                          className={user?.role !== 'admin' ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}
+                          title={user?.role !== 'admin' ? 'Chỉ Admin có quyền khôi phục' : ''}
                         >
-                          Khôi phục
+                          {user?.role !== 'admin' ? '🔒' : 'Khôi phục'}
                         </Button>
                         <Button
                           size="sm"
