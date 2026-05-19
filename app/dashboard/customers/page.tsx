@@ -418,13 +418,8 @@ export default function CustomersPage() {
                 </div>
               </div>
 
-              {/* Image Upload Sections */}
+              {/* Image Upload Sections - Removed for now */}
               <div className="space-y-4 pt-4 border-t border-gray-100">
-//                 <ImageUploadSection label="Ảnh khách hàng" field="customerPhoto" images={formData.customerPhoto} />
-//                 <ImageUploadSection label="Ảnh CCCD mặt trước" field="cccdFront" images={formData.cccdFront} />
-//                 <ImageUploadSection label="Ảnh CCCD mặt sau" field="cccdBack" images={formData.cccdBack} />
-//                 <ImageUploadSection label="Ảnh GPLX mặt trước" field="licenseFront" images={formData.licenseFront} />
-//                 <ImageUploadSection label="Ảnh GPLX mặt sau" field="licenseBack" images={formData.licenseBack} />
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
