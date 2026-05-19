@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
+import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Upload, AlertCircle, CheckCircle, Trash2, RefreshCw } from "lucide-react"
@@ -21,6 +23,7 @@ interface BackupFile {
 }
 
 export default function SettingsPage() {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [backupFiles, setBackupFiles] = useState<BackupFile[]>([])
@@ -114,6 +117,11 @@ export default function SettingsPage() {
 
       console.log("✅ Uploaded to Storage:", fileName)
 
+      // Log to access_logs
+      if (user) {
+        logger.log(user.username, user.displayName, "Sao lưu dữ liệu", "settings", `Sao lưu ${customers?.length || 0} khách, ${vehicles?.length || 0} xe, ${rentals?.length || 0} đơn thuê`)
+      }
+
       setMessage({ 
         type: 'success', 
         text: `✅ Sao lưu thành công!\n- ${customers?.length || 0} khách\n- ${vehicles?.length || 0} xe\n- ${rentals?.length || 0} đơn thuê\n\nFile: ${fileName}` 
@@ -193,6 +201,11 @@ export default function SettingsPage() {
         if (rentalsError) throw rentalsError
       }
 
+      // Log to access_logs
+      if (user) {
+        logger.log(user.username, user.displayName, "Khôi phục dữ liệu", "settings", `Khôi phục ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê từ file: ${fileName}`)
+      }
+
       setMessage({ 
         type: 'success', 
         text: `✅ Khôi phục thành công!\n- ${backupData.customers.length} khách\n- ${backupData.vehicles.length} xe\n- ${backupData.rentals.length} đơn thuê` 
@@ -270,6 +283,11 @@ export default function SettingsPage() {
           .from("rentals")
           .insert(backupData.rentals.map(({ created_at, updated_at, ...rest }) => rest))
         if (rentalsError) throw rentalsError
+      }
+
+      // Log to access_logs
+      if (user) {
+        logger.log(user.username, user.displayName, "Khôi phục dữ liệu", "settings", `Khôi phục ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê từ file tải lên`)
       }
 
       setMessage({ 
