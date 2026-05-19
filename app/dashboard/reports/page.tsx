@@ -33,14 +33,12 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    alert("📊 Reports page loaded!")
     loadReportData()
   }, [])
 
   const loadReportData = async () => {
     try {
       setLoading(true)
-      alert("🔍 Starting to load report data...")
       console.log("📊 Loading report data...")
 
       // Fetch from Supabase with error handling
