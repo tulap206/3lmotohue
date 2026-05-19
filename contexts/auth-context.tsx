@@ -30,6 +30,7 @@ export interface AccessLog {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
+  allUsers: User[]
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   addAccessLog: (action: string, module: string, details: string) => void
@@ -90,33 +91,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([])
+  const [allUsers, setAllUsers] = useState<User[]>([])
+
+  // Fetch users from Supabase
+  const fetchUsers = async () => {
+    try {
+      const { supabase } = await import("@/lib/supabase")
+      const { data, error } = await supabase
+        .from("auth_users")
+        .select("*")
+
+      if (error) {
+        console.error("Error fetching users:", error)
+        return USERS.map(u => u.user)
+      }
+
+      return (data || []).map((u: any) => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.displayname,
+        role: u.role as UserRole,
+        permissions: {
+          canDelete: u.can_delete || false,
+        },
+      }))
+    } catch (error) {
+      console.error("Exception fetching users:", error)
+      return USERS.map(u => u.user)
+    }
+  }
 
   useEffect(() => {
-    // Check for saved session
-    const savedUser = localStorage.getItem("3l_moto_user")
-    const savedLogs = localStorage.getItem("3l_moto_access_logs")
-    
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser))
-      } catch {
-        localStorage.removeItem("3l_moto_user")
+    const init = async () => {
+      // Load users
+      const users = await fetchUsers()
+      setAllUsers(users)
+
+      // Check for saved session
+      const savedUser = localStorage.getItem("3l_moto_user")
+      const savedLogs = localStorage.getItem("3l_moto_access_logs")
+      
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser))
+        } catch {
+          localStorage.removeItem("3l_moto_user")
+        }
       }
-    }
-    
-    if (savedLogs) {
-      try {
-        const parsedLogs = JSON.parse(savedLogs)
-        setAccessLogs(parsedLogs.map((log: AccessLog) => ({
-          ...log,
-          timestamp: new Date(log.timestamp)
-        })))
-      } catch {
-        localStorage.removeItem("3l_moto_access_logs")
+      
+      if (savedLogs) {
+        try {
+          const parsedLogs = JSON.parse(savedLogs)
+          setAccessLogs(parsedLogs.map((log: AccessLog) => ({
+            ...log,
+            timestamp: new Date(log.timestamp)
+          })))
+        } catch {
+          localStorage.removeItem("3l_moto_access_logs")
+        }
       }
+      
+      setIsLoading(false)
     }
-    
-    setIsLoading(false)
+
+    init()
   }, [])
 
   const addAccessLog = async (action: string, module: string, details: string) => {
@@ -167,17 +205,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    const foundUser = USERS.find(u => u.username === username && u.password === password)
-    
-    if (foundUser) {
-      setUser(foundUser.user)
-      localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
-      // Log to Supabase
-      logger.login(foundUser.user.username, foundUser.user.displayName)
-      return { success: true }
+    try {
+      const { supabase } = await import("@/lib/supabase")
+      
+      // Try Supabase first
+      const { data, error } = await supabase
+        .from("auth_users")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .single()
+
+      if (data) {
+        const userData: User = {
+          id: data.id,
+          username: data.username,
+          displayName: data.displayname,
+          role: data.role as UserRole,
+          permissions: {
+            canDelete: data.can_delete || false,
+          },
+        }
+        setUser(userData)
+        localStorage.setItem("3l_moto_user", JSON.stringify(userData))
+        logger.login(userData.username, userData.displayName)
+        return { success: true }
+      }
+
+      // Fallback to hardcoded users
+      const foundUser = USERS.find(u => u.username === username && u.password === password)
+      if (foundUser) {
+        setUser(foundUser.user)
+        localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
+        logger.login(foundUser.user.username, foundUser.user.displayName)
+        return { success: true }
+      }
+
+      return { success: false, error: "Tên đăng nhập hoặc mật khẩu không đúng" }
+    } catch (error) {
+      console.error("Login error:", error)
+      // Fallback to hardcoded
+      const foundUser = USERS.find(u => u.username === username && u.password === password)
+      if (foundUser) {
+        setUser(foundUser.user)
+        localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
+        logger.login(foundUser.user.username, foundUser.user.displayName)
+        return { success: true }
+      }
+      return { success: false, error: "Lỗi đăng nhập" }
     }
-    return { success: false, error: "Tên đăng nhập hoặc mật khẩu không đúng" }
   }
 
   const logout = () => {
@@ -190,7 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, addAccessLog, accessLogs }}>
+    <AuthContext.Provider value={{ user, isLoading, allUsers, login, logout, addAccessLog, accessLogs }}>
       {children}
     </AuthContext.Provider>
   )
