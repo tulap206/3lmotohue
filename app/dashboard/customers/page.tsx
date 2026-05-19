@@ -179,6 +179,7 @@ export default function CustomersPage() {
       
       const updatedCustomers = await fetchCustomers()
       setCustomers(updatedCustomers)
+      setIsDialogOpen(false)
       resetForm()
     } catch (error) {
       console.error("Error saving customer:", error)
