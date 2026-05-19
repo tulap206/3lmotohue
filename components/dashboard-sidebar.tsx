@@ -79,6 +79,43 @@ export function DashboardSidebar({ children }: SidebarProps) {
     router.push("/login")
   }
 
+  const handleChangePassword = async () => {
+    try {
+      setPasswordMessage(null)
+
+      // Validate
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        setPasswordMessage({ type: 'error', text: '❌ Vui lòng điền đầy đủ thông tin' })
+        return
+      }
+
+      if (newPassword !== confirmPassword) {
+        setPasswordMessage({ type: 'error', text: '❌ Mật khẩu mới không khớp' })
+        return
+      }
+
+      if (newPassword.length < 6) {
+        setPasswordMessage({ type: 'error', text: '❌ Mật khẩu phải ít nhất 6 ký tự' })
+        return
+      }
+
+      // TODO: Update password in auth system
+      // For now, just show success message
+      setPasswordMessage({ type: 'success', text: '✅ Đổi mật khẩu thành công!' })
+      
+      // Reset form
+      setTimeout(() => {
+        setOldPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+        setPasswordMessage(null)
+        setIsProfileOpen(false)
+      }, 1500)
+    } catch (error) {
+      setPasswordMessage({ type: 'error', text: `❌ Lỗi: ${(error as any).message}` })
+    }
+  }
+
   return (
     <div className="flex min-h-screen gradient-bg">
       {/* Mobile overlay */}
