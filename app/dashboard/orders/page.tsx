@@ -347,9 +347,11 @@ export default function OrdersPage() {
     }
   }
 
-  const updateOrderStatus = (orderId: string, newStatus: RentalOrder["status"]) => {
+  const updateOrderStatus = async (orderId: string, newStatus: RentalOrder["status"]) => {
     const order = orders.find((o) => o.id === orderId)
-    if (order) {
+    if (!order) return
+
+    try {
       // Tính doanh thu dựa trên trạng thái
       let revenue = 0
       if (newStatus === "cancelled") {
@@ -361,9 +363,24 @@ export default function OrdersPage() {
       }
       // pending và active chưa có doanh thu
       
+      // Update to Supabase
+      const { error } = await supabase
+        .from('rentals')
+        .update({ status: newStatus, revenue })
+        .eq('id', orderId)
+
+      if (error) {
+        console.error("Error updating rental status:", error)
+        alert(`❌ Lỗi: ${error.message}`)
+        return
+      }
+
       setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus, revenue } : o)))
       const statusLabels: Record<string, string> = { pending: "Chờ nhận xe", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }
       if (user) logger.log(user.username, user.displayName, 'Chỉnh sửa', 'Đơn thuê', `Cập nhật đơn ${orderId}: ${statusLabels[newStatus]}`)
+    } catch (error) {
+      console.error("Exception updating rental status:", error)
+      alert(`❌ Lỗi cập nhật trạng thái đơn thuê`)
     }
   }
 
