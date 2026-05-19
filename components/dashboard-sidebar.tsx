@@ -58,11 +58,6 @@ const menuItems = [
     href: "/dashboard/access-history",
     icon: History,
   },
-  {
-    title: "Cài đặt",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
 ]
 
 export function DashboardSidebar({ children }: SidebarProps) {
@@ -191,6 +186,23 @@ export function DashboardSidebar({ children }: SidebarProps) {
               </span>
             </button>
           )}
+          
+          {/* Settings Link */}
+          <Link
+            href="/dashboard/settings"
+            onClick={() => setMobileOpen(false)}
+            className={cn(
+              "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto",
+              pathname === "/dashboard/settings"
+                ? "sidebar-active"
+                : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+            )}
+            title="Cài đặt"
+          >
+            <Settings className="w-5 h-5" />
+          </Link>
+          
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
             className="flex items-center justify-center w-14 h-14 rounded-2xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all duration-200 mx-auto"
