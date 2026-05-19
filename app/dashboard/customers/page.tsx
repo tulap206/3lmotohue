@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchCustomers } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Pencil, Trash2, User, Phone, MapPin, Eye } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, User, Phone, MapPin, Eye, Upload } from "lucide-react"
 
 interface Customer {
   id: string
@@ -35,6 +35,60 @@ interface Customer {
   cccdback?: string[]
   licensefront?: string[]
   licenseback?: string[]
+}
+
+// Image upload button component
+const ImageUploadButton = ({ 
+  label, 
+  onImageSelected,
+  preview
+}: { 
+  label: string
+  onImageSelected: (base64: string) => void
+  preview?: string
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  return (
+    <div className="space-y-2">
+      <Label className="text-gray-600">{label}</Label>
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-blue-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
+      >
+        <div className="bg-blue-50 p-3 rounded-lg">
+          <Upload className="w-6 h-6 text-blue-500" />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-medium text-gray-700">Thêm ảnh</p>
+          <p className="text-xs text-gray-500">JPG, PNG, GIF</p>
+        </div>
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) {
+            const reader = new FileReader()
+            reader.onload = (event) => {
+              const base64 = event.target?.result as string
+              onImageSelected(base64)
+            }
+            reader.readAsDataURL(file)
+          }
+        }}
+      />
+      {preview && (
+        <div className="relative w-fit">
+          <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function CustomersPage() {
@@ -374,120 +428,35 @@ export default function CustomersPage() {
               <div className="space-y-4 pt-4 border-t border-gray-200">
                 <p className="font-medium text-gray-700">Thêm ảnh (tùy chọn)</p>
                 
-                <div className="space-y-2">
-                  <Label className="text-gray-600">Ảnh khách hàng</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = (event) => {
-                          const base64 = event.target?.result as string
-                          setFormData({ ...formData, customerphoto: [base64] })
-                        }
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
-                  />
-                  {formData.customerphoto?.length > 0 && (
-                    <img src={formData.customerphoto[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
-                  )}
-                </div>
+                <ImageUploadButton
+                  label="Ảnh khách hàng"
+                  preview={formData.customerphoto?.[0]}
+                  onImageSelected={(base64) => setFormData({ ...formData, customerphoto: base64 ? [base64] : [] })}
+                />
 
-                <div className="space-y-2">
-                  <Label className="text-gray-600">Ảnh CCCD mặt trước</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = (event) => {
-                          const base64 = event.target?.result as string
-                          setFormData({ ...formData, cccdfront: [base64] })
-                        }
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
-                  />
-                  {formData.cccdfront?.length > 0 && (
-                    <img src={formData.cccdfront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
-                  )}
-                </div>
+                <ImageUploadButton
+                  label="Ảnh CCCD mặt trước"
+                  preview={formData.cccdfront?.[0]}
+                  onImageSelected={(base64) => setFormData({ ...formData, cccdfront: base64 ? [base64] : [] })}
+                />
 
-                <div className="space-y-2">
-                  <Label className="text-gray-600">Ảnh CCCD mặt sau</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = (event) => {
-                          const base64 = event.target?.result as string
-                          setFormData({ ...formData, cccdback: [base64] })
-                        }
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
-                  />
-                  {formData.cccdback?.length > 0 && (
-                    <img src={formData.cccdback[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
-                  )}
-                </div>
+                <ImageUploadButton
+                  label="Ảnh CCCD mặt sau"
+                  preview={formData.cccdback?.[0]}
+                  onImageSelected={(base64) => setFormData({ ...formData, cccdback: base64 ? [base64] : [] })}
+                />
 
-                <div className="space-y-2">
-                  <Label className="text-gray-600">Ảnh GPLX mặt trước</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = (event) => {
-                          const base64 = event.target?.result as string
-                          setFormData({ ...formData, licensefront: [base64] })
-                        }
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
-                  />
-                  {formData.licensefront?.length > 0 && (
-                    <img src={formData.licensefront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
-                  )}
-                </div>
+                <ImageUploadButton
+                  label="Ảnh GPLX mặt trước"
+                  preview={formData.licensefront?.[0]}
+                  onImageSelected={(base64) => setFormData({ ...formData, licensefront: base64 ? [base64] : [] })}
+                />
 
-                <div className="space-y-2">
-                  <Label className="text-gray-600">Ảnh GPLX mặt sau</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = (event) => {
-                          const base64 = event.target?.result as string
-                          setFormData({ ...formData, licenseback: [base64] })
-                        }
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
-                  />
-                  {formData.licenseback?.length > 0 && (
-                    <img src={formData.licenseback[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
-                  )}
-                </div>
+                <ImageUploadButton
+                  label="Ảnh GPLX mặt sau"
+                  preview={formData.licenseback?.[0]}
+                  onImageSelected={(base64) => setFormData({ ...formData, licenseback: base64 ? [base64] : [] })}
+                />
               </div>
               
               <DialogFooter>
