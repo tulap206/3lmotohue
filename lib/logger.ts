@@ -8,13 +8,17 @@ export const logger = {
     try {
       const { error } = await supabase.from('access_logs').insert([{
         username,
-        displayName,
+        displayname: displayName,  // Column is lowercase 'displayname'
         action,
         module,
         details,
         timestamp: new Date().toISOString(),
       }])
-      if (error) console.error('Logger error:', error.message)
+      if (error) {
+        console.error('Logger error:', error.message)
+        return
+      }
+      console.log(`✅ Logged: ${action} - ${module}`)
     } catch (e) {
       console.error('Logger exception:', e)
     }

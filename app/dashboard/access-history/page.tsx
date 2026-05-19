@@ -27,12 +27,11 @@ import {
 interface AccessLog {
   id: string
   username: string
-  displayName: string
+  displayname: string
   action: string
   module: string
   details: string
   timestamp: string
-  ipAddress?: string
 }
 
 const actionIconMap: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
@@ -105,7 +104,7 @@ export default function AccessHistoryPage() {
       const matchSearch = 
         log.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
         log.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+        log.displayname.toLowerCase().includes(searchQuery.toLowerCase())
       const matchAccount = filterAccount === "all" || log.username === filterAccount
       const matchModule = filterModule === "all" || log.module === filterModule
       const matchAction = filterAction === "all" || log.action === filterAction
@@ -277,7 +276,7 @@ export default function AccessHistoryPage() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-900">{log.displayName}</span>
+                        <span className="font-semibold text-gray-900">{log.displayname}</span>
                         <span className="text-sm text-gray-600">({log.username})</span>
                         <span className="font-medium text-gray-700">{log.action}</span>
                         <div className="flex items-center gap-1">
