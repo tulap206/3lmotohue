@@ -85,16 +85,114 @@ export default function CustomersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      let uploadedImages = {
+        customerPhoto: formData.customerPhoto,
+        cccdFront: formData.cccdFront,
+        cccdBack: formData.cccdBack,
+        licenseFront: formData.licenseFront,
+        licenseBack: formData.licenseBack,
+      }
+
+      // Upload images to Supabase Storage
+      const uploadImage = async (base64: string, folder: string, fileName: string) => {
+        if (!base64 || base64.length === 0) return null
+        
+        try {
+          // Convert base64 to blob
+          const base64Data = base64.split(',')[1]
+          const byteCharacters = atob(base64Data)
+          const byteNumbers = new Array(byteCharacters.length)
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i)
+          }
+          const byteArray = new Uint8Array(byteNumbers)
+          const blob = new Blob([byteArray], { type: 'image/jpeg' })
+
+          const path = `${folder}/${fileName}`
+          const { error } = await supabase.storage
+            .from('customer-documents')
+            .upload(path, blob, { upsert: true })
+
+          if (error) {
+            console.error(`Storage error for ${fileName}:`, error)
+            return null
+          }
+          
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from('customer-documents')
+            .getPublicUrl(path)
+          
+          return urlData.publicUrl
+        } catch (error) {
+          console.error(`Error uploading ${fileName}:`, error)
+          return null
+        }
+      }
+
+      // Upload all images in parallel
+      const uploadPromises = []
+      
+      if (formData.customerPhoto && formData.customerPhoto.length > 0) {
+        uploadPromises.push(
+          uploadImage(formData.customerPhoto[0], 'customer-photos', `${formData.name}-${Date.now()}.jpg`)
+            .then(url => ({ key: 'customerPhoto', url }))
+        )
+      }
+      if (formData.cccdFront && formData.cccdFront.length > 0) {
+        uploadPromises.push(
+          uploadImage(formData.cccdFront[0], 'cccd-front', `${formData.name}-front-${Date.now()}.jpg`)
+            .then(url => ({ key: 'cccdFront', url }))
+        )
+      }
+      if (formData.cccdBack && formData.cccdBack.length > 0) {
+        uploadPromises.push(
+          uploadImage(formData.cccdBack[0], 'cccd-back', `${formData.name}-back-${Date.now()}.jpg`)
+            .then(url => ({ key: 'cccdBack', url }))
+        )
+      }
+      if (formData.licenseFront && formData.licenseFront.length > 0) {
+        uploadPromises.push(
+          uploadImage(formData.licenseFront[0], 'license-front', `${formData.name}-license-front-${Date.now()}.jpg`)
+            .then(url => ({ key: 'licenseFront', url }))
+        )
+      }
+      if (formData.licenseBack && formData.licenseBack.length > 0) {
+        uploadPromises.push(
+          uploadImage(formData.licenseBack[0], 'license-back', `${formData.name}-license-back-${Date.now()}.jpg`)
+            .then(url => ({ key: 'licenseBack', url }))
+        )
+      }
+
+      // Wait for all uploads
+      const uploadResults = await Promise.all(uploadPromises)
+      uploadResults.forEach(result => {
+        if (result.url) {
+          uploadedImages[result.key as keyof typeof uploadedImages] = [result.url]
+        }
+      })
+
       if (editingCustomer) {
+        const updateData: any = {
+          name: formData.name,
+          phone: formData.phone,
+          facebook: formData.facebook,
+          address: formData.address,
+          idcard: formData.idcard,
+        }
+        
+        // Only update image fields if new images were uploaded
+        if (uploadResults.some(r => r.url)) {
+          updateData.customerPhoto = uploadedImages.customerPhoto
+          updateData.cccdFront = uploadedImages.cccdFront
+          updateData.cccdBack = uploadedImages.cccdBack
+          updateData.licenseFront = uploadedImages.licenseFront
+          updateData.licenseBack = uploadedImages.licenseBack
+        }
+
         const { error } = await supabase
           .from('customers')
-          .update({
-            name: formData.name,
-            phone: formData.phone,
-            facebook: formData.facebook,
-            address: formData.address,
-            idcard: formData.idcard,
-          })
+          .update(updateData)
           .eq('id', editingCustomer.id)
         
         if (error) throw error
@@ -110,6 +208,11 @@ export default function CustomersPage() {
             idcard: formData.idcard,
             totalrentals: 0,
             status: "active",
+            customerPhoto: uploadedImages.customerPhoto,
+            cccdFront: uploadedImages.cccdFront,
+            cccdBack: uploadedImages.cccdBack,
+            licenseFront: uploadedImages.licenseFront,
+            licenseBack: uploadedImages.licenseBack,
           }])
         
         if (error) throw error
@@ -122,6 +225,7 @@ export default function CustomersPage() {
       resetForm()
     } catch (error) {
       console.error("Error saving customer:", error)
+      alert('Lỗi: ' + (error as any).message)
     }
   }
 
