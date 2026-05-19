@@ -16,16 +16,12 @@ import {
   Settings,
   Users,
   X,
-  Trash2,
-  Plus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface SidebarProps {
   children: React.ReactNode
@@ -67,10 +63,9 @@ const menuItems = [
 export function DashboardSidebar({ children }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, logout, allUsers } = useAuth()
+  const { user, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("profile")
   
   // Password change state
   const [oldPassword, setOldPassword] = useState("")
@@ -79,92 +74,9 @@ export function DashboardSidebar({ children }: SidebarProps) {
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [changingPassword, setChangingPassword] = useState(false)
 
-  // User creation state
-  const [newUsername, setNewUsername] = useState("")
-  const [newDisplayName, setNewDisplayName] = useState("")
-  const [newPassword2, setNewPassword2] = useState("")
-  const [newRole, setNewRole] = useState<"admin" | "staff">("staff")
-  const [creatingUser, setCreatingUser] = useState(false)
-  const [userMessage, setUserMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
-
   const handleLogout = () => {
     logout()
     router.push("/login")
-  }
-
-  const handleCreateUser = async () => {
-    try {
-      setUserMessage(null)
-      setCreatingUser(true)
-
-      // Validate
-      if (!newUsername || !newDisplayName || !newPassword2) {
-        setUserMessage({ type: 'error', text: '❌ Vui lòng điền đầy đủ thông tin' })
-        return
-      }
-
-      if (newPassword2.length < 6) {
-        setUserMessage({ type: 'error', text: '❌ Mật khẩu phải ít nhất 6 ký tự' })
-        return
-      }
-
-      // Check if user already exists
-      if (allUsers.some(u => u.username === newUsername)) {
-        setUserMessage({ type: 'error', text: '❌ Username đã tồn tại' })
-        return
-      }
-
-      // Create user in Supabase
-      const { supabase } = await import("@/lib/supabase")
-      const { error } = await supabase
-        .from("auth_users")
-        .insert([{
-          username: newUsername,
-          password: newPassword2,
-          displayname: newDisplayName,
-          role: newRole,
-          can_delete: newRole === "admin",
-        }])
-
-      if (error) throw error
-
-      setUserMessage({ type: 'success', text: `✅ Tạo user "${newDisplayName}" thành công!` })
-      
-      // Reset form
-      setTimeout(() => {
-        setNewUsername("")
-        setNewDisplayName("")
-        setNewPassword2("")
-        setNewRole("staff")
-        setUserMessage(null)
-        // Reload users
-        window.location.reload()
-      }, 1500)
-    } catch (error) {
-      console.error("Create user error:", error)
-      setUserMessage({ type: 'error', text: `❌ Lỗi: ${(error as any).message}` })
-    } finally {
-      setCreatingUser(false)
-    }
-  }
-
-  const handleDeleteUser = async (username: string) => {
-    try {
-      if (!window.confirm(`Xóa user "${username}"?`)) return
-
-      const { supabase } = await import("@/lib/supabase")
-      const { error } = await supabase
-        .from("auth_users")
-        .delete()
-        .eq("username", username)
-
-      if (error) throw error
-
-      setUserMessage({ type: 'success', text: `✅ Xóa user thành công!` })
-      setTimeout(() => window.location.reload(), 1000)
-    } catch (error) {
-      setUserMessage({ type: 'error', text: `❌ Lỗi xóa: ${(error as any).message}` })
-    }
   }
 
   return (
@@ -288,198 +200,91 @@ export function DashboardSidebar({ children }: SidebarProps) {
 
       {/* User Profile Modal */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="bg-white rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-white rounded-2xl max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-gray-800">Quản lý tài khoản</DialogTitle>
-            <DialogDescription className="text-gray-500">Thông tin cá nhân và quản lý người dùng</DialogDescription>
+            <DialogTitle className="text-gray-800">Thông tin cá nhân</DialogTitle>
+            <DialogDescription className="text-gray-500">Quản lý tài khoản của bạn</DialogDescription>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile">Tài khoản của tôi</TabsTrigger>
-              {user?.role === "admin" && (
-                <TabsTrigger value="users">Quản lý người dùng</TabsTrigger>
+          <div className="space-y-6">
+            {/* User Info */}
+            <div className="text-center">
+              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 mx-auto mb-3">
+                <span className="text-white text-2xl font-semibold uppercase">
+                  {user?.displayName.charAt(0)}
+                </span>
+              </div>
+              <h3 className="font-semibold text-gray-900">{user?.displayName}</h3>
+              <p className="text-sm text-gray-600">Username: {user?.username}</p>
+              <p className="text-sm text-gray-600">Quyền: {user?.role === 'admin' ? 'Admin' : 'Staff'}</p>
+            </div>
+
+            {/* Change Password Section */}
+            <div className="border-t border-gray-200 pt-6 space-y-4">
+              <h4 className="font-semibold text-gray-900">Đổi mật khẩu</h4>
+
+              {passwordMessage && (
+                <div className={`p-3 rounded-lg text-sm ${passwordMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                  {passwordMessage.text}
+                </div>
               )}
-            </TabsList>
 
-            {/* Profile Tab */}
-            <TabsContent value="profile" className="space-y-6">
-              {/* User Info */}
-              <div className="text-center">
-                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 mx-auto mb-3">
-                  <span className="text-white text-2xl font-semibold uppercase">
-                    {user?.displayName.charAt(0)}
-                  </span>
-                </div>
-                <h3 className="font-semibold text-gray-900">{user?.displayName}</h3>
-                <p className="text-sm text-gray-600">Username: {user?.username}</p>
-                <p className="text-sm text-gray-600">Quyền: {user?.role === 'admin' ? 'Admin' : 'Staff'}</p>
-              </div>
-
-              {/* Change Password Section */}
-              <div className="border-t border-gray-200 pt-6 space-y-4">
-                <h4 className="font-semibold text-gray-900">Đổi mật khẩu</h4>
-
-                {passwordMessage && (
-                  <div className={`p-3 rounded-lg text-sm ${passwordMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                    {passwordMessage.text}
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm text-gray-600">Mật khẩu cũ</Label>
-                    <Input
-                      type="password"
-                      placeholder="Nhập mật khẩu cũ"
-                      value={oldPassword}
-                      onChange={(e) => setOldPassword(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-sm text-gray-600">Mật khẩu mới</Label>
-                    <Input
-                      type="password"
-                      placeholder="Nhập mật khẩu mới"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-sm text-gray-600">Xác nhận mật khẩu</Label>
-                    <Input
-                      type="password"
-                      placeholder="Xác nhận mật khẩu mới"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm text-gray-600">Mật khẩu cũ</Label>
+                  <Input
+                    type="password"
+                    placeholder="Nhập mật khẩu cũ"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="mt-1"
+                  />
                 </div>
 
-                <Button
-                  onClick={handleChangePassword}
-                  disabled={changingPassword}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-                >
-                  {changingPassword ? "Đang xử lý..." : "Đổi mật khẩu"}
-                </Button>
+                <div>
+                  <Label className="text-sm text-gray-600">Mật khẩu mới</Label>
+                  <Input
+                    type="password"
+                    placeholder="Nhập mật khẩu mới"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm text-gray-600">Xác nhận mật khẩu</Label>
+                  <Input
+                    type="password"
+                    placeholder="Xác nhận mật khẩu mới"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
               </div>
 
-              {/* Logout Button */}
               <Button
-                onClick={() => {
-                  setIsProfileOpen(false)
-                  handleLogout()
-                }}
-                variant="outline"
-                className="w-full text-red-600 border-red-200 hover:bg-red-50 rounded-lg"
+                onClick={handleChangePassword}
+                disabled={changingPassword}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
               >
-                Đăng xuất
+                {changingPassword ? "Đang xử lý..." : "Đổi mật khẩu"}
               </Button>
-            </TabsContent>
+            </div>
 
-            {/* User Management Tab (Admin Only) */}
-            {user?.role === "admin" && (
-              <TabsContent value="users" className="space-y-4">
-                {/* Create New User */}
-                <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Tạo người dùng mới
-                  </h4>
-
-                  {userMessage && (
-                    <div className={`p-3 rounded-lg text-sm ${userMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                      {userMessage.text}
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-sm text-gray-600">Username</Label>
-                      <Input
-                        placeholder="Nhập username"
-                        value={newUsername}
-                        onChange={(e) => setNewUsername(e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-sm text-gray-600">Tên hiển thị</Label>
-                      <Input
-                        placeholder="Nhập tên hiển thị"
-                        value={newDisplayName}
-                        onChange={(e) => setNewDisplayName(e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-sm text-gray-600">Mật khẩu</Label>
-                      <Input
-                        type="password"
-                        placeholder="Nhập mật khẩu"
-                        value={newPassword2}
-                        onChange={(e) => setNewPassword2(e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-sm text-gray-600">Quyền</Label>
-                      <Select value={newRole} onValueChange={(value: any) => setNewRole(value)}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="staff">Staff</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleCreateUser}
-                    disabled={creatingUser}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg"
-                  >
-                    {creatingUser ? "Đang tạo..." : "Tạo người dùng"}
-                  </Button>
-                </div>
-
-                {/* Users List */}
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-gray-900">Danh sách người dùng ({allUsers.length})</h4>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {allUsers.map((u) => (
-                      <div key={u.id} className="flex items-center justify-between border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">{u.displayName}</p>
-                          <p className="text-sm text-gray-600">{u.username} • {u.role === 'admin' ? '👑 Admin' : '👤 Staff'}</p>
-                        </div>
-                        {u.username !== user?.username && (
-                          <Button
-                            onClick={() => handleDeleteUser(u.username)}
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-            )}
-          </Tabs>
+            {/* Logout Button */}
+            <Button
+              onClick={() => {
+                setIsProfileOpen(false)
+                handleLogout()
+              }}
+              variant="outline"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50 rounded-lg"
+            >
+              Đăng xuất
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
