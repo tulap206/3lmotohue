@@ -211,7 +211,7 @@ export default function CustomersPage() {
               Thêm khách hàng
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-white border-gray-200 rounded-2xl">
+          <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-gray-800">
                 {editingCustomer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}
