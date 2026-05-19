@@ -5,6 +5,7 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
+import { USERS } from "@/contexts/auth-context"
 import {
   Bike,
   ClipboardList,
@@ -82,6 +83,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
   const handleChangePassword = async () => {
     try {
       setPasswordMessage(null)
+      setChangingPassword(true)
 
       // Validate
       if (!oldPassword || !newPassword || !confirmPassword) {
@@ -99,8 +101,26 @@ export function DashboardSidebar({ children }: SidebarProps) {
         return
       }
 
-      // TODO: Update password in auth system
-      // For now, just show success message
+      // Check old password matches current user password
+      // For hardcoded users, check against USERS array
+      const foundUser = USERS.find(u => u.username === user?.username && u.password === oldPassword)
+      if (!foundUser) {
+        setPasswordMessage({ type: 'error', text: '❌ Mật khẩu cũ không đúng' })
+        return
+      }
+
+      // Update password in Supabase
+      const { supabase } = await import("@/lib/supabase")
+      const { error } = await supabase
+        .from("auth_users")
+        .update({ password: newPassword })
+        .eq("username", user?.username)
+
+      if (error) {
+        console.error("Supabase error:", error)
+        throw error
+      }
+
       setPasswordMessage({ type: 'success', text: '✅ Đổi mật khẩu thành công!' })
       
       // Reset form
@@ -112,7 +132,10 @@ export function DashboardSidebar({ children }: SidebarProps) {
         setIsProfileOpen(false)
       }, 1500)
     } catch (error) {
+      console.error("Change password error:", error)
       setPasswordMessage({ type: 'error', text: `❌ Lỗi: ${(error as any).message}` })
+    } finally {
+      setChangingPassword(false)
     }
   }
 

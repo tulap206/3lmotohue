@@ -39,7 +39,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Predefined users
-const USERS: { username: string; password: string; user: User }[] = [
+export const USERS: { username: string; password: string; user: User }[] = [
   {
     username: "admin",
     password: "admin",
