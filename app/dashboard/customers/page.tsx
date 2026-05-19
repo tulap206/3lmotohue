@@ -543,7 +543,13 @@ export default function CustomersPage() {
                     <tr key={customer.id} className="border-b border-gray-50 hover:bg-gray-50">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-400" />
+                          {customer.customerphoto && customer.customerphoto.length > 0 ? (
+                            <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-400" />
+                            </div>
+                          )}
                           <span className="font-medium text-gray-800">{customer.name}</span>
                         </div>
                       </td>
@@ -599,7 +605,7 @@ export default function CustomersPage() {
             <DialogDescription className="text-gray-500">Thông tin chi tiết của khách hàng trong hệ thống</DialogDescription>
           </DialogHeader>
           {viewingCustomer && (
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Tên</p>
@@ -633,6 +639,46 @@ export default function CustomersPage() {
                   <p className="text-xs text-gray-500">Số lần thuê</p>
                   <p className="font-medium text-gray-800">{viewingCustomer.totalrentals}</p>
                 </div>
+              </div>
+
+              {/* Images Section */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <p className="font-medium text-gray-700">Ảnh tài liệu</p>
+                
+                {viewingCustomer.customerphoto && viewingCustomer.customerphoto.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">Ảnh khách hàng</p>
+                    <img src={viewingCustomer.customerphoto[0]} alt="Customer" className="w-full max-w-xs rounded-lg border border-gray-200" />
+                  </div>
+                )}
+                
+                {viewingCustomer.cccdfront && viewingCustomer.cccdfront.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">CCCD mặt trước</p>
+                    <img src={viewingCustomer.cccdfront[0]} alt="CCCD Front" className="w-full max-w-xs rounded-lg border border-gray-200" />
+                  </div>
+                )}
+                
+                {viewingCustomer.cccdback && viewingCustomer.cccdback.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">CCCD mặt sau</p>
+                    <img src={viewingCustomer.cccdback[0]} alt="CCCD Back" className="w-full max-w-xs rounded-lg border border-gray-200" />
+                  </div>
+                )}
+                
+                {viewingCustomer.licensefront && viewingCustomer.licensefront.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">GPLX mặt trước</p>
+                    <img src={viewingCustomer.licensefront[0]} alt="License Front" className="w-full max-w-xs rounded-lg border border-gray-200" />
+                  </div>
+                )}
+                
+                {viewingCustomer.licenseback && viewingCustomer.licenseback.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">GPLX mặt sau</p>
+                    <img src={viewingCustomer.licenseback[0]} alt="License Back" className="w-full max-w-xs rounded-lg border border-gray-200" />
+                  </div>
+                )}
               </div>
             </div>
           )}
