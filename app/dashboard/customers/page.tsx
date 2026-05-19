@@ -583,32 +583,27 @@ export default function CustomersPage() {
                 {filteredCustomers.map((customer) => (
                   <div 
                     key={customer.id} 
-                    className="flex items-start gap-3 py-4 first:pt-0 last:pb-0"
+                    className="flex gap-3 py-4 px-2 first:pt-2 last:pb-2"
                   >
                     {/* Customer Avatar */}
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden mt-0.5">
                       {customer.customerphoto && customer.customerphoto.length > 0 ? (
                         <img src={customer.customerphoto[0]} alt={customer.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-blue-50 flex items-center justify-center">
-                          <User className="w-5 h-5 text-blue-500" />
+                        <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                          <User className="w-6 h-6 text-blue-500" />
                         </div>
                       )}
                     </div>
                     
-                    {/* Customer Info */}
+                    {/* Customer Info - Left Section */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="min-w-0">
-                          <h3 className="font-medium text-gray-800 truncate">{customer.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Phone className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                            <p className="text-sm text-gray-600 truncate">{customer.phone}</p>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-0.5 truncate">{customer.idcard}</p>
+                          <h3 className="font-semibold text-gray-800 text-base">{customer.name}</h3>
                         </div>
                         <span
-                          className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
                             customer.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
                           }`}
                         >
@@ -616,15 +611,29 @@ export default function CustomersPage() {
                         </span>
                       </div>
                       
+                      {/* Contact Info Grid */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        {/* Phone */}
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                          <span className="text-gray-700 font-medium truncate">{customer.phone}</span>
+                        </div>
+                        
+                        {/* CCCD */}
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <span className="text-xs text-gray-500 font-mono truncate">{customer.idcard}</span>
+                        </div>
+                      </div>
+                      
                       {/* Address */}
-                      <div className="flex items-center gap-1 mt-2 text-xs text-gray-600">
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
                         <MapPin className="w-3 h-3 flex-shrink-0" />
                         <span className="truncate">{customer.address}</span>
                       </div>
                     </div>
                     
-                    {/* Actions */}
-                    <div className="flex-shrink-0 flex items-center gap-1">
+                    {/* Actions - Right Section */}
+                    <div className="flex-shrink-0 flex flex-col gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -632,16 +641,14 @@ export default function CustomersPage() {
                         onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }}
                       >
                         <Eye className="h-4 w-4" />
-                        <span className="sr-only">Chi tiết</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50"
+                        className="h-8 w-8 text-gray-400 hover:text-amber-500 hover:bg-amber-50"
                         onClick={() => handleEdit(customer)}
                       >
                         <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Chỉnh sửa</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -650,7 +657,6 @@ export default function CustomersPage() {
                         onClick={() => handleDelete(customer.id)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Xóa</span>
                       </Button>
                     </div>
                   </div>
