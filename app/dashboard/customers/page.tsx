@@ -30,11 +30,11 @@ interface Customer {
   totalrentals: number
   status: "active" | "inactive"
   createdat: string
-  customerPhoto?: string[]
-  cccdFront?: string[]
-  cccdBack?: string[]
-  licenseFront?: string[]
-  licenseBack?: string[]
+  customerphoto?: string[]
+  cccdfront?: string[]
+  cccdback?: string[]
+  licensefront?: string[]
+  licenseback?: string[]
 }
 
 export default function CustomersPage() {
@@ -52,11 +52,11 @@ export default function CustomersPage() {
     facebook: "",
     address: "",
     idcard: "",
-    customerPhoto: [] as string[],
-    cccdFront: [] as string[],
-    cccdBack: [] as string[],
-    licenseFront: [] as string[],
-    licenseBack: [] as string[],
+    customerphoto: [] as string[],
+    cccdfront: [] as string[],
+    cccdback: [] as string[],
+    licensefront: [] as string[],
+    licenseback: [] as string[],
   })
 
   // Load customers from Supabase
@@ -86,11 +86,11 @@ export default function CustomersPage() {
     e.preventDefault()
     try {
       let uploadedImages = {
-        customerPhoto: formData.customerPhoto,
-        cccdFront: formData.cccdFront,
-        cccdBack: formData.cccdBack,
-        licenseFront: formData.licenseFront,
-        licenseBack: formData.licenseBack,
+        customerphoto: formData.customerphoto,
+        cccdfront: formData.cccdfront,
+        cccdback: formData.cccdback,
+        licensefront: formData.licensefront,
+        licenseback: formData.licenseback,
       }
 
       // Upload images to Supabase Storage
@@ -133,34 +133,34 @@ export default function CustomersPage() {
       // Upload all images in parallel
       const uploadPromises = []
       
-      if (formData.customerPhoto && formData.customerPhoto.length > 0) {
+      if (formData.customerphoto && formData.customerphoto.length > 0) {
         uploadPromises.push(
-          uploadImage(formData.customerPhoto[0], 'customer-photos', `${formData.name}-${Date.now()}.jpg`)
-            .then(url => ({ key: 'customerPhoto', url }))
+          uploadImage(formData.customerphoto[0], 'customer-photos', `${formData.name}-${Date.now()}.jpg`)
+            .then(url => ({ key: 'customerphoto', url }))
         )
       }
-      if (formData.cccdFront && formData.cccdFront.length > 0) {
+      if (formData.cccdfront && formData.cccdfront.length > 0) {
         uploadPromises.push(
-          uploadImage(formData.cccdFront[0], 'cccd-front', `${formData.name}-front-${Date.now()}.jpg`)
-            .then(url => ({ key: 'cccdFront', url }))
+          uploadImage(formData.cccdfront[0], 'cccd-front', `${formData.name}-front-${Date.now()}.jpg`)
+            .then(url => ({ key: 'cccdfront', url }))
         )
       }
-      if (formData.cccdBack && formData.cccdBack.length > 0) {
+      if (formData.cccdback && formData.cccdback.length > 0) {
         uploadPromises.push(
-          uploadImage(formData.cccdBack[0], 'cccd-back', `${formData.name}-back-${Date.now()}.jpg`)
-            .then(url => ({ key: 'cccdBack', url }))
+          uploadImage(formData.cccdback[0], 'cccd-back', `${formData.name}-back-${Date.now()}.jpg`)
+            .then(url => ({ key: 'cccdback', url }))
         )
       }
-      if (formData.licenseFront && formData.licenseFront.length > 0) {
+      if (formData.licensefront && formData.licensefront.length > 0) {
         uploadPromises.push(
-          uploadImage(formData.licenseFront[0], 'license-front', `${formData.name}-license-front-${Date.now()}.jpg`)
-            .then(url => ({ key: 'licenseFront', url }))
+          uploadImage(formData.licensefront[0], 'license-front', `${formData.name}-license-front-${Date.now()}.jpg`)
+            .then(url => ({ key: 'licensefront', url }))
         )
       }
-      if (formData.licenseBack && formData.licenseBack.length > 0) {
+      if (formData.licenseback && formData.licenseback.length > 0) {
         uploadPromises.push(
-          uploadImage(formData.licenseBack[0], 'license-back', `${formData.name}-license-back-${Date.now()}.jpg`)
-            .then(url => ({ key: 'licenseBack', url }))
+          uploadImage(formData.licenseback[0], 'license-back', `${formData.name}-license-back-${Date.now()}.jpg`)
+            .then(url => ({ key: 'licenseback', url }))
         )
       }
 
@@ -183,11 +183,11 @@ export default function CustomersPage() {
         
         // Only update image fields if new images were uploaded
         if (uploadResults.some(r => r.url)) {
-          updateData.customerPhoto = uploadedImages.customerPhoto
-          updateData.cccdFront = uploadedImages.cccdFront
-          updateData.cccdBack = uploadedImages.cccdBack
-          updateData.licenseFront = uploadedImages.licenseFront
-          updateData.licenseBack = uploadedImages.licenseBack
+          updateData.customerphoto = uploadedImages.customerphoto
+          updateData.cccdfront = uploadedImages.cccdfront
+          updateData.cccdback = uploadedImages.cccdback
+          updateData.licensefront = uploadedImages.licensefront
+          updateData.licenseback = uploadedImages.licenseback
         }
 
         const { error } = await supabase
@@ -208,11 +208,11 @@ export default function CustomersPage() {
             idcard: formData.idcard,
             totalrentals: 0,
             status: "active",
-            customerPhoto: uploadedImages.customerPhoto,
-            cccdFront: uploadedImages.cccdFront,
-            cccdBack: uploadedImages.cccdBack,
-            licenseFront: uploadedImages.licenseFront,
-            licenseBack: uploadedImages.licenseBack,
+            customerphoto: uploadedImages.customerphoto,
+            cccdfront: uploadedImages.cccdfront,
+            cccdback: uploadedImages.cccdback,
+            licensefront: uploadedImages.licensefront,
+            licenseback: uploadedImages.licenseback,
           }])
         
         if (error) throw error
@@ -236,11 +236,11 @@ export default function CustomersPage() {
       facebook: "", 
       address: "", 
       idcard: "",
-      customerPhoto: [],
-      cccdFront: [],
-      cccdBack: [],
-      licenseFront: [],
-      licenseBack: [],
+      customerphoto: [],
+      cccdfront: [],
+      cccdback: [],
+      licensefront: [],
+      licenseback: [],
     })
     setEditingCustomer(null)
   }
@@ -253,11 +253,11 @@ export default function CustomersPage() {
       facebook: customer.facebook,
       address: customer.address,
       idcard: customer.idcard,
-      customerPhoto: customer.customerPhoto || [],
-      cccdFront: customer.cccdFront || [],
-      cccdBack: customer.cccdBack || [],
-      licenseFront: customer.licenseFront || [],
-      licenseBack: customer.licenseBack || [],
+      customerphoto: customer.customerphoto || [],
+      cccdfront: customer.cccdfront || [],
+      cccdback: customer.cccdback || [],
+      licensefront: customer.licensefront || [],
+      licenseback: customer.licenseback || [],
     })
     setIsDialogOpen(true)
   }
@@ -385,15 +385,15 @@ export default function CustomersPage() {
                         const reader = new FileReader()
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string
-                          setFormData({ ...formData, customerPhoto: [base64] })
+                          setFormData({ ...formData, customerphoto: [base64] })
                         }
                         reader.readAsDataURL(file)
                       }
                     }}
                     className="bg-gray-50 border-gray-200 rounded-xl"
                   />
-                  {formData.customerPhoto?.length > 0 && (
-                    <img src={formData.customerPhoto[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  {formData.customerphoto?.length > 0 && (
+                    <img src={formData.customerphoto[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
                   )}
                 </div>
 
@@ -408,15 +408,15 @@ export default function CustomersPage() {
                         const reader = new FileReader()
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string
-                          setFormData({ ...formData, cccdFront: [base64] })
+                          setFormData({ ...formData, cccdfront: [base64] })
                         }
                         reader.readAsDataURL(file)
                       }
                     }}
                     className="bg-gray-50 border-gray-200 rounded-xl"
                   />
-                  {formData.cccdFront?.length > 0 && (
-                    <img src={formData.cccdFront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  {formData.cccdfront?.length > 0 && (
+                    <img src={formData.cccdfront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
                   )}
                 </div>
 
@@ -431,15 +431,15 @@ export default function CustomersPage() {
                         const reader = new FileReader()
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string
-                          setFormData({ ...formData, cccdBack: [base64] })
+                          setFormData({ ...formData, cccdback: [base64] })
                         }
                         reader.readAsDataURL(file)
                       }
                     }}
                     className="bg-gray-50 border-gray-200 rounded-xl"
                   />
-                  {formData.cccdBack?.length > 0 && (
-                    <img src={formData.cccdBack[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  {formData.cccdback?.length > 0 && (
+                    <img src={formData.cccdback[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
                   )}
                 </div>
 
@@ -454,15 +454,15 @@ export default function CustomersPage() {
                         const reader = new FileReader()
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string
-                          setFormData({ ...formData, licenseFront: [base64] })
+                          setFormData({ ...formData, licensefront: [base64] })
                         }
                         reader.readAsDataURL(file)
                       }
                     }}
                     className="bg-gray-50 border-gray-200 rounded-xl"
                   />
-                  {formData.licenseFront?.length > 0 && (
-                    <img src={formData.licenseFront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  {formData.licensefront?.length > 0 && (
+                    <img src={formData.licensefront[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
                   )}
                 </div>
 
@@ -477,15 +477,15 @@ export default function CustomersPage() {
                         const reader = new FileReader()
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string
-                          setFormData({ ...formData, licenseBack: [base64] })
+                          setFormData({ ...formData, licenseback: [base64] })
                         }
                         reader.readAsDataURL(file)
                       }
                     }}
                     className="bg-gray-50 border-gray-200 rounded-xl"
                   />
-                  {formData.licenseBack?.length > 0 && (
-                    <img src={formData.licenseBack[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
+                  {formData.licenseback?.length > 0 && (
+                    <img src={formData.licenseback[0]} alt="Preview" className="w-20 h-20 object-cover rounded" />
                   )}
                 </div>
               </div>
