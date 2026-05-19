@@ -41,25 +41,27 @@ export default function ReportsPage() {
       setLoading(true)
       console.log("📊 Loading report data...")
 
-      // Fetch from Supabase with error handling
-      const [customersRes, vehiclesRes, rentalsRes] = await Promise.all([
-        supabase.from("customers").select("*").catch((e) => {
-          console.error("Customers fetch error:", e)
-          return { data: [] }
-        }),
-        supabase.from("vehicles").select("*").catch((e) => {
-          console.error("Vehicles fetch error:", e)
-          return { data: [] }
-        }),
-        supabase.from("rentals").select("*").catch((e) => {
-          console.error("Rentals fetch error:", e)
-          return { data: [] }
-        }),
-      ])
+      // Fetch from Supabase
+      const { data: customersData, error: customersError } = await supabase
+        .from("customers")
+        .select("*")
+      
+      const { data: vehiclesData, error: vehiclesError } = await supabase
+        .from("vehicles")
+        .select("*")
+      
+      const { data: rentalsData, error: rentalsError } = await supabase
+        .from("rentals")
+        .select("*")
 
-      const customers = customersRes.data || []
-      const vehicles = vehiclesRes.data || []
-      const rentals = rentalsRes.data || []
+      // Handle errors
+      if (customersError) console.error("Customers error:", customersError)
+      if (vehiclesError) console.error("Vehicles error:", vehiclesError)
+      if (rentalsError) console.error("Rentals error:", rentalsError)
+
+      const customers = customersData || []
+      const vehicles = vehiclesData || []
+      const rentals = rentalsData || []
 
       console.log("📊 Fetched data:", {
         customers: customers.length,
