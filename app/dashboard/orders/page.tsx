@@ -358,7 +358,7 @@ export default function OrdersPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
+            <Button className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
               <Plus className="w-4 h-4 mr-2" />
               Tạo đơn thuê mới
             </Button>
