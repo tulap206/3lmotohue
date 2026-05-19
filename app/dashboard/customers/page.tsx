@@ -94,11 +94,6 @@ export default function CustomersPage() {
             facebook: formData.facebook,
             address: formData.address,
             idcard: formData.idcard,
-            customerPhoto: formData.customerPhoto,
-            cccdFront: formData.cccdFront,
-            cccdBack: formData.cccdBack,
-            licenseFront: formData.licenseFront,
-            licenseBack: formData.licenseBack,
           })
           .eq('id', editingCustomer.id)
         
@@ -115,11 +110,6 @@ export default function CustomersPage() {
             idcard: formData.idcard,
             totalrentals: 0,
             status: "active",
-            customerPhoto: formData.customerPhoto,
-            cccdFront: formData.cccdFront,
-            cccdBack: formData.cccdBack,
-            licenseFront: formData.licenseFront,
-            licenseBack: formData.licenseBack,
           }])
         
         if (error) throw error
