@@ -507,74 +507,156 @@ export default function CustomersPage() {
               Không tìm thấy khách hàng nào
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Khách hàng</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Liên hệ</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">CCCD</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Địa chỉ</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Trạng thái</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          {customer.customerphoto && customer.customerphoto.length > 0 ? (
-                            <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <User className="w-4 h-4 text-gray-400" />
-                            </div>
-                          )}
-                          <span className="font-medium text-gray-800">{customer.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Phone className="w-3 h-3 text-gray-400" />
-                            {customer.phone}
-                          </div>
-                          <a href={customer.facebook} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
-                            Facebook
-                          </a>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-sm text-gray-700">{customer.idcard}</td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          {customer.address}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge className={customer.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"}>
-                          {customer.status === "active" ? "Hoạt động" : "Ngừng"}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }} className="text-gray-600 hover:text-gray-900">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(customer)} className="text-gray-600 hover:text-gray-900">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(customer.id)} className="text-red-600 hover:text-red-900">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">Khách hàng</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">Liên hệ</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">CCCD</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">Địa chỉ</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">Trạng thái</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-600">Thao tác</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredCustomers.map((customer) => (
+                      <tr key={customer.id} className="border-b border-gray-50 hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            {customer.customerphoto && customer.customerphoto.length > 0 ? (
+                              <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <User className="w-4 h-4 text-gray-400" />
+                              </div>
+                            )}
+                            <span className="font-medium text-gray-800">{customer.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Phone className="w-3 h-3 text-gray-400" />
+                              {customer.phone}
+                            </div>
+                            <a href={customer.facebook} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
+                              Facebook
+                            </a>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-sm text-gray-700">{customer.idcard}</td>
+                        <td className="py-3 px-4 text-sm text-gray-700">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3 h-3 text-gray-400" />
+                            {customer.address}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge className={customer.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"}>
+                            {customer.status === "active" ? "Hoạt động" : "Ngừng"}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }} className="text-gray-600 hover:text-gray-900">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(customer)} className="text-gray-600 hover:text-gray-900">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDelete(customer.id)} className="text-red-600 hover:text-red-900">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {filteredCustomers.map((customer) => (
+                  <div 
+                    key={customer.id} 
+                    className="flex items-start gap-3 py-4 first:pt-0 last:pb-0"
+                  >
+                    {/* Customer Avatar */}
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden">
+                      {customer.customerphoto && customer.customerphoto.length > 0 ? (
+                        <img src={customer.customerphoto[0]} alt={customer.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                          <User className="w-5 h-5 text-blue-500" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Customer Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-gray-800 truncate">{customer.name}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Phone className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                            <p className="text-sm text-gray-600 truncate">{customer.phone}</p>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">{customer.idcard}</p>
+                        </div>
+                        <span
+                          className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            customer.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {customer.status === "active" ? "Hoạt động" : "Ngừng"}
+                        </span>
+                      </div>
+                      
+                      {/* Address */}
+                      <div className="flex items-center gap-1 mt-2 text-xs text-gray-600">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{customer.address}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="flex-shrink-0 flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                        onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }}
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">Chi tiết</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50"
+                        onClick={() => handleEdit(customer)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Chỉnh sửa</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                        onClick={() => handleDelete(customer.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Xóa</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
