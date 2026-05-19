@@ -31,11 +31,6 @@ interface Customer {
   totalRentals: number
   status: "active" | "inactive"
   createdAt: string
-  customerPhoto: string[]
-  cccdFront: string[]
-  cccdBack: string[]
-  licenseFront: string[]
-  licenseBack: string[]
 }
 
 // Lightbox component
@@ -486,15 +481,11 @@ export default function CustomersPage() {
                     <td className="py-4 px-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
-                          {customer.customerPhoto.length > 0 ? (
-                            <img src={customer.customerPhoto[0]} alt={customer.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="w-5 h-5 text-blue-500" />
-                          )}
+                          <User className="w-5 h-5 text-blue-500" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800">{customer.name}</p>
-                          <p className="text-xs text-gray-400">{customer.id}</p>
+                          <p className="font-medium text-sm text-gray-800">{customer.name}</p>
+                          <p className="text-xs text-gray-500">{customer.phone}</p>
                         </div>
                       </div>
                     </td>
@@ -593,16 +584,7 @@ export default function CustomersPage() {
               {/* Customer Avatar */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
-                  {viewingCustomer.customerPhoto.length > 0 ? (
-                    <img 
-                      src={viewingCustomer.customerPhoto[0]} 
-                      alt={viewingCustomer.name} 
-                      className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => setLightboxImage(viewingCustomer.customerPhoto[0])}
-                    />
-                  ) : (
-                    <User className="w-10 h-10 text-blue-500" />
-                  )}
+                  <User className="w-10 h-10 text-blue-500" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">{viewingCustomer.name}</h3>
@@ -653,11 +635,6 @@ export default function CustomersPage() {
               </div>
 
               {/* Image Sections */}
-              <ImageViewSection label="Ảnh khách hàng" images={viewingCustomer.customerPhoto} />
-              <ImageViewSection label="Ảnh CCCD mặt trước" images={viewingCustomer.cccdFront} />
-              <ImageViewSection label="Ảnh CCCD mặt sau" images={viewingCustomer.cccdBack} />
-              <ImageViewSection label="Ảnh GPLX mặt trước" images={viewingCustomer.licenseFront} />
-              <ImageViewSection label="Ảnh GPLX mặt sau" images={viewingCustomer.licenseBack} />
             </div>
           )}
           <DialogFooter>
