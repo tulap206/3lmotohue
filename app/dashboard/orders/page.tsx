@@ -221,7 +221,7 @@ export default function OrdersPage() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const customer = customers.find((c) => c.id === formData.customerId)
     const vehicle = vehicles.find((v) => v.id === formData.vehicleId)
@@ -231,28 +231,45 @@ export default function OrdersPage() {
     const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
     const totalPrice = totalDays * vehicle.pricePerDay
 
-    const newOrder: RentalOrder = {
-      id: `DH${String(orders.length + 1).padStart(3, "0")}`,
-      customerId: customer.id,
-      customerName: customer.name,
-      vehicleId: vehicle.id,
-      vehicleName: vehicle.name,
-      licensePlate: vehicle.licensePlate,
-      startDate: new Date(formData.startDate).toLocaleDateString("vi-VN"),
-      endDate: new Date(formData.endDate).toLocaleDateString("vi-VN"),
-      totalDays,
-      pricePerDay: vehicle.pricePerDay,
-      totalPrice,
-      deposit: parseInt(formData.deposit),
-      extraFees: 0,
-      notes: "",
-      revenue: 0, // Chưa có doanh thu khi mới tạo đơn
-      status: "pending",
-      createdAt: new Date().toLocaleDateString("vi-VN"),
+    try {
+      // Insert to Supabase
+      const { data, error } = await supabase
+        .from('rentals')
+        .insert([{
+          customerId: customer.id,
+          customerName: customer.name,
+          vehicleId: vehicle.id,
+          vehicleName: vehicle.name,
+          licensePlate: vehicle.licensePlate,
+          startDate: new Date(formData.startDate).toLocaleDateString("vi-VN"),
+          endDate: new Date(formData.endDate).toLocaleDateString("vi-VN"),
+          totalDays,
+          pricePerDay: vehicle.pricePerDay,
+          totalPrice,
+          deposit: parseInt(formData.deposit),
+          extraFees: 0,
+          notes: "",
+          revenue: 0,
+          status: "pending",
+        }])
+        .select()
+
+      if (error) {
+        console.error("Error creating rental:", error)
+        alert(`❌ Lỗi: ${error.message}`)
+        return
+      }
+
+      if (data && data.length > 0) {
+        const newOrder = data[0]
+        setOrders([newOrder, ...orders])
+        if (user) logger.addRental(user.username, user.displayName, customer.name, vehicle.name)
+        resetForm()
+      }
+    } catch (error) {
+      console.error("Exception creating rental:", error)
+      alert(`❌ Lỗi tạo đơn thuê`)
     }
-    setOrders([newOrder, ...orders])
-    if (user) logger.addRental(user.username, user.displayName, customer.name, vehicle.name)
-    resetForm()
   }
 
   const resetForm = () => {
@@ -275,7 +292,7 @@ export default function OrdersPage() {
     setIsEditDialogOpen(true)
   }
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingOrder) return
 
@@ -284,23 +301,50 @@ export default function OrdersPage() {
     
     if (!customer || !vehicle) return
 
-    const updatedOrder: RentalOrder = {
-      ...editingOrder,
-      customerId: customer.id,
-      customerName: customer.name,
-      vehicleId: vehicle.id,
-      vehicleName: vehicle.name,
-      licensePlate: vehicle.licensePlate,
-      deposit: parseInt(editFormData.deposit) || 0,
-      extraFees: parseInt(editFormData.extraFees) || 0,
-      notes: editFormData.notes.trim(),
-      status: editFormData.status,
-    }
+    try {
+      // Update to Supabase
+      const { error } = await supabase
+        .from('rentals')
+        .update({
+          customerId: customer.id,
+          customerName: customer.name,
+          vehicleId: vehicle.id,
+          vehicleName: vehicle.name,
+          licensePlate: vehicle.licensePlate,
+          deposit: parseInt(editFormData.deposit) || 0,
+          extraFees: parseInt(editFormData.extraFees) || 0,
+          notes: editFormData.notes.trim(),
+          status: editFormData.status,
+        })
+        .eq('id', editingOrder.id)
 
-    setOrders(orders.map((o) => (o.id === editingOrder.id ? updatedOrder : o)))
-    if (user) logger.editRental(user.username, user.displayName, customer.name, vehicle.name)
-    setIsEditDialogOpen(false)
-    setEditingOrder(null)
+      if (error) {
+        console.error("Error updating rental:", error)
+        alert(`❌ Lỗi: ${error.message}`)
+        return
+      }
+
+      const updatedOrder: RentalOrder = {
+        ...editingOrder,
+        customerId: customer.id,
+        customerName: customer.name,
+        vehicleId: vehicle.id,
+        vehicleName: vehicle.name,
+        licensePlate: vehicle.licensePlate,
+        deposit: parseInt(editFormData.deposit) || 0,
+        extraFees: parseInt(editFormData.extraFees) || 0,
+        notes: editFormData.notes.trim(),
+        status: editFormData.status,
+      }
+
+      setOrders(orders.map((o) => (o.id === editingOrder.id ? updatedOrder : o)))
+      if (user) logger.editRental(user.username, user.displayName, customer.name, vehicle.name)
+      setIsEditDialogOpen(false)
+      setEditingOrder(null)
+    } catch (error) {
+      console.error("Exception updating rental:", error)
+      alert(`❌ Lỗi cập nhật đơn thuê`)
+    }
   }
 
   const updateOrderStatus = (orderId: string, newStatus: RentalOrder["status"]) => {
