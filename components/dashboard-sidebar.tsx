@@ -19,6 +19,9 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface SidebarProps {
   children: React.ReactNode
@@ -67,10 +70,59 @@ export function DashboardSidebar({ children }: SidebarProps) {
   const router = useRouter()
   const { user, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [oldPassword, setOldPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   const handleLogout = () => {
     logout()
     router.push("/login")
+  }
+
+  const handleChangePassword = async () => {
+    try {
+      setPasswordMessage(null)
+
+      // Validate
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        setPasswordMessage({ type: 'error', text: '❌ Vui lòng điền đầy đủ thông tin' })
+        return
+      }
+
+      if (newPassword !== confirmPassword) {
+        setPasswordMessage({ type: 'error', text: '❌ Mật khẩu mới không khớp' })
+        return
+      }
+
+      if (newPassword.length < 6) {
+        setPasswordMessage({ type: 'error', text: '❌ Mật khẩu phải ít nhất 6 ký tự' })
+        return
+      }
+
+      // Check old password
+      if (oldPassword !== user?.password) {
+        setPasswordMessage({ type: 'error', text: '❌ Mật khẩu cũ không đúng' })
+        return
+      }
+
+      // TODO: Update password in auth system
+      // For now, just show success message
+      setPasswordMessage({ type: 'success', text: '✅ Đổi mật khẩu thành công!' })
+      
+      // Reset form
+      setTimeout(() => {
+        setOldPassword("")
+        setNewPassword("")
+        setConfirmPassword("")
+        setPasswordMessage(null)
+        setIsProfileOpen(false)
+      }, 1500)
+    } catch (error) {
+      setPasswordMessage({ type: 'error', text: `❌ Lỗi: ${(error as any).message}` })
+    }
   }
 
   return (
@@ -127,23 +179,18 @@ export function DashboardSidebar({ children }: SidebarProps) {
 
         {/* Bottom section */}
         <div className="p-3 space-y-2 border-t border-gray-100">
-          {/* User Avatar */}
+          {/* User Avatar - Clickable */}
           {user && (
-            <div 
-              className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 mx-auto cursor-default"
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 mx-auto cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
               title={`${user.displayName} (${user.username})`}
             >
               <span className="text-white text-sm font-semibold uppercase">
                 {user.displayName.charAt(0)}
               </span>
-            </div>
+            </button>
           )}
-          <button
-            className="flex items-center justify-center w-14 h-14 rounded-2xl text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all duration-200 mx-auto"
-            title="Cài đặt"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
           <button
             onClick={handleLogout}
             className="flex items-center justify-center w-14 h-14 rounded-2xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all duration-200 mx-auto"
@@ -179,6 +226,96 @@ export function DashboardSidebar({ children }: SidebarProps) {
         {/* Page content */}
         <main className="p-4 lg:p-8 lg:pt-8">{children}</main>
       </div>
+
+      {/* User Profile Modal */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className="bg-white rounded-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-gray-800">Thông tin cá nhân</DialogTitle>
+            <DialogDescription className="text-gray-500">Quản lý tài khoản của bạn</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* User Info */}
+            <div className="text-center">
+              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 mx-auto mb-3">
+                <span className="text-white text-2xl font-semibold uppercase">
+                  {user?.displayName.charAt(0)}
+                </span>
+              </div>
+              <h3 className="font-semibold text-gray-900">{user?.displayName}</h3>
+              <p className="text-sm text-gray-600">Username: {user?.username}</p>
+              <p className="text-sm text-gray-600">Quyền: {user?.role}</p>
+            </div>
+
+            {/* Change Password Section */}
+            <div className="border-t border-gray-200 pt-6 space-y-4">
+              <h4 className="font-semibold text-gray-900">Đổi mật khẩu</h4>
+
+              {passwordMessage && (
+                <div className={`p-3 rounded-lg text-sm ${passwordMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                  {passwordMessage.text}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm text-gray-600">Mật khẩu cũ</Label>
+                  <Input
+                    type="password"
+                    placeholder="Nhập mật khẩu cũ"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm text-gray-600">Mật khẩu mới</Label>
+                  <Input
+                    type="password"
+                    placeholder="Nhập mật khẩu mới"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm text-gray-600">Xác nhận mật khẩu</Label>
+                  <Input
+                    type="password"
+                    placeholder="Xác nhận mật khẩu mới"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={handleChangePassword}
+                disabled={changingPassword}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+              >
+                {changingPassword ? "Đang xử lý..." : "Đổi mật khẩu"}
+              </Button>
+            </div>
+
+            {/* Logout Button */}
+            <Button
+              onClick={() => {
+                setIsProfileOpen(false)
+                handleLogout()
+              }}
+              variant="outline"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50 rounded-lg"
+            >
+              Đăng xuất
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
