@@ -186,7 +186,22 @@ export default function VehiclesPage() {
         // Generate rentalCode for each rental if not already present
         const rentalsWithCodes = (rentalsData || []).map((rental) => {
           if (!rental.rentalCode) {
-            const code = `${rental.customerName.split(/\s+/).pop() || ""}-${rental.licensePlate.replace(/[\s-]/g, "").toUpperCase()}-${new Date(rental.startDate).toLocaleDateString("vi-VN").replace(/\//g, "")}`
+            // Parse DD/MM/YYYY format date
+            const parseVietnamDate = (dateStr: string): Date => {
+              if (!dateStr) return new Date(0)
+              const parts = dateStr.split("/")
+              if (parts.length === 3) {
+                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+              }
+              return new Date(dateStr)
+            }
+            
+            const startDate = parseVietnamDate(rental.startDate)
+            const lastName = rental.customerName.split(/\s+/).pop() || ""
+            const cleanPlate = rental.licensePlate.replace(/[\s-]/g, "").toUpperCase()
+            const dateFormatted = startDate.toLocaleDateString("vi-VN").replace(/\//g, "")
+            const code = `${lastName}-${cleanPlate}-${dateFormatted}`
+            
             return { ...rental, rentalCode: code }
           }
           return rental
