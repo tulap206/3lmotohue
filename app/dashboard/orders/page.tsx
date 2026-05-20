@@ -207,7 +207,7 @@ export default function OrdersPage() {
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.rentalCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.rentalCode || order.id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.vehicleName.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = filterStatus === "all" || order.status === filterStatus
@@ -603,7 +603,7 @@ export default function OrdersPage() {
                 {filteredOrders.map((order) => (
                   <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-2">
-                      <span className="font-medium text-gray-800">{order.rentalCode}</span>
+                      <span className="font-medium text-gray-800">{order.rentalCode || order.id}</span>
                     </td>
                     <td className="py-4 px-2">
                       <button
