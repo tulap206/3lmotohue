@@ -414,7 +414,7 @@ export default function VehiclesPage() {
     // Add rental history from rentals
     const vehicleRentals = orders.filter((order) => order.vehicleId === vehicleId)
     vehicleRentals.forEach((rental) => {
-      // Add rental start
+      // Add rental start (booking)
       const startDate = parseVietnamDate(rental.startDate)
       history.push({
         id: `rent-${rental.id}`,
@@ -423,6 +423,18 @@ export default function VehiclesPage() {
         type: "rent",
         datetime: startDate.toLocaleString("vi-VN"),
       })
+      
+      // Add vehicle receiving (when status becomes active)
+      if (rental.status === "active" || rental.status === "completed" || rental.status === "cancelled") {
+        // Use startDate as receiving date (when customer picks up vehicle)
+        history.push({
+          id: `receive-${rental.id}`,
+          timestamp: startDate,
+          description: `Nhận lại xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
+          type: "rent",
+          datetime: startDate.toLocaleString("vi-VN"),
+        })
+      }
       
       // Add rental return
       if (rental.status === "completed" || rental.status === "cancelled") {
