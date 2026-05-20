@@ -100,6 +100,8 @@ export default function CustomersPage() {
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -329,18 +331,29 @@ export default function CustomersPage() {
   }
 
   const handleDelete = async (id: string) => {
-    const customerToDelete = customers.find((c) => c.id === id)
+    const customer = customers.find((c) => c.id === id)
+    if (customer) {
+      setCustomerToDelete(customer)
+      setDeleteConfirmOpen(true)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!customerToDelete) return
+    
     try {
       const { error } = await supabase
         .from('customers')
         .delete()
-        .eq('id', id)
+        .eq('id', customerToDelete.id)
       
       if (error) throw error
-      setCustomers(customers.filter((c) => c.id !== id))
-      if (customerToDelete && user) {
+      setCustomers(customers.filter((c) => c.id !== customerToDelete.id))
+      if (user) {
         logger.deleteCustomer(user.username, user.displayName, customerToDelete.name)
       }
+      setDeleteConfirmOpen(false)
+      setCustomerToDelete(null)
     } catch (error) {
       console.error("Error deleting customer:", error)
     }
@@ -359,6 +372,42 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Xác nhận xoá
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 text-base mt-2">
+              Bạn có chắc chắn muốn xoá khách hàng <span className="font-semibold text-gray-800">"{customerToDelete?.name}"</span> không?
+              <p className="text-sm text-red-600 mt-2">⚠️ Hành động này không thể hoàn tác!</p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false)
+                setCustomerToDelete(null)
+              }}
+              className="border-gray-300"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Xoá
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-gray-800">Khách hàng</h1>
