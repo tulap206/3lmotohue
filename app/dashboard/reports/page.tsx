@@ -150,7 +150,10 @@ export default function ReportsPage() {
     
     try {
       await deleteTransaction(transactionToDelete.id)
-      setTransactions(transactions.filter((t) => t.id !== transactionToDelete.id))
+      
+      // Reload transactions from Supabase to ensure sync
+      await loadTransactions()
+      
       setDeleteConfirmOpen(false)
       setTransactionToDelete(null)
       addAccessLog("Xoá", "Thu/Chi", `Xoá: ${transactionToDelete.description}`)
@@ -184,11 +187,8 @@ export default function ReportsPage() {
         amount: parseInt(editFormData.amount),
       })
       
-      setTransactions(transactions.map((t) => 
-        t.id === editingTransaction.id 
-          ? { ...t, type: editFormData.type as "income" | "expense", description: editFormData.description, amount: parseInt(editFormData.amount) }
-          : t
-      ))
+      // Reload transactions from Supabase to ensure sync
+      await loadTransactions()
       
       setIsEditTransactionOpen(false)
       setEditingTransaction(null)
