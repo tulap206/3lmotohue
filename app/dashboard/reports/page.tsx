@@ -89,15 +89,12 @@ export default function ReportsPage() {
     console.log("📝 Adding transaction:", formData)
     
     if (!formData.description) {
-      alert("❌ Vui lòng nhập mô tả")
       return
     }
     if (!formData.amount) {
-      alert("❌ Vui lòng nhập số tiền")
       return
     }
     if (!user) {
-      alert("❌ Vui lòng đăng nhập lại")
       return
     }
 
@@ -124,11 +121,8 @@ export default function ReportsPage() {
           console.error("Warning: Could not log action", logError)
         }
       }
-      
-      alert("✅ Thêm khoản thu/chi thành công!")
     } catch (error) {
       console.error("❌ Error adding transaction:", error)
-      alert("❌ Lỗi thêm khoản thu/chi: " + (error instanceof Error ? error.message : String(error)))
     }
   }
 
