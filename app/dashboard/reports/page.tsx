@@ -357,12 +357,20 @@ export default function ReportsPage() {
       iconBg: "bg-purple-50",
       iconColor: "text-purple-500",
     },
+    {
+      title: "Tổng Đơn",
+      value: reportData.totalRentals.toString(),
+      change: `${reportData.activeRentals} đang thuê`,
+      icon: ClipboardList,
+      iconBg: "bg-rose-50",
+      iconColor: "text-rose-500",
+    },
   ]
 
   return (
     <div className="p-6 space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {stats.map((stat, idx) => (
           <Card 
             key={idx}
