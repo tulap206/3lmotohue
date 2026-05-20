@@ -3,11 +3,20 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/supabase"
+import { supabase, fetchTransactions, insertTransaction, Transaction } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -47,15 +56,55 @@ interface Vehicle {
 
 export default function ReportsPage() {
   const router = useRouter()
-  const { addAccessLog } = useAuth()
+  const { addAccessLog, user } = useAuth()
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    type: "income" as "income" | "expense",
+    description: "",
+    amount: "",
+  })
 
   useEffect(() => {
     loadReportData()
+    loadTransactions()
   }, [])
+
+  const loadTransactions = async () => {
+    try {
+      const data = await fetchTransactions()
+      setTransactions(data)
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error)
+    }
+  }
+
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.description || !formData.amount || !user) return
+
+    try {
+      const newTransaction = await insertTransaction({
+        type: formData.type,
+        description: formData.description,
+        amount: parseInt(formData.amount),
+        user: user.username,
+        timestamp: new Date().toISOString(),
+      })
+      
+      setTransactions([newTransaction, ...transactions])
+      setFormData({ type: "income", description: "", amount: "" })
+      setIsAddTransactionOpen(false)
+      addAccessLog("Thêm", "Thu/Chi", `${formData.type === "income" ? "Thu" : "Chi"}: ${formData.description}`)
+    } catch (error) {
+      console.error("Error adding transaction:", error)
+      alert("❌ Lỗi thêm khoản thu/chi")
+    }
+  }
 
   const loadReportData = async () => {
     try {
@@ -391,6 +440,102 @@ export default function ReportsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Transactions Table */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Theo Dõi Thu/Chi</CardTitle>
+            <CardDescription>Quản lý các khoản thu/chi ngoài đơn thuê</CardDescription>
+          </div>
+          <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
+            <Button onClick={() => setIsAddTransactionOpen(true)} className="bg-blue-500 text-white hover:bg-blue-600">
+              <Plus className="w-4 h-4 mr-2" />
+              Nhập Thu/Chi
+            </Button>
+            <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-gray-800">Thêm Khoản Thu/Chi</DialogTitle>
+                <DialogDescription className="text-gray-500">Nhập thông tin khoản thu hoặc chi</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddTransaction} className="space-y-4">
+                <div>
+                  <Label className="text-gray-700 text-sm font-medium">Loại</Label>
+                  <Select value={formData.type} onValueChange={(val) => setFormData({...formData, type: val as "income" | "expense"})}>
+                    <SelectTrigger className="border-gray-300 rounded-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="income">Thu</SelectItem>
+                      <SelectItem value="expense">Chi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-gray-700 text-sm font-medium">Mô Tả (ví dụ: mua định vị, sửa xe)</Label>
+                  <Input
+                    placeholder="Nhập mô tả"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    className="border-gray-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-700 text-sm font-medium">Số Tiền (VND)</Label>
+                  <Input
+                    type="number"
+                    placeholder="Nhập số tiền"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    className="border-gray-300 rounded-lg"
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-lg">
+                  Thêm
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          {transactions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="text-left p-3 font-semibold text-gray-700">Thời gian</th>
+                    <th className="text-left p-3 font-semibold text-gray-700">Khoản Thu/Chi</th>
+                    <th className="text-left p-3 font-semibold text-gray-700">Người (User)</th>
+                    <th className="text-right p-3 font-semibold text-gray-700">Số Tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((tx) => (
+                    <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="p-3 text-gray-600">
+                        {new Date(tx.timestamp).toLocaleString("vi-VN")}
+                      </td>
+                      <td className="p-3">
+                        <span className={tx.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                          {tx.type === "income" ? "✓" : "✗"} {tx.description}
+                        </span>
+                      </td>
+                      <td className="p-3 text-gray-600">{tx.user}</td>
+                      <td className={`p-3 text-right font-semibold ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
+                        {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} VND
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>Chưa có khoản thu/chi nào</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Summary */}
       <Card className="bg-blue-50 border-blue-200">

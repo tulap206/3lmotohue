@@ -75,6 +75,16 @@ export interface Rental {
   rentalCode?: string // Optional: generated in-memory
 }
 
+export interface Transaction {
+  id: string
+  type: "income" | "expense"
+  description: string
+  amount: number
+  user: string // username of person who recorded it
+  timestamp: string
+  created_at?: string
+}
+
 // Helper functions
 export const fetchVehicles = async () => {
   const { data, error } = await supabase
@@ -286,4 +296,37 @@ export const insertAccessLog = async (action: string, module: string, details: s
     console.error('Error inserting access log:', error)
     // Don't throw - logging failures shouldn't break the app
   }
+}
+
+// Transaction Functions
+export const fetchTransactions = async () => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .order('created_at', { ascending: false })
+  
+  if (error) {
+    console.error('Error fetching transactions:', error)
+    return []
+  }
+  return data || []
+}
+
+export const insertTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert([{
+      type: transaction.type,
+      description: transaction.description,
+      amount: transaction.amount,
+      user: transaction.user,
+      timestamp: transaction.timestamp,
+    }])
+    .select()
+  
+  if (error) {
+    console.error('Error inserting transaction:', error)
+    throw error
+  }
+  return data?.[0]
 }
