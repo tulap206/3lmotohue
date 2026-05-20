@@ -164,11 +164,24 @@ export default function ReportsPage() {
       const totalVehicles = vehicles.length || 0
       const totalRentals = rentals.length || 0
 
-      // Revenue from rentals (totalPrice field)
-      const totalRevenue = rentals.reduce((sum: number, r: any) => sum + (r.totalPrice || 0), 0)
+      // Rental revenue (totalPrice field)
+      const rentalRevenue = rentals.reduce((sum: number, r: any) => sum + (r.totalPrice || 0), 0)
       
-      // Profit from vehicles if available, otherwise calculate from revenue
-      const totalProfit = vehicles.reduce((sum: number, v: any) => sum + (v.profit || 0), 0) || Math.round(totalRevenue * 0.3)
+      // Transaction totals
+      const totalIncomeFromTransactions = transactions
+        .filter((tx: any) => tx.type === 'income')
+        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+      
+      const totalExpenseFromTransactions = transactions
+        .filter((tx: any) => tx.type === 'expense')
+        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+      
+      // NEW LOGIC:
+      // Doanh thu = Rental revenue + Income from transactions
+      const totalRevenue = rentalRevenue + totalIncomeFromTransactions
+      
+      // Lợi nhuận = Rental revenue only (not counting transactions)
+      const totalProfit = rentalRevenue
       
       // Active rentals = pending status
       const activeRentals = rentals.filter((r: any) => r.status === "pending").length
@@ -176,7 +189,17 @@ export default function ReportsPage() {
       // Vehicles in maintenance
       const vehiclesInMaintenance = vehicles.filter((v: any) => v.status === "maintenance").length
 
-      console.log("💰 Calculations:", { totalRevenue, totalProfit, activeRentals, totalCustomers, totalVehicles, totalRentals })
+      console.log("💰 Calculations:", { 
+        rentalRevenue, 
+        totalIncomeFromTransactions,
+        totalExpenseFromTransactions,
+        totalRevenue, 
+        totalProfit, 
+        activeRentals, 
+        totalCustomers, 
+        totalVehicles, 
+        totalRentals 
+      })
 
       // Monthly data
       const monthlyData: Record<string, number> = {}
@@ -599,9 +622,15 @@ export default function ReportsPage() {
           .filter((tx) => tx.type === 'expense')
           .reduce((sum, tx) => sum + tx.amount, 0)
         
+        // NOTE: reportData.totalRevenue = Rental revenue + Income transactions
+        // reportData.totalProfit = Rental revenue only
+        // So to get rental revenue: we need to subtract income from totalRevenue
+        // Better: use totalProfit which is rental revenue only
+        const rentalRevenue = reportData.totalProfit // This is rental revenue only
+        
         // Calculate cash on hand
-        // = Revenue from rentals + Income from transactions - Expenses from transactions
-        const cashOnHand = reportData.totalRevenue + totalIncome - totalExpense
+        // = Rental revenue + Income from transactions - Expenses from transactions
+        const cashOnHand = rentalRevenue + totalIncome - totalExpense
         
         return (
           <Card className="bg-blue-50 border-blue-200">
@@ -639,7 +668,7 @@ export default function ReportsPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📥 Tổng thu</p>
-                    <p className="font-semibold text-lg text-green-600">+{totalIncome.toLocaleString("vi-VN")} VNĐ</p>
+                    <p className="font-semibold text-lg text-green-600">+{(rentalRevenue + totalIncome).toLocaleString("vi-VN")} VNĐ</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📤 Tổng chi</p>
