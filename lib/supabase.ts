@@ -55,6 +55,7 @@ export interface Customer {
 
 export interface Rental {
   id: string
+  rentalCode: string
   customerId: string
   customerName: string
   vehicleId: string

@@ -207,7 +207,7 @@ export default function OrdersPage() {
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.rentalCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.vehicleName.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = filterStatus === "all" || order.status === filterStatus
@@ -255,15 +255,15 @@ export default function OrdersPage() {
     const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
     const totalPrice = totalDays * vehicle.pricePerDay
     const startDateVN = new Date(formData.startDate).toLocaleDateString("vi-VN")
-    const rentalId = generateRentalId(customer.name, vehicle.licensePlate, startDateVN)
-    console.log("Generated Rental ID:", rentalId) // DEBUG
+    const rentalCode = generateRentalId(customer.name, vehicle.licensePlate, startDateVN)
+    console.log("Generated Rental Code:", rentalCode) // DEBUG
 
     try {
-      // Insert to Supabase
+      // Insert to Supabase - let id auto-generate UUID
       const { data, error } = await supabase
         .from('rentals')
         .insert([{
-          id: rentalId,
+          rentalCode: rentalCode,
           customerId: customer.id,
           customerName: customer.name,
           vehicleId: vehicle.id,
@@ -291,7 +291,7 @@ export default function OrdersPage() {
       console.log("Inserted rental data:", data) // DEBUG
       if (data && data.length > 0) {
         const newOrder = data[0]
-        console.log("New order ID:", newOrder.id) // DEBUG
+        console.log("New order rentalCode:", newOrder.rentalCode) // DEBUG
         setOrders([newOrder, ...orders])
         if (user) logger.addRental(user.username, user.displayName, customer.name, vehicle.name)
         resetForm()
@@ -603,7 +603,7 @@ export default function OrdersPage() {
                 {filteredOrders.map((order) => (
                   <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-2">
-                      <span className="font-medium text-gray-800">{order.id}</span>
+                      <span className="font-medium text-gray-800">{order.rentalCode}</span>
                     </td>
                     <td className="py-4 px-2">
                       <button
