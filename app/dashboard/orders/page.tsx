@@ -255,6 +255,7 @@ export default function OrdersPage() {
     const totalPrice = totalDays * vehicle.pricePerDay
     const startDateVN = new Date(formData.startDate).toLocaleDateString("vi-VN")
     const rentalId = generateRentalId(customer.name, vehicle.licensePlate, startDateVN)
+    console.log("Generated Rental ID:", rentalId) // DEBUG
 
     try {
       // Insert to Supabase
@@ -286,8 +287,10 @@ export default function OrdersPage() {
         return
       }
 
+      console.log("Inserted rental data:", data) // DEBUG
       if (data && data.length > 0) {
         const newOrder = data[0]
+        console.log("New order ID:", newOrder.id) // DEBUG
         setOrders([newOrder, ...orders])
         if (user) logger.addRental(user.username, user.displayName, customer.name, vehicle.name)
         resetForm()
