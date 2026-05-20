@@ -491,7 +491,7 @@ export default function ReportsPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Theo Dõi Thu/Chi</CardTitle>
-            <CardDescription>Quản lý các khoản thu/chi ngoài đơn thuê</CardDescription>
+            <CardDescription>Quản lý các khoản thu/chi</CardDescription>
           </div>
           <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
             <Button onClick={() => setIsAddTransactionOpen(true)} className="bg-blue-500 text-white hover:bg-blue-600">
