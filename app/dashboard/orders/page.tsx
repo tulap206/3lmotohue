@@ -296,6 +296,7 @@ export default function OrdersPage() {
     const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
     const totalPrice = totalDays * vehicle.pricePerDay
     const startDateVN = new Date(formData.startDate).toLocaleDateString("vi-VN")
+    const now = new Date().toISOString() // Current timestamp
 
     try {
       // Insert to Supabase - let id auto-generate UUID
@@ -317,6 +318,9 @@ export default function OrdersPage() {
           notes: "",
           revenue: 0,
           status: "pending",
+          created_at: now,
+          received_at: null,
+          completed_at: null,
         }])
         .select()
 
@@ -448,10 +452,20 @@ export default function OrdersPage() {
       }
       // pending và active chưa có doanh thu
       
+      // Set timestamp based on status change
+      const now = new Date().toISOString()
+      const updateData: any = { status: newStatus, revenue }
+      
+      if (newStatus === "active") {
+        updateData.received_at = now
+      } else if (newStatus === "completed") {
+        updateData.completed_at = now
+      }
+      
       // Update to Supabase
       const { error } = await supabase
         .from('rentals')
-        .update({ status: newStatus, revenue })
+        .update(updateData)
         .eq('id', orderId)
 
       if (error) {
@@ -460,7 +474,7 @@ export default function OrdersPage() {
         return
       }
 
-      setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus, revenue } : o)))
+      setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus, revenue, ...updateData } : o)))
       const statusLabels: Record<string, string> = { pending: "Chờ nhận xe", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }
       if (user) logger.log(user.username, user.displayName, 'Chỉnh sửa', 'Đơn thuê', `Cập nhật đơn ${orderId}: ${statusLabels[newStatus]}`)
     } catch (error) {

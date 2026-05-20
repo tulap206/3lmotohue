@@ -414,37 +414,37 @@ export default function VehiclesPage() {
     // Add rental history from rentals
     const vehicleRentals = orders.filter((order) => order.vehicleId === vehicleId)
     vehicleRentals.forEach((rental) => {
-      // Add rental start (booking)
-      const startDate = parseVietnamDate(rental.startDate)
+      // Add rental booking (created_at or startDate)
+      const bookingDate = rental.created_at ? new Date(rental.created_at) : parseVietnamDate(rental.startDate)
       history.push({
-        id: `rent-${rental.id}`,
-        timestamp: startDate,
-        description: `Cho thuê - ${rental.customerName} (${rental.rentalCode || rental.id})`,
+        id: `book-${rental.id}`,
+        timestamp: bookingDate,
+        description: `Đặt xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
         type: "rent",
-        datetime: startDate.toLocaleString("vi-VN"),
+        datetime: bookingDate.toLocaleString("vi-VN"),
       })
       
-      // Add vehicle receiving (when status becomes active)
+      // Add vehicle receiving (received_at or use startDate)
       if (rental.status === "active" || rental.status === "completed" || rental.status === "cancelled") {
-        // Use startDate as receiving date (when customer picks up vehicle)
+        const receivingDate = rental.received_at ? new Date(rental.received_at) : parseVietnamDate(rental.startDate)
         history.push({
           id: `receive-${rental.id}`,
-          timestamp: startDate,
+          timestamp: receivingDate,
           description: `Nhận lại xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
           type: "rent",
-          datetime: startDate.toLocaleString("vi-VN"),
+          datetime: receivingDate.toLocaleString("vi-VN"),
         })
       }
       
-      // Add rental return
+      // Add rental return (completed_at or endDate)
       if (rental.status === "completed" || rental.status === "cancelled") {
-        const endDate = parseVietnamDate(rental.endDate)
+        const returnDate = rental.completed_at ? new Date(rental.completed_at) : parseVietnamDate(rental.endDate)
         history.push({
           id: `return-${rental.id}`,
-          timestamp: endDate,
+          timestamp: returnDate,
           description: `Trả xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
           type: "return",
-          datetime: endDate.toLocaleString("vi-VN"),
+          datetime: returnDate.toLocaleString("vi-VN"),
         })
       }
     })
