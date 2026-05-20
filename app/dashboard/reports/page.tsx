@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/supabase"
+import { supabase, fetchTransactions, insertTransaction, Transaction } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -37,15 +37,6 @@ interface ReportData {
   vehiclesInMaintenance: number
   monthlyRevenue: Array<{ month: string; revenue: number }>
   topVehicles: Array<{ name: string; rentals: number; revenue: number }>
-}
-
-interface Transaction {
-  id: string
-  type: "income" | "expense"
-  description: string
-  amount: number
-  user: string
-  timestamp: string
 }
 
 interface Vehicle {
@@ -85,13 +76,11 @@ export default function ReportsPage() {
 
   const loadTransactions = async () => {
     try {
-      // Load from localStorage instead of Supabase
-      const stored = localStorage.getItem('transactions')
-      if (stored) {
-        setTransactions(JSON.parse(stored))
-      }
+      const data = await fetchTransactions()
+      setTransactions(data)
     } catch (error) {
-      console.error("Failed to load transactions:", error)
+      console.error("Failed to fetch transactions:", error)
+      // Still works even if fetch fails
     }
   }
 
@@ -113,24 +102,17 @@ export default function ReportsPage() {
     }
 
     try {
-      const newTransaction: Transaction = {
-        id: `tx-${Date.now()}`,
+      const newTransaction = await insertTransaction({
         type: formData.type,
         description: formData.description,
         amount: parseInt(formData.amount),
         user: user.username,
         timestamp: new Date().toISOString(),
-      }
+      })
       
-      console.log("✅ Transaction object:", newTransaction)
+      console.log("✅ Transaction saved to Supabase:", newTransaction)
       
-      const updatedTransactions = [newTransaction, ...transactions]
-      setTransactions(updatedTransactions)
-      
-      // Save to localStorage
-      localStorage.setItem('transactions', JSON.stringify(updatedTransactions))
-      console.log("💾 Saved to localStorage")
-      
+      setTransactions([newTransaction, ...transactions])
       setFormData({ type: "income", description: "", amount: "" })
       setIsAddTransactionOpen(false)
       
@@ -140,7 +122,6 @@ export default function ReportsPage() {
           addAccessLog("Thêm", "Thu/Chi", `${formData.type === "income" ? "Thu" : "Chi"}: ${formData.description}`)
         } catch (logError) {
           console.error("Warning: Could not log action", logError)
-          // Don't fail if logging fails
         }
       }
       
