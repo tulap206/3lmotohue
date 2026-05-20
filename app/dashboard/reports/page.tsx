@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchTransactions, insertTransaction, Transaction } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -37,6 +37,15 @@ interface ReportData {
   vehiclesInMaintenance: number
   monthlyRevenue: Array<{ month: string; revenue: number }>
   topVehicles: Array<{ name: string; rentals: number; revenue: number }>
+}
+
+interface Transaction {
+  id: string
+  type: "income" | "expense"
+  description: string
+  amount: number
+  user: string
+  timestamp: string
 }
 
 interface Vehicle {
@@ -76,10 +85,13 @@ export default function ReportsPage() {
 
   const loadTransactions = async () => {
     try {
-      const data = await fetchTransactions()
-      setTransactions(data)
+      // Load from localStorage instead of Supabase
+      const stored = localStorage.getItem('transactions')
+      if (stored) {
+        setTransactions(JSON.parse(stored))
+      }
     } catch (error) {
-      console.error("Failed to fetch transactions:", error)
+      console.error("Failed to load transactions:", error)
     }
   }
 
@@ -88,15 +100,21 @@ export default function ReportsPage() {
     if (!formData.description || !formData.amount || !user) return
 
     try {
-      const newTransaction = await insertTransaction({
+      const newTransaction: Transaction = {
+        id: `tx-${Date.now()}`,
         type: formData.type,
         description: formData.description,
         amount: parseInt(formData.amount),
         user: user.username,
         timestamp: new Date().toISOString(),
-      })
+      }
       
-      setTransactions([newTransaction, ...transactions])
+      const updatedTransactions = [newTransaction, ...transactions]
+      setTransactions(updatedTransactions)
+      
+      // Save to localStorage
+      localStorage.setItem('transactions', JSON.stringify(updatedTransactions))
+      
       setFormData({ type: "income", description: "", amount: "" })
       setIsAddTransactionOpen(false)
       addAccessLog("Thêm", "Thu/Chi", `${formData.type === "income" ? "Thu" : "Chi"}: ${formData.description}`)
