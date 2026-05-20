@@ -222,13 +222,18 @@ export default function ReportsPage() {
         { month: "T6", revenue: monthlyData["T6"] || 0 },
       ]
 
-      // Top vehicles - use totalRevenue field
-      const topVehicles = vehicles
-        .map((v: any) => ({
+      // Top vehicles - calculate from rentals
+      const vehiclesWithStats = vehicles.map((v: any) => {
+        const vehicleRentals = rentals.filter((r: any) => r.vehicleId === v.id && r.status === 'completed')
+        const revenue = vehicleRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+        return {
           name: v.name,
-          rentals: v.totalRentalDays || 0,
-          revenue: v.totalRevenue || 0,
-        }))
+          rentals: vehicleRentals.length,
+          revenue: revenue,
+        }
+      })
+
+      const topVehicles = vehiclesWithStats
         .filter((v: any) => v.revenue > 0) // Only show vehicles with revenue
         .sort((a: any, b: any) => b.revenue - a.revenue)
         .slice(0, 5)
