@@ -614,20 +614,78 @@ export default function ReportsPage() {
       </Card>
 
       {/* Summary */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Tóm Tắt
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-gray-700 space-y-2">
-          <p>📊 Tổng khách: {reportData.totalCustomers}</p>
-          <p>🚗 Tổng xe: {reportData.totalVehicles}</p>
-          <p>💰 Doanh thu: {reportData.totalRevenue.toLocaleString("vi-VN")} VNĐ</p>
-          <p>📈 Lợi nhuận: {reportData.totalProfit.toLocaleString("vi-VN")} VNĐ</p>
-        </CardContent>
-      </Card>
+      {(() => {
+        // Calculate totals from transactions
+        const totalIncome = transactions
+          .filter((tx) => tx.type === 'income')
+          .reduce((sum, tx) => sum + tx.amount, 0)
+        
+        const totalExpense = transactions
+          .filter((tx) => tx.type === 'expense')
+          .reduce((sum, tx) => sum + tx.amount, 0)
+        
+        // Calculate cash on hand
+        // = Revenue from rentals + Income from transactions - Expenses from transactions
+        const cashOnHand = reportData.totalRevenue + totalIncome - totalExpense
+        
+        return (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Tóm Tắt
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-gray-700 space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">🚗 Tổng xe</p>
+                  <p className="font-semibold text-lg text-gray-800">{reportData.totalVehicles}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">👥 Tổng khách</p>
+                  <p className="font-semibold text-lg text-gray-800">{reportData.totalCustomers}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">📋 Tổng đơn</p>
+                  <p className="font-semibold text-lg text-gray-800">{reportData.totalRentals}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">💰 Doanh thu</p>
+                  <p className="font-semibold text-lg text-blue-600">{reportData.totalRevenue.toLocaleString("vi-VN")} VNĐ</p>
+                </div>
+              </div>
+              
+              <div className="border-t border-blue-200 pt-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">📈 Lợi nhuận</p>
+                    <p className="font-semibold text-lg text-emerald-600">{reportData.totalProfit.toLocaleString("vi-VN")} VNĐ</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">📥 Tổng thu</p>
+                    <p className="font-semibold text-lg text-green-600">+{totalIncome.toLocaleString("vi-VN")} VNĐ</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">📤 Tổng chi</p>
+                    <p className="font-semibold text-lg text-red-600">-{totalExpense.toLocaleString("vi-VN")} VNĐ</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">💵 Tiền hiện có</p>
+                    <p className={`font-semibold text-lg ${cashOnHand >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                      {cashOnHand.toLocaleString("vi-VN")} VNĐ
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border-t border-blue-200 pt-3 text-xs text-gray-500">
+                <p>📝 Công thức: Tiền hiện có = Doanh thu + Tổng thu - Tổng chi</p>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
     </div>
   )
 }
