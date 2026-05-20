@@ -178,23 +178,37 @@ export default function ReportsPage() {
   }
 
   const handleConfirmEdit = async () => {
-    if (!editingTransaction || !editFormData.description || !editFormData.amount) return
+    if (!editingTransaction || !editFormData.description || !editFormData.amount) {
+      console.error("❌ Validation failed:", { editingTransaction, editFormData })
+      return
+    }
+    
+    console.log("📝 Updating transaction:", editingTransaction.id, {
+      type: editFormData.type,
+      description: editFormData.description,
+      amount: parseInt(editFormData.amount),
+    })
     
     try {
-      await updateTransaction(editingTransaction.id, {
+      const result = await updateTransaction(editingTransaction.id, {
         type: editFormData.type as "income" | "expense",
         description: editFormData.description,
         amount: parseInt(editFormData.amount),
       })
       
+      console.log("✅ Update result:", result)
+      
       // Reload transactions from Supabase to ensure sync
+      console.log("🔄 Reloading transactions...")
       await loadTransactions()
       
       setIsEditTransactionOpen(false)
       setEditingTransaction(null)
       addAccessLog("Sửa", "Thu/Chi", `Sửa: ${editFormData.description}`)
+      
+      console.log("✅ Edit completed successfully")
     } catch (error) {
-      console.error("Error updating transaction:", error)
+      console.error("❌ Error updating transaction:", error)
     }
   }
 
