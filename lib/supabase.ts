@@ -55,7 +55,6 @@ export interface Customer {
 
 export interface Rental {
   id: string
-  rentalCode: string
   customerId: string
   customerName: string
   vehicleId: string
@@ -73,6 +72,7 @@ export interface Rental {
   status: "pending" | "active" | "completed" | "cancelled"
   createdAt: string
   created_at?: string
+  rentalCode?: string // Optional: generated in-memory
 }
 
 // Helper functions

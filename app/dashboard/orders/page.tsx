@@ -195,7 +195,22 @@ export default function OrdersPage() {
           const dateB = new Date(b.created_at || 0).getTime()
           return dateB - dateA // DESC (newest first)
         })
-        setOrders(sortedRentals)
+        
+        // Generate rentalCode for each rental if not already present
+        const rentalsWithCodes = sortedRentals.map((rental) => {
+          if (!rental.rentalCode) {
+            const code = generateRentalCodeFromUUID(
+              rental.customerName,
+              rental.licensePlate,
+              rental.startDate,
+              rental.id
+            )
+            return { ...rental, rentalCode: code }
+          }
+          return rental
+        })
+        
+        setOrders(rentalsWithCodes)
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -219,6 +234,32 @@ export default function OrdersPage() {
     const endDate = new Date(end)
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  }
+
+  const generateRentalCodeFromUUID = (customerName: string, licensePlate: string, startDate: string, uuid: string) => {
+    // Remove Vietnamese diacritics and get last name
+    const removeVietnameseDiacritics = (str: string) => {
+      return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+    }
+
+    // Get last name (last word of customer name)
+    const nameParts = removeVietnameseDiacritics(customerName).trim().split(/\s+/)
+    const lastName = nameParts[nameParts.length - 1]
+
+    // Remove spaces and dashes from license plate, UPPERCASE
+    const cleanPlate = licensePlate.replace(/[\s-]/g, "").toUpperCase()
+
+    // Format date DDMMYYYY from VI-VN format (DD/MM/YYYY)
+    const dateParts = startDate.split("/")
+    const dateFormatted = String(dateParts[0]).padStart(2, "0") + String(dateParts[1]).padStart(2, "0") + String(dateParts[2]).padStart(4, "0")
+
+    // Use first 8 chars of UUID for uniqueness
+    const uuidPart = uuid.substring(0, 8).toUpperCase()
+
+    return `${lastName}-${cleanPlate}-${dateFormatted}-${uuidPart}`
   }
 
   const generateRentalId = (customerName: string, licensePlate: string, startDate: string) => {
@@ -255,15 +296,12 @@ export default function OrdersPage() {
     const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
     const totalPrice = totalDays * vehicle.pricePerDay
     const startDateVN = new Date(formData.startDate).toLocaleDateString("vi-VN")
-    const rentalCode = generateRentalId(customer.name, vehicle.licensePlate, startDateVN)
-    console.log("Generated Rental Code:", rentalCode) // DEBUG
 
     try {
       // Insert to Supabase - let id auto-generate UUID
       const { data, error } = await supabase
         .from('rentals')
         .insert([{
-          rentalCode: rentalCode,
           customerId: customer.id,
           customerName: customer.name,
           vehicleId: vehicle.id,
@@ -288,11 +326,14 @@ export default function OrdersPage() {
         return
       }
 
-      console.log("Inserted rental data:", data) // DEBUG
       if (data && data.length > 0) {
-        const newOrder = data[0]
-        console.log("New order rentalCode:", newOrder.rentalCode) // DEBUG
-        setOrders([newOrder, ...orders])
+        const newRental = data[0]
+        // Generate rentalCode from UUID
+        const rentalCode = generateRentalCodeFromUUID(customer.name, vehicle.licensePlate, startDateVN, newRental.id)
+        const orderWithCode = { ...newRental, rentalCode }
+        console.log("Generated Rental Code:", rentalCode) // DEBUG
+        
+        setOrders([orderWithCode, ...orders])
         if (user) logger.addRental(user.username, user.displayName, customer.name, vehicle.name)
         resetForm()
       }
