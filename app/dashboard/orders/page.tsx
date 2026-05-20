@@ -423,14 +423,16 @@ export default function OrdersPage() {
     if (!order) return
 
     try {
-      // Tính doanh thu dựa trên trạng thái
+      // Tính doanh thu dựa trên trạng thái + chi phí phát sinh
       let revenue = 0
+      const extraFees = order.extraFees || 0
+      
       if (newStatus === "cancelled") {
-        // Hủy đơn: khách mất cọc -> doanh thu = tiền cọc
-        revenue = order.deposit
+        // Hủy đơn: khách mất cọc + chi phí phát sinh -> doanh thu = tiền cọc + extraFees
+        revenue = order.deposit + extraFees
       } else if (newStatus === "completed") {
-        // Hoàn thành: trả cọc, thu tiền thuê -> doanh thu = tiền thuê
-        revenue = order.totalPrice
+        // Hoàn thành: trả cọc, thu tiền thuê + chi phí phát sinh -> doanh thu = tiền thuê + extraFees
+        revenue = order.totalPrice + extraFees
       }
       // pending và active chưa có doanh thu
       
