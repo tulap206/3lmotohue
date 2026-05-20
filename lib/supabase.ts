@@ -83,6 +83,7 @@ export interface Transaction {
   user: string // username of person who recorded it
   timestamp: string
   created_at?: string
+  created_by?: string // Track who created it for permission check
 }
 
 // Helper functions
@@ -321,6 +322,7 @@ export const insertTransaction = async (transaction: Omit<Transaction, 'id' | 'c
       amount: transaction.amount,
       user: transaction.user,
       timestamp: transaction.timestamp,
+      created_by: transaction.user, // Store who created it
     }])
     .select()
   
@@ -329,4 +331,16 @@ export const insertTransaction = async (transaction: Omit<Transaction, 'id' | 'c
     throw error
   }
   return data?.[0]
+}
+
+export const deleteTransaction = async (id: string) => {
+  const { error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('id', id)
+  
+  if (error) {
+    console.error('Error deleting transaction:', error)
+    throw error
+  }
 }

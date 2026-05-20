@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchTransactions, insertTransaction, Transaction } from "@/lib/supabase"
+import { supabase, fetchTransactions, insertTransaction, deleteTransaction, Transaction } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -16,7 +16,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus } from "lucide-react"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2 } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -63,6 +63,8 @@ export default function ReportsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null)
   const [formData, setFormData] = useState({
     type: "income" as "income" | "expense",
     description: "",
@@ -123,6 +125,30 @@ export default function ReportsPage() {
       }
     } catch (error) {
       console.error("❌ Error adding transaction:", error)
+    }
+  }
+
+  const handleDeleteTransaction = (tx: Transaction) => {
+    // Only admin can delete
+    if (user?.role !== 'admin') {
+      alert('❌ Chỉ admin có quyền xoá khoản thu/chi')
+      return
+    }
+    setTransactionToDelete(tx)
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!transactionToDelete) return
+    
+    try {
+      await deleteTransaction(transactionToDelete.id)
+      setTransactions(transactions.filter((t) => t.id !== transactionToDelete.id))
+      setDeleteConfirmOpen(false)
+      setTransactionToDelete(null)
+      addAccessLog("Xoá", "Thu/Chi", `Xoá: ${transactionToDelete.description}`)
+    } catch (error) {
+      console.error("Error deleting transaction:", error)
     }
   }
 
@@ -367,6 +393,44 @@ export default function ReportsPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Delete Transaction Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Xác nhận xoá
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 text-base mt-2">
+              Bạn có chắc chắn muốn xoá khoản {transactionToDelete?.type === "income" ? "THU" : "CHI"} <span className="font-semibold text-gray-800">"{transactionToDelete?.description}"</span> không?
+              <p className="text-sm text-red-600 mt-2">⚠️ Số tiền: {transactionToDelete?.amount.toLocaleString("vi-VN")} VND</p>
+              <p className="text-sm text-red-600">⚠️ Nhập bởi: {transactionToDelete?.user}</p>
+              <p className="text-sm text-red-600">⚠️ Hành động này không thể hoàn tác!</p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false)
+                setTransactionToDelete(null)
+              }}
+              className="border-gray-300"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Xoá
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {stats.map((stat, idx) => (
@@ -581,6 +645,7 @@ export default function ReportsPage() {
                     <th className="text-left p-3 font-semibold text-gray-700">Khoản Thu/Chi</th>
                     <th className="text-left p-3 font-semibold text-gray-700">Người (User)</th>
                     <th className="text-right p-3 font-semibold text-gray-700">Số Tiền</th>
+                    <th className="text-center p-3 font-semibold text-gray-700">Tác vụ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -597,6 +662,19 @@ export default function ReportsPage() {
                       <td className="p-3 text-gray-600">{tx.user}</td>
                       <td className={`p-3 text-right font-semibold ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
                         {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} VND
+                      </td>
+                      <td className="p-3 text-center">
+                        {user?.role === 'admin' ? (
+                          <button
+                            onClick={() => handleDeleteTransaction(tx)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition"
+                            title="Xoá (chỉ admin)"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 text-xs">Chỉ admin</span>
+                        )}
                       </td>
                     </tr>
                   ))}
