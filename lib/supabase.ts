@@ -344,3 +344,15 @@ export const deleteTransaction = async (id: string) => {
     throw error
   }
 }
+
+export const updateTransaction = async (id: string, updates: Partial<Omit<Transaction, 'id'>>) => {
+  const { error } = await supabase
+    .from('transactions')
+    .update(updates)
+    .eq('id', id)
+  
+  if (error) {
+    console.error('Error updating transaction:', error)
+    throw error
+  }
+}

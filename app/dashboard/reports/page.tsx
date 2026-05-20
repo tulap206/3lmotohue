@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchTransactions, insertTransaction, deleteTransaction, Transaction } from "@/lib/supabase"
+import { supabase, fetchTransactions, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -16,7 +16,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2 } from "lucide-react"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2 } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -63,9 +63,16 @@ export default function ReportsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
+  const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null)
   const [formData, setFormData] = useState({
+    type: "income" as "income" | "expense",
+    description: "",
+    amount: "",
+  })
+  const [editFormData, setEditFormData] = useState({
     type: "income" as "income" | "expense",
     description: "",
     amount: "",
@@ -149,6 +156,45 @@ export default function ReportsPage() {
       addAccessLog("Xoá", "Thu/Chi", `Xoá: ${transactionToDelete.description}`)
     } catch (error) {
       console.error("Error deleting transaction:", error)
+    }
+  }
+
+  const handleEditTransaction = (tx: Transaction) => {
+    // Only admin can edit
+    if (user?.role !== 'admin') {
+      alert('❌ Chỉ admin có quyền sửa khoản thu/chi')
+      return
+    }
+    setEditingTransaction(tx)
+    setEditFormData({
+      type: tx.type,
+      description: tx.description,
+      amount: tx.amount.toString(),
+    })
+    setIsEditTransactionOpen(true)
+  }
+
+  const handleConfirmEdit = async () => {
+    if (!editingTransaction || !editFormData.description || !editFormData.amount) return
+    
+    try {
+      await updateTransaction(editingTransaction.id, {
+        type: editFormData.type as "income" | "expense",
+        description: editFormData.description,
+        amount: parseInt(editFormData.amount),
+      })
+      
+      setTransactions(transactions.map((t) => 
+        t.id === editingTransaction.id 
+          ? { ...t, type: editFormData.type as "income" | "expense", description: editFormData.description, amount: parseInt(editFormData.amount) }
+          : t
+      ))
+      
+      setIsEditTransactionOpen(false)
+      setEditingTransaction(null)
+      addAccessLog("Sửa", "Thu/Chi", `Sửa: ${editFormData.description}`)
+    } catch (error) {
+      console.error("Error updating transaction:", error)
     }
   }
 
@@ -431,6 +477,52 @@ export default function ReportsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Transaction Dialog */}
+      <Dialog open={isEditTransactionOpen} onOpenChange={setIsEditTransactionOpen}>
+        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-blue-600">Sửa Khoản Thu/Chi</DialogTitle>
+            <DialogDescription className="text-gray-500">Cập nhật thông tin khoản thu/chi</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleConfirmEdit() }} className="space-y-4">
+            <div>
+              <Label className="text-gray-700 text-sm font-medium">Loại</Label>
+              <Select value={editFormData.type} onValueChange={(val) => setEditFormData({...editFormData, type: val as "income" | "expense"})}>
+                <SelectTrigger className="border-gray-300 rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="income">Thu</SelectItem>
+                  <SelectItem value="expense">Chi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-gray-700 text-sm font-medium">Mô Tả</Label>
+              <Input
+                placeholder="Nhập mô tả"
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                className="border-gray-300 rounded-lg"
+              />
+            </div>
+            <div>
+              <Label className="text-gray-700 text-sm font-medium">Số Tiền (VND)</Label>
+              <Input
+                type="number"
+                placeholder="Nhập số tiền"
+                value={editFormData.amount}
+                onChange={(e) => setEditFormData({...editFormData, amount: e.target.value})}
+                className="border-gray-300 rounded-lg"
+              />
+            </div>
+            <Button type="submit" className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-lg">
+              Cập nhật
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {stats.map((stat, idx) => (
@@ -665,13 +757,22 @@ export default function ReportsPage() {
                       </td>
                       <td className="p-3 text-center">
                         {user?.role === 'admin' ? (
-                          <button
-                            onClick={() => handleDeleteTransaction(tx)}
-                            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition"
-                            title="Xoá (chỉ admin)"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              onClick={() => handleEditTransaction(tx)}
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition"
+                              title="Sửa (chỉ admin)"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTransaction(tx)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition"
+                              title="Xoá (chỉ admin)"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-gray-400 text-xs">Chỉ admin</span>
                         )}
