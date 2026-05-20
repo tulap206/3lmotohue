@@ -64,7 +64,7 @@ export default function ReportsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const itemsPerPage = 5
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
