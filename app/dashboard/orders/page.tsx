@@ -1194,15 +1194,15 @@ export default function OrdersPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Giá thuê/ngày</p>
-                  <p className="font-medium text-blue-600">{viewingVehicle.pricePerDay.toLocaleString("vi-VN")} VND</p>
+                  <p className="font-medium text-blue-600">{(viewingVehicle.pricePerDay ?? 0).toLocaleString("vi-VN")} VND</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Số KM hiện tại</p>
-                  <p className="font-medium text-gray-800">{viewingVehicle.currentKm.toLocaleString("vi-VN")} km</p>
+                  <p className="font-medium text-gray-800">{(viewingVehicle.currentKm ?? 0).toLocaleString("vi-VN")} km</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Giá mua xe</p>
-                  <p className="font-medium text-gray-800">{viewingVehicle.purchasePrice.toLocaleString("vi-VN")} VND</p>
+                  <p className="font-medium text-gray-800">{(viewingVehicle.purchasePrice ?? 0).toLocaleString("vi-VN")} VND</p>
                 </div>
               </div>
 
@@ -1214,7 +1214,7 @@ export default function OrdersPage() {
               {/* Vehicle Images */}
               <div className="border-t border-gray-100 pt-4">
                 <p className="text-sm text-gray-500 mb-2">Ảnh xe</p>
-                {viewingVehicle.vehicleImages.length > 0 ? (
+                {(viewingVehicle.vehicleImages?.length ?? 0) > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
                     {viewingVehicle.vehicleImages.map((img, index) => (
                       <div 
@@ -1237,7 +1237,7 @@ export default function OrdersPage() {
               {/* Document Images */}
               <div className="border-t border-gray-100 pt-4">
                 <p className="text-sm text-gray-500 mb-2">Ảnh giấy tờ xe</p>
-                {viewingVehicle.documentImages.length > 0 ? (
+                {(viewingVehicle.documentImages?.length ?? 0) > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
                     {viewingVehicle.documentImages.map((img, index) => (
                       <div 
