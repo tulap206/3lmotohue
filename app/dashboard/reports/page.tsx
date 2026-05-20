@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchTransactions, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
+import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -117,7 +118,7 @@ export default function ReportsPage() {
         id: `tx-${Date.now()}`,
         type: formData.type,
         description: formData.description,
-        amount: parseInt(formData.amount),
+        amount: parseMoneyInput(formData.amount),
         user: user.username,
         timestamp: new Date().toISOString(),
       }
@@ -185,7 +186,7 @@ export default function ReportsPage() {
     setEditFormData({
       type: tx.type,
       description: tx.description,
-      amount: tx.amount.toString(),
+      amount: tx.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
     })
     setIsEditTransactionOpen(true)
   }
@@ -196,16 +197,18 @@ export default function ReportsPage() {
       return
     }
     
+    const parsedAmount = parseMoneyInput(editFormData.amount)
+    
     console.log("📝 Updating transaction:", editingTransaction.id, {
       type: editFormData.type,
       description: editFormData.description,
-      amount: parseInt(editFormData.amount),
+      amount: parsedAmount,
     })
     
     try {
       const updatedTransactions = transactions.map((t) => 
         t.id === editingTransaction.id 
-          ? { ...t, type: editFormData.type as "income" | "expense", description: editFormData.description, amount: parseInt(editFormData.amount) }
+          ? { ...t, type: editFormData.type as "income" | "expense", description: editFormData.description, amount: parsedAmount }
           : t
       )
       
@@ -535,11 +538,14 @@ export default function ReportsPage() {
             <div>
               <Label className="text-gray-700 text-sm font-medium">Số Tiền (VND)</Label>
               <Input
-                type="number"
-                placeholder="Nhập số tiền"
+                type="text"
+                placeholder="Nhập số tiền (VD: 1.000.000)"
                 value={editFormData.amount}
-                onChange={(e) => setEditFormData({...editFormData, amount: e.target.value})}
-                className="border-gray-300 rounded-lg"
+                onChange={(e) => {
+                  const formatted = formatMoneyInput(e.target.value)
+                  setEditFormData({...editFormData, amount: formatted})
+                }}
+                className="border-gray-300 rounded-lg font-mono"
               />
             </div>
             <Button type="submit" className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-lg">
@@ -739,11 +745,14 @@ export default function ReportsPage() {
                 <div>
                   <Label className="text-gray-700 text-sm font-medium">Số Tiền (VND)</Label>
                   <Input
-                    type="number"
-                    placeholder="Nhập số tiền"
+                    type="text"
+                    placeholder="Nhập số tiền (VD: 1.000.000)"
                     value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    className="border-gray-300 rounded-lg"
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setFormData({...formData, amount: formatted})
+                    }}
+                    className="border-gray-300 rounded-lg font-mono"
                   />
                 </div>
                 <Button type="submit" className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-lg">
