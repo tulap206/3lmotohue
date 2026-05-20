@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchVehicles, fetchRentals } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
+import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -255,9 +256,9 @@ export default function VehiclesPage() {
           name: newVehicle.name,
           licensePlate: newVehicle.licensePlate,
           color: newVehicle.color,
-          pricePerDay: parseInt(newVehicle.pricePerDay),
+          pricePerDay: parseMoneyInput(newVehicle.pricePerDay),
           current_km: parseInt(newVehicle.current_km) || 0,
-          purchasePrice: parseInt(newVehicle.purchasePrice) || 0,
+          purchasePrice: parseMoneyInput(newVehicle.purchasePrice),
           notes: newVehicle.notes,
           status: newVehicle.status,
           vehicleImages: vehicleImageUrls,
@@ -330,15 +331,22 @@ export default function VehiclesPage() {
   const handleEditVehicle = async () => {
     if (editingVehicle) {
       try {
+        // Parse formatted money values back to numbers
+        const updateData = {
+          ...editingVehicle,
+          pricePerDay: parseMoneyInput(editingVehicle.pricePerDay.toString()),
+          purchasePrice: parseMoneyInput(editingVehicle.purchasePrice?.toString() || '0'),
+        }
+        
         const { error } = await supabase
           .from('vehicles')
-          .update(editingVehicle)
+          .update(updateData)
           .eq('id', editingVehicle.id)
         
         if (error) {
           console.error("Error updating vehicle:", error)
         } else {
-          setVehicles(vehicles.map((v) => (v.id === editingVehicle.id ? editingVehicle : v)))
+          setVehicles(vehicles.map((v) => (v.id === editingVehicle.id ? updateData : v)))
           if (user) logger.editVehicle(user.username, user.displayName, editingVehicle.name, editingVehicle.licensePlate)
           setIsEditDialogOpen(false)
           setEditingVehicle(null)
@@ -371,7 +379,11 @@ export default function VehiclesPage() {
   }
 
   const openEditDialog = (vehicle: Vehicle) => {
-    setEditingVehicle({ ...vehicle })
+    setEditingVehicle({ 
+      ...vehicle,
+      pricePerDay: vehicle.pricePerDay.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+      purchasePrice: vehicle.purchasePrice?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || ''
+    })
     setIsEditDialogOpen(true)
   }
 
@@ -534,22 +546,28 @@ export default function VehiclesPage() {
                   <Label htmlFor="price" className="text-gray-600">Giá thuê (VND/ngày)</Label>
                   <Input
                     id="price"
-                    type="number"
-                    placeholder="VD: 300000"
+                    type="text"
+                    placeholder="VD: 300.000"
                     value={newVehicle.pricePerDay}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, pricePerDay: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setNewVehicle({ ...newVehicle, pricePerDay: formatted })
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="purchasePrice" className="text-gray-600">Giá mua xe (VND)</Label>
                   <Input
                     id="purchasePrice"
-                    type="number"
-                    placeholder="VD: 50000000"
+                    type="text"
+                    placeholder="VD: 50.000.000"
                     value={newVehicle.purchasePrice}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, purchasePrice: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setNewVehicle({ ...newVehicle, purchasePrice: formatted })
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                   />
                 </div>
               </div>
@@ -973,20 +991,26 @@ export default function VehiclesPage() {
                   <Label htmlFor="edit-price" className="text-gray-600">Giá thuê (VND/ngày)</Label>
                   <Input
                     id="edit-price"
-                    type="number"
+                    type="text"
                     value={editingVehicle.pricePerDay}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, pricePerDay: parseInt(e.target.value) || 0 })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setEditingVehicle({ ...editingVehicle, pricePerDay: formatted })
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-purchasePrice" className="text-gray-600">Giá mua xe (VND)</Label>
                   <Input
                     id="edit-purchasePrice"
-                    type="number"
+                    type="text"
                     value={editingVehicle.purchasePrice}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, purchasePrice: parseInt(e.target.value) || 0 })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setEditingVehicle({ ...editingVehicle, purchasePrice: formatted })
+                    }}
+                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                   />
                 </div>
               </div>
