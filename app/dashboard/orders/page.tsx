@@ -1057,7 +1057,7 @@ export default function OrdersPage() {
               {/* Customer Photo */}
               <div className="border-t border-gray-100 pt-4">
                 <p className="text-sm text-gray-500 mb-2">Ảnh khách hàng</p>
-                {viewingCustomer.customerPhoto.length > 0 ? (
+                {(viewingCustomer.customerPhoto?.length ?? 0) > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
                     {viewingCustomer.customerPhoto.map((img, index) => (
                       <div 
@@ -1083,7 +1083,7 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt trước</p>
-                    {viewingCustomer.cccdFront.length > 0 ? (
+                    {(viewingCustomer.cccdFront?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
                         onClick={() => setLightboxImage(viewingCustomer.cccdFront[0])}
@@ -1098,7 +1098,7 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt sau</p>
-                    {viewingCustomer.cccdBack.length > 0 ? (
+                    {(viewingCustomer.cccdBack?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
                         onClick={() => setLightboxImage(viewingCustomer.cccdBack[0])}
@@ -1120,7 +1120,7 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt trước</p>
-                    {viewingCustomer.licenseFront.length > 0 ? (
+                    {(viewingCustomer.licenseFront?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
                         onClick={() => setLightboxImage(viewingCustomer.licenseFront[0])}
@@ -1135,7 +1135,7 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt sau</p>
-                    {viewingCustomer.licenseBack.length > 0 ? (
+                    {(viewingCustomer.licenseBack?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
                         onClick={() => setLightboxImage(viewingCustomer.licenseBack[0])}
