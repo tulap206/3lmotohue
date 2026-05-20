@@ -373,6 +373,16 @@ export default function OrdersPage() {
     if (!customer || !vehicle) return
 
     try {
+      const newExtraFees = parseInt(editFormData.extraFees) || 0
+      
+      // Recalculate revenue based on current status + new extraFees
+      let newRevenue = editingOrder.revenue || 0
+      if (editFormData.status === "completed") {
+        newRevenue = editingOrder.totalPrice + newExtraFees
+      } else if (editFormData.status === "cancelled") {
+        newRevenue = (parseInt(editFormData.deposit) || 0) + newExtraFees
+      }
+      
       // Update to Supabase
       const { error } = await supabase
         .from('rentals')
@@ -383,9 +393,10 @@ export default function OrdersPage() {
           vehicleName: vehicle.name,
           licensePlate: vehicle.licensePlate,
           deposit: parseInt(editFormData.deposit) || 0,
-          extraFees: parseInt(editFormData.extraFees) || 0,
+          extraFees: newExtraFees,
           notes: editFormData.notes.trim(),
           status: editFormData.status,
+          revenue: newRevenue,
         })
         .eq('id', editingOrder.id)
 
@@ -403,9 +414,10 @@ export default function OrdersPage() {
         vehicleName: vehicle.name,
         licensePlate: vehicle.licensePlate,
         deposit: parseInt(editFormData.deposit) || 0,
-        extraFees: parseInt(editFormData.extraFees) || 0,
+        extraFees: newExtraFees,
         notes: editFormData.notes.trim(),
         status: editFormData.status,
+        revenue: newRevenue,
       }
 
       setOrders(orders.map((o) => (o.id === editingOrder.id ? updatedOrder : o)))
