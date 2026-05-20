@@ -101,8 +101,8 @@ export default function DashboardPage() {
             name: v.name,
             licensePlate: v.licensePlate,
             rentals: vehicleRentals.length,
-            revenue: `${(vehicleRevenue / 1000000).toFixed(1)}M`,
-            profit: `${(vehicleProfit / 1000000).toFixed(1)}M`,
+            revenue: `${vehicleRevenue.toLocaleString("vi-VN")} VNĐ`,
+            profit: `${vehicleProfit.toLocaleString("vi-VN")} VNĐ`,
             image: v.vehicleImages || [],
           }
         }).sort((a, b) => b.rentals - a.rentals).slice(0, 4)
