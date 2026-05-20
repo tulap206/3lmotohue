@@ -319,8 +319,6 @@ export default function OrdersPage() {
           revenue: 0,
           status: "pending",
           created_at: now,
-          received_at: null,
-          completed_at: null,
         }])
         .select()
 
