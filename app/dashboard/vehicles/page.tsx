@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchVehicles } from "@/lib/supabase"
+import { supabase, fetchVehicles, fetchRentals } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -103,7 +103,7 @@ function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () =>
 
 interface HistoryLog {
   id: string
-  vehicleId: string
+  timestamp: Date
   type: HistoryType
   datetime: string
   description: string
@@ -141,6 +141,7 @@ const historyTypeConfig: Record<HistoryType, { label: string; className: string 
 export default function VehiclesPage() {
   const { user, addAccessLog } = useAuth()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [orders, setOrders] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -169,17 +170,32 @@ export default function VehiclesPage() {
     const loadVehicles = async () => {
       setIsLoading(true)
       try {
-        const data = await fetchVehicles()
-        // Sort by created_at descending (newest first) - client-side backup
-        const sorted = data.sort((a, b) => {
+        const [vehiclesData, rentalsData] = await Promise.all([
+          fetchVehicles(),
+          fetchRentals(),
+        ])
+        
+        // Sort vehicles by created_at descending (newest first) - client-side backup
+        const sorted = vehiclesData.sort((a, b) => {
           const dateA = new Date(a.created_at || 0).getTime()
           const dateB = new Date(b.created_at || 0).getTime()
           return dateB - dateA // DESC (newest first)
         })
         setVehicles(sorted)
+        
+        // Generate rentalCode for each rental if not already present
+        const rentalsWithCodes = (rentalsData || []).map((rental) => {
+          if (!rental.rentalCode) {
+            const code = `${rental.customerName.split(/\s+/).pop() || ""}-${rental.licensePlate.replace(/[\s-]/g, "").toUpperCase()}-${new Date(rental.startDate).toLocaleDateString("vi-VN").replace(/\//g, "")}`
+            return { ...rental, rentalCode: code }
+          }
+          return rental
+        })
+        setOrders(rentalsWithCodes)
       } catch (error) {
-        console.error("Failed to fetch vehicles:", error)
+        console.error("Failed to fetch data:", error)
         setVehicles([])
+        setOrders([])
       } finally {
         setIsLoading(false)
       }
@@ -355,7 +371,50 @@ export default function VehiclesPage() {
   }
 
   const getVehicleHistory = (vehicleId: string) => {
-    return []
+    const history: HistoryLog[] = []
+    const vehicle = vehicles.find((v) => v.id === vehicleId)
+    
+    // Add purchase date
+    if (vehicle?.created_at) {
+      history.push({
+        id: `purchase-${vehicleId}`,
+        timestamp: new Date(vehicle.created_at),
+        description: "Mua xe",
+        type: "rent",
+        datetime: new Date(vehicle.created_at).toLocaleString("vi-VN"),
+      })
+    }
+    
+    // Add rental history from rentals
+    const vehicleRentals = orders.filter((order) => order.vehicleId === vehicleId)
+    vehicleRentals.forEach((rental) => {
+      // Add rental start
+      const startDate = new Date(rental.startDate)
+      history.push({
+        id: `rent-${rental.id}`,
+        timestamp: startDate,
+        description: `Cho thuê - ${rental.customerName} (${rental.rentalCode || rental.id})`,
+        type: "rent",
+        datetime: startDate.toLocaleString("vi-VN"),
+      })
+      
+      // Add rental return
+      if (rental.status === "completed" || rental.status === "cancelled") {
+        const endDate = new Date(rental.endDate)
+        history.push({
+          id: `return-${rental.id}`,
+          timestamp: endDate,
+          description: `Trả xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
+          type: "return",
+          datetime: endDate.toLocaleString("vi-VN"),
+        })
+      }
+    })
+    
+    // Sort by timestamp descending (newest first)
+    history.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    
+    return history
   }
 
   const formatPrice = (price: number) => {
