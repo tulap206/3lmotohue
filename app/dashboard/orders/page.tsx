@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
+import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { supabase, fetchVehicles, fetchCustomers, fetchRentals } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -313,7 +314,7 @@ export default function OrdersPage() {
           totalDays,
           pricePerDay: vehicle.pricePerDay,
           totalPrice,
-          deposit: parseInt(formData.deposit),
+          deposit: parseMoneyInput(formData.deposit),
           extraFees: 0,
           notes: "",
           revenue: 0,
@@ -375,14 +376,14 @@ export default function OrdersPage() {
     if (!customer || !vehicle) return
 
     try {
-      const newExtraFees = parseInt(editFormData.extraFees) || 0
+      const newExtraFees = parseMoneyInput(editFormData.extraFees)
       
       // Recalculate revenue based on current status + new extraFees
       let newRevenue = editingOrder.revenue || 0
       if (editFormData.status === "completed") {
         newRevenue = editingOrder.totalPrice + newExtraFees
       } else if (editFormData.status === "cancelled") {
-        newRevenue = (parseInt(editFormData.deposit) || 0) + newExtraFees
+        newRevenue = parseMoneyInput(editFormData.deposit) + newExtraFees
       }
       
       // Update to Supabase
@@ -394,7 +395,7 @@ export default function OrdersPage() {
           vehicleId: vehicle.id,
           vehicleName: vehicle.name,
           licensePlate: vehicle.licensePlate,
-          deposit: parseInt(editFormData.deposit) || 0,
+          deposit: parseMoneyInput(editFormData.deposit),
           extraFees: newExtraFees,
           notes: editFormData.notes.trim(),
           status: editFormData.status,
@@ -594,11 +595,14 @@ export default function OrdersPage() {
                 <Label htmlFor="deposit" className="text-gray-600">Tiền đặt cọc (VND)</Label>
                 <Input
                   id="deposit"
-                  type="number"
+                  type="text"
                   value={formData.deposit}
-                  onChange={(e) => setFormData({ ...formData, deposit: e.target.value })}
-                  placeholder="VD: 500000"
-                  className="bg-gray-50 border-gray-200 rounded-xl"
+                  onChange={(e) => {
+                    const formatted = formatMoneyInput(e.target.value)
+                    setFormData({ ...formData, deposit: formatted })
+                  }}
+                  placeholder="VD: 500.000"
+                  className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                   required
                 />
               </div>
@@ -957,11 +961,13 @@ export default function OrdersPage() {
               <Label htmlFor="edit-deposit" className="text-gray-600">Tiền đặt cọc (VND)</Label>
               <Input
                 id="edit-deposit"
-                type="number"
-                min={0}
+                type="text"
                 value={editFormData.deposit}
-                onChange={(e) => setEditFormData({ ...editFormData, deposit: e.target.value })}
-                className="bg-gray-50 border-gray-200 rounded-xl"
+                onChange={(e) => {
+                  const formatted = formatMoneyInput(e.target.value)
+                  setEditFormData({ ...editFormData, deposit: formatted })
+                }}
+                className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                 required
               />
             </div>
@@ -970,11 +976,13 @@ export default function OrdersPage() {
               <Label htmlFor="edit-extraFees" className="text-gray-600">Phí phát sinh (VND)</Label>
               <Input
                 id="edit-extraFees"
-                type="number"
-                min={0}
+                type="text"
                 value={editFormData.extraFees}
-                onChange={(e) => setEditFormData({ ...editFormData, extraFees: e.target.value })}
-                className="bg-gray-50 border-gray-200 rounded-xl"
+                onChange={(e) => {
+                  const formatted = formatMoneyInput(e.target.value)
+                  setEditFormData({ ...editFormData, extraFees: formatted })
+                }}
+                className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                 placeholder="0"
               />
             </div>
