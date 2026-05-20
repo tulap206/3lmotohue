@@ -522,7 +522,7 @@ export default function ReportsPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Theo Dõi Thu/Chi</CardTitle>
-            <CardDescription>Quản lý các khoản thu/chi</CardDescription>
+            <CardDescription className="text-red-600 font-medium">Quản lý các khoản thu/chi nằm ngoài đơn thuê xe</CardDescription>
           </div>
           <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
             <Button onClick={() => setIsAddTransactionOpen(true)} className="bg-blue-500 text-white hover:bg-blue-600">
@@ -677,10 +677,6 @@ export default function ReportsPage() {
                     </p>
                   </div>
                 </div>
-              </div>
-              
-              <div className="border-t border-blue-200 pt-3 text-xs text-gray-500">
-                <p>📝 Công thức: Tiền hiện có = Doanh thu + Tổng thu - Tổng chi</p>
               </div>
             </CardContent>
           </Card>
