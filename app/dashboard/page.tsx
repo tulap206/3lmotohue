@@ -65,8 +65,12 @@ export default function DashboardPage() {
 
         // Calculate stats
         const completedRentals = rentals.filter((r: any) => r.status === 'completed')
-        const totalRevenue = completedRentals.reduce((sum: number, r: any) => sum + (r.totalPrice || 0), 0)
-        const totalProfit = vehicles.reduce((sum: number, v: any) => sum + (v.profit || 0), 0)
+        // Revenue = sum of all revenue from completed rentals (includes extraFees)
+        const totalRevenue = completedRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+        
+        // Profit = total revenue - purchase price of all vehicles
+        const totalVehicleCost = vehicles.reduce((sum: number, v: any) => sum + (v.purchasePrice || 0), 0)
+        const totalProfit = totalRevenue - totalVehicleCost
 
         setStats({
           totalVehicles: vehicles.length,
@@ -86,15 +90,22 @@ export default function DashboardPage() {
         setRecentOrders(recent)
 
         // Sort vehicles by rental count for top vehicles
-        const vehiclesWithRentals = vehicles.map((v: any) => ({
-          id: v.id,
-          name: v.name,
-          licensePlate: v.licensePlate,
-          rentals: rentals.filter((r: any) => r.vehicleId === v.id && r.status === 'completed').length,
-          revenue: `${((v.totalRevenue || 0) / 1000000).toFixed(1)}M`,
-          profit: `${((v.profit || 0) / 1000000).toFixed(1)}M`,
-          image: v.vehicleImages || [],
-        })).sort((a, b) => b.rentals - a.rentals).slice(0, 4)
+        const vehiclesWithRentals = vehicles.map((v: any) => {
+          // Calculate vehicle profit = revenue from rentals - purchase price
+          const vehicleRentals = rentals.filter((r: any) => r.vehicleId === v.id && r.status === 'completed')
+          const vehicleRevenue = vehicleRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+          const vehicleProfit = vehicleRevenue - (v.purchasePrice || 0)
+          
+          return {
+            id: v.id,
+            name: v.name,
+            licensePlate: v.licensePlate,
+            rentals: vehicleRentals.length,
+            revenue: `${(vehicleRevenue / 1000000).toFixed(1)}M`,
+            profit: `${(vehicleProfit / 1000000).toFixed(1)}M`,
+            image: v.vehicleImages || [],
+          }
+        }).sort((a, b) => b.rentals - a.rentals).slice(0, 4)
 
         setTopVehicles(vehiclesWithRentals)
       } catch (error) {
