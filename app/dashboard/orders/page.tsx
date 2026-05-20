@@ -234,12 +234,13 @@ export default function OrdersPage() {
     const nameParts = removeVietnameseDiacritics(customerName).trim().split(/\s+/)
     const lastName = nameParts[nameParts.length - 1]
 
-    // Remove spaces and dashes from license plate
-    const cleanPlate = licensePlate.replace(/[\s-]/g, "")
+    // Remove spaces and dashes from license plate, UPPERCASE
+    const cleanPlate = licensePlate.replace(/[\s-]/g, "").toUpperCase()
 
     // Format date DDMMYYYY from VI-VN format (DD/MM/YYYY)
     const dateParts = startDate.split("/")
-    const dateFormatted = dateParts[0] + dateParts[1] + dateParts[2] // DD + MM + YYYY
+    // dateParts[0] = DD, dateParts[1] = MM, dateParts[2] = YYYY
+    const dateFormatted = String(dateParts[0]).padStart(2, "0") + String(dateParts[1]).padStart(2, "0") + String(dateParts[2]).padStart(4, "0")
 
     return `${lastName}-${cleanPlate}-${dateFormatted}`
   }
