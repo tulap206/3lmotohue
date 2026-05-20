@@ -314,6 +314,8 @@ export const fetchTransactions = async () => {
 }
 
 export const insertTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
+  console.log("📝 [insertTransaction] Attempting to insert:", transaction)
+  
   const { data, error } = await supabase
     .from('transactions')
     .insert([{
@@ -322,14 +324,22 @@ export const insertTransaction = async (transaction: Omit<Transaction, 'id' | 'c
       amount: transaction.amount,
       user: transaction.user,
       timestamp: transaction.timestamp,
-      created_by: transaction.user, // Store who created it
+      created_by: transaction.user,
     }])
     .select()
   
   if (error) {
-    console.error('Error inserting transaction:', error)
+    console.error('❌ [insertTransaction] Error details:', {
+      message: error.message,
+      code: error.code,
+      hint: error.hint,
+      details: error.details,
+      fullError: error
+    })
     throw error
   }
+  
+  console.log("✅ [insertTransaction] Success:", data)
   return data?.[0]
 }
 
