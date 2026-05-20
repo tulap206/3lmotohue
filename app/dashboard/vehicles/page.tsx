@@ -374,14 +374,25 @@ export default function VehiclesPage() {
     const history: HistoryLog[] = []
     const vehicle = vehicles.find((v) => v.id === vehicleId)
     
+    // Helper to parse DD/MM/YYYY string to Date
+    const parseVietnamDate = (dateStr: string): Date => {
+      if (!dateStr) return new Date(0)
+      const parts = dateStr.split("/")
+      if (parts.length === 3) {
+        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+      }
+      return new Date(dateStr) // Fallback
+    }
+    
     // Add purchase date
     if (vehicle?.created_at) {
+      const purchaseDate = new Date(vehicle.created_at)
       history.push({
         id: `purchase-${vehicleId}`,
-        timestamp: new Date(vehicle.created_at),
+        timestamp: purchaseDate,
         description: "Mua xe",
         type: "rent",
-        datetime: new Date(vehicle.created_at).toLocaleString("vi-VN"),
+        datetime: purchaseDate.toLocaleString("vi-VN"),
       })
     }
     
@@ -389,7 +400,7 @@ export default function VehiclesPage() {
     const vehicleRentals = orders.filter((order) => order.vehicleId === vehicleId)
     vehicleRentals.forEach((rental) => {
       // Add rental start
-      const startDate = new Date(rental.startDate)
+      const startDate = parseVietnamDate(rental.startDate)
       history.push({
         id: `rent-${rental.id}`,
         timestamp: startDate,
@@ -400,7 +411,7 @@ export default function VehiclesPage() {
       
       // Add rental return
       if (rental.status === "completed" || rental.status === "cancelled") {
-        const endDate = new Date(rental.endDate)
+        const endDate = parseVietnamDate(rental.endDate)
         history.push({
           id: `return-${rental.id}`,
           timestamp: endDate,
