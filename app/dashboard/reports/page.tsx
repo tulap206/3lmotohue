@@ -63,6 +63,8 @@ export default function ReportsPage() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
@@ -88,10 +90,29 @@ export default function ReportsPage() {
     try {
       const data = await fetchTransactions()
       setTransactions(data)
+      setCurrentPage(1) // Reset to first page when loading
       console.log("✅ Loaded transactions from Supabase:", data.length)
     } catch (error) {
       console.error("Failed to fetch transactions:", error)
       setTransactions([])
+    }
+  }
+
+  // Pagination calculations
+  const totalPages = Math.ceil(transactions.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedTransactions = transactions.slice(startIndex, endIndex)
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1)
     }
   }
 
@@ -750,58 +771,86 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           {transactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left p-3 font-semibold text-gray-700">Thời gian</th>
-                    <th className="text-left p-3 font-semibold text-gray-700">Khoản Thu/Chi</th>
-                    <th className="text-left p-3 font-semibold text-gray-700">Người (User)</th>
-                    <th className="text-right p-3 font-semibold text-gray-700">Số Tiền</th>
-                    <th className="text-center p-3 font-semibold text-gray-700">Tác vụ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-3 text-gray-600">
-                        {new Date(tx.timestamp).toLocaleString("vi-VN")}
-                      </td>
-                      <td className="p-3">
-                        <span className={tx.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                          {tx.type === "income" ? "✓" : "✗"} {tx.description}
-                        </span>
-                      </td>
-                      <td className="p-3 text-gray-600">{tx.user}</td>
-                      <td className={`p-3 text-right font-semibold ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
-                        {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} VND
-                      </td>
-                      <td className="p-3 text-center">
-                        {user?.role === 'admin' ? (
-                          <div className="flex gap-2 justify-center">
-                            <button
-                              onClick={() => handleEditTransaction(tx)}
-                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition"
-                              title="Sửa (chỉ admin)"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTransaction(tx)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition"
-                              title="Xoá (chỉ admin)"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xs">Chỉ admin</span>
-                        )}
-                      </td>
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left p-3 font-semibold text-gray-700">Thời gian</th>
+                      <th className="text-left p-3 font-semibold text-gray-700">Khoản Thu/Chi</th>
+                      <th className="text-left p-3 font-semibold text-gray-700">Người (User)</th>
+                      <th className="text-right p-3 font-semibold text-gray-700">Số Tiền</th>
+                      <th className="text-center p-3 font-semibold text-gray-700">Tác vụ</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {paginatedTransactions.map((tx) => (
+                      <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="p-3 text-gray-600">
+                          {new Date(tx.timestamp).toLocaleString("vi-VN")}
+                        </td>
+                        <td className="p-3">
+                          <span className={tx.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {tx.type === "income" ? "✓" : "✗"} {tx.description}
+                          </span>
+                        </td>
+                        <td className="p-3 text-gray-600">{tx.user}</td>
+                        <td className={`p-3 text-right font-semibold ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
+                          {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} VND
+                        </td>
+                        <td className="p-3 text-center">
+                          {user?.role === 'admin' ? (
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                onClick={() => handleEditTransaction(tx)}
+                                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition"
+                                title="Sửa (chỉ admin)"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTransaction(tx)}
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition"
+                                title="Xoá (chỉ admin)"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs">Chỉ admin</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                <div className="text-sm text-gray-600">
+                  Hiển thị <span className="font-semibold">{startIndex + 1}</span> - <span className="font-semibold">{Math.min(endIndex, transactions.length)}</span> trong <span className="font-semibold">{transactions.length}</span> khoản
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    ← Trước
+                  </button>
+                  <div className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    <span className="text-sm font-medium">Trang {currentPage} / {totalPages}</span>
+                  </div>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Tiếp →
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
