@@ -85,11 +85,16 @@ export default function ReportsPage() {
 
   const loadTransactions = async () => {
     try {
-      const data = await fetchTransactions()
-      setTransactions(data)
+      // Load from localStorage (transactions table not working yet)
+      const stored = localStorage.getItem('transactions')
+      if (stored) {
+        setTransactions(JSON.parse(stored))
+      } else {
+        setTransactions([])
+      }
     } catch (error) {
-      console.error("Failed to fetch transactions:", error)
-      // Still works even if fetch fails
+      console.error("Failed to load transactions from localStorage:", error)
+      setTransactions([])
     }
   }
 
@@ -108,17 +113,24 @@ export default function ReportsPage() {
     }
 
     try {
-      const newTransaction = await insertTransaction({
+      const newTransaction: Transaction = {
+        id: `tx-${Date.now()}`,
         type: formData.type,
         description: formData.description,
         amount: parseInt(formData.amount),
         user: user.username,
         timestamp: new Date().toISOString(),
-      })
+      }
       
-      console.log("✅ Transaction saved to Supabase:", newTransaction)
+      console.log("✅ Transaction object:", newTransaction)
       
-      setTransactions([newTransaction, ...transactions])
+      const updatedTransactions = [newTransaction, ...transactions]
+      setTransactions(updatedTransactions)
+      
+      // Save to localStorage
+      localStorage.setItem('transactions', JSON.stringify(updatedTransactions))
+      console.log("💾 Saved to localStorage")
+      
       setFormData({ type: "income", description: "", amount: "" })
       setIsAddTransactionOpen(false)
       
@@ -149,10 +161,11 @@ export default function ReportsPage() {
     if (!transactionToDelete) return
     
     try {
-      await deleteTransaction(transactionToDelete.id)
+      const updatedTransactions = transactions.filter((t) => t.id !== transactionToDelete.id)
+      setTransactions(updatedTransactions)
       
-      // Reload transactions from Supabase to ensure sync
-      await loadTransactions()
+      // Save to localStorage
+      localStorage.setItem('transactions', JSON.stringify(updatedTransactions))
       
       setDeleteConfirmOpen(false)
       setTransactionToDelete(null)
@@ -190,17 +203,16 @@ export default function ReportsPage() {
     })
     
     try {
-      const result = await updateTransaction(editingTransaction.id, {
-        type: editFormData.type as "income" | "expense",
-        description: editFormData.description,
-        amount: parseInt(editFormData.amount),
-      })
+      const updatedTransactions = transactions.map((t) => 
+        t.id === editingTransaction.id 
+          ? { ...t, type: editFormData.type as "income" | "expense", description: editFormData.description, amount: parseInt(editFormData.amount) }
+          : t
+      )
       
-      console.log("✅ Update result:", result)
+      setTransactions(updatedTransactions)
       
-      // Reload transactions from Supabase to ensure sync
-      console.log("🔄 Reloading transactions...")
-      await loadTransactions()
+      // Save to localStorage
+      localStorage.setItem('transactions', JSON.stringify(updatedTransactions))
       
       setIsEditTransactionOpen(false)
       setEditingTransaction(null)
