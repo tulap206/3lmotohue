@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Bike, Users, ClipboardList, TrendingUp, Wallet, Eye } from "lucide-react"
-import { fetchVehicles, fetchRentals } from "@/lib/supabase"
+import { fetchVehicles, fetchRentals, fetchTransactions } from "@/lib/supabase"
 
 interface DashboardStats {
   totalVehicles: number
@@ -62,15 +62,29 @@ export default function DashboardPage() {
       try {
         const vehicles = await fetchVehicles()
         const rentals = await fetchRentals()
+        const transactions = await fetchTransactions()
 
         // Calculate stats
         const completedRentals = rentals.filter((r: any) => r.status === 'completed')
-        // Revenue = sum of all revenue from completed rentals (includes extraFees)
-        const totalRevenue = completedRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
         
-        // Profit = total revenue - purchase price of all vehicles
-        const totalVehicleCost = vehicles.reduce((sum: number, v: any) => sum + (v.purchasePrice || 0), 0)
-        const totalProfit = totalRevenue - totalVehicleCost
+        // Rental revenue (from completed rentals, includes extraFees via revenue field)
+        const rentalRevenue = completedRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+        
+        // Transaction totals
+        const totalIncome = transactions
+          .filter((tx: any) => tx.type === 'income')
+          .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+        
+        const totalExpense = transactions
+          .filter((tx: any) => tx.type === 'expense')
+          .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+        
+        // NEW LOGIC:
+        // Doanh thu = Rental revenue + Income from transactions
+        const totalRevenue = rentalRevenue + totalIncome
+        
+        // Lợi nhuận = Rental revenue ONLY (not counting transactions)
+        const totalProfit = rentalRevenue
 
         setStats({
           totalVehicles: vehicles.length,
