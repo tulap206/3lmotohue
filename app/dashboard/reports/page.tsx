@@ -97,7 +97,20 @@ export default function ReportsPage() {
 
   const handleAddTransaction = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.description || !formData.amount || !user) return
+    console.log("📝 Adding transaction:", formData)
+    
+    if (!formData.description) {
+      alert("❌ Vui lòng nhập mô tả")
+      return
+    }
+    if (!formData.amount) {
+      alert("❌ Vui lòng nhập số tiền")
+      return
+    }
+    if (!user) {
+      alert("❌ Vui lòng đăng nhập lại")
+      return
+    }
 
     try {
       const newTransaction: Transaction = {
@@ -109,18 +122,32 @@ export default function ReportsPage() {
         timestamp: new Date().toISOString(),
       }
       
+      console.log("✅ Transaction object:", newTransaction)
+      
       const updatedTransactions = [newTransaction, ...transactions]
       setTransactions(updatedTransactions)
       
       // Save to localStorage
       localStorage.setItem('transactions', JSON.stringify(updatedTransactions))
+      console.log("💾 Saved to localStorage")
       
       setFormData({ type: "income", description: "", amount: "" })
       setIsAddTransactionOpen(false)
-      addAccessLog("Thêm", "Thu/Chi", `${formData.type === "income" ? "Thu" : "Chi"}: ${formData.description}`)
+      
+      // Log action if user exists
+      if (user?.username) {
+        try {
+          addAccessLog("Thêm", "Thu/Chi", `${formData.type === "income" ? "Thu" : "Chi"}: ${formData.description}`)
+        } catch (logError) {
+          console.error("Warning: Could not log action", logError)
+          // Don't fail if logging fails
+        }
+      }
+      
+      alert("✅ Thêm khoản thu/chi thành công!")
     } catch (error) {
-      console.error("Error adding transaction:", error)
-      alert("❌ Lỗi thêm khoản thu/chi")
+      console.error("❌ Error adding transaction:", error)
+      alert("❌ Lỗi thêm khoản thu/chi: " + (error instanceof Error ? error.message : String(error)))
     }
   }
 
