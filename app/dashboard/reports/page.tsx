@@ -205,11 +205,23 @@ export default function ReportsPage() {
 
       // Monthly data
       const monthlyData: Record<string, number> = {}
+      
+      // Helper to parse DD/MM/YYYY format
+      const parseVietnamDate = (dateStr: string): Date => {
+        if (!dateStr) return new Date(0)
+        const parts = dateStr.split("/")
+        if (parts.length === 3) {
+          return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+        }
+        return new Date(dateStr)
+      }
+      
       rentals.forEach((rental: any) => {
         if (rental.startDate) {
-          const date = new Date(rental.startDate)
+          const date = parseVietnamDate(rental.startDate)
           const monthKey = `T${date.getMonth() + 1}`
-          monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (rental.totalPrice || 0)
+          // Use revenue (includes extraFees) instead of totalPrice
+          monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (rental.revenue || rental.totalPrice || 0)
         }
       })
 
@@ -220,6 +232,12 @@ export default function ReportsPage() {
         { month: "T4", revenue: monthlyData["T4"] || 0 },
         { month: "T5", revenue: monthlyData["T5"] || 0 },
         { month: "T6", revenue: monthlyData["T6"] || 0 },
+        { month: "T7", revenue: monthlyData["T7"] || 0 },
+        { month: "T8", revenue: monthlyData["T8"] || 0 },
+        { month: "T9", revenue: monthlyData["T9"] || 0 },
+        { month: "T10", revenue: monthlyData["T10"] || 0 },
+        { month: "T11", revenue: monthlyData["T11"] || 0 },
+        { month: "T12", revenue: monthlyData["T12"] || 0 },
       ]
 
       // Top vehicles - calculate from rentals
