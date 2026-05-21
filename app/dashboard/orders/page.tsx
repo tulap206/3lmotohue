@@ -294,6 +294,25 @@ export default function OrdersPage() {
     
     if (!customer || !vehicle) return
 
+    // Check if vehicle is already rented during this period
+    const startDate = new Date(formData.startDate)
+    const endDate = new Date(formData.endDate)
+    
+    const conflictingRental = orders.find((order) => {
+      if (order.vehicleId !== vehicle.id) return false
+      if (order.status === "cancelled") return false // Ignore cancelled rentals
+      
+      const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
+      const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
+      
+      return !(endDate < orderStart || startDate > orderEnd)
+    })
+    
+    if (conflictingRental) {
+      alert(`⚠️ Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!\n\nKhách: ${conflictingRental.customerName}\nNgày: ${conflictingRental.startDate} - ${conflictingRental.endDate}\nTrạng thái: ${conflictingRental.status}`)
+      return
+    }
+
     const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
     const totalPrice = totalDays * vehicle.pricePerDay
     const startDateVN = new Date(formData.startDate).toLocaleDateString("vi-VN")

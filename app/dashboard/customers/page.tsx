@@ -260,6 +260,16 @@ export default function CustomersPage() {
         if (error) throw error
         if (user) logger.editCustomer(user.username, user.displayName, formData.name)
       } else {
+        // Check if phone already exists
+        const existingCustomer = customers.find(
+          (c) => c.phone === formData.phone
+        )
+        
+        if (existingCustomer) {
+          alert(`⚠️ Khách hàng với số điện thoại "${formData.phone}" đã tồn tại!\n\nTên: ${existingCustomer.name}\nĐịa chỉ: ${existingCustomer.address}`)
+          return
+        }
+        
         const { error } = await supabase
           .from('customers')
           .insert([{

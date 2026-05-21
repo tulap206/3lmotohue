@@ -230,6 +230,16 @@ export default function VehiclesPage() {
   const handleAddVehicle = async () => {
     if (newVehicle.name && newVehicle.licensePlate && newVehicle.pricePerDay) {
       try {
+        // Check if licensePlate already exists
+        const existingVehicle = vehicles.find(
+          (v) => v.licensePlate.toLowerCase() === newVehicle.licensePlate.toLowerCase()
+        )
+        
+        if (existingVehicle) {
+          alert(`⚠️ Xe với biển số "${newVehicle.licensePlate}" đã tồn tại!\n\nTên xe: ${existingVehicle.name}\nGiá: ${existingVehicle.pricePerDay.toLocaleString('vi-VN')} VND/ngày`)
+          return
+        }
+        
         // Upload images first
         let vehicleImageUrls: string[] = []
         let documentImageUrls: string[] = []
