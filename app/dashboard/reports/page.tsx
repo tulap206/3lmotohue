@@ -563,24 +563,24 @@ export default function ReportsPage() {
       </Dialog>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 md:gap-4">
         {stats.map((stat, idx) => (
           <Card 
             key={idx}
-            className={stat.title === "Tổng Xe" || stat.title === "Tổng Khách" ? "cursor-pointer hover:shadow-lg transition" : ""}
+            className={`${stat.title === "Tổng Xe" || stat.title === "Tổng Khách" ? "cursor-pointer hover:shadow-lg transition" : ""}`}
             onClick={() => {
               if (stat.title === "Tổng Xe") router.push("/dashboard/vehicles")
               if (stat.title === "Tổng Khách") router.push("/dashboard/customers")
             }}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`${stat.iconBg} p-2 rounded-lg`}>
-                <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-4">
+              <CardTitle className="text-xs md:text-sm font-medium">{stat.title}</CardTitle>
+              <div className={`${stat.iconBg} p-1.5 md:p-2 rounded-lg`}>
+                <stat.icon className={`w-3 h-3 md:w-4 md:h-4 ${stat.iconColor}`} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+            <CardContent className="p-3 md:p-4">
+              <div className="text-lg md:text-2xl font-bold break-words">{stat.value}</div>
               <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
@@ -590,15 +590,15 @@ export default function ReportsPage() {
       {/* Monthly Revenue Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Doanh Thu Theo Tháng</CardTitle>
+          <CardTitle className="text-base md:text-lg">Doanh Thu Theo Tháng</CardTitle>
           <CardDescription>Doanh thu hàng tháng</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={reportData.monthlyRevenue}>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={reportData.monthlyRevenue} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} width={40} />
               <Tooltip
                 formatter={(value: any) => `${value.toLocaleString("vi-VN")} VNĐ`}
                 contentStyle={{
@@ -616,16 +616,16 @@ export default function ReportsPage() {
       {/* Top Vehicles */}
       <Card>
         <CardHeader>
-          <CardTitle>Xe Top Doanh Thu</CardTitle>
-          <CardDescription>Top 5 xe có doanh thu cao nhất</CardDescription>
+          <CardTitle className="text-base md:text-lg">Xe Top Doanh Thu</CardTitle>
+          <CardDescription className="text-xs md:text-sm">Top 5 xe có doanh thu cao nhất</CardDescription>
         </CardHeader>
         <CardContent>
           {reportData.topVehicles.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-2 md:space-y-4">
               {reportData.topVehicles.map((vehicle, idx) => (
                 <div 
                   key={idx} 
-                  className="flex items-center justify-between border-b pb-3 last:border-b-0 cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-2 md:pb-3 last:border-b-0 cursor-pointer hover:bg-gray-50 p-2 rounded transition gap-2 sm:gap-0"
                   onClick={async () => {
                     // Fetch full vehicle data
                     const { data } = await supabase
@@ -644,8 +644,8 @@ export default function ReportsPage() {
                     <p className="font-medium text-sm text-gray-900">{vehicle.name}</p>
                     <p className="text-xs text-gray-500">{vehicle.rentals} lần thuê</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-sm">
+                  <div className="text-right sm:text-right">
+                    <p className="font-semibold text-sm break-words">
                       {vehicle.revenue.toLocaleString("vi-VN")} VNĐ
                     </p>
                   </div>
@@ -667,22 +667,22 @@ export default function ReportsPage() {
           </DialogHeader>
           {selectedVehicle && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Tên xe</p>
-                  <p className="font-medium text-gray-800">{selectedVehicle.name}</p>
+                  <p className="font-medium text-gray-800 text-sm">{selectedVehicle.name}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Biển số</p>
-                  <p className="font-medium text-gray-800">{selectedVehicle.licensePlate}</p>
+                  <p className="font-medium text-gray-800 text-sm">{selectedVehicle.licensePlate}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Màu sắc</p>
-                  <p className="font-medium text-gray-800">{selectedVehicle.color}</p>
+                  <p className="font-medium text-gray-800 text-sm">{selectedVehicle.color}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Giá/ngày</p>
-                  <p className="font-medium text-gray-800">{selectedVehicle.pricePerDay.toLocaleString()} VNĐ</p>
+                  <p className="font-medium text-gray-800 text-sm">{selectedVehicle.pricePerDay.toLocaleString()} VNĐ</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Trạng thái</p>
@@ -890,34 +890,34 @@ export default function ReportsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-gray-700 space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">🚗 Tổng xe</p>
-                  <p className="font-semibold text-lg text-gray-800">{reportData.totalVehicles}</p>
+                  <p className="font-semibold text-base md:text-lg text-gray-800">{reportData.totalVehicles}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">👥 Tổng khách</p>
-                  <p className="font-semibold text-lg text-gray-800">{reportData.totalCustomers}</p>
+                  <p className="font-semibold text-base md:text-lg text-gray-800">{reportData.totalCustomers}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">📋 Tổng đơn</p>
-                  <p className="font-semibold text-lg text-gray-800">{reportData.totalRentals}</p>
+                  <p className="font-semibold text-base md:text-lg text-gray-800">{reportData.totalRentals}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">💰 Doanh thu</p>
-                  <p className="font-semibold text-lg text-blue-600">{reportData.totalRevenue.toLocaleString("vi-VN")} VNĐ</p>
+                  <p className="font-semibold text-base md:text-lg text-blue-600 break-words">{reportData.totalRevenue.toLocaleString("vi-VN")} VNĐ</p>
                 </div>
               </div>
               
               <div className="border-t border-blue-200 pt-3">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📈 Lợi nhuận</p>
-                    <p className="font-semibold text-lg text-emerald-600">{reportData.totalProfit.toLocaleString("vi-VN")} VNĐ</p>
+                    <p className="font-semibold text-base md:text-lg text-emerald-600 break-words">{reportData.totalProfit.toLocaleString("vi-VN")} VNĐ</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📥 Tổng thu</p>
-                    <p className="font-semibold text-lg text-green-600">+{(rentalRevenue + totalIncome).toLocaleString("vi-VN")} VNĐ</p>
+                    <p className="font-semibold text-base md:text-lg text-green-600 break-words">+{(rentalRevenue + totalIncome).toLocaleString("vi-VN")} VNĐ</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📤 Tổng chi</p>
