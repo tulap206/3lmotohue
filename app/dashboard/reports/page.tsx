@@ -474,7 +474,7 @@ export default function ReportsPage() {
   ]
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full">
       {/* Delete Transaction Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
@@ -563,7 +563,7 @@ export default function ReportsPage() {
       </Dialog>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
         {stats.map((stat, idx) => (
           <Card 
             key={idx}
@@ -573,14 +573,14 @@ export default function ReportsPage() {
               if (stat.title === "Tổng Khách") router.push("/dashboard/customers")
             }}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-4">
-              <CardTitle className="text-xs md:text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`${stat.iconBg} p-1.5 md:p-2 rounded-lg`}>
-                <stat.icon className={`w-3 h-3 md:w-4 md:h-4 ${stat.iconColor}`} />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <div className={`${stat.iconBg} p-2 rounded-lg`}>
+                <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
               </div>
             </CardHeader>
-            <CardContent className="p-3 md:p-4">
-              <div className="text-lg md:text-2xl font-bold break-words">{stat.value}</div>
+            <CardContent className="p-3">
+              <div className="text-xl md:text-2xl font-bold break-words">{stat.value}</div>
               <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
@@ -589,25 +589,26 @@ export default function ReportsPage() {
 
       {/* Monthly Revenue Chart */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
           <CardTitle className="text-base md:text-lg">Doanh Thu Theo Tháng</CardTitle>
-          <CardDescription>Doanh thu hàng tháng</CardDescription>
+          <CardDescription className="text-xs md:text-sm">Doanh thu hàng tháng</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={reportData.monthlyRevenue} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+        <CardContent className="p-3 md:p-4">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={reportData.monthlyRevenue} margin={{ top: 10, right: 5, left: -15, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} width={40} />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} width={35} />
               <Tooltip
                 formatter={(value: any) => `${value.toLocaleString("vi-VN")} VNĐ`}
                 contentStyle={{
                   backgroundColor: "#fff",
                   border: "1px solid #ccc",
                   borderRadius: "4px",
+                  fontSize: "12px"
                 }}
               />
-              <Bar dataKey="revenue" fill="#3b82f6" />
+              <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -615,19 +616,18 @@ export default function ReportsPage() {
 
       {/* Top Vehicles */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
           <CardTitle className="text-base md:text-lg">Xe Top Doanh Thu</CardTitle>
           <CardDescription className="text-xs md:text-sm">Top 5 xe có doanh thu cao nhất</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-4">
           {reportData.topVehicles.length > 0 ? (
-            <div className="space-y-2 md:space-y-4">
+            <div className="space-y-2 md:space-y-3">
               {reportData.topVehicles.map((vehicle, idx) => (
                 <div 
                   key={idx} 
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-2 md:pb-3 last:border-b-0 cursor-pointer hover:bg-gray-50 p-2 rounded transition gap-2 sm:gap-0"
+                  className="flex items-start justify-between border-b pb-2 md:pb-3 last:border-b-0 cursor-pointer hover:bg-gray-50 p-2 rounded transition gap-2"
                   onClick={async () => {
-                    // Fetch full vehicle data
                     const { data } = await supabase
                       .from('vehicles')
                       .select('*')
@@ -640,20 +640,20 @@ export default function ReportsPage() {
                     }
                   }}
                 >
-                  <div className="flex-1">
-                    <p className="font-medium text-sm text-gray-900">{vehicle.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-gray-900 break-words">{vehicle.name}</p>
                     <p className="text-xs text-gray-500">{vehicle.rentals} lần thuê</p>
                   </div>
-                  <div className="text-right sm:text-right">
-                    <p className="font-semibold text-sm break-words">
-                      {vehicle.revenue.toLocaleString("vi-VN")} VNĐ
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-semibold text-sm text-blue-600 break-words">
+                      {vehicle.revenue.toLocaleString("vi-VN")}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">Chưa có dữ liệu xe</p>
+            <p className="text-gray-500 text-center py-6 text-sm">Chưa có dữ liệu xe</p>
           )}
         </CardContent>
       </Card>
@@ -769,55 +769,53 @@ export default function ReportsPage() {
             </DialogContent>
           </Dialog>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 md:p-4">
           {transactions.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs md:text-sm">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left p-3 font-semibold text-gray-700">Thời gian</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Khoản Thu/Chi</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Người (User)</th>
-                      <th className="text-right p-3 font-semibold text-gray-700">Số Tiền</th>
-                      <th className="text-center p-3 font-semibold text-gray-700">Tác vụ</th>
+                      <th className="text-left p-2 md:p-3 font-semibold text-gray-700">Thời gian</th>
+                      <th className="text-left p-2 md:p-3 font-semibold text-gray-700">Thu/Chi</th>
+                      <th className="text-left p-2 md:p-3 font-semibold text-gray-700 hidden sm:table-cell">Người</th>
+                      <th className="text-right p-2 md:p-3 font-semibold text-gray-700">Tiền</th>
+                      <th className="text-center p-2 md:p-3 font-semibold text-gray-700">Tác vụ</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedTransactions.map((tx) => (
                       <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="p-3 text-gray-600">
-                          {new Date(tx.timestamp).toLocaleString("vi-VN")}
-                        </td>
-                        <td className="p-3">
+                        <td className="p-2 md:p-3 text-gray-600 text-xs">{new Date(tx.timestamp).toLocaleString("vi-VN")}</td>
+                        <td className="p-2 md:p-3">
                           <span className={tx.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
                             {tx.type === "income" ? "✓" : "✗"} {tx.description}
                           </span>
                         </td>
-                        <td className="p-3 text-gray-600">{tx.user}</td>
-                        <td className={`p-3 text-right font-semibold ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
-                          {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} VND
+                        <td className="p-2 md:p-3 text-gray-600 hidden sm:table-cell text-xs">{tx.user}</td>
+                        <td className={`p-2 md:p-3 text-right font-semibold text-xs md:text-sm ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
+                          {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")}
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="p-2 md:p-3 text-center">
                           {user?.role === 'admin' ? (
-                            <div className="flex gap-2 justify-center">
+                            <div className="flex gap-1 md:gap-2 justify-center">
                               <button
                                 onClick={() => handleEditTransaction(tx)}
                                 className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition"
-                                title="Sửa (chỉ admin)"
+                                title="Sửa"
                               >
-                                <Edit2 className="w-4 h-4" />
+                                <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteTransaction(tx)}
                                 className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition"
-                                title="Xoá (chỉ admin)"
+                                title="Xoá"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                               </button>
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-xs">Chỉ admin</span>
+                            <span className="text-gray-400 text-xs">Admin</span>
                           )}
                         </td>
                       </tr>
@@ -827,25 +825,25 @@ export default function ReportsPage() {
               </div>
 
               {/* Pagination Controls */}
-              <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                <div className="text-sm text-gray-600">
-                  Hiển thị <span className="font-semibold">{startIndex + 1}</span> - <span className="font-semibold">{Math.min(endIndex, transactions.length)}</span> trong <span className="font-semibold">{transactions.length}</span> khoản
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 pt-3 gap-2 sm:gap-0">
+                <div className="text-xs text-gray-600">
+                  <span>{startIndex + 1}</span> - <span>{Math.min(endIndex, transactions.length)}</span> / <span>{transactions.length}</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1 md:gap-2">
                   <button
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-xs md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     ← Trước
                   </button>
-                  <div className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                    <span className="text-sm font-medium">Trang {currentPage} / {totalPages}</span>
+                  <div className="px-2 md:px-3 py-1 md:py-2 border border-gray-300 rounded bg-gray-50">
+                    <span className="text-xs md:text-sm font-medium">{currentPage} / {totalPages}</span>
                   </div>
                   <button
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-xs md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     Tiếp →
                   </button>
@@ -853,8 +851,8 @@ export default function ReportsPage() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <p>Chưa có khoản thu/chi nào</p>
+            <div className="text-center py-6 text-gray-500">
+              <p className="text-sm">Chưa có khoản thu/chi nào</p>
             </div>
           )}
         </CardContent>
@@ -883,14 +881,14 @@ export default function ReportsPage() {
         
         return (
           <Card className="bg-blue-50 border-blue-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
+              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                 <TrendingUp className="w-5 h-5" />
                 Tóm Tắt
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-gray-700 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
+            <CardContent className="text-sm text-gray-700 space-y-3 p-3 md:p-4">
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">🚗 Tổng xe</p>
                   <p className="font-semibold text-base md:text-lg text-gray-800">{reportData.totalVehicles}</p>
@@ -905,28 +903,28 @@ export default function ReportsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">💰 Doanh thu</p>
-                  <p className="font-semibold text-base md:text-lg text-blue-600 break-words">{reportData.totalRevenue.toLocaleString("vi-VN")} VNĐ</p>
+                  <p className="font-semibold text-base md:text-lg text-blue-600 break-words text-sm md:text-base">{reportData.totalRevenue.toLocaleString("vi-VN")}</p>
                 </div>
               </div>
               
               <div className="border-t border-blue-200 pt-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📈 Lợi nhuận</p>
-                    <p className="font-semibold text-base md:text-lg text-emerald-600 break-words">{reportData.totalProfit.toLocaleString("vi-VN")} VNĐ</p>
+                    <p className="font-semibold text-base md:text-lg text-emerald-600 break-words text-sm md:text-base">{reportData.totalProfit.toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📥 Tổng thu</p>
-                    <p className="font-semibold text-base md:text-lg text-green-600 break-words">+{(rentalRevenue + totalIncome).toLocaleString("vi-VN")} VNĐ</p>
+                    <p className="font-semibold text-base md:text-lg text-green-600 break-words text-sm md:text-base">+{(rentalRevenue + totalIncome).toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">📤 Tổng chi</p>
-                    <p className="font-semibold text-lg text-red-600">-{totalExpense.toLocaleString("vi-VN")} VNĐ</p>
+                    <p className="font-semibold text-base md:text-lg text-red-600 text-sm md:text-base">-{totalExpense.toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">💵 Tiền hiện có</p>
-                    <p className={`font-semibold text-lg ${cashOnHand >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      {cashOnHand.toLocaleString("vi-VN")} VNĐ
+                    <p className={`font-semibold text-base md:text-lg ${cashOnHand >= 0 ? 'text-blue-600' : 'text-red-600'} text-sm md:text-base break-words`}>
+                      {cashOnHand.toLocaleString("vi-VN")}
                     </p>
                   </div>
                 </div>
