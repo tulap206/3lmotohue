@@ -527,21 +527,21 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-gray-800">Đơn thuê</h1>
-          <p className="text-gray-500 text-sm">Quản lý các đơn thuê xe</p>
+          <h1 className="text-lg md:text-xl font-semibold text-gray-800">Đơn thuê</h1>
+          <p className="text-gray-500 text-xs md:text-sm">Quản lý các đơn thuê xe</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
+            <Button className="w-full sm:w-auto bg-blue-500 text-white hover:bg-blue-600 rounded-xl text-sm">
               <Plus className="w-4 h-4 mr-2" />
               Tạo đơn thuê mới
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-white border-gray-200 rounded-2xl">
+          <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-gray-800">Tạo đơn thuê mới</DialogTitle>
               <DialogDescription className="text-gray-500">Nhập thông tin đơn thuê xe</DialogDescription>
@@ -670,107 +670,114 @@ export default function OrdersPage() {
 
       {/* Orders Table */}
       <Card className="bg-white border-0 card-shadow rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-800">Danh sách đơn thuê</CardTitle>
-          <CardDescription className="text-gray-500">Tổng cộng {filteredOrders.length} đơn thuê</CardDescription>
+        <CardHeader className="pb-3 md:pb-4 p-3 md:p-4">
+          <CardTitle className="text-base md:text-lg font-semibold text-gray-800">Danh sách đơn thuê</CardTitle>
+          <CardDescription className="text-xs md:text-sm text-gray-500">Tổng cộng {filteredOrders.length} đơn thuê</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 uppercase">Mã đơn</th>
-                  <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 uppercase">Khách hàng</th>
-                  <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Xe thuê</th>
-                  <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Thời gian</th>
-                  <th className="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Tổng tiền</th>
-                  <th className="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Doanh thu</th>
-                  <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                  <th className="text-right py-3 px-2 text-xs font-medium text-gray-500 uppercase">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-2">
-                      <span className="font-medium text-gray-800">{order.rentalCode || order.id}</span>
-                    </td>
-                    <td className="py-4 px-2">
+        <CardContent className="p-3 md:p-4">
+          {filteredOrders.length > 0 ? (
+            <div className="space-y-3 md:space-y-4 max-h-[70vh] overflow-y-auto">
+              {filteredOrders.map((order) => (
+                <div key={order.id} className="bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow transition-all">
+                  {/* Top row: Code + Status */}
+                  <div className="flex items-start justify-between mb-3 pb-3 border-b border-gray-200">
+                    <div>
+                      <p className="text-xs text-gray-500">Mã đơn</p>
+                      <p className="font-semibold text-sm text-gray-800">{order.rentalCode || order.id}</p>
+                    </div>
+                    <Badge className={statusMap[order.status].className}>
+                      {statusMap[order.status].label}
+                    </Badge>
+                  </div>
+                  
+                  {/* 2 cols: Customer + Vehicle */}
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Khách hàng</p>
                       <button
-                        className="flex items-center gap-2 text-left hover:text-blue-600 transition-colors"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left break-words"
                         onClick={() => openCustomerDetail(order.customerId)}
                       >
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-700 hover:text-blue-600 hover:underline">{order.customerName}</span>
+                        {order.customerName}
                       </button>
-                    </td>
-                    <td className="py-4 px-2 hidden sm:table-cell">
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Xe thuê</p>
                       <button
-                        className="flex items-center gap-2 text-left hover:text-blue-600 transition-colors"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left break-words"
                         onClick={() => openVehicleDetail(order.vehicleId)}
                       >
-                        <Bike className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-700 hover:text-blue-600 hover:underline">{order.vehicleName}</p>
-                          <p className="text-xs text-gray-400">{order.licensePlate}</p>
-                        </div>
+                        {order.vehicleName}
                       </button>
-                    </td>
-                    <td className="py-4 px-2 hidden md:table-cell">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Calendar className="w-4 h-4" />
-                        {order.startDate} - {order.endDate}
-                      </div>
-                      <p className="text-xs text-gray-400">{order.totalDays} ngày</p>
-                    </td>
-                    <td className="py-4 px-2 text-right hidden lg:table-cell">
-                      <p className="text-sm font-medium text-blue-600">{order.totalPrice.toLocaleString("vi-VN")} VND</p>
-                      <p className="text-xs text-gray-400">Cọc: {order.deposit.toLocaleString("vi-VN")}</p>
-                    </td>
-                    <td className="py-4 px-2 text-right hidden xl:table-cell">
+                      <p className="text-xs text-gray-400">{order.licensePlate}</p>
+                    </div>
+                  </div>
+
+                  {/* 2 cols: Dates + Days */}
+                  <div className="grid grid-cols-2 gap-3 mb-3 pb-3 border-b border-gray-200">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Thời gian</p>
+                      <p className="text-sm text-gray-700">{order.startDate}</p>
+                      <p className="text-xs text-gray-500">→ {order.endDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Số ngày</p>
+                      <p className="text-sm font-semibold text-gray-800">{order.totalDays} ngày</p>
+                      <p className="text-xs text-gray-500">{order.pricePerDay.toLocaleString("vi-VN")}/ngày</p>
+                    </div>
+                  </div>
+
+                  {/* 2 cols: Total Price + Revenue */}
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Tổng tiền</p>
+                      <p className="text-sm font-semibold text-blue-600">{order.totalPrice.toLocaleString("vi-VN")} VND</p>
+                      <p className="text-xs text-gray-500">Cọc: {order.deposit.toLocaleString("vi-VN")}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Doanh thu</p>
                       {order.revenue > 0 ? (
-                        <p className={`text-sm font-medium ${order.status === "cancelled" ? "text-amber-600" : "text-emerald-600"}`}>
-                          {order.revenue.toLocaleString("vi-VN")} VND
-                        </p>
+                        <>
+                          <p className={`text-sm font-semibold ${order.status === "cancelled" ? "text-amber-600" : "text-emerald-600"}`}>
+                            {order.revenue.toLocaleString("vi-VN")} VND
+                          </p>
+                        </>
                       ) : (
                         <p className="text-sm text-gray-400">-</p>
                       )}
-                    </td>
-                    <td className="py-4 px-2 text-center">
-                      <Badge className={statusMap[order.status].className}>
-                        {statusMap[order.status].label}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-2">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-gray-400 hover:text-blue-600 hover:bg-blue-50" 
-                          onClick={() => setViewingOrder(order)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-gray-400 hover:text-amber-600 hover:bg-amber-50" 
-                          onClick={() => openEditDialog(order)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
 
-          {filteredOrders.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <ClipboardList className="w-12 h-12 text-gray-300 mb-4" />
-              <p className="text-gray-400">Không tìm thấy đơn thuê nào</p>
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 text-xs md:text-sm"
+                      onClick={() => setViewingOrder(order)}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Xem
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 text-xs md:text-sm"
+                      onClick={() => {
+                        setEditingOrder(order)
+                        setIsEditDialogOpen(true)
+                      }}
+                    >
+                      <Pencil className="w-3 h-3 mr-1" />
+                      Sửa
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">Chưa có đơn thuê nào</p>
             </div>
           )}
         </CardContent>
