@@ -147,12 +147,13 @@ export default function CustomersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      // Start with empty or existing images depending on if editing
       let uploadedImages = {
-        customerphoto: formData.customerphoto,
-        cccdfront: formData.cccdfront,
-        cccdback: formData.cccdback,
-        licensefront: formData.licensefront,
-        licenseback: formData.licenseback,
+        customerphoto: editingCustomer?.customerphoto || [],
+        cccdfront: editingCustomer?.cccdfront || [],
+        cccdback: editingCustomer?.cccdback || [],
+        licensefront: editingCustomer?.licensefront || [],
+        licenseback: editingCustomer?.licenseback || [],
       }
 
       // Upload images to Supabase Storage
@@ -203,31 +204,34 @@ export default function CustomersPage() {
       // Upload all images in parallel
       const uploadPromises = []
       
-      if (formData.customerphoto && formData.customerphoto.length > 0) {
+      // Helper to check if string is base64 (not a URL)
+      const isBase64 = (str: string) => str.startsWith('data:')
+      
+      if (formData.customerphoto && formData.customerphoto.length > 0 && isBase64(formData.customerphoto[0])) {
         uploadPromises.push(
           uploadImage(formData.customerphoto[0], 'customer-photos', `${formData.name}-${Date.now()}.jpg`)
             .then(url => ({ key: 'customerphoto', url }))
         )
       }
-      if (formData.cccdfront && formData.cccdfront.length > 0) {
+      if (formData.cccdfront && formData.cccdfront.length > 0 && isBase64(formData.cccdfront[0])) {
         uploadPromises.push(
           uploadImage(formData.cccdfront[0], 'cccd-front', `${formData.name}-front-${Date.now()}.jpg`)
             .then(url => ({ key: 'cccdfront', url }))
         )
       }
-      if (formData.cccdback && formData.cccdback.length > 0) {
+      if (formData.cccdback && formData.cccdback.length > 0 && isBase64(formData.cccdback[0])) {
         uploadPromises.push(
           uploadImage(formData.cccdback[0], 'cccd-back', `${formData.name}-back-${Date.now()}.jpg`)
             .then(url => ({ key: 'cccdback', url }))
         )
       }
-      if (formData.licensefront && formData.licensefront.length > 0) {
+      if (formData.licensefront && formData.licensefront.length > 0 && isBase64(formData.licensefront[0])) {
         uploadPromises.push(
           uploadImage(formData.licensefront[0], 'license-front', `${formData.name}-license-front-${Date.now()}.jpg`)
             .then(url => ({ key: 'licensefront', url }))
         )
       }
-      if (formData.licenseback && formData.licenseback.length > 0) {
+      if (formData.licenseback && formData.licenseback.length > 0 && isBase64(formData.licenseback[0])) {
         uploadPromises.push(
           uploadImage(formData.licenseback[0], 'license-back', `${formData.name}-license-back-${Date.now()}.jpg`)
             .then(url => ({ key: 'licenseback', url }))
@@ -250,6 +254,12 @@ export default function CustomersPage() {
       console.log("📷 Final uploadedImages:", uploadedImages)
 
       if (editingCustomer) {
+        console.log("📝 Editing customer:", editingCustomer.id)
+        console.log("🔄 formData images:", {
+          customerphoto: formData.customerphoto?.[0]?.substring(0, 50),
+          cccdfront: formData.cccdfront?.[0]?.substring(0, 50),
+        })
+        
         const updateData: any = {
           name: formData.name,
           phone: formData.phone,
@@ -258,21 +268,39 @@ export default function CustomersPage() {
           idcard: formData.idcard,
         }
         
-        // Only update image fields if new images were uploaded
-        if (uploadResults.some(r => r.url)) {
-          updateData.customerphoto = uploadedImages.customerphoto
-          updateData.cccdfront = uploadedImages.cccdfront
-          updateData.cccdback = uploadedImages.cccdback
-          updateData.licensefront = uploadedImages.licensefront
-          updateData.licenseback = uploadedImages.licenseback
-        }
+        // Merge: use new uploaded images if available, otherwise keep existing
+        updateData.customerphoto = uploadedImages.customerphoto.length > 0 
+          ? uploadedImages.customerphoto 
+          : (editingCustomer.customerphoto || [])
+        
+        updateData.cccdfront = uploadedImages.cccdfront.length > 0 
+          ? uploadedImages.cccdfront 
+          : (editingCustomer.cccdfront || [])
+        
+        updateData.cccdback = uploadedImages.cccdback.length > 0 
+          ? uploadedImages.cccdback 
+          : (editingCustomer.cccdback || [])
+        
+        updateData.licensefront = uploadedImages.licensefront.length > 0 
+          ? uploadedImages.licensefront 
+          : (editingCustomer.licensefront || [])
+        
+        updateData.licenseback = uploadedImages.licenseback.length > 0 
+          ? uploadedImages.licenseback 
+          : (editingCustomer.licenseback || [])
+        
+        console.log("💾 Final data to update:", updateData)
 
         const { error } = await supabase
           .from('customers')
           .update(updateData)
           .eq('id', editingCustomer.id)
         
-        if (error) throw error
+        if (error) {
+          console.error("❌ Update error:", error)
+          throw error
+        }
+        console.log("✅ Customer updated successfully")
         if (user) logger.editCustomer(user.username, user.displayName, formData.name)
       } else {
         // Check if phone already exists
