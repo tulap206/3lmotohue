@@ -157,9 +157,14 @@ export default function CustomersPage() {
 
       // Upload images to Supabase Storage
       const uploadImage = async (base64: string, folder: string, fileName: string) => {
-        if (!base64 || base64.length === 0) return null
+        if (!base64 || base64.length === 0) {
+          console.log(`⏭️ Skipping ${fileName} - empty base64`)
+          return null
+        }
         
         try {
+          console.log(`📤 Uploading ${fileName} to ${folder}...`)
+          
           // Convert base64 to blob
           const base64Data = base64.split(',')[1]
           const byteCharacters = atob(base64Data)
@@ -171,23 +176,26 @@ export default function CustomersPage() {
           const blob = new Blob([byteArray], { type: 'image/jpeg' })
 
           const path = `${folder}/${fileName}`
-          const { error } = await supabase.storage
+          const { data, error } = await supabase.storage
             .from('customer-documents')
             .upload(path, blob, { upsert: true })
 
           if (error) {
-            console.error(`Storage error for ${fileName}:`, error)
+            console.error(`❌ Storage error for ${fileName}:`, error)
             return null
           }
+          
+          console.log(`✅ Uploaded successfully: ${path}`)
           
           // Get public URL
           const { data: urlData } = supabase.storage
             .from('customer-documents')
             .getPublicUrl(path)
           
+          console.log(`🔗 Public URL: ${urlData.publicUrl}`)
           return urlData.publicUrl
         } catch (error) {
-          console.error(`Error uploading ${fileName}:`, error)
+          console.error(`❌ Error uploading ${fileName}:`, error)
           return null
         }
       }
@@ -228,11 +236,18 @@ export default function CustomersPage() {
 
       // Wait for all uploads
       const uploadResults = await Promise.all(uploadPromises)
+      console.log("📸 Upload results:", uploadResults)
+      
       uploadResults.forEach(result => {
-        if (result.url) {
+        if (result && result.url) {
+          console.log(`✅ Uploaded ${result.key}: ${result.url}`)
           uploadedImages[result.key as keyof typeof uploadedImages] = [result.url]
+        } else if (result) {
+          console.warn(`⚠️ No URL for ${result.key}`)
         }
       })
+      
+      console.log("📷 Final uploadedImages:", uploadedImages)
 
       if (editingCustomer) {
         const updateData: any = {
