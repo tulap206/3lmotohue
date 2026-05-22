@@ -163,11 +163,23 @@ export default function CustomersPage() {
           return null
         }
         
+        // Validate it's actually base64
+        if (!base64.startsWith('data:')) {
+          console.log(`⏭️ Skipping ${fileName} - not base64 (is URL)`)
+          return null
+        }
+        
         try {
           console.log(`📤 Uploading ${fileName} to ${folder}...`)
           
           // Convert base64 to blob
-          const base64Data = base64.split(',')[1]
+          const parts = base64.split(',')
+          if (parts.length !== 2) {
+            console.error(`❌ Invalid base64 format for ${fileName}`)
+            return null
+          }
+          
+          const base64Data = parts[1]
           const byteCharacters = atob(base64Data)
           const byteNumbers = new Array(byteCharacters.length)
           for (let i = 0; i < byteCharacters.length; i++) {
