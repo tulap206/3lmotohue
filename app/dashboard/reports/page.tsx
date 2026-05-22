@@ -17,7 +17,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2 } from "lucide-react"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X } from "lucide-react"
 import {
   BarChart,
   Bar,
@@ -63,6 +63,7 @@ export default function ReportsPage() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
@@ -98,11 +99,21 @@ export default function ReportsPage() {
     }
   }
 
-  // Pagination calculations
-  const totalPages = Math.ceil(transactions.length / itemsPerPage)
+  // Pagination calculations with search filter
+  const filteredTransactions = transactions.filter((tx) => {
+    const query = searchQuery.toLowerCase()
+    return (
+      tx.description.toLowerCase().includes(query) ||
+      tx.user.toLowerCase().includes(query) ||
+      tx.amount.toString().includes(query) ||
+      tx.type.toLowerCase().includes(query)
+    )
+  })
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const paginatedTransactions = transactions.slice(startIndex, endIndex)
+  const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex)
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -114,6 +125,12 @@ export default function ReportsPage() {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1)
     }
+  }
+
+  // Reset to page 1 when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setCurrentPage(1)
   }
 
   const handleAddTransaction = async (e: React.FormEvent) => {
@@ -712,62 +729,84 @@ export default function ReportsPage() {
 
       {/* Transactions Table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Theo Dõi Thu/Chi</CardTitle>
-            <CardDescription className="text-red-600 font-medium">Quản lý các khoản thu/chi nằm ngoài đơn thuê xe</CardDescription>
+        <CardHeader className="pb-3 md:pb-4 p-3 md:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+            <div>
+              <CardTitle className="text-base md:text-lg">Theo Dõi Thu/Chi</CardTitle>
+              <CardDescription className="text-red-600 font-medium text-xs md:text-sm">Quản lý các khoản thu/chi nằm ngoài đơn thuê xe</CardDescription>
+            </div>
+            <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
+              <Button onClick={() => setIsAddTransactionOpen(true)} className="bg-blue-500 text-white hover:bg-blue-600 text-sm w-full sm:w-auto">
+                <Plus className="w-4 h-4 mr-2" />
+                Nhập Thu/Chi
+              </Button>
+              <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-gray-800">Thêm Khoản Thu/Chi</DialogTitle>
+                  <DialogDescription className="text-gray-500">Nhập thông tin khoản thu hoặc chi</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleAddTransaction} className="space-y-4">
+                  <div>
+                    <Label className="text-gray-700 text-sm font-medium">Loại</Label>
+                    <Select value={formData.type} onValueChange={(val) => setFormData({...formData, type: val as "income" | "expense"})}>
+                      <SelectTrigger className="border-gray-300 rounded-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="income">Thu</SelectItem>
+                        <SelectItem value="expense">Chi</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 text-sm font-medium">Mô Tả (ví dụ: mua định vị, sửa xe)</Label>
+                    <Input
+                      placeholder="Nhập mô tả"
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className="border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 text-sm font-medium">Số Tiền (VND)</Label>
+                    <Input
+                      type="text"
+                      placeholder="Nhập số tiền (VD: 1.000.000)"
+                      value={formData.amount}
+                      onChange={(e) => {
+                        const formatted = formatMoneyInput(e.target.value)
+                        setFormData({...formData, amount: formatted})
+                      }}
+                      className="border-gray-300 rounded-lg font-mono"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-lg">
+                    Thêm
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
-          <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
-            <Button onClick={() => setIsAddTransactionOpen(true)} className="bg-blue-500 text-white hover:bg-blue-600">
-              <Plus className="w-4 h-4 mr-2" />
-              Nhập Thu/Chi
-            </Button>
-            <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-gray-800">Thêm Khoản Thu/Chi</DialogTitle>
-                <DialogDescription className="text-gray-500">Nhập thông tin khoản thu hoặc chi</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleAddTransaction} className="space-y-4">
-                <div>
-                  <Label className="text-gray-700 text-sm font-medium">Loại</Label>
-                  <Select value={formData.type} onValueChange={(val) => setFormData({...formData, type: val as "income" | "expense"})}>
-                    <SelectTrigger className="border-gray-300 rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="income">Thu</SelectItem>
-                      <SelectItem value="expense">Chi</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-medium">Mô Tả (ví dụ: mua định vị, sửa xe)</Label>
-                  <Input
-                    placeholder="Nhập mô tả"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    className="border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-700 text-sm font-medium">Số Tiền (VND)</Label>
-                  <Input
-                    type="text"
-                    placeholder="Nhập số tiền (VD: 1.000.000)"
-                    value={formData.amount}
-                    onChange={(e) => {
-                      const formatted = formatMoneyInput(e.target.value)
-                      setFormData({...formData, amount: formatted})
-                    }}
-                    className="border-gray-300 rounded-lg font-mono"
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-blue-500 text-white hover:bg-blue-600 rounded-lg">
-                  Thêm
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+
+          {/* Search Box */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Tìm kiếm: mô tả, user, tiền, loại..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10 pr-10 border-gray-300 rounded-lg text-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => handleSearchChange("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="p-3 md:p-4">
           {transactions.length > 0 ? (
@@ -827,7 +866,7 @@ export default function ReportsPage() {
               {/* Pagination Controls */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 pt-3 gap-2 sm:gap-0">
                 <div className="text-xs text-gray-600">
-                  <span>{startIndex + 1}</span> - <span>{Math.min(endIndex, transactions.length)}</span> / <span>{transactions.length}</span>
+                  <span>{startIndex + 1}</span> - <span>{Math.min(endIndex, filteredTransactions.length)}</span> / <span>{filteredTransactions.length}</span> {searchQuery && <span className="text-gray-500 text-xs">(lọc từ {transactions.length})</span>}
                 </div>
                 <div className="flex gap-1 md:gap-2">
                   <button
