@@ -146,6 +146,17 @@ export default function CustomersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate required fields
+    if (!formData.name || formData.name.trim() === '') {
+      alert('Vui lòng nhập tên khách hàng')
+      return
+    }
+    if (!formData.phone || formData.phone.trim() === '') {
+      alert('Vui lòng nhập số điện thoại')
+      return
+    }
+    
     try {
       // Start with empty or existing images depending on if editing
       let uploadedImages = {
@@ -217,7 +228,10 @@ export default function CustomersPage() {
       const uploadPromises = []
       
       // Helper to check if string is base64 (not a URL)
-      const isBase64 = (str: string) => str.startsWith('data:')
+      const isBase64 = (str: string | undefined | null): boolean => {
+        if (!str || typeof str !== 'string') return false
+        return str.startsWith('data:')
+      }
       
       if (formData.customerphoto && formData.customerphoto.length > 0 && isBase64(formData.customerphoto[0])) {
         uploadPromises.push(
