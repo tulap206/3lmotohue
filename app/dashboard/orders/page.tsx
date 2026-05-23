@@ -372,15 +372,28 @@ export default function OrdersPage() {
     setIsDialogOpen(false)
   }
 
+  // Helper to convert DD/MM/YYYY to YYYY-MM-DD for HTML5 date input
+  const parseVNToISODate = (vnDate: string): string => {
+    if (!vnDate) return ""
+    const parts = vnDate.split("/")
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0')
+      const month = parts[1].padStart(2, '0')
+      const year = parts[2]
+      return `${year}-${month}-${day}`
+    }
+    return ""
+  }
+
   const openEditDialog = (order: RentalOrder) => {
     setEditingOrder(order)
     setEditFormData({
       customerId: order.customerId,
       vehicleId: order.vehicleId,
-      startDate: "",
-      endDate: "",
-      deposit: order.deposit.toString(),
-      extraFees: order.extraFees.toString(),
+      startDate: parseVNToISODate(order.startDate),
+      endDate: parseVNToISODate(order.endDate),
+      deposit: formatMoneyInput(order.deposit.toString()),
+      extraFees: formatMoneyInput(order.extraFees.toString()),
       notes: order.notes,
       status: order.status,
     })
@@ -396,15 +409,49 @@ export default function OrdersPage() {
     
     if (!customer || !vehicle) return
 
+    // Check if vehicle is already rented during this period (excluding this rental itself)
+    const startDate = new Date(editFormData.startDate)
+    const endDate = new Date(editFormData.endDate)
+    
+    if (startDate > endDate) {
+      alert("⚠️ Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
+      return
+    }
+
+    const conflictingRental = orders.find((order) => {
+      if (order.id === editingOrder.id) return false // Ignore current order
+      if (order.vehicleId !== vehicle.id) return false
+      if (order.status === "cancelled") return false // Ignore cancelled rentals
+      
+      const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
+      const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
+      
+      return !(endDate < orderStart || startDate > orderEnd)
+    })
+    
+    if (conflictingRental) {
+      alert(`⚠️ Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!\n\nKhách: ${conflictingRental.customerName}\nNgày: ${conflictingRental.startDate} - ${conflictingRental.endDate}\nTrạng thái: ${conflictingRental.status}`)
+      return
+    }
+
     try {
       const newExtraFees = parseMoneyInput(editFormData.extraFees)
+      const newDeposit = parseMoneyInput(editFormData.deposit)
+      
+      // Convert inputs back to vi-VN locale dates
+      const newStartDate = new Date(editFormData.startDate).toLocaleDateString("vi-VN")
+      const newEndDate = new Date(editFormData.endDate).toLocaleDateString("vi-VN")
+      
+      // Calculate totalDays and totalPrice
+      const totalDays = calculateTotalDays(editFormData.startDate, editFormData.endDate)
+      const totalPrice = totalDays * vehicle.pricePerDay
       
       // Recalculate revenue based on current status + new extraFees
       let newRevenue = editingOrder.revenue || 0
       if (editFormData.status === "completed") {
-        newRevenue = editingOrder.totalPrice + newExtraFees
+        newRevenue = totalPrice + newExtraFees
       } else if (editFormData.status === "cancelled") {
-        newRevenue = parseMoneyInput(editFormData.deposit) + newExtraFees
+        newRevenue = newDeposit + newExtraFees
       }
       
       // Update to Supabase
@@ -416,7 +463,12 @@ export default function OrdersPage() {
           vehicleId: vehicle.id,
           vehicleName: vehicle.name,
           licensePlate: vehicle.licensePlate,
-          deposit: parseMoneyInput(editFormData.deposit),
+          startDate: newStartDate,
+          endDate: newEndDate,
+          totalDays,
+          pricePerDay: vehicle.pricePerDay,
+          totalPrice,
+          deposit: newDeposit,
           extraFees: newExtraFees,
           notes: editFormData.notes.trim(),
           status: editFormData.status,
@@ -430,6 +482,7 @@ export default function OrdersPage() {
         return
       }
 
+      // Generate updated order object
       const updatedOrder: RentalOrder = {
         ...editingOrder,
         customerId: customer.id,
@@ -437,7 +490,12 @@ export default function OrdersPage() {
         vehicleId: vehicle.id,
         vehicleName: vehicle.name,
         licensePlate: vehicle.licensePlate,
-        deposit: parseInt(editFormData.deposit) || 0,
+        startDate: newStartDate,
+        endDate: newEndDate,
+        totalDays,
+        pricePerDay: vehicle.pricePerDay,
+        totalPrice,
+        deposit: newDeposit,
         extraFees: newExtraFees,
         notes: editFormData.notes.trim(),
         status: editFormData.status,
@@ -1021,22 +1079,12 @@ export default function OrdersPage() {
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-customer" className="text-gray-600">Khách hàng</Label>
-              <Select
-                value={editFormData.customerId}
-                onValueChange={(value) => setEditFormData({ ...editFormData, customerId: value })}
-              >
-                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
-                  <SelectValue placeholder="Chọn khách hàng" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200 rounded-xl">
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name} ({customer.id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-gray-600">Khách hàng</Label>
+              <Input
+                value={editingOrder?.customerName || ""}
+                disabled
+                className="bg-gray-100 border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+              />
             </div>
 
             <div className="space-y-2">
@@ -1056,6 +1104,31 @@ export default function OrdersPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-startDate" className="text-gray-600">Ngày bắt đầu</Label>
+                <Input
+                  id="edit-startDate"
+                  type="date"
+                  value={editFormData.startDate}
+                  onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
+                  className="bg-gray-50 border-gray-200 rounded-xl"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-endDate" className="text-gray-600">Ngày kết thúc</Label>
+                <Input
+                  id="edit-endDate"
+                  type="date"
+                  value={editFormData.endDate}
+                  onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
+                  className="bg-gray-50 border-gray-200 rounded-xl"
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
