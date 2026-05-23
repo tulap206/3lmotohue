@@ -88,23 +88,40 @@ export interface Transaction {
 
 // Helper functions
 export const fetchVehicles = async () => {
-  const { data, error } = await supabase
-    .from('vehicles')
-    .select('id,name,licensePlate,color,pricePerDay,status,current_km,purchasePrice,notes,vehicleImages,documentImages,totalRentalDays,totalRevenue,profit,created_at')
-    .order('created_at', { ascending: false })
+  const [vehiclesResult, rentalsResult] = await Promise.all([
+    supabase
+      .from('vehicles')
+      .select('id,name,licensePlate,color,pricePerDay,status,current_km,purchasePrice,notes,vehicleImages,documentImages,totalRentalDays,totalRevenue,profit,created_at')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('rentals')
+      .select('vehicleId')
+      .eq('status', 'active')
+  ])
   
-  if (error) {
-    console.error('Error fetching vehicles:', error)
+  if (vehiclesResult.error) {
+    console.error('Error fetching vehicles:', vehiclesResult.error)
     return []
   }
   
-  // Ensure all vehicles have the required fields with defaults
-  return (data || []).map(vehicle => ({
-    ...vehicle,
-    totalRentalDays: vehicle.totalRentalDays ?? 0,
-    totalRevenue: vehicle.totalRevenue ?? 0,
-    profit: vehicle.profit ?? 0,
-  }))
+  const activeVehicleIds = new Set(
+    (rentalsResult.data || []).map((r: any) => r.vehicleId)
+  )
+  
+  // Ensure all vehicles have the required fields with defaults and correct dynamic status
+  return (vehiclesResult.data || []).map(vehicle => {
+    let status = vehicle.status
+    if (status !== 'maintenance') {
+      status = activeVehicleIds.has(vehicle.id) ? 'rented' : 'available'
+    }
+    return {
+      ...vehicle,
+      status,
+      totalRentalDays: vehicle.totalRentalDays ?? 0,
+      totalRevenue: vehicle.totalRevenue ?? 0,
+      profit: vehicle.profit ?? 0,
+    }
+  })
 }
 
 export const fetchCustomers = async () => {
