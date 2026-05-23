@@ -56,15 +56,15 @@ interface Customer {
   phone: string
   facebook: string
   address: string
-  idCard: string
-  totalRentals: number
+  idcard: string
+  totalrentals: number
   status: "active" | "inactive"
   createdAt: string
-  customerPhoto: string[]
-  cccdFront: string[]
-  cccdBack: string[]
-  licenseFront: string[]
-  licenseBack: string[]
+  customerphoto: string[]
+  cccdfront: string[]
+  cccdback: string[]
+  licensefront: string[]
+  licenseback: string[]
 }
 
 interface Vehicle {
@@ -1106,20 +1106,20 @@ export default function OrdersPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">CCCD</p>
-                  <p className="font-medium text-gray-800">{viewingCustomer.idCard}</p>
+                  <p className="font-medium text-gray-800">{viewingCustomer.idcard}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Số lần thuê</p>
-                  <p className="font-medium text-gray-800">{viewingCustomer.totalRentals} lần</p>
+                  <p className="font-medium text-gray-800">{viewingCustomer.totalrentals} lần</p>
                 </div>
               </div>
 
               {/* Customer Photo */}
               <div className="border-t border-gray-100 pt-4">
                 <p className="text-sm text-gray-500 mb-2">Ảnh khách hàng</p>
-                {(viewingCustomer.customerPhoto?.length ?? 0) > 0 ? (
+                {(viewingCustomer.customerphoto?.length ?? 0) > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
-                    {viewingCustomer.customerPhoto.map((img, index) => (
+                    {viewingCustomer.customerphoto.map((img, index) => (
                       <div 
                         key={index}
                         className="aspect-square rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
@@ -1143,12 +1143,12 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt trước</p>
-                    {(viewingCustomer.cccdFront?.length ?? 0) > 0 ? (
+                    {(viewingCustomer.cccdfront?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage(viewingCustomer.cccdFront[0])}
+                        onClick={() => setLightboxImage(viewingCustomer.cccdfront[0])}
                       >
-                        <img src={viewingCustomer.cccdFront[0]} alt="CCCD mặt trước" className="w-full h-full object-cover" />
+                        <img src={viewingCustomer.cccdfront[0]} alt="CCCD mặt trước" className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className="aspect-video flex items-center justify-center text-gray-400 bg-gray-50 rounded-xl">
@@ -1158,12 +1158,12 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt sau</p>
-                    {(viewingCustomer.cccdBack?.length ?? 0) > 0 ? (
+                    {(viewingCustomer.cccdback?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage(viewingCustomer.cccdBack[0])}
+                        onClick={() => setLightboxImage(viewingCustomer.cccdback[0])}
                       >
-                        <img src={viewingCustomer.cccdBack[0]} alt="CCCD mặt sau" className="w-full h-full object-cover" />
+                        <img src={viewingCustomer.cccdback[0]} alt="CCCD mặt sau" className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className="aspect-video flex items-center justify-center text-gray-400 bg-gray-50 rounded-xl">
@@ -1180,12 +1180,12 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt trước</p>
-                    {(viewingCustomer.licenseFront?.length ?? 0) > 0 ? (
+                    {(viewingCustomer.licensefront?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage(viewingCustomer.licenseFront[0])}
+                        onClick={() => setLightboxImage(viewingCustomer.licensefront[0])}
                       >
-                        <img src={viewingCustomer.licenseFront[0]} alt="GPLX mặt trước" className="w-full h-full object-cover" />
+                        <img src={viewingCustomer.licensefront[0]} alt="GPLX mặt trước" className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className="aspect-video flex items-center justify-center text-gray-400 bg-gray-50 rounded-xl">
@@ -1195,12 +1195,12 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Mặt sau</p>
-                    {(viewingCustomer.licenseBack?.length ?? 0) > 0 ? (
+                    {(viewingCustomer.licenseback?.length ?? 0) > 0 ? (
                       <div 
                         className="aspect-video rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage(viewingCustomer.licenseBack[0])}
+                        onClick={() => setLightboxImage(viewingCustomer.licenseback[0])}
                       >
-                        <img src={viewingCustomer.licenseBack[0]} alt="GPLX mặt sau" className="w-full h-full object-cover" />
+                        <img src={viewingCustomer.licenseback[0]} alt="GPLX mặt sau" className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className="aspect-video flex items-center justify-center text-gray-400 bg-gray-50 rounded-xl">

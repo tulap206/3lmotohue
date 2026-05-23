@@ -41,14 +41,14 @@ export interface Customer {
   phone: string
   facebook: string
   address: string
-  idCard: string
-  totalRentals: number
+  idcard: string
+  totalrentals: number
   status: "active" | "inactive"
-  customerPhoto: string[]
-  cccdFront: string[]
-  cccdBack: string[]
-  licenseFront: string[]
-  licenseBack: string[]
+  customerphoto: string[]
+  cccdfront: string[]
+  cccdback: string[]
+  licensefront: string[]
+  licenseback: string[]
   createdAt?: string
   created_at?: string
 }

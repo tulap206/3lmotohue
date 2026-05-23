@@ -224,8 +224,21 @@ export default function CustomersPage() {
         }
       }
 
+      // Sanitization helper for storage key filenames
+      const sanitizeFilename = (name: string): string => {
+        return name
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/đ/g, "d")
+          .replace(/Đ/g, "D")
+          .replace(/[^a-zA-Z0-9.\-_]/g, "-")
+          .replace(/-+/g, "-")
+          .toLowerCase()
+      }
+
       // Upload all images in parallel
       const uploadPromises = []
+      const safeName = sanitizeFilename(formData.name)
       
       // Helper to check if string is base64 (not a URL)
       const isBase64 = (str: string | undefined | null): boolean => {
@@ -235,31 +248,31 @@ export default function CustomersPage() {
       
       if (formData.customerphoto && formData.customerphoto.length > 0 && isBase64(formData.customerphoto[0])) {
         uploadPromises.push(
-          uploadImage(formData.customerphoto[0], 'customer-photos', `${formData.name}-${Date.now()}.jpg`)
+          uploadImage(formData.customerphoto[0], 'customer-photos', `${safeName}-${Date.now()}.jpg`)
             .then(url => ({ key: 'customerphoto', url }))
         )
       }
       if (formData.cccdfront && formData.cccdfront.length > 0 && isBase64(formData.cccdfront[0])) {
         uploadPromises.push(
-          uploadImage(formData.cccdfront[0], 'cccd-front', `${formData.name}-front-${Date.now()}.jpg`)
+          uploadImage(formData.cccdfront[0], 'cccd-front', `${safeName}-front-${Date.now()}.jpg`)
             .then(url => ({ key: 'cccdfront', url }))
         )
       }
       if (formData.cccdback && formData.cccdback.length > 0 && isBase64(formData.cccdback[0])) {
         uploadPromises.push(
-          uploadImage(formData.cccdback[0], 'cccd-back', `${formData.name}-back-${Date.now()}.jpg`)
+          uploadImage(formData.cccdback[0], 'cccd-back', `${safeName}-back-${Date.now()}.jpg`)
             .then(url => ({ key: 'cccdback', url }))
         )
       }
       if (formData.licensefront && formData.licensefront.length > 0 && isBase64(formData.licensefront[0])) {
         uploadPromises.push(
-          uploadImage(formData.licensefront[0], 'license-front', `${formData.name}-license-front-${Date.now()}.jpg`)
+          uploadImage(formData.licensefront[0], 'license-front', `${safeName}-license-front-${Date.now()}.jpg`)
             .then(url => ({ key: 'licensefront', url }))
         )
       }
       if (formData.licenseback && formData.licenseback.length > 0 && isBase64(formData.licenseback[0])) {
         uploadPromises.push(
-          uploadImage(formData.licenseback[0], 'license-back', `${formData.name}-license-back-${Date.now()}.jpg`)
+          uploadImage(formData.licenseback[0], 'license-back', `${safeName}-license-back-${Date.now()}.jpg`)
             .then(url => ({ key: 'licenseback', url }))
         )
       }
