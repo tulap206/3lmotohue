@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Eye, ClipboardList, Calendar, User, Bike, Pencil, X, ImageIcon, Phone, MapPin, Facebook } from "lucide-react"
+import { Plus, Search, Eye, ClipboardList, Calendar, User, Bike, Pencil, X, ImageIcon, Phone, MapPin, Facebook, Trash2 } from "lucide-react"
 
 interface RentalOrder {
   id: string
@@ -159,6 +159,8 @@ export default function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<RentalOrder | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [orderToDelete, setOrderToDelete] = useState<RentalOrder | null>(null)
   const [formData, setFormData] = useState({
     customerId: "",
     vehicleId: "",
@@ -515,6 +517,34 @@ export default function OrdersPage() {
     }
   }
 
+  const handleDeleteClick = (order: RentalOrder) => {
+    setOrderToDelete(order)
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!orderToDelete) return
+    
+    try {
+      const { error } = await supabase
+        .from('rentals')
+        .delete()
+        .eq('id', orderToDelete.id)
+      
+      if (error) throw error
+      
+      setOrders(orders.filter((o) => o.id !== orderToDelete.id))
+      if (user) {
+        logger.log(user.username, user.displayName, 'Xóa', 'Đơn thuê', `Xóa đơn thuê: ${orderToDelete.customerName} - ${orderToDelete.vehicleName} (${orderToDelete.rentalCode || orderToDelete.id})`)
+      }
+      setDeleteConfirmOpen(false)
+      setOrderToDelete(null)
+    } catch (error) {
+      console.error("Error deleting rental:", error)
+      alert("Lỗi khi xóa đơn thuê: " + (error as any).message)
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-6 space-y-6">
@@ -528,6 +558,42 @@ export default function OrdersPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full">
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Xác nhận xoá đơn thuê
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 text-base mt-2">
+              Bạn có chắc chắn muốn xoá đơn thuê mã <span className="font-semibold text-gray-800">"{orderToDelete?.rentalCode || orderToDelete?.id}"</span> của khách hàng <span className="font-semibold text-gray-800">"{orderToDelete?.customerName}"</span> không?
+              <p className="text-sm text-red-600 mt-2">⚠️ Hành động này không thể hoàn tác!</p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteConfirmOpen(false)
+                setOrderToDelete(null)
+              }}
+              className="border-gray-300"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Xoá
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
         <div>
@@ -770,6 +836,15 @@ export default function OrdersPage() {
                     >
                       <Pencil className="w-3 h-3 mr-1" />
                       Sửa
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 text-xs md:text-sm text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      onClick={() => handleDeleteClick(order)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Xóa
                     </Button>
                   </div>
                 </div>
