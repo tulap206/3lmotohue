@@ -470,11 +470,15 @@ export default function LandingPage() {
             {/* Airblade Đời Mới */}
             <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition-shadow group flex flex-col justify-between">
               <div>
-                <div className="h-40 relative overflow-hidden bg-gradient-to-br from-blue-900 to-indigo-950 flex items-center justify-center text-white">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -mr-6 -mt-6"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-600/10 rounded-full blur-xl -ml-6 -mb-6"></div>
-                  <Bike className="w-16 h-16 text-cyan-300 transform group-hover:scale-110 transition-transform duration-300" />
-                  <span className="absolute bottom-3 left-4 bg-cyan-400/20 backdrop-blur-sm border border-cyan-400/30 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                <div className="h-40 relative overflow-hidden flex items-center justify-center text-white">
+                  <Image 
+                    src="/airblade.jpg"
+                    alt="Honda Airblade đời mới tại Huế" 
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  />
+                  <span className="absolute bottom-3 left-4 bg-blue-950/70 backdrop-blur-sm border border-white/10 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider z-10">
                     Xe Ga Đời Mới
                   </span>
                 </div>
@@ -502,11 +506,15 @@ export default function LandingPage() {
             {/* Honda Vision */}
             <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition-shadow group flex flex-col justify-between">
               <div>
-                <div className="h-40 relative overflow-hidden bg-gradient-to-br from-blue-900 to-indigo-950 flex items-center justify-center text-white">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -mr-6 -mt-6"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-600/10 rounded-full blur-xl -ml-6 -mb-6"></div>
-                  <Bike className="w-16 h-16 text-cyan-300 transform group-hover:scale-110 transition-transform duration-300" />
-                  <span className="absolute bottom-3 left-4 bg-cyan-400/20 backdrop-blur-sm border border-cyan-400/30 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                <div className="h-40 relative overflow-hidden flex items-center justify-center text-white">
+                  <Image 
+                    src="/vision.jpg"
+                    alt="Honda Vision thanh lịch tại Huế" 
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  />
+                  <span className="absolute bottom-3 left-4 bg-blue-950/70 backdrop-blur-sm border border-white/10 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider z-10">
                     Xe Ga Đô Thị
                   </span>
                 </div>
@@ -534,11 +542,15 @@ export default function LandingPage() {
             {/* Yamaha Janus */}
             <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition-shadow group flex flex-col justify-between">
               <div>
-                <div className="h-40 relative overflow-hidden bg-gradient-to-br from-blue-900 to-indigo-950 flex items-center justify-center text-white">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -mr-6 -mt-6"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-600/10 rounded-full blur-xl -ml-6 -mb-6"></div>
-                  <Bike className="w-16 h-16 text-cyan-300 transform group-hover:scale-110 transition-transform duration-300" />
-                  <span className="absolute bottom-3 left-4 bg-cyan-400/20 backdrop-blur-sm border border-cyan-400/30 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                <div className="h-40 relative overflow-hidden flex items-center justify-center text-white">
+                  <Image 
+                    src="/janus.jpg"
+                    alt="Yamaha Janus trẻ trung tại Huế" 
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  />
+                  <span className="absolute bottom-3 left-4 bg-blue-950/70 backdrop-blur-sm border border-white/10 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider z-10">
                     Xe Ga Trẻ Trung
                   </span>
                 </div>
@@ -566,11 +578,15 @@ export default function LandingPage() {
             {/* Scoopter */}
             <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition-shadow group flex flex-col justify-between">
               <div>
-                <div className="h-40 relative overflow-hidden bg-gradient-to-br from-blue-900 to-indigo-950 flex items-center justify-center text-white">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl -mr-6 -mt-6"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-600/10 rounded-full blur-xl -ml-6 -mb-6"></div>
-                  <Bike className="w-16 h-16 text-cyan-300 transform group-hover:scale-110 transition-transform duration-300" />
-                  <span className="absolute bottom-3 left-4 bg-cyan-400/20 backdrop-blur-sm border border-cyan-400/30 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                <div className="h-40 relative overflow-hidden flex items-center justify-center text-white">
+                  <Image 
+                    src="/scoopter.jpg"
+                    alt="Scoopter vintage sang chảnh tại Huế" 
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  />
+                  <span className="absolute bottom-3 left-4 bg-blue-950/70 backdrop-blur-sm border border-white/10 text-cyan-200 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider z-10">
                     Xe Ga Cổ Điển
                   </span>
                 </div>
@@ -897,7 +913,7 @@ export default function LandingPage() {
 
             {/* Facebook Button */}
             <a 
-              href="https://facebook.com/3lmotohue" 
+              href="https://www.facebook.com/profile.php?id=61569870030659" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-blue-900 hover:bg-blue-950 text-white px-4 py-2.5 rounded-full shadow-lg transition-all transform hover:scale-105"
