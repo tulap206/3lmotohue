@@ -240,7 +240,7 @@ export default function LandingPage() {
           alt="Huế Motorbike Background"
           fill
           priority
-          className="object-cover z-0 blur-[3px] scale-105"
+          className="object-cover z-0"
         />
         {/* Background Overlay */}
         <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/50 via-slate-950/40 to-cyan-950/50 z-10" />
@@ -249,7 +249,7 @@ export default function LandingPage() {
 
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Hero text */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div className="lg:col-span-7 space-y-6 text-center lg:text-left p-6 sm:p-8 rounded-3xl bg-slate-950/45 backdrop-blur-md border border-white/10 shadow-2xl">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-800/60 border border-blue-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-wider">
               <Star className="w-3.5 h-3.5 fill-cyan-300 text-cyan-300" />
               3L MOTO - CHO THUÊ XE MÁY TẠI HUẾ
@@ -734,7 +734,7 @@ export default function LandingPage() {
             <ul className="space-y-3 text-sm font-light">
               <li className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <span>L25 Đường Số 8, KQH Đông Nam Thủy An, TP Huế</span>
+                <span>L25 Đường Số 8, KQH Đông Nam Thủy An, phường Thanh Thuỷ, TP Huế</span>
               </li>
               <li className="flex items-center gap-2">
                 <PhoneCall className="w-5 h-5 text-cyan-400" />
@@ -750,7 +750,7 @@ export default function LandingPage() {
           <div className="space-y-4">
             <h3 className="text-white font-bold font-serif">Chính Sách & Quy Định</h3>
             <ul className="space-y-2 text-sm font-light">
-              <li>• Yêu cầu CCCD / Hộ chiếu hợp lệ</li>
+              <li>• Yêu cầu CCCD / Hộ chiếu / Giấy phép lái xe</li>
               <li>• Giao xe miễn phí trong trung tâm Huế</li>
               <li>• Cung cấp sẵn 2 mũ bảo hiểm cao cấp</li>
               <li>• Hỗ trợ cứu hộ 24/7 khi gặp sự cố</li>
