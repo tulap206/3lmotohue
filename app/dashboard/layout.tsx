@@ -1,36 +1,15 @@
-"use client"
+import type { Metadata } from 'next'
+import DashboardLayoutClient from './layout-client'
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/auth-context"
-import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { Loader2 } from "lucide-react"
+export const metadata: Metadata = {
+  title: '3L Moto - Quản trị hệ thống',
+  description: 'Hệ thống quản lý cho thuê xe máy 3L Moto',
+}
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login")
-    }
-  }, [user, isLoading, router])
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center gradient-bg">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
-  }
-
-  return <DashboardSidebar>{children}</DashboardSidebar>
+  return <DashboardLayoutClient>{children}</DashboardLayoutClient>
 }
