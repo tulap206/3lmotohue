@@ -236,14 +236,14 @@ export default function LandingPage() {
       {/* Hero Section & Booking Form */}
       <section className="relative min-h-[85vh] flex items-center justify-center py-12 sm:py-20 overflow-hidden text-white bg-no-repeat">
         <Image 
-          src="/hue-motorbike-bg.png"
+          src="/hue-motorbike-bg.jpg"
           alt="Huế Motorbike Background"
           fill
           priority
-          className="object-cover -z-10"
+          className="object-cover -z-10 blur-md scale-105"
         />
         {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/95 via-slate-950/90 to-cyan-950/95 z-0" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/85 via-slate-950/80 to-cyan-950/85 z-0" />
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-700/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl" />
 
