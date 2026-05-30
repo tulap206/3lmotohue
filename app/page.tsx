@@ -236,7 +236,7 @@ export default function LandingPage() {
       {/* Hero Section & Booking Form */}
       <section className="relative z-10 min-h-[85vh] flex items-center justify-center py-12 sm:py-20 overflow-hidden text-white bg-no-repeat">
         <Image 
-          src="/hue-motorbike-bg.jpg"
+          src="/hue-motorbike-bg-v2.jpg"
           alt="Huế Motorbike Background"
           fill
           priority
