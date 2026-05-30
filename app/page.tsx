@@ -209,7 +209,7 @@ export default function LandingPage() {
             </div>
             <div>
               <span className="text-2xl font-black bg-gradient-to-r from-blue-800 to-cyan-600 bg-clip-text text-transparent tracking-wider font-serif">3LMOTO</span>
-              <span className="block text-[10px] text-blue-600 font-semibold tracking-widest uppercase">Cho thuê xe máy đời mới tại Huế</span>
+              <span className="block text-[10px] text-blue-600 font-semibold tracking-widest uppercase">Cho thuê xe máy tại Huế</span>
             </div>
           </div>
           
@@ -234,29 +234,29 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section & Booking Form */}
-      <section className="relative min-h-[85vh] flex items-center justify-center py-12 sm:py-20 overflow-hidden text-white bg-no-repeat">
+      <section className="relative z-10 min-h-[85vh] flex items-center justify-center py-12 sm:py-20 overflow-hidden text-white bg-no-repeat">
         <Image 
           src="/hue-motorbike-bg.jpg"
           alt="Huế Motorbike Background"
           fill
           priority
-          className="object-cover -z-10 blur-[3px] scale-105"
+          className="object-cover z-0 blur-[3px] scale-105"
         />
         {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/50 via-slate-950/40 to-cyan-950/50 z-0" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/50 via-slate-950/40 to-cyan-950/50 z-10" />
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-700/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Hero text */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-800/60 border border-blue-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-wider">
               <Star className="w-3.5 h-3.5 fill-cyan-300 text-cyan-300" />
-              3L MOTO - THUÊ XE MÁY HUẾ
+              3L MOTO - CHO THUÊ XE MÁY TẠI HUẾ
             </span>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-serif leading-tight text-white uppercase">
-              <span className="block">HUẾ</span>
-              <span className="block bg-gradient-to-r from-cyan-400 via-blue-300 to-cyan-300 bg-clip-text text-transparent">MỘNG MƠ VÀ CỔ KÍNH</span>
+              <span className="block">CỐ ĐÔ HUẾ</span>
+              <span className="block bg-gradient-to-r from-cyan-400 via-blue-300 to-cyan-300 bg-clip-text text-transparent">TẬN HƯỞNG NHỮNG CHUYẾN ĐI</span>
             </h1>
             <div className="text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light space-y-2">
               <p className="font-semibold text-white">Cho thuê xe máy đời mới tại Thành phố Huế:</p>
@@ -759,7 +759,7 @@ export default function LandingPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500 gap-4">
-          <p>© 2026 3LMoto Huế. Thiết kế và phát triển bền vững.</p>
+          <p>© 2026 3LMoto Huế - Phan Lê Tự Lập.</p>
           <div className="flex gap-4">
             <a href="#" className="hover:underline">Điều khoản dịch vụ</a>
             <a href="#" className="hover:underline">Chính sách bảo mật</a>
