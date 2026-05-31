@@ -482,6 +482,11 @@ export default function OrdersPage() {
         return
       }
 
+      await syncCustomerStatus(customer.id)
+      if (editingOrder.customerId !== customer.id) {
+        await syncCustomerStatus(editingOrder.customerId)
+      }
+
       // Generate updated order object
       const updatedOrder: RentalOrder = {
         ...editingOrder,
@@ -509,6 +514,29 @@ export default function OrdersPage() {
     } catch (error) {
       console.error("Exception updating rental:", error)
       alert(`❌ Lỗi cập nhật đơn thuê`)
+    }
+  }
+
+  const syncCustomerStatus = async (customerId: string) => {
+    try {
+      const { data: customerRentals, error: fetchErr } = await supabase
+        .from('rentals')
+        .select('status')
+        .eq('customerId', customerId)
+      
+      if (fetchErr) throw fetchErr
+
+      const hasActiveRental = customerRentals?.some((r: any) => r.status === 'active') || false
+      const newStatus = hasActiveRental ? 'active' : 'inactive'
+
+      const { error: updateErr } = await supabase
+        .from('customers')
+        .update({ status: newStatus })
+        .eq('id', customerId)
+
+      if (updateErr) throw updateErr
+    } catch (err) {
+      console.error('Failed to sync customer status:', err)
     }
   }
 
@@ -552,6 +580,8 @@ export default function OrdersPage() {
         return
       }
 
+      await syncCustomerStatus(order.customerId)
+
       setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus, revenue, ...updateData } : o)))
       const statusLabels: Record<string, string> = { pending: "Chờ nhận xe", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }
       if (user) logger.log(user.username, user.displayName, 'Chỉnh sửa', 'Đơn thuê', `Cập nhật đơn ${orderId}: ${statusLabels[newStatus]}`)
@@ -590,6 +620,8 @@ export default function OrdersPage() {
         .eq('id', orderToDelete.id)
       
       if (error) throw error
+      
+      await syncCustomerStatus(orderToDelete.customerId)
       
       setOrders(orders.filter((o) => o.id !== orderToDelete.id))
       if (user) {

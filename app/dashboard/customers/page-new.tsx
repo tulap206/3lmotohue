@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchCustomers } from "@/lib/supabase"
+import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -49,13 +49,25 @@ export default function CustomersPage() {
     idcard: "",
   })
 
-  // Load customers from Supabase
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true)
-        const data = await fetchCustomers()
-        setCustomers(data)
+        const [customersData, rentalsData] = await Promise.all([
+          fetchCustomers(),
+          fetchRentals()
+        ])
+        
+        const updated = customersData.map((customer) => {
+          const hasActiveRental = rentalsData.some(
+            (rental: any) => rental.customerId === customer.id && rental.status === "active"
+          )
+          return {
+            ...customer,
+            status: hasActiveRental ? ("active" as const) : ("inactive" as const)
+          }
+        })
+        setCustomers(updated)
       } catch (error) {
         console.error("Failed to load customers:", error)
       } finally {
@@ -106,8 +118,20 @@ export default function CustomersPage() {
         if (user) logger.addCustomer(user.username, user.displayName, formData.name, formData.phone)
       }
       
-      const updatedCustomers = await fetchCustomers()
-      setCustomers(updatedCustomers)
+      const [updatedCustomers, rentalsData] = await Promise.all([
+        fetchCustomers(),
+        fetchRentals()
+      ])
+      const updated = updatedCustomers.map((customer) => {
+        const hasActiveRental = rentalsData.some(
+          (rental: any) => rental.customerId === customer.id && rental.status === "active"
+        )
+        return {
+          ...customer,
+          status: hasActiveRental ? ("active" as const) : ("inactive" as const)
+        }
+      })
+      setCustomers(updated)
       setIsDialogOpen(false)
       resetForm()
     } catch (error) {

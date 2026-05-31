@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchCustomers } from "@/lib/supabase"
+import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -120,12 +120,26 @@ export default function CustomersPage() {
     const loadData = async () => {
       try {
         setLoading(true)
-        const data = await fetchCustomers()
-        // Sort by created_at or createdat descending (newest first) - client-side backup
-        const sorted = data.sort((a, b) => {
+        const [customersData, rentalsData] = await Promise.all([
+          fetchCustomers(),
+          fetchRentals()
+        ])
+        
+        const updated = customersData.map((customer) => {
+          const hasActiveRental = rentalsData.some(
+            (rental: any) => rental.customerId === customer.id && rental.status === "active"
+          )
+          return {
+            ...customer,
+            status: hasActiveRental ? ("active" as const) : ("inactive" as const)
+          }
+        })
+
+        // Sort by created_at or createdat descending (newest first)
+        const sorted = updated.sort((a, b) => {
           const dateA = new Date(a.createdat || a.created_at || 0).getTime()
           const dateB = new Date(b.createdat || b.created_at || 0).getTime()
-          return dateB - dateA // DESC (newest first)
+          return dateB - dateA
         })
         setCustomers(sorted)
       } catch (error) {
@@ -373,12 +387,24 @@ export default function CustomersPage() {
         if (user) logger.addCustomer(user.username, user.displayName, formData.name, formData.phone)
       }
       
-      const updatedCustomers = await fetchCustomers()
+      const [updatedCustomers, rentalsData] = await Promise.all([
+        fetchCustomers(),
+        fetchRentals()
+      ])
+      const updated = updatedCustomers.map((customer) => {
+        const hasActiveRental = rentalsData.some(
+          (rental: any) => rental.customerId === customer.id && rental.status === "active"
+        )
+        return {
+          ...customer,
+          status: hasActiveRental ? ("active" as const) : ("inactive" as const)
+        }
+      })
       // Sort by created_at or createdat descending (newest first)
-      const sorted = updatedCustomers.sort((a, b) => {
+      const sorted = updated.sort((a, b) => {
         const dateA = new Date(a.createdat || a.created_at || 0).getTime()
         const dateB = new Date(b.createdat || b.created_at || 0).getTime()
-        return dateB - dateA // DESC (newest first)
+        return dateB - dateA
       })
       setCustomers(sorted)
       setIsDialogOpen(false)

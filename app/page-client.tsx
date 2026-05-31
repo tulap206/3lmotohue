@@ -259,7 +259,7 @@ export default function LandingPage() {
               <span className="block bg-gradient-to-r from-cyan-400 via-blue-300 to-cyan-300 bg-clip-text text-transparent">TẬN HƯỞNG NHỮNG CHUYẾN ĐI</span>
             </h1>
             <div className="text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light space-y-2">
-              <p className="font-semibold text-white">Cho thuê xe máy đời mới tại Thành phố Huế:</p>
+              <p className="font-semibold text-white">Cho thuê xe máy đời mới tại TP Huế:</p>
               <ul className="list-none space-y-1 text-sm text-slate-300 text-left max-w-xs mx-auto lg:mx-0">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-cyan-400" />
@@ -754,11 +754,11 @@ export default function LandingPage() {
               </li>
               <li className="flex items-center gap-2">
                 <PhoneCall className="w-5 h-5 text-cyan-400" />
-                <span>Hotline: 0363.077.775 - 0775.27.2222 (Zalo)</span>
+                <span>Hotline: 0363.077.775 - 0934.924.195 (Zalo)</span>
               </li>
               <li className="flex items-center gap-2">
                 <Facebook className="w-5 h-5 text-cyan-400" />
-                <a href="https://facebook.com/3lmotohue" target="_blank" rel="noopener noreferrer" className="hover:underline">fb.com/3lmotohue</a>
+                <a href="https://www.facebook.com/profile.php?id=61569870030659" target="_blank" rel="noopener noreferrer" className="hover:underline">fb.com/3lmotohue</a>
               </li>
             </ul>
           </div>
