@@ -21,7 +21,8 @@ import {
   ClipboardList,
   Filter,
   Settings,
-  RefreshCw
+  RefreshCw,
+  Globe
 } from "lucide-react"
 
 interface AccessLog {
@@ -41,6 +42,7 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
   "Chỉnh sửa": { icon: Pencil, color: "text-amber-600", bgColor: "bg-amber-50" },
   "Xóa": { icon: Trash2, color: "text-red-600", bgColor: "bg-red-50" },
   "Xem": { icon: Eye, color: "text-blue-600", bgColor: "bg-blue-50" },
+  "Truy cập": { icon: Globe, color: "text-indigo-600", bgColor: "bg-indigo-50" },
 }
 
 const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> = {
@@ -51,6 +53,7 @@ const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> 
   "Báo cáo": { icon: FileText, color: "text-violet-600" },
   "Lịch sử truy cập": { icon: History, color: "text-purple-600" },
   "Quản lý người dùng": { icon: Users, color: "text-cyan-600" },
+  "Trang chủ": { icon: Globe, color: "text-indigo-600" },
 }
 
 export default function AccessHistoryPage() {

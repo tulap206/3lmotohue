@@ -54,6 +54,22 @@ export default function LandingPage() {
     }
   }, [formData.startDate, formData.endDate])
 
+  // Log visitor access on initial load
+  useEffect(() => {
+    const hasLogged = sessionStorage.getItem('3l_visitor_logged')
+    if (!hasLogged) {
+      fetch('/api/visitor-log', { method: 'POST' })
+        .then((res) => {
+          if (res.ok) {
+            sessionStorage.setItem('3l_visitor_logged', 'true')
+          }
+        })
+        .catch((err) => {
+          console.error('Error logging access:', err)
+        })
+    }
+  }, [])
+
   // Fetch available vehicles that don't conflict with current rentals
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -255,7 +271,7 @@ export default function LandingPage() {
               3L MOTO - CHO THUÊ XE MÁY TẠI HUẾ
             </span>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-serif leading-tight text-white uppercase">
-              <span className="block">CỐ ĐÔ HUẾ</span>
+              <span className="block">VI VU HUẾ</span>
               <span className="block bg-gradient-to-r from-cyan-400 via-blue-300 to-cyan-300 bg-clip-text text-transparent">TẬN HƯỞNG NHỮNG CHUYẾN ĐI</span>
             </h1>
             <div className="text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light space-y-2">
@@ -700,7 +716,7 @@ export default function LandingPage() {
                 </div>
                 <div className="space-y-2 text-center sm:text-left">
                   <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
-                    Quà Tặng Kèm
+                    Miễn phí kèm theo
                   </span>
                   <h5 className="font-bold text-white text-base">02 Mũ Bảo Hiểm & 01 Áo Mưa</h5>
                   <p className="text-xs text-slate-300 leading-relaxed">
@@ -922,12 +938,12 @@ export default function LandingPage() {
 
             {/* Zalo Hotline 2 */}
             <a 
-              href="https://zalo.me/0775272222" 
+              href="https://zalo.me/0934924195" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-full shadow-lg transition-all transform hover:scale-105"
             >
-              <span className="text-xs font-semibold">Zalo: 0775.27.2222</span>
+              <span className="text-xs font-semibold">Zalo: 0934.924.195</span>
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                 <MessageCircle className="w-4 h-4 text-white" />
               </div>
