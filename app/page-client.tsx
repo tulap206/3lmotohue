@@ -658,35 +658,57 @@ export default function LandingPage() {
           {/* Flyer Notes Banner */}
           <div className="mt-10 bg-gradient-to-r from-blue-900 to-indigo-950 rounded-3xl p-6 md:p-8 text-white relative overflow-hidden shadow-xl">
             <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-3 text-center md:text-left">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              
+              {/* Notes list */}
+              <div className="lg:col-span-6 space-y-4 text-center md:text-left">
                 <h4 className="text-lg font-bold font-serif text-cyan-300">Lưu Ý & Ưu Đãi Khi Thuê Xe</h4>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-xs md:text-sm text-slate-200">
-                  <li className="flex items-center gap-2 justify-center md:justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                    Giá trên áp dụng cho thuê từ 1 ngày.
+                <ul className="space-y-3 text-xs md:text-sm text-slate-200">
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2 shrink-0"></span>
+                    <span>Giá trên áp dụng cho thuê từ 1 ngày.</span>
                   </li>
-                  <li className="flex items-center gap-2 justify-center md:justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                    Giá đã bao gồm 2 nón bảo hiểm và áo mưa.
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2 shrink-0"></span>
+                    <span>Giao xe miễn phí trong nội thành Huế.</span>
                   </li>
-                  <li className="flex items-center gap-2 justify-center md:justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                    Giao xe miễn phí trong nội thành Huế.
-                  </li>
-                  <li className="flex items-center gap-2 justify-center md:justify-start">
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-                    Vui lòng liên hệ để được hỗ trợ và tư vấn.
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-2 shrink-0"></span>
+                    <span>Vui lòng liên hệ để được hỗ trợ và tư vấn chi tiết.</span>
                   </li>
                 </ul>
+                <div className="pt-2">
+                  <a 
+                    href="#booking" 
+                    className="inline-flex px-6 py-3 bg-cyan-400 hover:bg-cyan-500 text-blue-950 font-bold rounded-xl transition-all shadow-md hover:shadow-cyan-400/20 items-center gap-2 cursor-pointer"
+                  >
+                    <span>Đặt xe ngay</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
               </div>
-              <a 
-                href="#booking" 
-                className="px-6 py-3 bg-cyan-400 hover:bg-cyan-500 text-blue-950 font-bold rounded-xl transition-all shadow-md hover:shadow-cyan-400/20 flex items-center gap-2 shrink-0"
-              >
-                <span>Đặt xe ngay</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
+
+              {/* Accessories Showcase Card */}
+              <div className="lg:col-span-6 flex flex-col sm:flex-row items-center gap-6 bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-sm">
+                <div className="w-32 h-32 relative flex-shrink-0 bg-white/10 rounded-xl overflow-hidden shadow-inner">
+                  <Image 
+                    src="/accessories.png"
+                    alt="02 Mũ bảo hiểm & 01 Áo mưa miễn phí"
+                    fill
+                    className="object-contain p-1"
+                  />
+                </div>
+                <div className="space-y-2 text-center sm:text-left">
+                  <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                    Quà Tặng Kèm
+                  </span>
+                  <h5 className="font-bold text-white text-base">02 Mũ Bảo Hiểm & 01 Áo Mưa</h5>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Nhận ngay bộ phụ kiện chính hãng 3L MOTO (gồm 02 mũ bảo hiểm cao cấp và 01 áo mưa tiện lợi) hoàn toàn miễn phí đi kèm, nhận kèm khi thuê xe máy.
+                  </p>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -697,7 +719,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
             <span className="text-blue-700 font-bold uppercase tracking-wider text-sm block">Đơn Giản & Nhanh Chóng</span>
-            <h2 className="text-3xl sm:text-4xl font-bold font-serif text-blue-950">Quy Trình 3 Bước Thuê Xe Máy</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold font-serif text-blue-950">Quy Trình 3 Bước Thuê Xe</h2>
             <div className="w-20 h-1 bg-cyan-500 mx-auto rounded-full mt-4" />
           </div>
 
@@ -758,7 +780,7 @@ export default function LandingPage() {
               </li>
               <li className="flex items-center gap-2">
                 <Facebook className="w-5 h-5 text-cyan-400" />
-                <a href="https://www.facebook.com/profile.php?id=61569870030659" target="_blank" rel="noopener noreferrer" className="hover:underline">fb.com/3lmotohue</a>
+                <a href="https://www.facebook.com/profile.php?id=61569870030659" target="_blank" rel="noopener noreferrer" className="hover:underline">Facebook Page</a>
               </li>
             </ul>
           </div>
