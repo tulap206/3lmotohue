@@ -919,10 +919,7 @@ export default function OrdersPage() {
                       variant="outline" 
                       size="sm"
                       className="flex-1 text-xs md:text-sm"
-                      onClick={() => {
-                        setEditingOrder(order)
-                        setIsEditDialogOpen(true)
-                      }}
+                      onClick={() => openEditDialog(order)}
                     >
                       <Pencil className="w-3 h-3 mr-1" />
                       Sửa
