@@ -33,7 +33,7 @@ const faqs = [
   },
   {
     question: "Giá thuê xe máy được tính như thế nào?",
-    answer: "Giá thuê xe máy dao động từ 120.000đ đến 130.000đ/ngày tùy thuộc vào dòng xe bạn chọn (Vision, Janus, Airblade, Scoopter). Chúng tôi cam kết bảng giá công khai, không phát sinh chi phí ẩn và có chiết khấu thêm nếu thuê dài ngày."
+    answer: "Giá thuê xe máy dao động từ 120.000đ đến 130.000đ/ngày tùy thuộc vào dòng xe bạn chọn (Vision, Janus, Airblade, Scoopy). Chúng tôi cam kết bảng giá công khai, không phát sinh chi phí ẩn và có chiết khấu thêm nếu thuê dài ngày."
   }
 ]
 
@@ -616,13 +616,13 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Scoopter */}
+            {/* Scoopy */}
             <div className="bg-white rounded-3xl overflow-hidden shadow-md border border-slate-100 hover:shadow-xl transition-shadow group flex flex-col justify-between">
               <div>
                 <div className="h-40 relative overflow-hidden flex items-center justify-center text-white">
                   <Image 
-                    src="/scoopter.jpg"
-                    alt="Cho thuê xe máy tay ga Scoopter cổ điển tại Huế - 3L Moto" 
+                    src="/scoopy.jpg"
+                    alt="Cho thuê xe máy tay ga Scoopy cổ điển tại Huế - 3L Moto" 
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
@@ -632,7 +632,7 @@ export default function LandingPage() {
                   </span>
                 </div>
                 <div className="p-6 space-y-4">
-                  <h3 className="text-lg font-bold text-slate-800">Scoopter</h3>
+                  <h3 className="text-lg font-bold text-slate-800">Scoopy</h3>
                   <p className="text-xs text-slate-500">Dòng xe tay ga cổ điển độc đáo, thích hợp vi vu sống ảo.</p>
                   <ul className="text-xs text-slate-600 space-y-2">
                     <li className="flex items-center gap-2">✓ Kiểu dáng vintage độc lạ bắt mắt</li>
