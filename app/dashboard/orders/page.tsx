@@ -558,16 +558,9 @@ export default function OrdersPage() {
       }
       // pending và active chưa có doanh thu
       
-      // Set timestamp based on status change
-      const now = new Date().toISOString()
-      const updateData: any = { status: newStatus, revenue }
-      
-      if (newStatus === "active") {
-        updateData.received_at = now
-      } else if (newStatus === "completed") {
-        updateData.completed_at = now
-      }
-      
+      // DB doesn't have received_at or completed_at columns, so we only update status and revenue
+      const updateData = { status: newStatus, revenue }
+
       // Update to Supabase
       const { error } = await supabase
         .from('rentals')
