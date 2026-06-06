@@ -128,53 +128,69 @@ export default function CustomersPage() {
     licenseback: [] as string[],
   })
 
+  const loadData = async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true)
+      const [customersData, rentalsData] = await Promise.all([
+        fetchCustomers(),
+        fetchRentals()
+      ])
+      
+      const updated = customersData.map((customer) => {
+        const activeRental = rentalsData.find(
+          (rental: any) => rental.customerId === customer.id && rental.status === "active"
+        )
+        const pendingRental = rentalsData.find(
+          (rental: any) => rental.customerId === customer.id && rental.status === "pending"
+        )
+        
+        let statusLabel = "active"
+        if (activeRental) {
+          statusLabel = "renting"
+        } else if (pendingRental) {
+          statusLabel = "pending"
+        } else if (customer.status === "inactive") {
+          statusLabel = "inactive"
+        }
+        
+        return {
+          ...customer,
+          status: statusLabel as any
+        }
+      })
+
+      // Sort by created_at or createdat descending (newest first)
+      const sorted = updated.sort((a, b) => {
+        const dateA = new Date(a.createdat || a.created_at || 0).getTime()
+        const dateB = new Date(b.createdat || b.created_at || 0).getTime()
+        return dateB - dateA
+      })
+      setCustomers(sorted)
+    } catch (error) {
+      console.error("Failed to load customers:", error)
+    } finally {
+      if (showLoading) setLoading(false)
+    }
+  }
+
   // Load customers from Supabase
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        const [customersData, rentalsData] = await Promise.all([
-          fetchCustomers(),
-          fetchRentals()
-        ])
-        
-        const updated = customersData.map((customer) => {
-          const activeRental = rentalsData.find(
-            (rental: any) => rental.customerId === customer.id && rental.status === "active"
-          )
-          const pendingRental = rentalsData.find(
-            (rental: any) => rental.customerId === customer.id && rental.status === "pending"
-          )
-          
-          let statusLabel = "active"
-          if (activeRental) {
-            statusLabel = "renting"
-          } else if (pendingRental) {
-            statusLabel = "pending"
-          } else if (customer.status === "inactive") {
-            statusLabel = "inactive"
-          }
-          
-          return {
-            ...customer,
-            status: statusLabel as any
-          }
-        })
+    loadData(true)
 
-        // Sort by created_at or createdat descending (newest first)
-        const sorted = updated.sort((a, b) => {
-          const dateA = new Date(a.createdat || a.created_at || 0).getTime()
-          const dateB = new Date(b.createdat || b.created_at || 0).getTime()
-          return dateB - dateA
-        })
-        setCustomers(sorted)
-      } catch (error) {
-        console.error("Failed to load customers:", error)
-      } finally {
-        setLoading(false)
-      }
+    // Subscribe to real-time events for customers, rentals
+    const customersChannel = supabase
+      .channel('customers-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => {
+        loadData(false)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
+        loadData(false)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(customersChannel)
     }
-    loadData()
   }, [])
 
   const filteredCustomers = customers.filter(

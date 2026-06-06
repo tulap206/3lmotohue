@@ -167,56 +167,72 @@ export default function VehiclesPage() {
     documentImages: [] as File[],
   })
 
-  useEffect(() => {
-    const loadVehicles = async () => {
-      setIsLoading(true)
-      try {
-        const [vehiclesData, rentalsData] = await Promise.all([
-          fetchVehicles(),
-          fetchRentals(),
-        ])
-        
-        // Sort vehicles by created_at descending (newest first) - client-side backup
-        const sorted = vehiclesData.sort((a, b) => {
-          const dateA = new Date(a.created_at || 0).getTime()
-          const dateB = new Date(b.created_at || 0).getTime()
-          return dateB - dateA // DESC (newest first)
-        })
-        setVehicles(sorted)
-        
-        // Generate rentalCode for each rental if not already present
-        const rentalsWithCodes = (rentalsData || []).map((rental) => {
-          if (!rental.rentalCode) {
-            // Parse DD/MM/YYYY format date
-            const parseVietnamDate = (dateStr: string): Date => {
-              if (!dateStr) return new Date(0)
-              const parts = dateStr.split("/")
-              if (parts.length === 3) {
-                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-              }
-              return new Date(dateStr)
+  const loadVehicles = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true)
+    try {
+      const [vehiclesData, rentalsData] = await Promise.all([
+        fetchVehicles(),
+        fetchRentals(),
+      ])
+      
+      // Sort vehicles by created_at descending (newest first) - client-side backup
+      const sorted = vehiclesData.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime()
+        const dateB = new Date(b.created_at || 0).getTime()
+        return dateB - dateA // DESC (newest first)
+      })
+      setVehicles(sorted)
+      
+      // Generate rentalCode for each rental if not already present
+      const rentalsWithCodes = (rentalsData || []).map((rental) => {
+        if (!rental.rentalCode) {
+          // Parse DD/MM/YYYY format date
+          const parseVietnamDate = (dateStr: string): Date => {
+            if (!dateStr) return new Date(0)
+            const parts = dateStr.split("/")
+            if (parts.length === 3) {
+              return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
             }
-            
-            const startDate = parseVietnamDate(rental.startDate)
-            const lastName = rental.customerName.split(/\s+/).pop() || ""
-            const cleanPlate = rental.licensePlate.replace(/[\s-]/g, "").toUpperCase()
-            const dateFormatted = startDate.toLocaleDateString("vi-VN").replace(/\//g, "")
-            const code = `${lastName}-${cleanPlate}-${dateFormatted}`
-            
-            return { ...rental, rentalCode: code }
+            return new Date(dateStr)
           }
-          return rental
-        })
-        setOrders(rentalsWithCodes)
-      } catch (error) {
-        console.error("Failed to fetch data:", error)
-        setVehicles([])
-        setOrders([])
-      } finally {
-        setIsLoading(false)
-      }
+          
+          const startDate = parseVietnamDate(rental.startDate)
+          const lastName = rental.customerName.split(/\s+/).pop() || ""
+          const cleanPlate = rental.licensePlate.replace(/[\s-]/g, "").toUpperCase()
+          const dateFormatted = startDate.toLocaleDateString("vi-VN").replace(/\//g, "")
+          const code = `${lastName}-${cleanPlate}-${dateFormatted}`
+          
+          return { ...rental, rentalCode: code }
+        }
+        return rental
+      })
+      setOrders(rentalsWithCodes)
+    } catch (error) {
+      console.error("Failed to fetch data:", error)
+      setVehicles([])
+      setOrders([])
+    } finally {
+      if (showLoading) setIsLoading(false)
     }
-    loadVehicles()
+  }
+
+  useEffect(() => {
+    loadVehicles(true)
+
+    // Subscribe to real-time events for vehicles, rentals
+    const vehiclesChannel = supabase
+      .channel('vehicles-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
+        loadVehicles(false)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
+        loadVehicles(false)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(vehiclesChannel)
+    }
   }, [])
 
   const filteredVehicles = vehicles.filter((vehicle) => {

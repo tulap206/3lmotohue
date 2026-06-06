@@ -82,22 +82,47 @@ export default function ReportsPage() {
     amount: "",
   })
 
-  useEffect(() => {
-    loadReportData()
-    loadTransactions()
-  }, [])
-
-  const loadTransactions = async () => {
+  const loadTransactions = async (resetPage = true) => {
     try {
       const data = await fetchTransactions()
       setTransactions(data)
-      setCurrentPage(1) // Reset to first page when loading
+      if (resetPage) setCurrentPage(1) // Reset to first page only when requested
       console.log("✅ Loaded transactions from Supabase:", data.length)
     } catch (error) {
       console.error("Failed to fetch transactions:", error)
       setTransactions([])
     }
   }
+
+  useEffect(() => {
+    loadReportData(true)
+    loadTransactions(true)
+
+    // Subscribe to real-time events for reports/transactions
+    const reportsChannel = supabase
+      .channel('reports-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        loadReportData(false)
+        loadTransactions(false)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
+        loadReportData(false)
+        loadTransactions(false)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
+        loadReportData(false)
+        loadTransactions(false)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => {
+        loadReportData(false)
+        loadTransactions(false)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(reportsChannel)
+    }
+  }, [])
 
   // Pagination calculations with search filter
   const filteredTransactions = transactions.filter((tx) => {
@@ -251,9 +276,9 @@ export default function ReportsPage() {
     }
   }
 
-  const loadReportData = async () => {
+  const loadReportData = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) setLoading(true)
       console.log("📊 Loading report data...")
 
       // Fetch from Supabase
@@ -417,7 +442,7 @@ export default function ReportsPage() {
         topVehicles: [],
       })
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 

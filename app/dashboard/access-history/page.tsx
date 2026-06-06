@@ -66,14 +66,9 @@ export default function AccessHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
 
-  // Load logs from Supabase
-  useEffect(() => {
-    loadAccessLogs()
-  }, [])
-
-  const loadAccessLogs = async () => {
+  const loadAccessLogs = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) setLoading(true)
       console.log("📋 Loading access logs from Supabase...")
 
       const { data, error } = await supabase
@@ -92,9 +87,26 @@ export default function AccessHistoryPage() {
       console.error("Failed to load access logs:", error)
       setAccessLogs([])
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
+
+  // Load logs from Supabase
+  useEffect(() => {
+    loadAccessLogs(true)
+
+    // Subscribe to real-time events for access_logs
+    const logsChannel = supabase
+      .channel('access-logs-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => {
+        loadAccessLogs(false)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(logsChannel)
+    }
+  }, [])
 
   // Get unique values for filters
   const accounts = Array.from(new Set(accessLogs.map(log => log.username)))
