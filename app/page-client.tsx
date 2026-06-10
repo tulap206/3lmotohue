@@ -401,21 +401,6 @@ export default function LandingPage() {
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="facebook" className="text-xs font-semibold text-slate-500 uppercase">Link Facebook hoặc Zalo</Label>
-                <div className="relative">
-                  <Facebook className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-blue-500/60" />
-                  <Input 
-                    id="facebook"
-                    type="text"
-                    placeholder="facebook.com/nguyenvana"
-                    className="pl-11 h-12 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 rounded-xl transition-all"
-                    value={formData.facebook}
-                    onChange={(e) => setFormData({...formData, facebook: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
                 <Label htmlFor="address" className="text-xs font-semibold text-slate-500 uppercase">Nơi nhận xe (Ga Huế, Khách sạn...)</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-blue-500/60" />
