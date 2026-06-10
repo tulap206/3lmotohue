@@ -14,32 +14,9 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 
-const faqs = [
-  {
-    question: "Thủ tục thuê xe máy tại 3L Moto Huế gồm những gì?",
-    answer: "Thủ tục cực kỳ đơn giản! Bạn chỉ cần chuẩn bị Căn cước công dân (CCCD), Hộ chiếu hoặc Giấy phép lái xe hợp lệ. Chúng tôi không yêu cầu đặt cọc phức tạp đối với đa số khách du lịch."
-  },
-  {
-    question: "3L Moto có giao nhận xe máy tận nơi miễn phí tại Huế không?",
-    answer: "Có! 3L Moto hỗ trợ giao nhận xe máy MIỄN PHÍ tận nơi trong khu vực nội thành Huế bao gồm Ga Huế, các khách sạn trung tâm, và các điểm lân cận. Đối với các khu vực xa hơn như Sân bay Phú Bài, vui lòng liên hệ hotline để được hỗ trợ báo giá và sắp xếp."
-  },
-  {
-    question: "Khi thuê xe máy có được kèm theo mũ bảo hiểm và áo mưa không?",
-    answer: "Tất cả xe máy cho thuê tại 3L Moto đều được trang bị sẵn 02 mũ bảo hiểm nửa đầu chất lượng cao, sạch sẽ và 01 áo mưa tiện lợi hoàn toàn miễn phí đi kèm để đảm bảo an toàn cho hành trình của bạn."
-  },
-  {
-    question: "Nếu xe máy gặp sự cố trên đường đi thì tôi phải làm thế nào?",
-    answer: "Đừng lo lắng! Tất cả các dòng xe của chúng tôi đều được bảo dưỡng định kỳ rất kỹ. Trong trường hợp xảy ra sự cố không mong muốn dọc đường, đội ngũ kỹ thuật của 3L Moto luôn sẵn sàng cứu hộ và hỗ trợ bạn 24/7."
-  },
-  {
-    question: "Giá thuê xe máy được tính như thế nào?",
-    answer: "Giá thuê xe máy dao động từ 120.000đ đến 130.000đ/ngày tùy thuộc vào dòng xe bạn chọn (Vision, Janus, Airblade, Scoopy). Chúng tôi cam kết bảng giá công khai, không phát sinh chi phí ẩn và có chiết khấu thêm nếu thuê dài ngày."
-  }
-]
-
 export default function LandingPage() {
   const router = useRouter()
-  const [activeFaq, setActiveFaq] = useState<number | null>(null)
+  
   
   // Form booking states
   const [formData, setFormData] = useState({
@@ -783,59 +760,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-blue-50/20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 space-y-3">
-            <span className="text-blue-700 font-bold uppercase tracking-wider text-sm block">Giải Đáp Thắc Mắc</span>
-            <h2 className="text-3xl sm:text-4xl font-bold font-serif text-blue-950">Câu Hỏi Thường Gặp (FAQ)</h2>
-            <p className="text-slate-600">Những câu hỏi phổ biến từ khách hàng khi sử dụng dịch vụ thuê xe máy của chúng tôi</p>
-            <div className="w-20 h-1 bg-cyan-500 mx-auto rounded-full mt-4" />
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq, index) => {
-              const isOpen = activeFaq === index
-              return (
-                <div 
-                  key={index}
-                  className="bg-white rounded-2xl border border-blue-100/60 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActiveFaq(isOpen ? null : index)}
-                    className="w-full flex items-center justify-between p-5 text-left font-semibold text-slate-800 hover:text-blue-900 transition-colors focus:outline-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      <HelpCircle className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-                      <span>{faq.question}</span>
-                    </div>
-                    <span className="ml-4 flex-shrink-0">
-                      <svg
-                        className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-blue-600' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </span>
-                  </button>
-                  <div
-                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                      isOpen ? 'max-h-40 border-t border-slate-50' : 'max-h-0'
-                    }`}
-                  >
-                    <div className="p-5 text-slate-600 text-sm leading-relaxed bg-slate-50/50">
-                      {faq.answer}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
       </main>
 
       {/* Footer Contact Details */}
