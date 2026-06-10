@@ -352,8 +352,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
+                <div className="space-y-1 w-full min-w-0">
                   <Label htmlFor="startDate" className="text-xs font-semibold text-slate-500 uppercase">Ngày nhận *</Label>
                   <div className="relative w-full">
                     <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-blue-500/60 pointer-events-none" />
@@ -361,13 +361,13 @@ export default function LandingPage() {
                       id="startDate"
                       type="date"
                       required
-                      className="block w-full min-w-full pl-11 h-12 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 rounded-xl text-sm"
+                      className="pl-11 h-12 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 rounded-xl text-sm"
                       value={formData.startDate}
                       onChange={(e) => setFormData({...formData, startDate: e.target.value})}
                     />
                   </div>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 w-full min-w-0">
                   <Label htmlFor="endDate" className="text-xs font-semibold text-slate-500 uppercase">Ngày trả *</Label>
                   <div className="relative w-full">
                     <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-blue-500/60 pointer-events-none" />
@@ -375,7 +375,7 @@ export default function LandingPage() {
                       id="endDate"
                       type="date"
                       required
-                      className="block w-full min-w-full pl-11 h-12 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 rounded-xl text-sm"
+                      className="pl-11 h-12 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 rounded-xl text-sm"
                       value={formData.endDate}
                       onChange={(e) => setFormData({...formData, endDate: e.target.value})}
                     />
