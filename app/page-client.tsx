@@ -258,27 +258,27 @@ export default function LandingPage() {
           alt="Dịch vụ cho thuê xe máy Huế uy tín giá rẻ - 3L Moto"
           fill
           priority
-          className="object-cover z-0"
+          className="object-cover z-0 blur-[6px] scale-105"
         />
         {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/50 via-slate-950/40 to-cyan-950/50 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/75 via-slate-950/65 to-cyan-950/75 z-10" />
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-700/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl" />
 
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Hero text */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left p-6 sm:p-8 rounded-3xl bg-slate-950/45 backdrop-blur-md border border-white/10 shadow-2xl">
+          <div className="lg:col-span-7 space-y-6 text-center lg:text-left py-4 sm:py-6">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-800/60 border border-blue-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-wider">
               <Star className="w-3.5 h-3.5 fill-cyan-300 text-cyan-300" />
               3L MOTO - CHO THUÊ XE MÁY TẠI HUẾ
             </span>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-serif leading-tight text-white uppercase">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-serif leading-tight text-white uppercase drop-shadow-md">
               <span className="block">VI VU HUẾ</span>
               <span className="block bg-gradient-to-r from-cyan-400 via-blue-300 to-cyan-300 bg-clip-text text-transparent">TẬN HƯỞNG NHỮNG CHUYẾN ĐI</span>
             </h1>
-            <div className="text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light space-y-2">
+            <div className="text-lg text-slate-200 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light space-y-2 drop-shadow-sm">
               <p className="font-semibold text-white">Cho thuê xe máy đời mới tại TP Huế:</p>
-              <ul className="list-none space-y-1 text-sm text-slate-300 text-left max-w-xs mx-auto lg:mx-0">
+              <ul className="list-none space-y-1 text-sm text-slate-200 text-left max-w-xs mx-auto lg:mx-0">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-cyan-400" />
                   Thủ tục đơn giản
@@ -292,12 +292,12 @@ export default function LandingPage() {
                   Giá cả cạnh tranh
                 </li>
               </ul>
-              <p className="text-sm text-slate-400 pt-2">
+              <p className="text-sm text-slate-300 pt-2">
                 3LMOTO chuyên cung cấp dịch vụ thuê xe máy chất lượng cao giúp du khách tự do khám phá cố đô Huế mộng mơ. Xe được trang bị sẵn 2 nón bảo hiểm cao cấp và áo mưa.
               </p>
             </div>
             
-            <div className="hidden lg:flex items-center gap-6 pt-4 text-sm text-blue-300">
+            <div className="hidden lg:flex items-center gap-6 pt-4 text-sm text-cyan-200 drop-shadow-sm">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-cyan-400" />
                 <span>2 Mũ bảo hiểm & Áo mưa</span>
