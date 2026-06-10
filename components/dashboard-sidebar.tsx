@@ -163,7 +163,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
               src="/logo.jpg"
               alt="3L Moto Logo"
               fill
-              className="object-contain rounded-xl"
+              className="object-contain rounded-full bg-white"
             />
           </div>
         </div>

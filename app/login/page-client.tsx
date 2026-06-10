@@ -74,7 +74,7 @@ export default function LoginPage() {
               src="/logo.jpg"
               alt="3L Moto Logo"
               fill
-              className="object-contain rounded-2xl card-shadow"
+              className="object-contain rounded-full bg-white card-shadow"
               priority
             />
           </div>

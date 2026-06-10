@@ -212,7 +212,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-blue-100/50 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 relative bg-blue-900 rounded-xl overflow-hidden flex items-center justify-center border border-blue-500 shadow-md">
+            <div className="w-16 h-16 relative bg-white rounded-full overflow-hidden flex items-center justify-center border border-blue-100 shadow-sm">
               <Image 
                 src="/logo.jpg"
                 alt="Logo cửa hàng cho thuê xe máy 3L Moto tại Huế" 
@@ -258,10 +258,10 @@ export default function LandingPage() {
           alt="Dịch vụ cho thuê xe máy Huế uy tín giá rẻ - 3L Moto"
           fill
           priority
-          className="object-cover z-0 blur-[6px] scale-105"
+          className="object-cover z-0 blur-[2px] scale-105"
         />
         {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/75 via-slate-950/65 to-cyan-950/75 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/65 via-slate-950/55 to-cyan-950/65 z-10" />
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-700/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl" />
 
@@ -314,7 +314,7 @@ export default function LandingPage() {
           </div>
 
           {/* Booking Form */}
-          <div id="booking" className="lg:col-span-5 bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-blue-100 hover:shadow-blue-900/10 transition-all duration-300">
+          <div id="booking" className="lg:col-span-5 w-full lg:max-w-[80%] lg:ml-auto bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-blue-100 hover:shadow-blue-900/10 transition-all duration-300">
             <h2 className="text-2xl font-bold text-blue-950 font-serif text-center mb-6">
               Đặt xe máy trực tuyến
             </h2>
