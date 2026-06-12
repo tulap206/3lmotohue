@@ -16,6 +16,7 @@ import {
   Menu,
   Settings,
   Users,
+  Wrench,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -48,6 +49,11 @@ const menuItems = [
     title: "Đơn thuê",
     href: "/dashboard/orders",
     icon: ClipboardList,
+  },
+  {
+    title: "Bảo trì",
+    href: "/dashboard/maintenance",
+    icon: Wrench,
   },
   {
     title: "Báo cáo",

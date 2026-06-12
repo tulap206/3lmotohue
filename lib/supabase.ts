@@ -25,6 +25,7 @@ export interface Vehicle {
   pricePerDay: number
   status: "available" | "rented" | "maintenance"
   current_km: number
+  last_maintenance_km?: number
   purchasePrice: number
   notes: string
   vehicleImages: string[]
@@ -384,4 +385,54 @@ export const updateTransaction = async (id: string, updates: Partial<Omit<Transa
     throw error
   }
   return data?.[0]
+}
+// =========================================================================
+// MAINTENANCE MANAGEMENT
+// =========================================================================
+
+export interface MaintenanceVehicle extends Vehicle {
+  next_maintenance_km: number
+  km_until_maintenance: number
+}
+
+export const calculateMaintenanceStatus = (vehicle: Vehicle): MaintenanceVehicle => {
+  const lastMaintenanceKm = vehicle.last_maintenance_km ?? 0
+  const nextMaintenanceKm = Math.floor(lastMaintenanceKm / 1000) * 1000 + 1000
+  const kmUntilMaintenance = nextMaintenanceKm - vehicle.current_km
+
+  return {
+    ...vehicle,
+    next_maintenance_km: nextMaintenanceKm,
+    km_until_maintenance: kmUntilMaintenance
+  }
+}
+
+export const getVehiclesDueMaintenance = async (): Promise<MaintenanceVehicle[]> => {
+  try {
+    const vehicles = await fetchVehicles()
+    return vehicles
+      .map(v => calculateMaintenanceStatus(v))
+      .filter(v => v.km_until_maintenance <= 0)
+      .sort((a, b) => a.km_until_maintenance - b.km_until_maintenance)
+  } catch (error) {
+    console.error("Error getting vehicles due for maintenance:", error)
+    return []
+  }
+}
+
+export const markVehicleAsMaintained = async (vehicleId: string, currentKm: number) => {
+  try {
+    await updateVehicle(vehicleId, {
+      last_maintenance_km: currentKm
+    })
+    await insertAccessLog(
+      'VEHICLE_MAINTAINED',
+      'maintenance',
+      `Xe được đánh dấu bảo trì xong tại ${currentKm}km`
+    )
+    return true
+  } catch (error) {
+    console.error("Error marking vehicle as maintained:", error)
+    throw error
+  }
 }
