@@ -74,6 +74,8 @@ export interface Rental {
   createdAt: string
   created_at?: string
   rentalCode?: string // Optional: generated in-memory
+  commissionHome?: number
+  homeName?: string
 }
 
 export interface Transaction {

@@ -360,6 +360,8 @@ export default function OrdersPage() {
           revenue: 0,
           status: "pending",
           created_at: now,
+          commissionHome: parseMoneyInput(formData.commissionHome) || 0,
+          homeName: formData.homeName.trim(),
         }])
         .select()
 
@@ -387,7 +389,7 @@ export default function OrdersPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleId: "", startDate: "", endDate: "", deposit: "" })
+    setFormData({ customerId: "", vehicleId: "", startDate: "", endDate: "", deposit: "", commissionHome: "", homeName: "" })
     setIsDialogOpen(false)
   }
 
@@ -415,6 +417,8 @@ export default function OrdersPage() {
       extraFees: formatMoneyInput(order.extraFees.toString()),
       notes: order.notes,
       status: order.status,
+      commissionHome: formatMoneyInput((order.commissionHome || 0).toString()),
+      homeName: order.homeName || "",
     })
     setIsEditDialogOpen(true)
   }
@@ -456,6 +460,7 @@ export default function OrdersPage() {
     try {
       const newExtraFees = parseMoneyInput(editFormData.extraFees)
       const newDeposit = parseMoneyInput(editFormData.deposit)
+      const newCommissionHome = parseMoneyInput(editFormData.commissionHome) || 0
       
       // Convert inputs back to vi-VN locale dates
       const newStartDate = new Date(editFormData.startDate).toLocaleDateString("vi-VN")
@@ -464,11 +469,12 @@ export default function OrdersPage() {
       // Calculate totalDays and totalPrice
       const totalDays = calculateTotalDays(editFormData.startDate, editFormData.endDate)
       const totalPrice = totalDays * vehicle.pricePerDay
+      const commissionTotal = newCommissionHome * totalDays
       
       // Recalculate revenue based on current status + new extraFees
       let newRevenue = editingOrder.revenue || 0
       if (editFormData.status === "completed") {
-        newRevenue = totalPrice + newExtraFees
+        newRevenue = totalPrice + newExtraFees - commissionTotal
       } else if (editFormData.status === "cancelled") {
         newRevenue = newDeposit + newExtraFees
       }
@@ -492,6 +498,8 @@ export default function OrdersPage() {
           notes: editFormData.notes.trim(),
           status: editFormData.status,
           revenue: newRevenue,
+          commissionHome: newCommissionHome,
+          homeName: editFormData.homeName.trim(),
         })
         .eq('id', editingOrder.id)
 
@@ -524,6 +532,8 @@ export default function OrdersPage() {
         notes: editFormData.notes.trim(),
         status: editFormData.status,
         revenue: newRevenue,
+        commissionHome: newCommissionHome,
+        homeName: editFormData.homeName.trim(),
       }
 
       setOrders(orders.map((o) => (o.id === editingOrder.id ? updatedOrder : o)))
@@ -794,6 +804,33 @@ export default function OrdersPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="commissionHome" className="text-gray-600">Chia hoa hồng cho Home (VND/ngày)</Label>
+                <Input
+                  id="commissionHome"
+                  type="text"
+                  value={formData.commissionHome}
+                  onChange={(e) => {
+                    const formatted = formatMoneyInput(e.target.value)
+                    setFormData({ ...formData, commissionHome: formatted })
+                  }}
+                  placeholder="VD: 20.000"
+                  className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="homeName" className="text-gray-600">Tên Home</Label>
+                <Input
+                  id="homeName"
+                  type="text"
+                  value={formData.homeName}
+                  onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
+                  placeholder="VD: Home ABC"
+                  className="bg-gray-50 border-gray-200 rounded-xl"
+                />
+              </div>
+
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={resetForm} className="rounded-xl border-gray-200">
                   Hủy
@@ -901,6 +938,11 @@ export default function OrdersPage() {
                       <p className="text-xs text-gray-500 mb-1">Tổng tiền</p>
                       <p className="text-sm font-semibold text-blue-600">{order.totalPrice.toLocaleString("vi-VN")} VND</p>
                       <p className="text-xs text-gray-500">Cọc: {order.deposit.toLocaleString("vi-VN")}</p>
+                      {order.homeName && (
+                        <p className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-1 border border-amber-200">
+                          {order.homeName} (-{(order.commissionHome || 0).toLocaleString("vi-VN")}đ/n)
+                        </p>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Doanh thu</p>
@@ -1024,6 +1066,18 @@ export default function OrdersPage() {
                       : "—"}
                   </p>
                 </div>
+                {viewingOrder.homeName && (
+                  <>
+                    <div>
+                      <p className="text-sm text-gray-500">Tên Home giới thiệu</p>
+                      <p className="font-medium text-amber-700">{viewingOrder.homeName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Hoa hồng Home</p>
+                      <p className="font-medium text-amber-700">{(viewingOrder.commissionHome || 0).toLocaleString("vi-VN")} VND/ngày</p>
+                    </div>
+                  </>
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-500">Ghi chú</p>
@@ -1052,6 +1106,12 @@ export default function OrdersPage() {
                         <span className="text-gray-500">Trả cọc cho khách:</span>
                         <span className="font-medium text-gray-500">-{viewingOrder.deposit.toLocaleString("vi-VN")} VND</span>
                       </div>
+                      {viewingOrder.homeName && (
+                        <div className="flex justify-between text-sm text-amber-700 bg-amber-50/50 p-1 rounded">
+                          <span>Hoa hồng Home ({viewingOrder.homeName}):</span>
+                          <span>-{(viewingOrder.commissionHome || 0).toLocaleString("vi-VN")}đ × {viewingOrder.totalDays} ngày = -{((viewingOrder.commissionHome || 0) * viewingOrder.totalDays).toLocaleString("vi-VN")} VND</span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
                         <span className="text-gray-700 font-medium">Doanh thu thực nhận:</span>
                         <span className="font-bold text-emerald-600">{viewingOrder.revenue.toLocaleString("vi-VN")} VND</span>
@@ -1184,6 +1244,31 @@ export default function OrdersPage() {
                 }}
                 className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-commissionHome" className="text-gray-600">Chia hoa hồng cho Home (VND/ngày)</Label>
+              <Input
+                id="edit-commissionHome"
+                type="text"
+                value={editFormData.commissionHome}
+                onChange={(e) => {
+                  const formatted = formatMoneyInput(e.target.value)
+                  setEditFormData({ ...editFormData, commissionHome: formatted })
+                }}
+                className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-homeName" className="text-gray-600">Tên Home</Label>
+              <Input
+                id="edit-homeName"
+                type="text"
+                value={editFormData.homeName}
+                onChange={(e) => setEditFormData({ ...editFormData, homeName: e.target.value })}
+                className="bg-gray-50 border-gray-200 rounded-xl"
               />
             </div>
 
