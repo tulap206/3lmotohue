@@ -608,273 +608,273 @@ export default function DashboardPage() {
       {/* Order Detail Dialog */}
             {/* ── Create Order Dialog ── */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto max-w-5xl">
-          <DialogHeader>
-            <DialogTitle className="text-gray-800">Tạo đơn thuê mới</DialogTitle>
-            <p className="text-gray-500 text-sm">Nhập thông tin đơn thuê xe</p>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* CỘT 1: KHÁCH THUÊ */}
-              <div className="space-y-4 border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0 lg:pr-6">
-                <h3 className="font-bold text-slate-800 text-sm border-b border-slate-50 pb-2">1. Khách thuê</h3>
+                  <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto max-w-xl">
+            <DialogHeader>
+              <DialogTitle className="text-gray-800">Tạo đơn thuê mới</DialogTitle>
+              <DialogDescription className="text-gray-500">Nhập thông tin đơn thuê xe</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-5">
                 
-                <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsNewCustomer(false)}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${!isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Khách cũ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsNewCustomer(true)}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Khách mới
-                  </button>
+                {/* CỘT 1: KHÁCH THUÊ */}
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">1. Khách thuê</h3>
+                  
+                  <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsNewCustomer(false)}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${!isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Khách cũ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsNewCustomer(true)}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      Khách mới
+                    </button>
+                  </div>
+
+                  {!isNewCustomer ? (
+                    <div className="space-y-2 relative">
+                      <Label htmlFor="customer" className="text-gray-600">Tìm kiếm khách hàng</Label>
+                      <Input
+                        placeholder="Nhập tên, số điện thoại hoặc ID khách..."
+                        value={customerSearch}
+                        onChange={(e) => {
+                          setCustomerSearch(e.target.value)
+                          setShowCustomerDropdown(true)
+                          setFormData(prev => ({ ...prev, customerId: "" }))
+                        }}
+                        onFocus={() => setShowCustomerDropdown(true)}
+                        className="bg-white border-gray-200 rounded-xl"
+                        required={!isNewCustomer}
+                      />
+                      {showCustomerDropdown && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
+                          <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+                            {filteredCustomersForSelect.length === 0 ? (
+                              <div className="p-3 text-sm text-gray-500 text-center">Không tìm thấy khách hàng nào</div>
+                            ) : (
+                              filteredCustomersForSelect.map((customer) => (
+                                <div
+                                  key={customer.id}
+                                  onClick={() => {
+                                    setFormData(prev => ({ ...prev, customerId: customer.id }))
+                                    setCustomerSearch(`${customer.name} (${customer.phone || 'Không có SĐT'})`)
+                                    setShowCustomerDropdown(false)
+                                  }}
+                                  className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                                >
+                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-xs text-gray-400">({customer.id})</span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </>
+                      )}
+                      <input type="hidden" name="customerId" value={formData.customerId} required={!isNewCustomer} />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-gray-600 text-xs">Tên khách hàng *</Label>
+                        <Input
+                          placeholder="Nhập họ và tên..."
+                          value={newCustomerName}
+                          onChange={(e) => setNewCustomerName(e.target.value)}
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                          required={isNewCustomer}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-gray-600 text-xs">Số điện thoại</Label>
+                        <Input
+                          placeholder="Nhập số điện thoại..."
+                          value={newCustomerPhone}
+                          onChange={(e) => setNewCustomerPhone(e.target.value)}
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-gray-600 text-xs">Số CCCD khách *</Label>
+                        <Input
+                          placeholder="Nhập số CCCD..."
+                          value={newCustomerCCCD}
+                          onChange={(e) => setNewCustomerCCCD(e.target.value)}
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                          required={isNewCustomer}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-gray-600 text-xs">Ảnh khách</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setNewCustomerPhoto(e.target.files?.[0] || null)}
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm p-1"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-gray-600 text-xs">Ảnh CCCD khách</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm p-1"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {!isNewCustomer ? (
+                {/* CỘT 2: XE THUÊ */}
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">2. Xe thuê</h3>
                   <div className="space-y-2 relative">
-                    <Label htmlFor="customer" className="text-gray-600">Tìm kiếm khách hàng</Label>
+                    <Label htmlFor="vehicle" className="text-gray-600">Chọn xe thuê</Label>
                     <Input
-                      placeholder="Nhập tên, số điện thoại hoặc ID khách..."
-                      value={customerSearch}
+                      placeholder="Nhập tên xe hoặc biển số..."
+                      value={vehicleSearch}
                       onChange={(e) => {
-                        setCustomerSearch(e.target.value)
-                        setShowCustomerDropdown(true)
-                        setFormData(prev => ({ ...prev, customerId: "" }))
+                        setVehicleSearch(e.target.value)
+                        setShowVehicleDropdown(true)
+                        setFormData(prev => ({ ...prev, vehicleId: "" }))
                       }}
-                      onFocus={() => setShowCustomerDropdown(true)}
-                      className="bg-gray-50 border-gray-200 rounded-xl"
-                      required={!isNewCustomer}
+                      onFocus={() => setShowVehicleDropdown(true)}
+                      className="bg-white border-gray-200 rounded-xl"
+                      required
                     />
-                    {showCustomerDropdown && (
+                    {showVehicleDropdown && (
                       <>
-                        <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
+                        <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
                         <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
-                          {filteredCustomersForSelect.length === 0 ? (
-                            <div className="p-3 text-sm text-gray-500 text-center">Không tìm thấy khách hàng nào</div>
+                          {filteredVehiclesForSelect.length === 0 ? (
+                            <div className="p-3 text-sm text-gray-500 text-center">Không tìm thấy xe nào</div>
                           ) : (
-                            filteredCustomersForSelect.map((customer) => (
+                            filteredVehiclesForSelect.map((vehicle) => (
                               <div
-                                key={customer.id}
+                                key={vehicle.id}
                                 onClick={() => {
-                                  setFormData(prev => ({ ...prev, customerId: customer.id }))
-                                  setCustomerSearch(`${customer.name} (${customer.phone || 'Không có SĐT'})`)
-                                  setShowCustomerDropdown(false)
+                                  setFormData(prev => ({ ...prev, vehicleId: vehicle.id }))
+                                  setVehicleSearch(`${vehicle.name} - ${vehicle.licensePlate}`)
+                                  setShowVehicleDropdown(false)
                                 }}
                                 className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
                               >
-                                <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-xs text-gray-400">({customer.id})</span>
+                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-xs text-gray-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
                               </div>
                             ))
                           )}
                         </div>
                       </>
                     )}
-                    <input type="hidden" name="customerId" value={formData.customerId} required={!isNewCustomer} />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label className="text-gray-600 text-xs">Tên khách hàng *</Label>
-                      <Input
-                        placeholder="Nhập họ và tên..."
-                        value={newCustomerName}
-                        onChange={(e) => setNewCustomerName(e.target.value)}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
-                        required={isNewCustomer}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-gray-600 text-xs">Số điện thoại</Label>
-                      <Input
-                        placeholder="Nhập số điện thoại..."
-                        value={newCustomerPhone}
-                        onChange={(e) => setNewCustomerPhone(e.target.value)}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-gray-600 text-xs">Số CCCD khách *</Label>
-                      <Input
-                        placeholder="Nhập số CCCD..."
-                        value={newCustomerCCCD}
-                        onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
-                        required={isNewCustomer}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-gray-600 text-xs">Ảnh khách</Label>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setNewCustomerPhoto(e.target.files?.[0] || null)}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm p-1"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-gray-600 text-xs">Ảnh CCCD khách</Label>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm p-1"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* CỘT 2: XE THUÊ */}
-              <div className="space-y-4 border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0 lg:pr-6">
-                <h3 className="font-bold text-slate-800 text-sm border-b border-slate-50 pb-2">2. Xe thuê</h3>
-                <div className="space-y-2 relative">
-                  <Label htmlFor="vehicle" className="text-gray-600">Chọn xe thuê</Label>
-                  <Input
-                    placeholder="Nhập tên xe hoặc biển số..."
-                    value={vehicleSearch}
-                    onChange={(e) => {
-                      setVehicleSearch(e.target.value)
-                      setShowVehicleDropdown(true)
-                      setFormData(prev => ({ ...prev, vehicleId: "" }))
-                    }}
-                    onFocus={() => setShowVehicleDropdown(true)}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
-                    required
-                  />
-                  {showVehicleDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
-                      <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
-                        {filteredVehiclesForSelect.length === 0 ? (
-                          <div className="p-3 text-sm text-gray-500 text-center">Không tìm thấy xe nào</div>
-                        ) : (
-                          filteredVehiclesForSelect.map((vehicle) => (
-                            <div
-                              key={vehicle.id}
-                              onClick={() => {
-                                setFormData(prev => ({ ...prev, vehicleId: vehicle.id }))
-                                setVehicleSearch(`${vehicle.name} - ${vehicle.licensePlate}`)
-                                setShowVehicleDropdown(false)
-                              }}
-                              className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
-                            >
-                              <span className="font-semibold">{vehicle.name}</span> - <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-xs text-gray-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </>
-                  )}
-                  <input type="hidden" name="vehicleId" value={formData.vehicleId} required />
-                </div>
-              </div>
-
-              {/* CỘT 3: LÊN ĐƠN */}
-              <div className="space-y-4">
-                <h3 className="font-bold text-slate-800 text-sm border-b border-slate-50 pb-2">3. Lên đơn</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="startDate" className="text-gray-600 text-xs">Ngày bắt đầu</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="endDate" className="text-gray-600 text-xs">Ngày kết thúc</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
-                      required
-                    />
+                    <input type="hidden" name="vehicleId" value={formData.vehicleId} required />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="deposit" className="text-gray-600 text-xs">Tiền đặt cọc (VND)</Label>
-                  <Input
-                    id="deposit"
-                    type="text"
-                    value={formData.deposit}
-                    onChange={(e) => {
-                      const formatted = formatMoneyInput(e.target.value)
-                      setFormData({ ...formData, deposit: formatted })
-                    }}
-                    placeholder="VD: 500.000"
-                    className="bg-gray-50 border-gray-200 rounded-xl font-mono h-9 text-sm"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2 pt-2">
-                  <input
-                    id="hasCommission"
-                    type="checkbox"
-                    checked={hasCommission}
-                    onChange={(e) => setHasCommission(e.target.checked)}
-                    className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-4 w-4"
-                  />
-                  <Label htmlFor="hasCommission" className="text-gray-700 text-sm font-semibold cursor-pointer">Chia hoa hồng</Label>
-                </div>
-
-                {hasCommission && (
-                  <div className="grid grid-cols-1 gap-3 pt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                {/* CỘT 3: LÊN ĐƠN */}
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">3. Lên đơn</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label htmlFor="homeName" className="text-gray-600 text-xs">Tên Home</Label>
+                      <Label htmlFor="startDate" className="text-gray-600 text-xs">Ngày bắt đầu</Label>
                       <Input
-                        id="homeName"
-                        type="text"
-                        value={formData.homeName}
-                        onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
-                        placeholder="VD: Home ABC"
+                        id="startDate"
+                        type="date"
+                        value={formData.startDate}
+                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                         className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                        required
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="commissionHome" className="text-gray-600 text-xs">Chia hoa hồng cho Home (VND/ngày)</Label>
+                      <Label htmlFor="endDate" className="text-gray-600 text-xs">Ngày kết thúc</Label>
                       <Input
-                        id="commissionHome"
-                        type="text"
-                        value={formData.commissionHome}
-                        onChange={(e) => {
-                          const formatted = formatMoneyInput(e.target.value)
-                          setFormData({ ...formData, commissionHome: formatted })
-                        }}
-                        placeholder="VD: 20.000"
-                        className="bg-white border-gray-200 rounded-xl font-mono h-9 text-sm"
+                        id="endDate"
+                        type="date"
+                        value={formData.endDate}
+                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                        className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                        required
                       />
                     </div>
                   </div>
-                )}
+
+                  <div className="space-y-1">
+                    <Label htmlFor="deposit" className="text-gray-600 text-xs">Tiền đặt cọc (VND)</Label>
+                    <Input
+                      id="deposit"
+                      type="text"
+                      value={formData.deposit}
+                      onChange={(e) => {
+                        const formatted = formatMoneyInput(e.target.value)
+                        setFormData({ ...formData, deposit: formatted })
+                      }}
+                      placeholder="VD: 500.000"
+                      className="bg-white border-gray-200 rounded-xl font-mono h-9 text-sm"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2 pt-2">
+                    <input
+                      id="hasCommission"
+                      type="checkbox"
+                      checked={hasCommission}
+                      onChange={(e) => setHasCommission(e.target.checked)}
+                      className="rounded border-gray-300 text-red-600 focus:ring-red-500 h-4 w-4"
+                    />
+                    <Label htmlFor="hasCommission" className="text-gray-700 text-sm font-semibold cursor-pointer">Chia hoa hồng</Label>
+                  </div>
+
+                  {hasCommission && (
+                    <div className="grid grid-cols-1 gap-3 pt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <div className="space-y-1">
+                        <Label htmlFor="homeName" className="text-gray-600 text-xs">Tên Home</Label>
+                        <Input
+                          id="homeName"
+                          type="text"
+                          value={formData.homeName}
+                          onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
+                          placeholder="VD: Home ABC"
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="commissionHome" className="text-gray-600 text-xs">Chia hoa hồng cho Home (VND/ngày)</Label>
+                        <Input
+                          id="commissionHome"
+                          type="text"
+                          value={formData.commissionHome}
+                          onChange={(e) => {
+                            const formatted = formatMoneyInput(e.target.value)
+                            setFormData({ ...formData, commissionHome: formatted })
+                          }}
+                          placeholder="VD: 20.000"
+                          className="bg-white border-gray-200 rounded-xl font-mono h-9 text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
-            </div>
-
-            <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
-              <Button type="button" variant="outline" onClick={resetForm} className="rounded-xl border-gray-200">
-                Hủy
-              </Button>
-              <Button type="submit" className="bg-red-600 text-white hover:bg-red-700 rounded-xl">
-                Tạo đơn
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
+              <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
+                <Button type="button" variant="outline" onClick={resetForm} className="rounded-xl border-gray-200">
+                  Hủy
+                </Button>
+                <Button type="submit" className="bg-red-600 text-white hover:bg-red-700 rounded-xl">
+                  Tạo đơn
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
       </Dialog>
 
       {/* ── Order Detail Dialog ── */}

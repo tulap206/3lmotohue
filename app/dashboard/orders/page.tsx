@@ -822,30 +822,30 @@ export default function OrdersPage() {
               Tạo đơn thuê mới
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto max-w-5xl">
+                    <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto max-w-xl">
             <DialogHeader>
               <DialogTitle className="text-gray-800">Tạo đơn thuê mới</DialogTitle>
               <DialogDescription className="text-gray-500">Nhập thông tin đơn thuê xe</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="space-y-5">
                 
                 {/* CỘT 1: KHÁCH THUÊ */}
-                <div className="space-y-4 border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0 lg:pr-6">
-                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-50 pb-2">1. Khách thuê</h3>
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">1. Khách thuê</h3>
                   
                   <div className="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
                     <button
                       type="button"
                       onClick={() => setIsNewCustomer(false)}
-                      className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${!isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${!isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                       Khách cũ
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsNewCustomer(true)}
-                      className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                      className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${isNewCustomer ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                       Khách mới
                     </button>
@@ -863,7 +863,7 @@ export default function OrdersPage() {
                           setFormData(prev => ({ ...prev, customerId: "" }))
                         }}
                         onFocus={() => setShowCustomerDropdown(true)}
-                        className="bg-gray-50 border-gray-200 rounded-xl"
+                        className="bg-white border-gray-200 rounded-xl"
                         required={!isNewCustomer}
                       />
                       {showCustomerDropdown && (
@@ -900,7 +900,7 @@ export default function OrdersPage() {
                           placeholder="Nhập họ và tên..."
                           value={newCustomerName}
                           onChange={(e) => setNewCustomerName(e.target.value)}
-                          className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
                           required={isNewCustomer}
                         />
                       </div>
@@ -910,7 +910,7 @@ export default function OrdersPage() {
                           placeholder="Nhập số điện thoại..."
                           value={newCustomerPhone}
                           onChange={(e) => setNewCustomerPhone(e.target.value)}
-                          className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
                         />
                       </div>
                       <div className="space-y-1">
@@ -919,7 +919,7 @@ export default function OrdersPage() {
                           placeholder="Nhập số CCCD..."
                           value={newCustomerCCCD}
                           onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
                           required={isNewCustomer}
                         />
                       </div>
@@ -929,7 +929,7 @@ export default function OrdersPage() {
                           type="file"
                           accept="image/*"
                           onChange={(e) => setNewCustomerPhoto(e.target.files?.[0] || null)}
-                          className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm p-1"
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm p-1"
                         />
                       </div>
                       <div className="space-y-1">
@@ -938,7 +938,7 @@ export default function OrdersPage() {
                           type="file"
                           accept="image/*"
                           onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
-                          className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm p-1"
+                          className="bg-white border-gray-200 rounded-xl h-9 text-sm p-1"
                         />
                       </div>
                     </div>
@@ -946,8 +946,8 @@ export default function OrdersPage() {
                 </div>
 
                 {/* CỘT 2: XE THUÊ */}
-                <div className="space-y-4 border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0 lg:pr-6">
-                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-50 pb-2">2. Xe thuê</h3>
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">2. Xe thuê</h3>
                   <div className="space-y-2 relative">
                     <Label htmlFor="vehicle" className="text-gray-600">Chọn xe thuê</Label>
                     <Input
@@ -959,7 +959,7 @@ export default function OrdersPage() {
                         setFormData(prev => ({ ...prev, vehicleId: "" }))
                       }}
                       onFocus={() => setShowVehicleDropdown(true)}
-                      className="bg-gray-50 border-gray-200 rounded-xl"
+                      className="bg-white border-gray-200 rounded-xl"
                       required
                     />
                     {showVehicleDropdown && (
@@ -991,8 +991,8 @@ export default function OrdersPage() {
                 </div>
 
                 {/* CỘT 3: LÊN ĐƠN */}
-                <div className="space-y-4">
-                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-50 pb-2">3. Lên đơn</h3>
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <h3 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">3. Lên đơn</h3>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
@@ -1002,7 +1002,7 @@ export default function OrdersPage() {
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
+                        className="bg-white border-gray-200 rounded-xl h-9 text-sm"
                         required
                       />
                     </div>
@@ -1013,7 +1013,7 @@ export default function OrdersPage() {
                         type="date"
                         value={formData.endDate}
                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-9 text-sm"
+                        className="bg-white border-gray-200 rounded-xl h-9 text-sm"
                         required
                       />
                     </div>
@@ -1030,7 +1030,7 @@ export default function OrdersPage() {
                         setFormData({ ...formData, deposit: formatted })
                       }}
                       placeholder="VD: 500.000"
-                      className="bg-gray-50 border-gray-200 rounded-xl font-mono h-9 text-sm"
+                      className="bg-white border-gray-200 rounded-xl font-mono h-9 text-sm"
                       required
                     />
                   </div>
