@@ -951,74 +951,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Popular Vehicles (Cards) ── */}
-      {topVehicles.length > 0 && (
-        <Card className="rounded-2xl border-slate-100 shadow-sm">
-          <CardHeader className="pb-3 border-b border-slate-50">
-            <CardTitle className="text-base font-bold text-slate-800">Xe Được Thuê Nhiều</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {topVehicles.slice(0, 4).map((vehicle) => (
-                <div
-                  key={vehicle.id}
-                  className="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-blue-100 transition-all cursor-pointer group"
-                  onClick={() => { setSelectedVehicle(vehicle); setIsVehicleDialogOpen(true) }}
-                >
-                  {/* Image */}
-                  <div className="aspect-video bg-slate-100 overflow-hidden">
-                    {vehicle.image && vehicle.image.length > 0 ? (
-                      <img
-                        src={vehicle.image[0]}
-                        alt={vehicle.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-                        {vehicle.category === "bike"
-                          ? <Bike className="w-10 h-10 text-slate-400" />
-                          : <Car className="w-10 h-10 text-slate-400" />
-                        }
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Info */}
-                  <div className="p-4">
-                    <p className="font-bold text-slate-800 text-sm truncate">{vehicle.name}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{vehicle.licensePlate}</p>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <p className="text-slate-400">Doanh thu</p>
-                        <p className="font-semibold text-slate-800 truncate">{Number(vehicle.revenue).toLocaleString("vi-VN")} đ</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400">Lần thuê</p>
-                        <p className="font-bold text-blue-600">{vehicle.rentals} lần</p>
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedVehicle(vehicle)
-                        setIsVehicleDialogOpen(true)
-                      }}
-                      variant="outline"
-                      className="w-full mt-3 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl h-8 text-xs font-semibold"
-                      size="sm"
-                    >
-                      <Eye className="w-3.5 h-3.5 mr-1.5" />
-                      Chi Tiết
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* ── Financial Reports Section ── */}
       <div id="reports-section" className="mt-8 mb-6 border-t border-slate-100 pt-8">
@@ -1030,13 +963,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
         {/* Doanh Thu Theo Tháng */}
         <div className="lg:col-span-2">
-          <Card className="rounded-2xl border-slate-100 shadow-sm">
+          <Card className="rounded-2xl border-slate-100 shadow-sm h-full flex flex-col">
             <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
               <CardTitle className="text-base font-bold text-slate-800">Doanh Thu Theo Tháng</CardTitle>
               <CardDescription className="text-xs text-slate-500">Doanh thu hàng tháng</CardDescription>
             </CardHeader>
-            <CardContent className="p-3 md:p-4">
-              <ResponsiveContainer width="100%" height={280}>
+            <CardContent className="p-3 md:p-4 flex-1">
+              <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={monthlyRevenue} margin={{ top: 20, right: 5, left: -15, bottom: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
@@ -1065,6 +998,80 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Xe Được Thuê Nhiều */}
+        <div className="lg:col-span-3">
+          {topVehicles.length > 0 && (
+            <Card className="rounded-2xl border-slate-100 shadow-sm h-full flex flex-col">
+              <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
+                <CardTitle className="text-base font-bold text-slate-800">Xe Được Thuê Nhiều</CardTitle>
+                <CardDescription className="text-xs text-slate-500">Những mẫu xe có doanh số tốt nhất</CardDescription>
+              </CardHeader>
+              <CardContent className="p-3 md:p-4 flex-1 flex flex-col justify-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {topVehicles.slice(0, 2).map((vehicle) => (
+                    <div
+                      key={vehicle.id}
+                      className="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-blue-100 transition-all cursor-pointer group flex flex-col h-full"
+                      onClick={() => { setSelectedVehicle(vehicle); setIsVehicleDialogOpen(true) }}
+                    >
+                      {/* Image */}
+                      <div className="aspect-video bg-slate-100 overflow-hidden relative">
+                        {vehicle.image && vehicle.image.length > 0 ? (
+                          <img
+                            src={vehicle.image[0]}
+                            alt={vehicle.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+                            {vehicle.category === "bike"
+                              ? <Bike className="w-10 h-10 text-slate-400" />
+                              : <Car className="w-10 h-10 text-slate-400" />
+                            }
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-3 flex-1 flex flex-col justify-between">
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm truncate">{vehicle.name}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{vehicle.licensePlate}</p>
+
+                          <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+                            <div>
+                              <p className="text-slate-400">Doanh thu</p>
+                              <p className="font-semibold text-slate-800 truncate">{Number(vehicle.revenue).toLocaleString("vi-VN")} đ</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400">Lần thuê</p>
+                              <p className="font-bold text-blue-600">{vehicle.rentals} lần</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedVehicle(vehicle)
+                            setIsVehicleDialogOpen(true)
+                          }}
+                          variant="outline"
+                          className="w-full mt-3 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl h-7 text-[11px] font-semibold"
+                          size="sm"
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          Chi Tiết
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
