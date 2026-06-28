@@ -50,6 +50,7 @@ export const USERS: { username: string; password: string; user: User }[] = [
       role: "admin",
       permissions: {
         canDelete: true,
+        canBackup: true,
       },
     },
   },
@@ -195,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: data.role as UserRole,
           permissions: {
             canDelete: data.can_delete || false,
+            canBackup: data.role === 'admin',
           },
         }
         setUser(userData)

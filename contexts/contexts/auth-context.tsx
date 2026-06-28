@@ -49,6 +49,7 @@ const USERS: { username: string; password: string; user: User }[] = [
       role: "admin",
       permissions: {
         canDelete: true,
+        canBackup: true,
       },
     },
   },
