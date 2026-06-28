@@ -749,9 +749,9 @@ export default function DashboardPage() {
         {/* Quá Hạn */}
         <MetricCard
           label="Quá Hạn"
-          value={<span className="text-blue-600 font-bold">{stats.overdueRentals}</span>}
+          value={<span className="text-red-600 font-bold">{stats.overdueRentals}</span>}
           icon={<AlertTriangle className="w-5 h-5" />}
-          iconColor="text-blue-600"
+          iconColor="text-red-600"
           delay={3}
           onClick={() => router.push("/dashboard/orders?status=overdue")}
           backgroundColor="bg-white"
