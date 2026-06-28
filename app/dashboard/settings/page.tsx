@@ -469,7 +469,7 @@ export default function SettingsPage() {
               <p className="text-xs md:text-sm text-gray-600 mb-3 md:mb-4">
                 Xuất tất cả khách hàng, xe, và đơn thuê
               </p>
-              {user?.permissions.canBackup ? (
+              {user?.role === 'admin' || user?.permissions?.canBackup ? (
                 <Button
                   onClick={handleBackup}
                   disabled={loading}
