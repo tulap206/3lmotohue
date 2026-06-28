@@ -749,7 +749,8 @@ export default function DashboardPage() {
         {/* Quá Hạn */}
         <MetricCard
           label="Quá Hạn"
-          value={<span className="text-red-600 font-bold">{stats.overdueRentals}</span>}
+          value={stats.overdueRentals}
+          valueClassName="text-red-600"
           icon={<AlertTriangle className="w-5 h-5" />}
           iconColor="text-red-600"
           delay={3}

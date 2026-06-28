@@ -1,5 +1,6 @@
 import React from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface MetricCardProps {
   icon?: React.ReactNode
@@ -14,6 +15,7 @@ interface MetricCardProps {
   iconColor?: string
   delay?: number
   onClick?: () => void
+  valueClassName?: string
 }
 
 export function MetricCard({
@@ -26,7 +28,11 @@ export function MetricCard({
   iconColor = "text-blue-500",
   delay = 0,
   onClick,
+  valueClassName,
 }: MetricCardProps) {
+  // Compute text length safely if value is a React node
+  const textLength = React.isValidElement(value) ? 2 : String(value).length;
+
   return (
     <Card
       className="glass-card hover-lift transition-smooth cursor-pointer border border-slate-100/50 shadow-xs relative overflow-hidden rounded-2xl"
@@ -51,13 +57,15 @@ export function MetricCard({
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-1 space-y-2">
         <div className="flex items-baseline gap-3">
-          <div className={`font-black text-slate-800 tracking-tight truncate ${
-            String(value).length > 12 
+          <div className={cn(
+            "font-black tracking-tight truncate",
+            valueClassName || "text-slate-800",
+            textLength > 12 
               ? "text-base xl:text-lg" 
-              : String(value).length > 8 
+              : textLength > 8 
                 ? "text-lg xl:text-xl" 
                 : "text-xl xl:text-2xl"
-          }`} title={String(value)}>
+          )} title={String(value)}>
             {value}
           </div>
           {trend && (
