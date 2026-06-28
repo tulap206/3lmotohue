@@ -175,8 +175,8 @@ export default function VehiclesPage() {
   const loadVehicles = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true)
     try {
-      // Check if user is demo account (admin)
-      const isDemoAccount = user?.username === "admin"
+      // Check if user is demo account (demo)
+      const isDemoAccount = user?.username === "demo"
 
       if (isDemoAccount) {
         setVehicles([])

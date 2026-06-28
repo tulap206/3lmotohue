@@ -373,8 +373,8 @@ export default function DashboardPage() {
   const loadDashboardData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true)
     try {
-      // Check if user is demo account (admin)
-      const isDemoAccount = user?.username === "admin"
+      // Check if user is demo account (demo)
+      const isDemoAccount = user?.username === "demo"
 
       const vehicles = isDemoAccount ? [] : (await fetchVehicles()) || []
       setVehicles(vehicles)

@@ -135,8 +135,8 @@ export default function CustomersPage() {
     try {
       if (showLoading) setLoading(true)
 
-      // Check if user is demo account (admin)
-      const isDemoAccount = user?.username === "admin"
+      // Check if user is demo account (demo)
+      const isDemoAccount = user?.username === "demo"
 
       if (isDemoAccount) {
         setCustomers([])
