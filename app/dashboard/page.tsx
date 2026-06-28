@@ -1107,7 +1107,7 @@ export default function DashboardPage() {
                         <DialogHeader>
                           <DialogTitle className="text-slate-800">Ghi Chép Thu/Chi Mới</DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={handleCreateTx} className="space-y-4 pt-2">
+                        <form onSubmit={handleAddTx} className="space-y-4 pt-2">
                           <div className="space-y-1.5">
                             <Label className="text-slate-700 font-semibold text-xs">Loại giao dịch</Label>
                             <div className="grid grid-cols-2 gap-2">
