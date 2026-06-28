@@ -1580,27 +1580,6 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              {/* VietQR Billing code */}
-              <div className="pt-4 border-t border-gray-100">
-                <div className="bg-slate-950 text-white p-4 rounded-xl flex flex-col items-center space-y-2">
-                  <div className="flex items-center justify-between w-full border-b border-slate-800 pb-2">
-                    <span className="text-xs bg-blue-600 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">Mã QR VietinBank</span>
-                    <span className="text-xs text-slate-400">Mr. Quý - 0762 75 3333</span>
-                  </div>
-                  
-                  <div className="w-40 h-40 bg-white p-1.5 rounded-lg overflow-hidden flex items-center justify-center my-1.5 shadow-md">
-                    <img 
-                      src={`https://img.vietqr.io/image/ICB-0762753333-qr_only.png?amount=${viewingOrder.totalPrice}&addInfo=${encodeURIComponent(`TT DON HONG ${viewingOrder.rentalCode || viewingOrder.id}`)}&accountName=NGUYEN%20HOANG%20QUY`}
-                      alt="VietQR"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="text-[11px] text-slate-300 text-center space-y-0.5">
-                    <p className="font-bold text-blue-500 text-sm">Số tiền: {viewingOrder.totalPrice.toLocaleString("vi-VN")} VND</p>
-                    <p className="text-slate-400">Dùng App Ngân hàng quét QR để thanh toán cọc hoặc tất toán đơn</p>
-                  </div>
-                </div>
-              </div>
               {viewingOrder.status === "pending" && (
                 <div className="flex gap-2 pt-4">
                   <Button
