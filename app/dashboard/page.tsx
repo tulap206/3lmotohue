@@ -1095,7 +1095,7 @@ export default function DashboardPage() {
                   
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Add Transaction Dialog */}
-                    <Dialog open={txDialogOpen} onOpenChange={setTxDialogOpen}>
+                    <Dialog open={isAddTxOpen} onOpenChange={setIsAddTxOpen}>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-8 font-semibold">
                           <Plus className="w-3.5 h-3.5 mr-1" />
@@ -1163,86 +1163,7 @@ export default function DashboardPage() {
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => { setTxDialogOpen(false); setTxFormData({ type: "income", description: "", amount: "" }) }}
-                              className="rounded-xl border-slate-200 text-xs h-9 font-semibold"
-                            >
-                              Hủy
-                            </Button>
-                            <Button
-                              type="submit"
-                              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-9 font-semibold"
-                            >
-                              Lưu lại
-                            </Button>
-                          </div>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-
-                    {/* Edit Transaction Dialog */}
-                    <Dialog open={txEditDialogOpen} onOpenChange={setTxEditDialogOpen}>
-                      <DialogContent className="bg-white border-slate-200 rounded-2xl max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle className="text-slate-800">Chỉnh Sửa Thu/Chi</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleUpdateTx} className="space-y-4 pt-2">
-                          <div className="space-y-1.5">
-                            <Label className="text-slate-700 font-semibold text-xs">Loại giao dịch</Label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Button
-                                type="button"
-                                variant={txEditFormData.type === "income" ? "default" : "outline"}
-                                className={cn(
-                                  "rounded-xl text-xs h-9 font-semibold",
-                                  txEditFormData.type === "income" ? "bg-emerald-600 text-white hover:bg-emerald-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                                )}
-                                onClick={() => setTxEditFormData(prev => ({ ...prev, type: "income" }))}
-                              >
-                                Thu tiền (+)
-                              </Button>
-                              <Button
-                                type="button"
-                                variant={txEditFormData.type === "expense" ? "default" : "outline"}
-                                className={cn(
-                                  "rounded-xl text-xs h-9 font-semibold",
-                                  txEditFormData.type === "expense" ? "bg-red-600 text-white hover:bg-red-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                                )}
-                                onClick={() => setTxEditFormData(prev => ({ ...prev, type: "expense" }))}
-                              >
-                                Chi tiền (-)
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-slate-700 font-semibold text-xs">Số tiền (VND)</Label>
-                            <Input
-                              type="number"
-                              required
-                              placeholder="Nhập số tiền..."
-                              value={txEditFormData.amount}
-                              onChange={(e) => setTxEditFormData(prev => ({ ...prev, amount: e.target.value }))}
-                              className="rounded-xl border-slate-200 h-9 text-sm"
-                            />
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-slate-700 font-semibold text-xs">Mô tả chi tiết</Label>
-                            <Input
-                              type="text"
-                              required
-                              placeholder="Lý do thu/chi..."
-                              value={txEditFormData.description}
-                              onChange={(e) => setTxEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                              className="rounded-xl border-slate-200 h-9 text-sm"
-                            />
-                          </div>
-
-                          <div className="flex gap-2 justify-end pt-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => { setTxEditDialogOpen(false); setEditingTxId(null) }}
+                              onClick={() => { setIsAddTxOpen(false); setTxFormData({ type: "income", description: "", amount: "" }) }}
                               className="rounded-xl border-slate-200 text-xs h-9 font-semibold"
                             >
                               Hủy
@@ -1326,7 +1247,7 @@ export default function DashboardPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg"
-                                    onClick={() => handleOpenEditTx(tx)}
+                                    onClick={() => handleEditTx(tx)}
                                     title="Sửa"
                                   >
                                     <Pencil className="w-3.5 h-3.5" />
