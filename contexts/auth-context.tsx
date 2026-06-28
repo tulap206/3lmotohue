@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const newLog = {
       username: user.username,
-      displayName: user.displayName,
+      displayname: user.displayName,
       action,
       module,
       details,
