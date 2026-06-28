@@ -153,24 +153,24 @@ export function DashboardSidebar({ children }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-20 bg-white border-r border-gray-100 transition-transform duration-300 flex flex-col shadow-sm",
+          "fixed left-0 top-0 z-50 h-screen w-20 bg-white/80 backdrop-blur-md border-r border-slate-100/50 transition-all duration-300 flex flex-col shadow-sm",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-center h-24 border-b border-gray-100">
-          <div className="relative w-[86px] h-[86px]">
+        <div className="flex items-center justify-center h-24 border-b border-slate-100/50">
+          <div className="relative w-[64px] h-[64px] rounded-full overflow-hidden border border-slate-100/80 shadow-sm">
             <Image
               src="/logo.jpg"
               alt="3L Moto Logo"
               fill
-              className="object-contain rounded-full bg-white"
+              className="object-contain bg-white"
             />
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6 px-3 space-y-2">
+        <nav className="flex-1 py-6 px-3 space-y-3">
           {menuItems.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -179,26 +179,26 @@ export function DashboardSidebar({ children }: SidebarProps) {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto",
+                  "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift",
                   isActive
                     ? "sidebar-active"
-                    : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                    : "text-slate-400 hover:bg-slate-50 hover:text-blue-600"
                 )}
                 title={item.title}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="w-5 h-5 transition-transform group-hover:scale-110" />
               </Link>
             )
           })}
         </nav>
 
         {/* Bottom section - compact spacing */}
-        <div className="p-2 space-y-1 border-t border-gray-100">
+        <div className="p-2 space-y-2 border-t border-slate-100/50">
           {/* User Avatar - Clickable */}
           {user && (
             <button
               onClick={() => setIsProfileOpen(true)}
-              className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 mx-auto cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
+              className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mx-auto cursor-pointer hover:shadow-lg hover:shadow-blue-500/20 hover:scale-105 transition-all duration-200 border border-blue-400/20"
               title={`${user.displayName} (${user.username})`}
             >
               <span className="text-white text-sm font-semibold uppercase">
@@ -212,20 +212,20 @@ export function DashboardSidebar({ children }: SidebarProps) {
             href="/dashboard/settings"
             onClick={() => setMobileOpen(false)}
             className={cn(
-              "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto",
+              "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift",
               pathname === "/dashboard/settings"
-                ? "bg-amber-50 text-amber-600 font-medium"
-                : "text-gray-400 hover:bg-amber-50 hover:text-amber-500"
+                ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-500"
             )}
             title="Cài đặt - Sao lưu & Khôi phục"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
           </Link>
           
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center w-14 h-14 rounded-2xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all duration-200 mx-auto"
+            className="flex items-center justify-center w-14 h-14 rounded-2xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all duration-200 mx-auto hover-lift"
             title="Đăng xuất"
           >
             <LogOut className="w-5 h-5" />

@@ -29,37 +29,40 @@ export function MetricCard({
 }: MetricCardProps) {
   return (
     <Card
-      className={`metric-card card-animate ${backgroundColor} cursor-pointer`}
+      className="glass-card hover-lift transition-smooth cursor-pointer border border-slate-100/50 shadow-xs relative overflow-hidden rounded-2xl"
       style={{ animationDelay: `${delay * 60}ms` }}
       onClick={onClick}
     >
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-slate-600">{label}</p>
+      {/* Premium ambient light spot */}
+      <div className="absolute -top-6 -right-6 w-16 h-16 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
+      
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+        <div className="space-y-0.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p>
           {sublabel && (
             <p className="text-xs text-slate-500">{sublabel}</p>
           )}
         </div>
         {icon && (
-          <div className={`${iconColor} text-xl flex-shrink-0`}>
+          <div className={`${iconColor} flex-shrink-0 w-9 h-9 rounded-xl bg-slate-50/50 backdrop-blur-xs flex items-center justify-center border border-slate-100/80 shadow-2xs`}>
             {icon}
           </div>
         )}
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="px-4 pb-4 pt-1 space-y-2">
         <div className="flex items-baseline gap-3">
-          <div className={`font-bold text-slate-900 truncate ${
+          <div className={`font-black text-slate-800 tracking-tight truncate ${
             String(value).length > 12 
-              ? "text-lg xl:text-xl" 
+              ? "text-base xl:text-lg" 
               : String(value).length > 8 
-                ? "text-xl xl:text-2xl" 
-                : "text-2xl xl:text-3xl"
+                ? "text-lg xl:text-xl" 
+                : "text-xl xl:text-2xl"
           }`} title={String(value)}>
             {value}
           </div>
           {trend && (
             <div
-              className={`text-sm font-medium flex items-center gap-1 ${
+              className={`text-xs font-semibold flex items-center gap-1 ${
                 trend.direction === "up"
                   ? "text-emerald-600"
                   : trend.direction === "down"
@@ -77,3 +80,4 @@ export function MetricCard({
     </Card>
   )
 }
+
