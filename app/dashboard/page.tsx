@@ -32,6 +32,7 @@ import {
   Edit2,
   Trash2,
   Search,
+  Pencil,
 } from "lucide-react"
 import { fetchVehicles, fetchRentals, fetchTransactions, fetchCustomers, insertCustomer, insertTransaction, deleteTransaction, updateTransaction, supabase } from "@/lib/supabase"
 import {
