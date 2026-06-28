@@ -824,7 +824,7 @@ export default function DashboardPage() {
                             <Car className="w-4 h-4 text-blue-600" />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-slate-800 text-sm truncate">{order.customer}</p>
+                            <p className="font-semibold text-slate-800 text-sm truncate capitalize">{order.customer}</p>
                             <p className="text-xs text-slate-500 truncate">{order.vehicle}</p>
                           </div>
                         </div>
@@ -883,7 +883,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="font-bold text-sm text-blue-600 break-words">
+                        <p className="font-semibold text-sm text-slate-800 break-words">
                           {vehicle.revenue.toLocaleString("vi-VN")} đ
                         </p>
                       </div>
@@ -988,7 +988,7 @@ export default function DashboardPage() {
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <p className="text-slate-400">Doanh thu</p>
-                        <p className="font-bold text-emerald-600 truncate">{Number(vehicle.revenue).toLocaleString("vi-VN")} đ</p>
+                        <p className="font-semibold text-slate-800 truncate">{Number(vehicle.revenue).toLocaleString("vi-VN")} đ</p>
                       </div>
                       <div>
                         <p className="text-slate-400">Lần thuê</p>
@@ -1025,8 +1025,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-        {/* Doanh Thu Theo Tháng & Tóm Tắt */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        {/* Doanh Thu Theo Tháng */}
+        <div className="lg:col-span-2">
           <Card className="rounded-2xl border-slate-100 shadow-sm">
             <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
               <CardTitle className="text-base font-bold text-slate-800">Doanh Thu Theo Tháng</CardTitle>
@@ -1062,264 +1062,332 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+        </div>
+      </div>
 
-          {/* Tóm tắt */}
-          {(() => {
-            const totalIncome = transactions
-              .filter(t => t.type === 'income' && t.description !== 'Góp vốn')
-              .reduce((sum, t) => sum + (t.amount || 0), 0)
-            
-            const totalExpense = transactions
-              .filter(t => t.type === 'expense')
-              .reduce((sum, t) => sum + (t.amount || 0), 0)
-            
-            const rentalRevenue = stats.totalProfit
-            const cashOnHand = rentalRevenue + totalIncome - totalExpense
-            
+      {/* Theo Dõi Thu/Chi (Expanded to Width 100%) */}
+      <div className="w-full mb-6">
+        {(() => {
+          const query = txSearchQuery.toLowerCase()
+          const filteredTx = transactions.filter((tx) => {
             return (
-              <Card className="rounded-2xl border-slate-100 shadow-sm bg-blue-50/40 border-blue-100/50">
-                <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
-                  <CardTitle className="flex items-center gap-2 text-base md:text-lg font-bold text-slate-800">
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                    Tóm Tắt Tài Chính
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-gray-700 space-y-3 p-3 md:p-4">
-                  <div className="grid grid-cols-2 gap-2 md:gap-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">🚗 Tổng xe</p>
-                      <p className="font-bold text-base text-gray-800">{stats.totalVehicles}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">👥 Tổng khách</p>
-                      <p className="font-bold text-base text-gray-800">{customers.length}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">📋 Tổng đơn</p>
-                      <p className="font-bold text-base text-gray-800">{stats.totalRentals}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">💰 Doanh thu thuê xe</p>
-                      <p className="font-bold text-base text-blue-600 break-words">{stats.totalRevenue.toLocaleString("vi-VN")} ₫</p>
-                    </div>
+              tx.description.toLowerCase().includes(query) ||
+              tx.user.toLowerCase().includes(query) ||
+              tx.amount.toString().includes(query) ||
+              tx.type.toLowerCase().includes(query)
+            )
+          })
+
+          const totalTxPages = Math.max(1, Math.ceil(filteredTx.length / txItemsPerPage))
+          const activePage = Math.min(txCurrentPage, totalTxPages)
+          const startTxIndex = (activePage - 1) * txItemsPerPage
+          const endTxIndex = startTxIndex + txItemsPerPage
+          const paginatedTx = filteredTx.slice(startTxIndex, endTxIndex)
+
+          return (
+            <Card className="rounded-2xl border-slate-100 shadow-sm h-full">
+              <CardHeader className="pb-3 md:pb-4 p-3 md:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                  <div>
+                    <CardTitle className="text-base font-bold text-slate-800">Theo Dõi Thu/Chi</CardTitle>
+                    <CardDescription className="text-blue-600 font-medium text-xs">Quản lý các khoản thu/chi ngoài đơn thuê</CardDescription>
                   </div>
                   
-                  <div className="border-t border-blue-200/60 pt-3">
-                    <div className="grid grid-cols-2 gap-2 md:gap-3">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">📈 Lợi nhuận thuê xe</p>
-                        <p className="font-bold text-base text-emerald-600 break-words">{stats.totalProfit.toLocaleString("vi-VN")} ₫</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">📥 Tổng thu (ngoài góp vốn)</p>
-                        <p className="font-bold text-base text-green-600 break-words">+{totalIncome.toLocaleString("vi-VN")} ₫</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">📤 Tổng chi</p>
-                        <p className="font-bold text-base text-red-600">-{totalExpense.toLocaleString("vi-VN")} ₫</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">💵 Tiền mặt hiện có</p>
-                        <p className={`font-bold text-base ${cashOnHand >= 0 ? 'text-blue-600' : 'text-red-600'} break-words`}>
-                          {cashOnHand.toLocaleString("vi-VN")} ₫
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })()}
-        </div>
-
-        {/* Theo Dõi Thu/Chi */}
-        <div className="lg:col-span-3">
-          {(() => {
-            const query = txSearchQuery.toLowerCase()
-            const filteredTx = transactions.filter((tx) => {
-              return (
-                tx.description.toLowerCase().includes(query) ||
-                tx.user.toLowerCase().includes(query) ||
-                tx.amount.toString().includes(query) ||
-                tx.type.toLowerCase().includes(query)
-              )
-            })
-
-            const totalTxPages = Math.max(1, Math.ceil(filteredTx.length / txItemsPerPage))
-            const activePage = Math.min(txCurrentPage, totalTxPages)
-            const startTxIndex = (activePage - 1) * txItemsPerPage
-            const endTxIndex = startTxIndex + txItemsPerPage
-            const paginatedTx = filteredTx.slice(startTxIndex, endTxIndex)
-
-            return (
-              <Card className="rounded-2xl border-slate-100 shadow-sm h-full">
-                <CardHeader className="pb-3 md:pb-4 p-3 md:p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                    <div>
-                      <CardTitle className="text-base font-bold text-slate-800">Theo Dõi Thu/Chi</CardTitle>
-                      <CardDescription className="text-blue-600 font-medium text-xs">Quản lý các khoản thu/chi ngoài đơn thuê</CardDescription>
-                    </div>
-                    <Dialog open={isAddTxOpen} onOpenChange={setIsAddTxOpen}>
-                      <Button onClick={() => setIsAddTxOpen(true)} className="bg-blue-600 text-white hover:bg-blue-700 text-xs w-full sm:w-auto h-9 rounded-xl">
-                        <Plus className="w-3.5 h-3.5 mr-1.5" />
-                        Nhập Thu/Chi
-                      </Button>
-                      <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-md">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Add Transaction Dialog */}
+                    <Dialog open={txDialogOpen} onOpenChange={setTxDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-8 font-semibold">
+                          <Plus className="w-3.5 h-3.5 mr-1" />
+                          Ghi chép thu/chi
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-white border-slate-200 rounded-2xl max-w-sm">
                         <DialogHeader>
-                          <DialogTitle className="text-gray-800">Thêm Khoản Thu/Chi</DialogTitle>
-                          <DialogDescription className="text-gray-500">Nhập thông tin khoản thu hoặc chi</DialogDescription>
+                          <DialogTitle className="text-slate-800">Ghi Chép Thu/Chi Mới</DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={handleAddTx} className="space-y-4">
-                          <div>
-                            <Label className="text-gray-700 text-sm font-medium">Loại</Label>
-                            <Select value={txFormData.type} onValueChange={(val) => setTxFormData({...txFormData, type: val as "income" | "expense"})}>
-                              <SelectTrigger className="border-gray-300 rounded-lg">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="bg-white">
-                                <SelectItem value="income">Thu</SelectItem>
-                                <SelectItem value="expense">Chi</SelectItem>
-                              </SelectContent>
-                            </Select>
+                        <form onSubmit={handleCreateTx} className="space-y-4 pt-2">
+                          <div className="space-y-1.5">
+                            <Label className="text-slate-700 font-semibold text-xs">Loại giao dịch</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button
+                                type="button"
+                                variant={txFormData.type === "income" ? "default" : "outline"}
+                                className={cn(
+                                  "rounded-xl text-xs h-9 font-semibold",
+                                  txFormData.type === "income" ? "bg-emerald-600 text-white hover:bg-emerald-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                                )}
+                                onClick={() => setTxFormData(prev => ({ ...prev, type: "income" }))}
+                              >
+                                Thu tiền (+)
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={txFormData.type === "expense" ? "default" : "outline"}
+                                className={cn(
+                                  "rounded-xl text-xs h-9 font-semibold",
+                                  txFormData.type === "expense" ? "bg-red-600 text-white hover:bg-red-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                                )}
+                                onClick={() => setTxFormData(prev => ({ ...prev, type: "expense" }))}
+                              >
+                                Chi tiền (-)
+                              </Button>
+                            </div>
                           </div>
-                          <div>
-                            <Label className="text-gray-700 text-sm font-medium">Mô Tả</Label>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-slate-700 font-semibold text-xs">Số tiền (VND)</Label>
                             <Input
-                              placeholder="Nhập mô tả (ví dụ: mua định vị, sửa xe)"
-                              value={txFormData.description}
-                              onChange={(e) => setTxFormData({...txFormData, description: e.target.value})}
-                              className="border-gray-300 rounded-lg"
+                              type="number"
+                              required
+                              placeholder="Nhập số tiền..."
+                              value={txFormData.amount}
+                              onChange={(e) => setTxFormData(prev => ({ ...prev, amount: e.target.value }))}
+                              className="rounded-xl border-slate-200 h-9 text-sm"
                             />
                           </div>
-                          <div>
-                            <Label className="text-gray-700 text-sm font-medium">Số Tiền (VND)</Label>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-slate-700 font-semibold text-xs">Mô tả chi tiết</Label>
                             <Input
                               type="text"
-                              placeholder="Nhập số tiền (VD: 1.000.000)"
-                              value={txFormData.amount}
-                              onChange={(e) => {
-                                const formatted = formatMoneyInput(e.target.value)
-                                setTxFormData({...txFormData, amount: formatted})
-                              }}
-                              className="border-gray-300 rounded-lg font-mono"
+                              required
+                              placeholder="Lý do thu/chi..."
+                              value={txFormData.description}
+                              onChange={(e) => setTxFormData(prev => ({ ...prev, description: e.target.value }))}
+                              className="rounded-xl border-slate-200 h-9 text-sm"
                             />
                           </div>
-                          <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-lg">
-                            Thêm
-                          </Button>
+
+                          <div className="flex gap-2 justify-end pt-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => { setTxDialogOpen(false); setTxFormData({ type: "income", description: "", amount: "" }) }}
+                              className="rounded-xl border-slate-200 text-xs h-9 font-semibold"
+                            >
+                              Hủy
+                            </Button>
+                            <Button
+                              type="submit"
+                              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-9 font-semibold"
+                            >
+                              Lưu lại
+                            </Button>
+                          </div>
                         </form>
                       </DialogContent>
                     </Dialog>
-                  </div>
 
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="Tìm kiếm: mô tả, user, tiền, loại..."
-                      value={txSearchQuery}
-                      onChange={(e) => { setTxSearchQuery(e.target.value); setTxCurrentPage(1); }}
-                      className="pl-10 pr-10 border-gray-200 rounded-xl text-xs h-9 bg-slate-50"
-                    />
-                    {txSearchQuery && (
-                      <button
-                        onClick={() => { setTxSearchQuery(""); setTxCurrentPage(1); }}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-3 md:p-4">
-                  {filteredTx.length > 0 ? (
-                    <div className="space-y-3">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead className="bg-slate-50">
-                            <tr className="border-b border-slate-100">
-                              <th className="text-left p-2.5 font-semibold text-slate-600">Thời gian</th>
-                              <th className="text-left p-2.5 font-semibold text-slate-600">Thu/Chi</th>
-                              <th className="text-right p-2.5 font-semibold text-slate-600">Tiền</th>
-                              <th className="text-center p-2.5 font-semibold text-slate-600">Tác vụ</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {paginatedTx.map((tx) => (
-                              <tr key={tx.id} className="border-b border-slate-100/50 hover:bg-slate-50/50 last:border-0 transition-colors">
-                                <td className="p-2.5 text-slate-500 text-[11px]">{new Date(tx.timestamp).toLocaleString("vi-VN")}</td>
-                                <td className="p-2.5">
-                                  <span className={`font-semibold ${tx.type === "income" ? "text-green-600" : "text-blue-600"}`}>
-                                    {tx.type === "income" ? "✓" : "✗"} {tx.description}
-                                  </span>
-                                </td>
-                                <td className={`p-2.5 text-right font-bold ${tx.type === "income" ? "text-green-600" : "text-blue-600"}`}>
-                                  {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} đ
-                                </td>
-                                <td className="p-2.5 text-center">
-                                  {user?.role === 'admin' ? (
-                                    <div className="flex gap-1.5 justify-center">
-                                      <button
-                                        onClick={() => handleEditTx(tx)}
-                                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
-                                        title="Sửa"
-                                      >
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteTx(tx)}
-                                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
-                                        title="Xoá"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-slate-400 text-[10px]">Admin</span>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Pagination Controls */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 pt-3 gap-2 sm:gap-0">
-                        <div className="text-[11px] text-slate-500">
-                          <span>{startTxIndex + 1}</span> - <span>{Math.min(endTxIndex, filteredTx.length)}</span> / <span>{filteredTx.length}</span>
-                        </div>
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => setTxCurrentPage(prev => Math.max(1, prev - 1))}
-                            disabled={activePage === 1}
-                            className="px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                          >
-                            ←
-                          </button>
-                          <div className="px-2 py-0.5 border border-slate-200 rounded-lg bg-slate-50">
-                            <span className="text-[11px] font-bold text-slate-700">{activePage}/{totalTxPages}</span>
+                    {/* Edit Transaction Dialog */}
+                    <Dialog open={txEditDialogOpen} onOpenChange={setTxEditDialogOpen}>
+                      <DialogContent className="bg-white border-slate-200 rounded-2xl max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle className="text-slate-800">Chỉnh Sửa Thu/Chi</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleUpdateTx} className="space-y-4 pt-2">
+                          <div className="space-y-1.5">
+                            <Label className="text-slate-700 font-semibold text-xs">Loại giao dịch</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button
+                                type="button"
+                                variant={txEditFormData.type === "income" ? "default" : "outline"}
+                                className={cn(
+                                  "rounded-xl text-xs h-9 font-semibold",
+                                  txEditFormData.type === "income" ? "bg-emerald-600 text-white hover:bg-emerald-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                                )}
+                                onClick={() => setTxEditFormData(prev => ({ ...prev, type: "income" }))}
+                              >
+                                Thu tiền (+)
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={txEditFormData.type === "expense" ? "default" : "outline"}
+                                className={cn(
+                                  "rounded-xl text-xs h-9 font-semibold",
+                                  txEditFormData.type === "expense" ? "bg-red-600 text-white hover:bg-red-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                                )}
+                                onClick={() => setTxEditFormData(prev => ({ ...prev, type: "expense" }))}
+                              >
+                                Chi tiền (-)
+                              </Button>
+                            </div>
                           </div>
-                          <button
-                            onClick={() => setTxCurrentPage(prev => Math.min(totalTxPages, prev + 1))}
-                            disabled={activePage === totalTxPages}
-                            className="px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                          >
-                            →
-                          </button>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-slate-700 font-semibold text-xs">Số tiền (VND)</Label>
+                            <Input
+                              type="number"
+                              required
+                              placeholder="Nhập số tiền..."
+                              value={txEditFormData.amount}
+                              onChange={(e) => setTxEditFormData(prev => ({ ...prev, amount: e.target.value }))}
+                              className="rounded-xl border-slate-200 h-9 text-sm"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-slate-700 font-semibold text-xs">Mô tả chi tiết</Label>
+                            <Input
+                              type="text"
+                              required
+                              placeholder="Lý do thu/chi..."
+                              value={txEditFormData.description}
+                              onChange={(e) => setTxEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                              className="rounded-xl border-slate-200 h-9 text-sm"
+                            />
+                          </div>
+
+                          <div className="flex gap-2 justify-end pt-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => { setTxEditDialogOpen(false); setEditingTxId(null) }}
+                              className="rounded-xl border-slate-200 text-xs h-9 font-semibold"
+                            >
+                              Hủy
+                            </Button>
+                            <Button
+                              type="submit"
+                              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-9 font-semibold"
+                            >
+                              Lưu lại
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Search Field */}
+                    <div className="relative w-44">
+                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                      <Input
+                        type="search"
+                        placeholder="Tìm kiếm..."
+                        value={txSearchQuery}
+                        onChange={(e) => { setTxSearchQuery(e.target.value); setTxCurrentPage(1) }}
+                        className="pl-8 h-8 rounded-lg text-xs border-slate-200 w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 md:p-4 pt-0">
+                {paginatedTx.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="overflow-x-auto rounded-xl border border-slate-100/80">
+                      <table className="w-full text-left border-collapse table-striped">
+                        <thead>
+                          <tr className="bg-slate-50/50 border-b border-slate-100">
+                            <th className="p-2.5 text-slate-500 font-semibold text-[10px] uppercase tracking-wider w-10 text-center">STT</th>
+                            <th className="p-2.5 text-slate-500 font-semibold text-[10px] uppercase tracking-wider text-center">Thời gian</th>
+                            <th className="p-2.5 text-slate-500 font-semibold text-[10px] uppercase tracking-wider text-center">Loại</th>
+                            <th className="p-2.5 text-slate-500 font-semibold text-[10px] uppercase tracking-wider">Mô tả chi tiết</th>
+                            <th className="p-2.5 text-slate-500 font-semibold text-[10px] uppercase tracking-wider text-right">Số tiền</th>
+                            <th className="p-2.5 text-slate-500 font-semibold text-[10px] uppercase tracking-wider text-center">Người nhập</th>
+                            <th className="p-2.5 text-slate-500 font-semibold text-[10px] uppercase tracking-wider text-center w-20">Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedTx.map((tx, index) => (
+                            <tr key={tx.id} className="border-b border-slate-50 hover:bg-slate-50/40 table-row-hover transition-colors">
+                              <td className="p-2.5 text-center text-slate-400 font-medium text-xs">
+                                {startTxIndex + index + 1}
+                              </td>
+                              <td className="p-2.5 text-slate-500 text-[11px]">
+                                {new Date(tx.timestamp).toLocaleString("vi-VN")}
+                              </td>
+                              <td className="p-2.5 text-center">
+                                <span className={cn(
+                                  "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+                                  tx.type === "income" 
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                                    : "bg-red-50 text-red-700 border-red-100"
+                                )}>
+                                  {tx.type === "income" ? "Thu" : "Chi"}
+                                </span>
+                              </td>
+                              <td className="p-2.5 text-slate-700 text-xs font-medium max-w-[200px] truncate" title={tx.description}>
+                                {tx.description}
+                              </td>
+                              <td className={cn(
+                                "p-2.5 text-right font-bold text-xs",
+                                tx.type === "income" ? "text-emerald-600" : "text-red-600"
+                              )}>
+                                {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} đ
+                              </td>
+                              <td className="p-2.5 text-slate-600 text-xs font-semibold text-center uppercase tracking-wide">
+                                {tx.user}
+                              </td>
+                              <td className="p-2.5 text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg"
+                                    onClick={() => handleOpenEditTx(tx)}
+                                    title="Sửa"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </Button>
+                                  {user?.permissions.canDelete && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                                      onClick={() => { setTxToDelete(tx); setTxDeleteConfirmOpen(true) }}
+                                      title="Xoá"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 pt-3 gap-2 sm:gap-0">
+                      <div className="text-[11px] text-slate-500">
+                        <span>{startTxIndex + 1}</span> - <span>{Math.min(endTxIndex, filteredTx.length)}</span> / <span>{filteredTx.length}</span>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setTxCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={activePage === 1}
+                          className="px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                          ←
+                        </button>
+                        <div className="px-2 py-0.5 border border-slate-200 rounded-lg bg-slate-50">
+                          <span className="text-[11px] font-bold text-slate-700">{activePage}/{totalTxPages}</span>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => setTxCurrentPage(prev => Math.min(totalTxPages, prev + 1))}
+                          disabled={activePage === totalTxPages}
+                          className="px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                          →
+                        </button>
                       </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-6 text-slate-400">
-                      <p className="text-xs">Chưa có khoản thu/chi nào</p>
-                    </div>
-                  )}
-                </CardContent>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-slate-400">
+                    <p className="text-xs">Chưa có khoản thu/chi nào</p>
+                  </div>
+                )}
+                              </CardContent>
               </Card>
             )
           })()}
-        </div>
       </div>
 
       {/* ── Transaction Confirm Delete Dialog ── */}

@@ -586,7 +586,7 @@ export default function VehiclesPage() {
   }
 
   const formatPrice = (price: number) => {
-    return price.toLocaleString("vi-VN") + " VND"
+    return price.toLocaleString("vi-VN") + " đ"
   }
 
   return (
@@ -885,11 +885,11 @@ export default function VehiclesPage() {
                         <TableCell className="table-cell-enhanced text-center text-slate-500 font-medium">
                           {(currentPage - 1) * itemsPerPage + index + 1}
                         </TableCell>
-                        <TableCell className="table-cell-enhanced text-center">
-                          <div className="font-semibold text-slate-800 capitalize">{vehicle.name}</div>
-                          <div className="text-xs text-slate-500 font-mono">{vehicle.licensePlate}</div>
+                        <TableCell className="table-cell-enhanced text-center py-3">
+                          <div className="font-semibold text-slate-800 capitalize leading-normal">{vehicle.name}</div>
+                          <div className="text-xs text-slate-500 font-mono mt-1 leading-normal">{vehicle.licensePlate}</div>
                         </TableCell>
-                        <TableCell className="table-cell-enhanced text-right text-blue-600 font-semibold font-mono text-xs">
+                        <TableCell className="table-cell-enhanced text-right text-slate-800 font-semibold font-mono text-xs">
                           {formatPrice(vehicle.pricePerDay)}
                         </TableCell>
                         <TableCell className="table-cell-status text-center">
@@ -1000,7 +1000,7 @@ export default function VehiclesPage() {
                       
                       {/* Price */}
                       <div className="mt-1">
-                        <span className="text-sm font-medium text-blue-600">
+                        <span className="text-sm font-semibold text-slate-800">
                           {formatPrice(vehicle.pricePerDay)}/ngày
                         </span>
                       </div>

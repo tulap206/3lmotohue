@@ -473,12 +473,12 @@ export default function SettingsPage() {
                 <Button
                   onClick={handleBackup}
                   disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white w-full text-sm h-10 rounded-xl font-semibold transition-all duration-200"
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full text-sm h-10 rounded-full font-semibold transition-all duration-200"
                 >
                   {loading ? "Đang xử lý..." : "📥 Sao lưu ngay"}
                 </Button>
               ) : (
-                <Button disabled className="bg-gray-100 text-gray-400 w-full text-sm h-10 rounded-xl cursor-not-allowed border border-gray-200 font-semibold">
+                <Button disabled className="bg-gray-100 text-gray-400 w-full text-sm h-10 rounded-full cursor-not-allowed border border-gray-200 font-semibold">
                   🔒 Không có quyền
                 </Button>
               )}
@@ -494,7 +494,7 @@ export default function SettingsPage() {
               {user?.role !== 'admin' ? (
                 <Button
                   disabled={true}
-                  className="bg-gray-100 text-gray-400 w-full text-sm h-10 rounded-xl cursor-not-allowed border border-gray-200 font-semibold"
+                  className="bg-gray-100 text-gray-400 w-full text-sm h-10 rounded-full cursor-not-allowed border border-gray-200 font-semibold"
                 >
                   🔒 Chỉ Admin
                 </Button>
@@ -508,7 +508,7 @@ export default function SettingsPage() {
                     input.click()
                   }}
                   disabled={loading}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm h-10 rounded-xl font-semibold transition-all duration-200"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm h-10 rounded-full font-semibold transition-all duration-200"
                 >
                   {loading ? "Đang xử lý..." : "📤 Chọn file"}
                 </Button>
@@ -602,19 +602,19 @@ export default function SettingsPage() {
                       variant="outline"
                       onClick={() => handleRestoreFromFile(file.url, file.name)}
                       disabled={loading || user?.role !== 'admin'}
-                      className={`text-xs px-3 h-8 rounded-lg font-semibold border-blue-600 text-blue-600 hover:bg-blue-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed`}
+                      className={`text-xs px-3 h-8 rounded-lg font-semibold border-red-500 text-red-600 hover:bg-red-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-all duration-200`}
                       title={user?.role !== 'admin' ? 'Chỉ Admin có quyền khôi phục' : ''}
                     >
                       {user?.role !== 'admin' ? '🔒 Chỉ Admin' : 'Khôi phục'}
                     </Button>
 
-                    {user?.permissions.canBackup && (
+                    {user?.role === 'admin' && (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteBackup(file.name)}
                         disabled={loading}
-                        className="border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-blue-50 h-8 w-8 rounded-lg flex items-center justify-center p-0"
+                        className="border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 h-8 w-8 rounded-lg flex items-center justify-center p-0 transition-all duration-200"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

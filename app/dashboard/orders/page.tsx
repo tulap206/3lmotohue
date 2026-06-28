@@ -139,10 +139,10 @@ function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () =>
 }
 
 const statusMap = {
-  pending: { label: "Chờ giao xe", className: "bg-amber-50 text-amber-600" },
-  active: { label: "Đang thuê", className: "bg-blue-50 text-blue-600" },
-  completed: { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-600" },
-  cancelled: { label: "Đã hủy", className: "bg-gray-100 text-gray-500" },
+  pending: { label: "Chờ giao xe", className: "bg-amber-50 text-amber-600 rounded-full" },
+  active: { label: "Đang thuê", className: "bg-blue-50 text-blue-600 rounded-full" },
+  completed: { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-600 rounded-full" },
+  cancelled: { label: "Đã hủy", className: "bg-gray-100 text-gray-500 rounded-full" },
 }
 
 const vehicleStatusConfig = {
@@ -1223,7 +1223,7 @@ export default function OrdersPage() {
                     {paginatedOrders.map((order, index) => {
                       const isOverdue = isOrderOverdue(order)
                       const sc = isOverdue 
-                        ? { label: "Quá hạn", className: "bg-orange-50 text-orange-600 border border-orange-200 font-bold" }
+                        ? { label: "Quá hạn", className: "bg-orange-50 text-orange-600 border border-orange-200 font-bold rounded-full" }
                         : (statusMap[order.status] || statusMap.pending)
                       return (
                         <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
@@ -1255,7 +1255,7 @@ export default function OrdersPage() {
                           <td className="py-3 px-4 text-center font-semibold text-slate-700">{order.totalDays} ngày</td>
                           <td className="py-3 px-4 text-right font-mono text-slate-600">{order.pricePerDay.toLocaleString("vi-VN")} đ</td>
                           <td className="py-3 px-4 text-right">
-                            <div className={`font-bold font-mono ${isOverdue ? 'text-blue-600' : 'text-slate-900'}`}>{order.totalPrice.toLocaleString("vi-VN")} đ</div>
+                            <div className={`font-bold font-mono ${isOverdue ? 'text-red-600' : 'text-slate-900'}`}>{order.totalPrice.toLocaleString("vi-VN")} đ</div>
                             <div className="text-[10px] text-slate-400 font-mono">Cọc: {order.deposit.toLocaleString("vi-VN")} đ</div>
                           </td>
                           <td className="py-3 px-4 text-right font-mono">

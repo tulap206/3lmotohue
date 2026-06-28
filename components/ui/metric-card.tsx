@@ -35,7 +35,10 @@ export function MetricCard({
 
   return (
     <Card
-      className="glass-card hover-lift transition-smooth cursor-pointer border border-slate-100/50 shadow-xs relative overflow-hidden rounded-2xl"
+      className={cn(
+        backgroundColor === "bg-white" ? "bg-white border-slate-200" : "glass-card border-slate-100/50",
+        "hover-lift transition-smooth cursor-pointer shadow-xs relative overflow-hidden rounded-2xl"
+      )}
       style={{ animationDelay: `${delay * 60}ms` }}
       onClick={onClick}
     >

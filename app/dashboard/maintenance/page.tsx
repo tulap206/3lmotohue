@@ -193,16 +193,25 @@ export default function MaintenancePage() {
                       <TableCell className="text-center text-slate-500 font-medium w-16">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </TableCell>
-                      <TableCell className="font-medium text-slate-800">{vehicle.name}</TableCell>
-                      <TableCell className="font-mono text-xs font-semibold text-slate-600">{vehicle.licensePlate}</TableCell>
+                      <TableCell className="font-medium text-slate-800 capitalize">{vehicle.name}</TableCell>
+                      <TableCell className="font-mono text-xs font-semibold text-slate-600">{vehicle.licensePlate === "(Đang làm)" ? "—" : vehicle.licensePlate}</TableCell>
                       <TableCell className="text-right font-mono text-xs text-slate-700">{vehicle.current_km.toLocaleString()} km</TableCell>
                       <TableCell className="text-right font-mono text-xs text-slate-900 font-semibold">
                         {mntKm.toLocaleString()} km
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1 font-mono text-xs">
-                          <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
-                          <span className="text-orange-600 font-bold">
+                          {overKm > 0 && (
+                            <AlertTriangle className={cn("w-3.5 h-3.5", overKm >= 300 ? "text-red-500" : "text-orange-500")} />
+                          )}
+                          <span className={cn(
+                            "font-bold",
+                            overKm === 0 
+                              ? "text-slate-500 font-medium" 
+                              : overKm >= 300 
+                                ? "text-red-600" 
+                                : "text-orange-600"
+                          )}>
                             +{overKm.toLocaleString()} km
                           </span>
                         </div>
@@ -213,7 +222,7 @@ export default function MaintenancePage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold text-xs h-8 rounded-lg"
+                              className="border-slate-200 bg-slate-50 text-slate-600 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold text-xs h-8 rounded-lg transition-colors"
                               disabled={maintaining === vehicle.id}
                             >
                               <Check className="w-3.5 h-3.5 mr-1" />

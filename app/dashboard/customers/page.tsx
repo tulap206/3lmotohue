@@ -95,13 +95,12 @@ const ImageUploadButton = ({
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "renting":
-      return { className: "bg-blue-50 text-blue-600 border-blue-100", label: "Đang thuê" }
+      return { className: "bg-blue-50 text-blue-600 border-blue-100 rounded-full", label: "Đang thuê" }
     case "pending":
-      return { className: "bg-yellow-50 text-yellow-600 border-yellow-200", label: "Chờ giao xe" }
+      return { className: "bg-yellow-50 text-yellow-600 border-yellow-200 rounded-full", label: "Chờ giao xe" }
     case "inactive":
-      return { className: "bg-gray-100 text-gray-500", label: "Ngừng hoạt động" }
     default:
-      return { className: "bg-emerald-50 text-emerald-600 border-emerald-200", label: "Sẵn sàng" }
+      return { className: "bg-emerald-50 text-emerald-600 border-emerald-200 rounded-full", label: "Sẵn sàng" }
   }
 }
 
@@ -233,6 +232,20 @@ export default function CustomersPage() {
     if (!formData.phone || formData.phone.trim() === '') {
       alert('Vui lòng nhập số điện thoại')
       return
+    }
+    
+    const cleanPhone = formData.phone.replace(/\D/g, '')
+    if (cleanPhone.length < 10) {
+      alert('Số điện thoại phải nhập đủ từ 10 chữ số trở lên')
+      return
+    }
+    
+    if (formData.idcard && formData.idcard.trim() !== '') {
+      const cleanIdCard = formData.idcard.replace(/\D/g, '')
+      if (cleanIdCard.length !== 12) {
+        alert('Số CCCD phải nhập đúng định dạng 12 chữ số')
+        return
+      }
     }
     
     try {
@@ -776,8 +789,8 @@ export default function CustomersPage() {
                             {customer.customerphoto && customer.customerphoto.length > 0 ? (
                               <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                <User className="w-4 h-4 text-slate-400" />
+                              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                                <User className="w-4 h-4 text-blue-500" />
                               </div>
                             )}
                             <span className="font-semibold text-slate-800 capitalize">{customer.name}</span>

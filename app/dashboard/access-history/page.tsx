@@ -151,14 +151,32 @@ export default function AccessHistoryPage() {
 
   const formatLogDetails = (text: string) => {
     if (!text) return ""
+    
+    // Split by | if present to handle the device info part separately
+    const partsByPipe = text.split("|")
+    const mainText = partsByPipe[0]
+    const deviceInfo = partsByPipe.slice(1).join("|")
+    
     const regex = /(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|\b\d+\s*(?:khách|xe|đơn|ngày|giờ|phút|giây|cccd|đồng|đ|năm|tháng|km)\b|\b\d+\b)/gi
-    const parts = text.split(regex)
-    return parts.map((part, index) => {
+    const parts = mainText.split(regex)
+    const formattedMainText = parts.map((part, index) => {
       if (regex.test(part)) {
         return <span key={index} className="font-semibold text-slate-800 bg-slate-100/70 px-1 py-0.5 rounded">{part}</span>
       }
       return part
     })
+    
+    if (deviceInfo) {
+      return (
+        <span className="flex flex-wrap items-center gap-1">
+          <span>{formattedMainText}</span>
+          <span className="text-slate-300 mx-1">|</span>
+          <span className="font-medium text-slate-700 bg-slate-100/50 px-1.5 py-0.5 rounded border border-slate-200/50 text-[10px]">{deviceInfo.trim()}</span>
+        </span>
+      )
+    }
+    
+    return formattedMainText
   }
 
   if (loading) {
@@ -310,6 +328,25 @@ export default function AccessHistoryPage() {
                       icon: Settings,
                       color: "text-slate-600"
                     }
+                    // Dynamic action badge colors fallback based on action content
+                    let actionBadgeColor = actionConfig.color
+                    let actionBadgeBgColor = actionConfig.bgColor
+                    let actionBadgeBorderColor = actionConfig.borderColor
+
+                    if (log.action.includes("Xóa") || log.action.includes("Xoá")) {
+                      actionBadgeColor = "text-red-700"
+                      actionBadgeBgColor = "bg-red-50"
+                      actionBadgeBorderColor = "border-red-100"
+                    } else if (log.action.includes("Chỉnh sửa") || log.action.includes("Sửa")) {
+                      actionBadgeColor = "text-amber-700"
+                      actionBadgeBgColor = "bg-amber-50"
+                      actionBadgeBorderColor = "border-amber-100"
+                    } else if (log.action === "Đăng nhập" || log.action === "Thêm mới") {
+                      actionBadgeColor = "text-emerald-700"
+                      actionBadgeBgColor = "bg-emerald-50"
+                      actionBadgeBorderColor = "border-emerald-100"
+                    }
+
                     const ActionIcon = actionConfig.icon
                     const ModuleIcon = moduleConfig.icon
 
@@ -332,7 +369,7 @@ export default function AccessHistoryPage() {
                         <TableCell>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {/* Action badge */}
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${actionConfig.bgColor} ${actionConfig.color} ${actionConfig.borderColor}`}>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${actionBadgeBgColor} ${actionBadgeColor} ${actionBadgeBorderColor}`}>
                               <ActionIcon className="w-3 h-3" />
                               {log.action}
                             </span>
@@ -361,31 +398,30 @@ export default function AccessHistoryPage() {
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-100">
-              <p className="text-xs text-slate-500">
-                Trang {currentPage} / {totalPages}
-              </p>
-              <div className="flex gap-2">
-                <Button
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 p-4 gap-2 sm:gap-0">
+              <div className="text-[11px] text-slate-500">
+                <span>{(currentPage - 1) * itemsPerPage + 1}</span> - <span>{Math.min(currentPage * itemsPerPage, filteredLogs.length)}</span> / <span>{filteredLogs.length}</span>
+              </div>
+              <div className="flex gap-1.5">
+                <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-lg h-8 text-xs"
+                  className="px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
-                  Trước
-                </Button>
-                <Button
+                  ←
+                </button>
+                <div className="px-2 py-0.5 border border-slate-200 rounded-lg bg-slate-50">
+                  <span className="text-[11px] font-bold text-slate-700">{currentPage}/{totalPages}</span>
+                </div>
+                <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-lg h-8 text-xs"
+                  className="px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
-                  Tiếp
-                </Button>
+                  →
+                </button>
               </div>
             </div>
           )}
