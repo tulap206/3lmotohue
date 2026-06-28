@@ -56,11 +56,6 @@ const menuItems = [
     icon: Wrench,
   },
   {
-    title: "Báo cáo",
-    href: "/dashboard/reports",
-    icon: FileText,
-  },
-  {
     title: "Lịch sử truy cập",
     href: "/dashboard/access-history",
     icon: History,

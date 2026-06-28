@@ -1024,9 +1024,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-        {/* Doanh Thu Theo Tháng */}
-        <div className="lg:col-span-2">
-          <Card className="rounded-2xl border-slate-100 shadow-sm h-full">
+        {/* Doanh Thu Theo Tháng & Tóm Tắt */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <Card className="rounded-2xl border-slate-100 shadow-sm">
             <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
               <CardTitle className="text-base font-bold text-slate-800">Doanh Thu Theo Tháng</CardTitle>
               <CardDescription className="text-xs text-slate-500">Doanh thu hàng tháng</CardDescription>
@@ -1061,6 +1061,74 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+
+          {/* Tóm tắt */}
+          {(() => {
+            const totalIncome = transactions
+              .filter(t => t.type === 'income' && t.description !== 'Góp vốn')
+              .reduce((sum, t) => sum + (t.amount || 0), 0)
+            
+            const totalExpense = transactions
+              .filter(t => t.type === 'expense')
+              .reduce((sum, t) => sum + (t.amount || 0), 0)
+            
+            const rentalRevenue = stats.totalProfit
+            const cashOnHand = rentalRevenue + totalIncome - totalExpense
+            
+            return (
+              <Card className="rounded-2xl border-slate-100 shadow-sm bg-blue-50/40 border-blue-100/50">
+                <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
+                  <CardTitle className="flex items-center gap-2 text-base md:text-lg font-bold text-slate-800">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                    Tóm Tắt Tài Chính
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-gray-700 space-y-3 p-3 md:p-4">
+                  <div className="grid grid-cols-2 gap-2 md:gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">🚗 Tổng xe</p>
+                      <p className="font-bold text-base text-gray-800">{stats.totalVehicles}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">👥 Tổng khách</p>
+                      <p className="font-bold text-base text-gray-800">{customers.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">📋 Tổng đơn</p>
+                      <p className="font-bold text-base text-gray-800">{stats.totalRentals}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">💰 Doanh thu thuê xe</p>
+                      <p className="font-bold text-base text-blue-600 break-words">{stats.totalRevenue.toLocaleString("vi-VN")} ₫</p>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-blue-200/60 pt-3">
+                    <div className="grid grid-cols-2 gap-2 md:gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">📈 Lợi nhuận thuê xe</p>
+                        <p className="font-bold text-base text-emerald-600 break-words">{stats.totalProfit.toLocaleString("vi-VN")} ₫</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">📥 Tổng thu (ngoài góp vốn)</p>
+                        <p className="font-bold text-base text-green-600 break-words">+{totalIncome.toLocaleString("vi-VN")} ₫</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">📤 Tổng chi</p>
+                        <p className="font-bold text-base text-red-600">-{totalExpense.toLocaleString("vi-VN")} ₫</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">💵 Tiền mặt hiện có</p>
+                        <p className={`font-bold text-base ${cashOnHand >= 0 ? 'text-blue-600' : 'text-red-600'} break-words`}>
+                          {cashOnHand.toLocaleString("vi-VN")} ₫
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })()}
         </div>
 
         {/* Theo Dõi Thu/Chi */}

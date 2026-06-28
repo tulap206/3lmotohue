@@ -51,12 +51,6 @@ const menuItems = [
     color: "text-orange-500",
   },
   {
-    title: "Báo cáo",
-    href: "/dashboard/reports",
-    icon: FileText,
-    color: "text-pink-500",
-  },
-  {
     title: "Lịch sử truy cập",
     href: "/dashboard/access-history",
     icon: History,
