@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchVehicles, fetchRentals } from "@/lib/supabase"
@@ -46,7 +46,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Bike, Eye, Clock, Upload, X, ImageIcon } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, ImageIcon } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
 type VehicleStatus = "available" | "rented" | "maintenance"
@@ -118,13 +118,15 @@ interface Vehicle {
   pricePerDay: number
   status: VehicleStatus
   current_km: number
-  totalRentalDays: number
+  totalRentalDays?: number
   purchasePrice: number
-  totalRevenue: number
-  profit: number
+  totalRevenue?: number
+  profit?: number
   notes: string
   vehicleImages: string[]
   documentImages: string[]
+  category?: "car" | "bike"
+  created_at?: string
 }
 
 const statusConfig: Record<VehicleStatus, { label: string; className: string }> = {
@@ -146,6 +148,8 @@ export default function VehiclesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 15
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -163,18 +167,28 @@ export default function VehiclesPage() {
     purchasePrice: "",
     notes: "",
     status: "available" as VehicleStatus,
+    category: "bike" as "car" | "bike",
     vehicleImages: [] as File[],
     documentImages: [] as File[],
   })
 
-  const loadVehicles = async (showLoading = true) => {
+  const loadVehicles = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true)
     try {
+      // Check if user is demo account (admin)
+      const isDemoAccount = user?.username === "admin"
+
+      if (isDemoAccount) {
+        setVehicles([])
+        setIsLoading(false)
+        return
+      }
+
       const [vehiclesData, rentalsData] = await Promise.all([
         fetchVehicles(),
         fetchRentals(),
       ])
-      
+
       // Sort vehicles by created_at descending (newest first) - client-side backup
       const sorted = vehiclesData.sort((a, b) => {
         const dateA = new Date(a.created_at || 0).getTime()
@@ -214,26 +228,26 @@ export default function VehiclesPage() {
     } finally {
       if (showLoading) setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     loadVehicles(true)
 
-    // Subscribe to real-time events for vehicles, rentals
-    const vehiclesChannel = supabase
-      .channel('vehicles-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel("vehicles-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "vehicles" }, () => {
         loadVehicles(false)
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, () => {
         loadVehicles(false)
       })
       .subscribe()
 
     return () => {
-      supabase.removeChannel(vehiclesChannel)
+      supabase.removeChannel(channel)
     }
-  }, [])
+  }, [loadVehicles])
 
   const filteredVehicles = vehicles.filter((vehicle) => {
     const matchesSearch =
@@ -243,9 +257,32 @@ export default function VehiclesPage() {
     return matchesSearch && matchesStatus
   })
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
+
+  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage)
+  const paginatedVehicles = filteredVehicles.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   const handleAddVehicle = async () => {
-    if (newVehicle.name && newVehicle.licensePlate && newVehicle.pricePerDay) {
-      try {
+    if (!newVehicle.name || !newVehicle.name.trim()) {
+      alert("⚠️ Vui lòng nhập Loại xe!")
+      return
+    }
+    if (!newVehicle.licensePlate || !newVehicle.licensePlate.trim()) {
+      alert("⚠️ Vui lòng nhập Biển số xe!")
+      return
+    }
+    if (!newVehicle.pricePerDay) {
+      alert("⚠️ Vui lòng nhập Giá thuê!")
+      return
+    }
+
+    try {
         // Check if licensePlate already exists
         const existingVehicle = vehicles.find(
           (v) => v.licensePlate.toLowerCase() === newVehicle.licensePlate.toLowerCase()
@@ -287,35 +324,43 @@ export default function VehiclesPage() {
           purchasePrice: parseMoneyInput(newVehicle.purchasePrice),
           notes: newVehicle.notes,
           status: newVehicle.status,
+          category: newVehicle.category,
           vehicleImages: vehicleImageUrls,
           documentImages: documentImageUrls,
         }
         
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('vehicles')
           .insert([vehicle])
+          .select()
         
         if (error) {
           console.error("Error adding vehicle:", error)
           alert(`❌ Lỗi: ${error.message}`)
-        } else {
+        } else if (data && data.length > 0) {
+          const insertedVehicle = data[0]
           // Add new vehicle and sort (newest first)
-          const updated = [...vehicles, vehicle]
+          const updated = [...vehicles, insertedVehicle]
           const sorted = updated.sort((a, b) => {
             const dateA = new Date(a.created_at || 0).getTime()
             const dateB = new Date(b.created_at || 0).getTime()
             return dateB - dateA // DESC (newest first)
           })
           setVehicles(sorted)
-          if (user) logger.addVehicle(user.username, user.displayName, vehicle.name, vehicle.licensePlate)
-          setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", vehicleImages: [], documentImages: [] })
+          if (user) logger.addVehicle(user.username, user.displayName, insertedVehicle.name, insertedVehicle.licensePlate)
+          setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", category: "bike", vehicleImages: [], documentImages: [] })
+          setIsAddDialogOpen(false)
+        } else {
+          console.warn("⚠️ No data returned after vehicle insertion")
+          // Fallback if success but no data returned
+          const updated = [...vehicles, vehicle]
+          setVehicles(updated)
           setIsAddDialogOpen(false)
         }
       } catch (error) {
         console.error("Error adding vehicle:", error)
         alert(`❌ Lỗi: ${error instanceof Error ? error.message : "Unknown"}`)
       }
-    }
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'vehicle' | 'document', isEdit: boolean = false) => {
@@ -357,11 +402,51 @@ export default function VehiclesPage() {
   const handleEditVehicle = async () => {
     if (editingVehicle) {
       try {
+        // Separate existing URL strings from new File objects
+        const existingVehicleImages = (editingVehicle.vehicleImages || []).filter((img: any) => typeof img === 'string') as string[]
+        const newVehicleImageFiles = (editingVehicle.vehicleImages || []).filter((img: any) => img instanceof File) as unknown as File[]
+
+        const existingDocumentImages = (editingVehicle.documentImages || []).filter((img: any) => typeof img === 'string') as string[]
+        const newDocumentImageFiles = (editingVehicle.documentImages || []).filter((img: any) => img instanceof File) as unknown as File[]
+
+        // Upload new images if any
+        let newVehicleImageUrls: string[] = []
+        if (newVehicleImageFiles.length > 0) {
+          console.log("📸 Uploading new vehicle images for edit...")
+          newVehicleImageUrls = await uploadMultipleImages(
+            newVehicleImageFiles,
+            "vehicles",
+            "vehicle-images"
+          )
+        }
+
+        let newDocumentImageUrls: string[] = []
+        if (newDocumentImageFiles.length > 0) {
+          console.log("📄 Uploading new document images for edit...")
+          newDocumentImageUrls = await uploadMultipleImages(
+            newDocumentImageFiles,
+            "vehicles",
+            "document-images"
+          )
+        }
+
+        // Combine existing URLs and new uploaded URLs
+        const finalVehicleImages = [...existingVehicleImages, ...newVehicleImageUrls]
+        const finalDocumentImages = [...existingDocumentImages, ...newDocumentImageUrls]
+
         // Parse formatted money values back to numbers
         const updateData = {
-          ...editingVehicle,
+          name: editingVehicle.name,
+          licensePlate: editingVehicle.licensePlate,
+          color: editingVehicle.color,
           pricePerDay: parseMoneyInput(editingVehicle.pricePerDay.toString()),
+          current_km: parseInt(editingVehicle.current_km.toString()) || 0,
           purchasePrice: parseMoneyInput(editingVehicle.purchasePrice?.toString() || '0'),
+          notes: editingVehicle.notes,
+          status: editingVehicle.status,
+          category: editingVehicle.category,
+          vehicleImages: finalVehicleImages,
+          documentImages: finalDocumentImages,
         }
         
         const { error } = await supabase
@@ -371,14 +456,21 @@ export default function VehiclesPage() {
         
         if (error) {
           console.error("Error updating vehicle:", error)
+          alert(`❌ Lỗi khi cập nhật: ${error.message}`)
         } else {
-          setVehicles(vehicles.map((v) => (v.id === editingVehicle.id ? updateData : v)))
+          // Sync with state
+          const fullUpdatedVehicle = {
+            ...editingVehicle,
+            ...updateData,
+          }
+          setVehicles(vehicles.map((v) => (v.id === editingVehicle.id ? fullUpdatedVehicle : v)))
           if (user) logger.editVehicle(user.username, user.displayName, editingVehicle.name, editingVehicle.licensePlate)
           setIsEditDialogOpen(false)
           setEditingVehicle(null)
         }
       } catch (error) {
         console.error("Error updating vehicle:", error)
+        alert(`❌ Lỗi: ${error instanceof Error ? error.message : "Unknown"}`)
       }
     }
   }
@@ -405,10 +497,10 @@ export default function VehiclesPage() {
   }
 
   const openEditDialog = (vehicle: Vehicle) => {
-    setEditingVehicle({ 
+    setEditingVehicle({
       ...vehicle,
-      pricePerDay: vehicle.pricePerDay.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
-      purchasePrice: vehicle.purchasePrice?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || ''
+      pricePerDay: vehicle.pricePerDay?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || '' as any,
+      purchasePrice: vehicle.purchasePrice?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || '' as any
     })
     setIsEditDialogOpen(true)
   }
@@ -511,65 +603,63 @@ export default function VehiclesPage() {
         }
       }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
+            <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl">
               <Plus className="w-4 h-4 mr-2" />
               Thêm xe mới
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-white border-slate-100 rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-gray-800">Thêm xe mới</DialogTitle>
-              <DialogDescription className="text-gray-500">Nhập thông tin xe mới vào hệ thống</DialogDescription>
+              <DialogTitle>Thêm xe mới</DialogTitle>
+              <DialogDescription>Nhập thông tin xe mới vào hệ thống</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name" className="text-gray-600">Loại xe</Label>
+            <div className="form-group py-4">
+              <div className="form-row">
+                <div className="form-field">
+                  <Label htmlFor="name" className="form-field-label">Loại xe</Label>
                   <Input
                     id="name"
-                    placeholder="VD: Honda SH 150i"
+                    placeholder="VD: Toyota Vios"
                     value={newVehicle.name}
                     onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
                   />
+                  <p className="form-field-description">Tên hoặc model của xe</p>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="licensePlate" className="text-gray-600">Biển số</Label>
+                <div className="form-field">
+                  <Label htmlFor="licensePlate" className="form-field-label">Biển số</Label>
                   <Input
                     id="licensePlate"
                     placeholder="VD: 75AA-12345"
                     value={newVehicle.licensePlate}
                     onChange={(e) => setNewVehicle({ ...newVehicle, licensePlate: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
                   />
+                  <p className="form-field-description">Biển số xe định danh</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="color" className="text-gray-600">Màu xe</Label>
+              <div className="form-row">
+                <div className="form-field">
+                  <Label htmlFor="color" className="form-field-label">Màu xe</Label>
                   <Input
                     id="color"
                     placeholder="VD: Đen, Trắng, Đỏ"
                     value={newVehicle.color}
                     onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="current_km" className="text-gray-600">Số KM hiện tại</Label>
+                <div className="form-field">
+                  <Label htmlFor="current_km" className="form-field-label">Số KM hiện tại</Label>
                   <Input
                     id="current_km"
                     type="number"
                     placeholder="VD: 15000"
                     value={newVehicle.current_km}
                     onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="price" className="text-gray-600">Giá thuê (VND/ngày)</Label>
+              <div className="form-row">
+                <div className="form-field">
+                  <Label htmlFor="price" className="form-field-label">Giá thuê (VND/ngày)</Label>
                   <Input
                     id="price"
                     type="text"
@@ -579,11 +669,11 @@ export default function VehiclesPage() {
                       const formatted = formatMoneyInput(e.target.value)
                       setNewVehicle({ ...newVehicle, pricePerDay: formatted })
                     }}
-                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                    className="font-mono"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="purchasePrice" className="text-gray-600">Giá mua xe (VND)</Label>
+                <div className="form-field">
+                  <Label htmlFor="purchasePrice" className="form-field-label">Giá mua xe (VND)</Label>
                   <Input
                     id="purchasePrice"
                     type="text"
@@ -593,35 +683,53 @@ export default function VehiclesPage() {
                       const formatted = formatMoneyInput(e.target.value)
                       setNewVehicle({ ...newVehicle, purchasePrice: formatted })
                     }}
-                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                    className="font-mono"
                   />
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="status" className="text-gray-600">Trạng thái</Label>
-                <Select
-                  value={newVehicle.status}
-                  onValueChange={(value: VehicleStatus) => setNewVehicle({ ...newVehicle, status: value })}
-                >
-                  <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
-                    <SelectValue placeholder="Chọn trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-200 rounded-xl">
-                    <SelectItem value="available">Sẵn sàng</SelectItem>
-                    <SelectItem value="rented">Đang thuê</SelectItem>
-                    <SelectItem value="maintenance">Bảo trì</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="form-row">
+                <div className="form-field">
+                  <Label htmlFor="category" className="form-field-label">Phân loại xe</Label>
+                  <Select
+                    value={newVehicle.category}
+                    onValueChange={(value: "car" | "bike") => setNewVehicle({ ...newVehicle, category: value })}
+                  >
+                    <SelectTrigger className="rounded-lg border-slate-100 bg-slate-50">
+                      <SelectValue placeholder="Phân loại" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-slate-100 rounded-lg">
+                      <SelectItem value="bike">Xe máy</SelectItem>
+                      <SelectItem value="car">Ô tô</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="form-field">
+                  <Label htmlFor="status" className="form-field-label">Trạng thái</Label>
+                  <Select
+                    value={newVehicle.status}
+                    onValueChange={(value: VehicleStatus) => setNewVehicle({ ...newVehicle, status: value })}
+                  >
+                    <SelectTrigger className="rounded-lg border-slate-100 bg-slate-50">
+                      <SelectValue placeholder="Chọn trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-slate-100 rounded-lg">
+                      <SelectItem value="available">Sẵn sàng</SelectItem>
+                      <SelectItem value="rented">Đang thuê</SelectItem>
+                      <SelectItem value="maintenance">Bảo trì</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="notes" className="text-gray-600">Ghi chú</Label>
+              <div className="form-field">
+                <Label htmlFor="notes" className="form-field-label">Ghi chú</Label>
                 <Textarea
                   id="notes"
                   placeholder="Nhập ghi chú về xe..."
                   value={newVehicle.notes}
                   onChange={(e) => setNewVehicle({ ...newVehicle, notes: e.target.value })}
-                  className="bg-gray-50 border-gray-200 rounded-xl min-h-[80px]"
+                  className="min-h-[80px] rounded-lg bg-slate-50 border-slate-100"
                 />
+                <p className="form-field-description">Thêm bất kỳ thông tin bổ sung nào về xe</p>
               </div>
               
               {/* Vehicle Images */}
@@ -641,13 +749,13 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'vehicle')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
                     <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
                     <input
@@ -678,13 +786,13 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'document')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
                     <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
                     <input
@@ -699,10 +807,10 @@ export default function VehiclesPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="rounded-xl border-gray-200">
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="rounded-lg border-slate-200 hover:bg-slate-50">
                 Hủy
               </Button>
-              <Button onClick={handleAddVehicle} className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
+              <Button onClick={handleAddVehicle} className="bg-blue-600 text-white hover:bg-blue-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
                 Thêm xe
               </Button>
             </DialogFooter>
@@ -740,76 +848,75 @@ export default function VehiclesPage() {
 
       {/* Vehicles List */}
       <Card className="bg-white border-0 card-shadow rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-gray-800">Danh sách xe</CardTitle>
-          <CardDescription className="text-gray-500">
+        <CardHeader className="bg-white border-b border-slate-100 pt-6 pb-4 px-6">
+          <CardTitle className="text-slate-800 font-bold tracking-tight text-lg">Danh sách xe</CardTitle>
+          <CardDescription className="text-xs md:text-sm text-slate-500">
             Hiển thị {filteredVehicles.length} / {vehicles.length} xe
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <Bike className="w-12 h-12 mb-3 opacity-50 animate-pulse" />
+              <Car className="w-12 h-12 mb-3 opacity-50 animate-pulse" />
               <p>Đang tải dữ liệu xe...</p>
             </div>
           ) : filteredVehicles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <Bike className="w-12 h-12 mb-3 opacity-50" />
+              <Car className="w-12 h-12 mb-3 opacity-50" />
               <p>Không tìm thấy xe nào</p>
             </div>
           ) : (
             <>
               {/* Desktop Table View */}
               <div className="hidden md:block rounded-xl border border-gray-100 overflow-hidden">
-                <Table>
+                <Table className="table-striped">
                   <TableHeader>
-                    <TableRow className="bg-gray-50 hover:bg-gray-50">
-                      <TableHead className="w-16 text-center text-gray-500 font-medium">STT</TableHead>
-                      <TableHead className="text-gray-500 font-medium">Loại xe</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-right">Giá thuê/ngày</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-center">Trạng thái</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-center w-20">Lịch sử</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-center w-40">Thao tác</TableHead>
+                    <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
+                      <TableHead className="w-16 text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">STT</TableHead>
+                      <TableHead className="text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Loại xe</TableHead>
+                      <TableHead className="text-right font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Giá thuê/ngày</TableHead>
+                      <TableHead className="text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Trạng thái</TableHead>
+                      <TableHead className="text-center w-48 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredVehicles.map((vehicle, index) => (
-                      <TableRow key={vehicle.id} className="hover:bg-gray-50">
-                        <TableCell className="text-center text-gray-500 font-medium">
-                          {index + 1}
+                    {paginatedVehicles.map((vehicle, index) => (
+                      <TableRow key={vehicle.id} className="table-row-hover transition-all duration-200">
+                        <TableCell className="table-cell-enhanced text-center text-slate-500 font-medium">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
                         </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-gray-800">{vehicle.name}</div>
-                          <div className="text-sm text-gray-500 font-mono">{vehicle.licensePlate}</div>
+                        <TableCell className="table-cell-enhanced text-center">
+                          <div className="font-semibold text-slate-800 capitalize">{vehicle.name}</div>
+                          <div className="text-xs text-slate-500 font-mono">{vehicle.licensePlate}</div>
                         </TableCell>
-                        <TableCell className="text-right text-blue-600 font-medium">
+                        <TableCell className="table-cell-enhanced text-right text-blue-600 font-semibold font-mono text-xs">
                           {formatPrice(vehicle.pricePerDay)}
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="table-cell-status text-center">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig[vehicle.status].className}`}
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusConfig[vehicle.status].className}`}
                           >
                             {statusConfig[vehicle.status].label}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-400 hover:text-amber-500 hover:bg-amber-50"
-                            onClick={() => openHistoryDialog(vehicle)}
-                          >
-                            <Clock className="h-4 w-4" />
-                            <span className="sr-only">Lịch sử</span>
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="table-cell-status text-center">
                           <div className="flex items-center justify-center gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50"
+                              className="table-action-btn h-8 w-8 text-slate-500 hover:text-amber-500 hover:bg-amber-50"
+                              onClick={() => openHistoryDialog(vehicle)}
+                              title="Lịch sử bảo trì"
+                            >
+                              <Clock className="h-4 w-4" />
+                              <span className="sr-only">Lịch sử</span>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="table-action-btn h-8 w-8 text-slate-500 hover:text-emerald-500 hover:bg-emerald-50"
                               onClick={() => openDetailDialog(vehicle)}
+                              title="Chi tiết"
                             >
                               <Eye className="h-4 w-4" />
                               <span className="sr-only">Chi tiết</span>
@@ -817,8 +924,9 @@ export default function VehiclesPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                              className="table-action-btn h-8 w-8 text-slate-500 hover:text-blue-500 hover:bg-blue-50"
                               onClick={() => openEditDialog(vehicle)}
+                              title="Sửa"
                             >
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Sửa</span>
@@ -829,7 +937,8 @@ export default function VehiclesPage() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                    className="table-action-btn h-8 w-8 text-slate-500 hover:text-blue-500 hover:bg-blue-50"
+                                    title="Xóa"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                     <span className="sr-only">Xóa</span>
@@ -847,7 +956,7 @@ export default function VehiclesPage() {
                                     <AlertDialogCancel className="border-gray-200 rounded-xl">Hủy</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => handleDeleteVehicle(vehicle.id)}
-                                      className="bg-red-500 text-white hover:bg-red-600 rounded-xl"
+                                      className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
                                     >
                                       Xóa
                                     </AlertDialogAction>
@@ -865,14 +974,14 @@ export default function VehiclesPage() {
 
               {/* Mobile Card View */}
               <div className="md:hidden divide-y divide-gray-100">
-                {filteredVehicles.map((vehicle) => (
+                {paginatedVehicles.map((vehicle) => (
                   <div 
                     key={vehicle.id} 
                     className="flex items-center gap-3 py-4 first:pt-0 last:pb-0"
                   >
                     {/* Vehicle Icon */}
                     <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                      <Bike className="w-5 h-5 text-blue-500" />
+                      <Car className="w-5 h-5 text-blue-600" />
                     </div>
                     
                     {/* Vehicle Info */}
@@ -923,7 +1032,7 @@ export default function VehiclesPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              className="h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="sr-only">Xóa</span>
@@ -941,7 +1050,7 @@ export default function VehiclesPage() {
                               <AlertDialogCancel className="border-gray-200 rounded-xl">Hủy</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteVehicle(vehicle.id)}
-                                className="bg-red-500 text-white hover:bg-red-600 rounded-xl"
+                                className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
                               >
                                 Xóa
                               </AlertDialogAction>
@@ -953,6 +1062,33 @@ export default function VehiclesPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Phân trang */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t">
+                  <span className="text-xs text-gray-500 mr-2">
+                    Trang {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs border-gray-200 rounded-xl"
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs border-gray-200 rounded-xl"
+                  >
+                    Tiếp
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </CardContent>
@@ -1021,7 +1157,7 @@ export default function VehiclesPage() {
                     value={editingVehicle.pricePerDay}
                     onChange={(e) => {
                       const formatted = formatMoneyInput(e.target.value)
-                      setEditingVehicle({ ...editingVehicle, pricePerDay: formatted })
+                      setEditingVehicle({ ...editingVehicle, pricePerDay: formatted as any })
                     }}
                     className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                   />
@@ -1034,7 +1170,7 @@ export default function VehiclesPage() {
                     value={editingVehicle.purchasePrice}
                     onChange={(e) => {
                       const formatted = formatMoneyInput(e.target.value)
-                      setEditingVehicle({ ...editingVehicle, purchasePrice: formatted })
+                      setEditingVehicle({ ...editingVehicle, purchasePrice: formatted as any })
                     }}
                     className="bg-gray-50 border-gray-200 rounded-xl font-mono"
                   />
@@ -1050,6 +1186,21 @@ export default function VehiclesPage() {
                     className="bg-gray-50 border-gray-200 rounded-xl p-3 border resize-none"
                     rows={3}
                   />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-category" className="text-gray-600">Phân loại xe</Label>
+                  <Select
+                    value={editingVehicle.category || "bike"}
+                    onValueChange={(value: "car" | "bike") => setEditingVehicle({ ...editingVehicle, category: value })}
+                  >
+                    <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                      <SelectValue placeholder="Phân loại" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-gray-200 rounded-xl">
+                      <SelectItem value="bike">Xe máy</SelectItem>
+                      <SelectItem value="car">Ô tô</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-status" className="text-gray-600">Trạng thái</Label>
@@ -1087,22 +1238,22 @@ export default function VehiclesPage() {
                       key={index} 
                       className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group"
                     >
-                      <img 
-                        src={img} 
-                        alt={`Xe ${index + 1}`} 
+                      <img
+                        src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
+                        alt={`Xe ${index + 1}`}
                         className="w-full h-full object-cover cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage(img)}
+                        onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'vehicle', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
                     <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
                     <input
@@ -1125,22 +1276,22 @@ export default function VehiclesPage() {
                       key={index} 
                       className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group"
                     >
-                      <img 
-                        src={img} 
-                        alt={`Giấy tờ ${index + 1}`} 
+                      <img
+                        src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
+                        alt={`Giấy tờ ${index + 1}`}
                         className="w-full h-full object-cover cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage(img)}
+                        onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'document', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
                     <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
                     <input
@@ -1159,7 +1310,7 @@ export default function VehiclesPage() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl border-gray-200">
               Hủy
             </Button>
-            <Button onClick={handleEditVehicle} className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
+            <Button onClick={handleEditVehicle} className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl">
               Lưu thay đổi
             </Button>
           </DialogFooter>
@@ -1175,7 +1326,7 @@ export default function VehiclesPage() {
         <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-gray-800 flex items-center gap-2">
-              <Eye className="w-5 h-5 text-blue-500" />
+              <Eye className="w-5 h-5 text-blue-600" />
               Chi tiết xe
             </DialogTitle>
             <DialogDescription className="text-gray-500">Thông tin chi tiết của xe trong hệ thống</DialogDescription>
@@ -1219,11 +1370,11 @@ export default function VehiclesPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500">Tổng thu</p>
-                  <p className="text-sm font-medium text-emerald-600">{formatPrice(viewingVehicle.totalRevenue)}</p>
+                  <p className="text-sm font-medium text-emerald-600">{formatPrice(viewingVehicle.totalRevenue ?? 0)}</p>
                 </div>
                 <div className="col-span-2 space-y-1">
                   <p className="text-xs text-gray-500">Lợi nhuận</p>
-                  <p className="text-sm font-medium text-blue-600">{formatPrice(viewingVehicle.profit)}</p>
+                  <p className="text-sm font-medium text-blue-600">{formatPrice(viewingVehicle.profit ?? 0)}</p>
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-100">
@@ -1234,7 +1385,7 @@ export default function VehiclesPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">Tỷ suất lợi nhuận trên vốn:</span>
                   <span className="font-semibold text-blue-600">
-                    {viewingVehicle.purchasePrice > 0 ? ((viewingVehicle.profit / viewingVehicle.purchasePrice) * 100).toFixed(1) : 0}%
+                    {viewingVehicle.purchasePrice > 0 ? (((viewingVehicle.profit ?? 0) / viewingVehicle.purchasePrice) * 100).toFixed(1) : 0}%
                   </span>
                 </div>
               </div>
@@ -1301,7 +1452,7 @@ export default function VehiclesPage() {
                 setIsDetailDialogOpen(false)
                 if (viewingVehicle) openEditDialog(viewingVehicle)
               }} 
-              className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
+              className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
             >
               <Pencil className="w-4 h-4 mr-2" />
               Chỉnh sửa
@@ -1372,15 +1523,6 @@ export default function VehiclesPage() {
           onClose={() => setLightboxImage(null)} 
         />
       )}
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setIsAddDialogOpen(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40 hover:scale-110"
-        title="Thêm xe mới"
-      >
-        <Plus className="w-8 h-8" />
-      </button>
     </div>
   )
 }

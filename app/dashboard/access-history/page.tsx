@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -16,44 +16,47 @@ import {
   Trash2, 
   Eye, 
   FileText,
-  Bike,
+  Car,
   Users,
   ClipboardList,
   Filter,
   Settings,
   RefreshCw,
-  Globe
+  Activity,
+  Database
 } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface AccessLog {
   id: string
   username: string
-  displayname: string
+  displayName: string
   action: string
   module: string
   details: string
   timestamp: string
+  ipAddress?: string
 }
 
-const actionIconMap: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
-  "Đăng nhập": { icon: LogIn, color: "text-emerald-600", bgColor: "bg-emerald-50" },
-  "Đăng xuất": { icon: LogOut, color: "text-gray-500", bgColor: "bg-gray-100" },
-  "Thêm mới": { icon: Plus, color: "text-emerald-600", bgColor: "bg-emerald-50" },
-  "Chỉnh sửa": { icon: Pencil, color: "text-amber-600", bgColor: "bg-amber-50" },
-  "Xóa": { icon: Trash2, color: "text-red-600", bgColor: "bg-red-50" },
-  "Xem": { icon: Eye, color: "text-blue-600", bgColor: "bg-blue-50" },
-  "Truy cập": { icon: Globe, color: "text-indigo-600", bgColor: "bg-indigo-50" },
+const actionIconMap: Record<string, { icon: React.ElementType; color: string; bgColor: string; borderColor: string }> = {
+  "Đăng nhập": { icon: LogIn, color: "text-emerald-600", bgColor: "bg-emerald-50/50", borderColor: "border-emerald-200" },
+  "Đăng xuất": { icon: LogOut, color: "text-slate-600", bgColor: "bg-slate-50/50", borderColor: "border-slate-200" },
+  "Thêm mới": { icon: Plus, color: "text-blue-600", bgColor: "bg-blue-50/50", borderColor: "border-blue-200" },
+  "Chỉnh sửa": { icon: Pencil, color: "text-amber-600", bgColor: "bg-amber-50/50", borderColor: "border-amber-200" },
+  "Xóa": { icon: Trash2, color: "text-blue-600", bgColor: "bg-blue-50/50", borderColor: "border-blue-200" },
+  "Sao lưu": { icon: Database, color: "text-indigo-600", bgColor: "bg-indigo-50/50", borderColor: "border-indigo-200" },
+  "Khôi phục": { icon: RefreshCw, color: "text-purple-600", bgColor: "bg-purple-50/50", borderColor: "border-purple-200" },
+  "Xem": { icon: Eye, color: "text-slate-600", bgColor: "bg-slate-50/50", borderColor: "border-slate-200" },
 }
 
 const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> = {
   "Hệ thống": { icon: Settings, color: "text-gray-600" },
-  "Quản lý xe": { icon: Bike, color: "text-blue-600" },
+  "Quản lý xe": { icon: Car, color: "text-blue-600" },
   "Quản lý khách hàng": { icon: Users, color: "text-emerald-600" },
   "Đơn thuê": { icon: ClipboardList, color: "text-amber-600" },
   "Báo cáo": { icon: FileText, color: "text-violet-600" },
   "Lịch sử truy cập": { icon: History, color: "text-purple-600" },
   "Quản lý người dùng": { icon: Users, color: "text-cyan-600" },
-  "Trang chủ": { icon: Globe, color: "text-indigo-600" },
 }
 
 export default function AccessHistoryPage() {
@@ -66,7 +69,7 @@ export default function AccessHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
 
-  const loadAccessLogs = async (showLoading = true) => {
+  const loadAccessLogs = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
       console.log("📋 Loading access logs from Supabase...")
@@ -89,14 +92,14 @@ export default function AccessHistoryPage() {
     } finally {
       if (showLoading) setLoading(false)
     }
-  }
+  }, [])
 
   // Load logs from Supabase
   useEffect(() => {
     loadAccessLogs(true)
 
     // Subscribe to real-time events for access_logs
-    const logsChannel = supabase
+    const channel = supabase
       .channel('access-logs-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'access_logs' }, () => {
         loadAccessLogs(false)
@@ -104,22 +107,22 @@ export default function AccessHistoryPage() {
       .subscribe()
 
     return () => {
-      supabase.removeChannel(logsChannel)
+      supabase.removeChannel(channel)
     }
-  }, [])
+  }, [loadAccessLogs])
 
-  // Get unique values for filters
-  const accounts = Array.from(new Set(accessLogs.map(log => log.username)))
-  const modules = Array.from(new Set(accessLogs.map(log => log.module)))
-  const actions = Array.from(new Set(accessLogs.map(log => log.action)))
+  // Get unique values for filters (filter out empty strings to prevent Select.Item crash)
+  const accounts = Array.from(new Set(accessLogs.map(log => log.username))).filter(Boolean) as string[]
+  const modules = Array.from(new Set(accessLogs.map(log => log.module))).filter(Boolean) as string[]
+  const actions = Array.from(new Set(accessLogs.map(log => log.action))).filter(Boolean) as string[]
 
   // Filter logs
   const filteredLogs = accessLogs
     .filter(log => {
       const matchSearch = 
-        log.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.displayname.toLowerCase().includes(searchQuery.toLowerCase())
+        (log.details || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (log.username || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (log.displayName || "").toLowerCase().includes(searchQuery.toLowerCase())
       const matchAccount = filterAccount === "all" || log.username === filterAccount
       const matchModule = filterModule === "all" || log.module === filterModule
       const matchAction = filterAction === "all" || log.action === filterAction
@@ -146,6 +149,18 @@ export default function AccessHistoryPage() {
     })
   }
 
+  const formatLogDetails = (text: string) => {
+    if (!text) return ""
+    const regex = /(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b|\b\d+\s*(?:khách|xe|đơn|ngày|giờ|phút|giây|cccd|đồng|đ|năm|tháng|km)\b|\b\d+\b)/gi
+    const parts = text.split(regex)
+    return parts.map((part, index) => {
+      if (regex.test(part)) {
+        return <span key={index} className="font-semibold text-slate-800 bg-slate-100/70 px-1 py-0.5 rounded">{part}</span>
+      }
+      return part
+    })
+  }
+
   if (loading) {
     return (
       <div className="p-6 space-y-6">
@@ -160,51 +175,51 @@ export default function AccessHistoryPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lịch Sử Truy Cập</h1>
-          <p className="text-gray-600 mt-1">Theo dõi tất cả hoạt động trong hệ thống</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800">Lịch Sử Truy Cập</h1>
+          <p className="text-slate-500 text-xs mt-1">Theo dõi tất cả hoạt động trong hệ thống</p>
         </div>
         <Button
-          onClick={loadAccessLogs}
+          onClick={() => loadAccessLogs()}
           variant="outline"
-          className="gap-2"
+          size="icon"
+          disabled={loading}
+          className="w-9 h-9 border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-xl flex items-center justify-center shadow-sm"
+          title="Làm mới"
         >
-          <RefreshCw className="w-4 h-4" />
-          Làm mới
+          <RefreshCw className={`w-4 h-4 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
         </Button>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Lọc Lịch Sử</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2 items-center">
-            <Search className="w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Tìm kiếm theo tên, username, hoặc chi tiết..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setCurrentPage(1)
-              }}
-              className="flex-1"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Tài Khoản</label>
+      <Card className="bg-white border-0 card-shadow rounded-2xl overflow-hidden">
+        <CardContent className="pt-6">
+          <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center w-full">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Tìm kiếm theo tên, username, hoặc chi tiết..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="pl-10 bg-gray-50 border-gray-200 rounded-xl"
+              />
+            </div>
+            
+            {/* Tài Khoản filter */}
+            <div className="w-full lg:w-48">
               <Select value={filterAccount} onValueChange={(value) => {
                 setFilterAccount(value)
                 setCurrentPage(1)
               }}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                  <SelectValue placeholder="Tài khoản" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200 rounded-xl">
                   <SelectItem value="all">Tất Cả Tài Khoản</SelectItem>
                   {accounts.map(account => (
                     <SelectItem key={account} value={account}>
@@ -215,16 +230,16 @@ export default function AccessHistoryPage() {
               </Select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Mục</label>
+            {/* Mục filter */}
+            <div className="w-full lg:w-48">
               <Select value={filterModule} onValueChange={(value) => {
                 setFilterModule(value)
                 setCurrentPage(1)
               }}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                  <SelectValue placeholder="Mục" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200 rounded-xl">
                   <SelectItem value="all">Tất Cả Mục</SelectItem>
                   {modules.map(module => (
                     <SelectItem key={module} value={module}>
@@ -235,16 +250,16 @@ export default function AccessHistoryPage() {
               </Select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Hành Động</label>
+            {/* Hành Động filter */}
+            <div className="w-full lg:w-48">
               <Select value={filterAction} onValueChange={(value) => {
                 setFilterAction(value)
                 setCurrentPage(1)
               }}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                  <SelectValue placeholder="Hành động" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200 rounded-xl">
                   <SelectItem value="all">Tất Cả Hành Động</SelectItem>
                   {actions.map(action => (
                     <SelectItem key={action} value={action}>
@@ -259,62 +274,97 @@ export default function AccessHistoryPage() {
       </Card>
 
       {/* Logs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Chi Tiết Hoạt Động</CardTitle>
-          <CardDescription>
+      <Card className="bg-white border-0 card-shadow rounded-2xl overflow-hidden">
+        <CardHeader className="bg-white border-b border-slate-100 pt-6 pb-4 px-6">
+          <CardTitle className="text-slate-800 font-bold tracking-tight text-lg">Chi Tiết Hoạt Động</CardTitle>
+          <CardDescription className="text-xs md:text-sm text-slate-500">
             Hiển thị {paginatedLogs.length} trên {filteredLogs.length} kết quả
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {filteredLogs.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <History className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-12 text-slate-500">
+              <History className="w-12 h-12 mx-auto mb-4 text-slate-300" />
               <p>Không có dữ liệu lịch sử</p>
             </div>
           ) : (
-            <div className="space-y-3 overflow-x-auto">
-              {paginatedLogs.map((log) => {
-                const actionConfig = actionIconMap[log.action]
-                const moduleConfig = moduleIconMap[log.module]
-                const ActionIcon = actionConfig?.icon || Eye
-                const ModuleIcon = moduleConfig?.icon || Settings
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
+                    <TableHead className="w-48 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Thời gian</TableHead>
+                    <TableHead className="w-56 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Người thực hiện</TableHead>
+                    <TableHead className="w-64 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Hành động & Vị trí</TableHead>
+                    <TableHead className="font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Chi tiết nội dung</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedLogs.map((log) => {
+                    const actionConfig = actionIconMap[log.action] || {
+                      icon: Activity,
+                      color: "text-slate-600",
+                      bgColor: "bg-slate-50/50",
+                      borderColor: "border-slate-200"
+                    }
+                    const moduleConfig = moduleIconMap[log.module] || {
+                      icon: Settings,
+                      color: "text-slate-600"
+                    }
+                    const ActionIcon = actionConfig.icon
+                    const ModuleIcon = moduleConfig.icon
 
-                return (
-                  <div
-                    key={log.id}
-                    className={`flex items-start gap-4 p-4 rounded-lg border ${actionConfig?.bgColor || "bg-gray-50"}`}
-                  >
-                    <div className={`flex-shrink-0 p-2 rounded-lg ${actionConfig?.bgColor}`}>
-                      <ActionIcon className={`w-5 h-5 ${actionConfig?.color || "text-gray-600"}`} />
-                    </div>
+                    return (
+                      <TableRow key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                        {/* Cột 1: Thời gian */}
+                        <TableCell className="font-mono text-xs text-slate-500 whitespace-nowrap">
+                          {formatDate(log.timestamp)}
+                        </TableCell>
+                        
+                        {/* Cột 2: Người thực hiện */}
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-slate-900 text-xs">{log.displayName || log.username}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">@{log.username}</span>
+                          </div>
+                        </TableCell>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-900">{log.displayname}</span>
-                        <span className="text-sm text-gray-600">({log.username})</span>
-                        <span className="font-medium text-gray-700">{log.action}</span>
-                        <div className="flex items-center gap-1">
-                          <ModuleIcon className={`w-4 h-4 ${moduleConfig?.color || "text-gray-600"}`} />
-                          <span className="text-sm text-gray-600">{log.module}</span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{log.details}</p>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                        <span>{formatDate(log.timestamp)}</span>
-                        {log.ipAddress && <span>• IP: {log.ipAddress}</span>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+                        {/* Cột 3: Hành động & Vị trí */}
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {/* Action badge */}
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${actionConfig.bgColor} ${actionConfig.color} ${actionConfig.borderColor}`}>
+                              <ActionIcon className="w-3 h-3" />
+                              {log.action}
+                            </span>
+                            {/* Module badge */}
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-100">
+                              <ModuleIcon className={`w-3 h-3 ${moduleConfig.color}`} />
+                              {log.module}
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        {/* Cột 4: Chi tiết nội dung */}
+                        <TableCell className="text-xs text-slate-600 max-w-md">
+                          <div className="space-y-1">
+                            <div className="break-words leading-relaxed">{formatLogDetails(log.details)}</div>
+                            {log.ipAddress && (
+                              <p className="text-[10px] text-slate-400 font-mono">IP: {log.ipAddress}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
             </div>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t">
-              <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between p-4 border-t border-slate-100">
+              <p className="text-xs text-slate-500">
                 Trang {currentPage} / {totalPages}
               </p>
               <div className="flex gap-2">
@@ -323,6 +373,7 @@ export default function AccessHistoryPage() {
                   disabled={currentPage === 1}
                   variant="outline"
                   size="sm"
+                  className="rounded-lg h-8 text-xs"
                 >
                   Trước
                 </Button>
@@ -331,6 +382,7 @@ export default function AccessHistoryPage() {
                   disabled={currentPage === totalPages}
                   variant="outline"
                   size="sm"
+                  className="rounded-lg h-8 text-xs"
                 >
                   Tiếp
                 </Button>

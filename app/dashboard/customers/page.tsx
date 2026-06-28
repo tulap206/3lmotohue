@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
@@ -29,7 +29,8 @@ interface Customer {
   idcard: string
   totalrentals: number
   status: "active" | "inactive" | "renting" | "pending"
-  createdat: string
+  createdAt?: string
+  created_at?: string
   customerphoto?: string[]
   cccdfront?: string[]
   cccdback?: string[]
@@ -55,10 +56,10 @@ const ImageUploadButton = ({
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-blue-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
+        className="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-red-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
       >
         <div className="bg-blue-50 p-3 rounded-lg">
-          <Upload className="w-6 h-6 text-blue-500" />
+          <Upload className="w-6 h-6 text-blue-600" />
         </div>
         <div className="text-center">
           <p className="text-sm font-medium text-gray-700">Thêm ảnh</p>
@@ -94,7 +95,7 @@ const ImageUploadButton = ({
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "renting":
-      return { className: "bg-blue-50 text-blue-600 border-blue-200", label: "Đang thuê" }
+      return { className: "bg-blue-50 text-blue-600 border-blue-100", label: "Đang thuê" }
     case "pending":
       return { className: "bg-yellow-50 text-yellow-600 border-yellow-200", label: "Chờ giao xe" }
     case "inactive":
@@ -109,6 +110,8 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 15
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -128,14 +131,24 @@ export default function CustomersPage() {
     licenseback: [] as string[],
   })
 
-  const loadData = async (showLoading = true) => {
+  const loadData = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
+
+      // Check if user is demo account (admin)
+      const isDemoAccount = user?.username === "admin"
+
+      if (isDemoAccount) {
+        setCustomers([])
+        setLoading(false)
+        return
+      }
+
       const [customersData, rentalsData] = await Promise.all([
         fetchCustomers(),
         fetchRentals()
       ])
-      
+
       const updated = customersData.map((customer) => {
         const activeRental = rentalsData.find(
           (rental: any) => rental.customerId === customer.id && rental.status === "active"
@@ -159,10 +172,9 @@ export default function CustomersPage() {
         }
       })
 
-      // Sort by created_at or createdat descending (newest first)
       const sorted = updated.sort((a, b) => {
-        const dateA = new Date(a.createdat || a.created_at || 0).getTime()
-        const dateB = new Date(b.createdat || b.created_at || 0).getTime()
+        const dateA = new Date(a.createdAt || a.created_at || 0).getTime()
+        const dateB = new Date(b.createdAt || b.created_at || 0).getTime()
         return dateB - dateA
       })
       setCustomers(sorted)
@@ -171,33 +183,43 @@ export default function CustomersPage() {
     } finally {
       if (showLoading) setLoading(false)
     }
-  }
+  }, [])
 
-  // Load customers from Supabase
   useEffect(() => {
     loadData(true)
 
-    // Subscribe to real-time events for customers, rentals
-    const customersChannel = supabase
-      .channel('customers-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => {
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel("customers-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, () => {
         loadData(false)
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, () => {
         loadData(false)
       })
       .subscribe()
 
     return () => {
-      supabase.removeChannel(customersChannel)
+      supabase.removeChannel(channel)
     }
-  }, [])
+  }, [loadData])
 
   const filteredCustomers = customers.filter(
     (customer) =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.phone.includes(searchQuery) ||
       customer.facebook.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  // Reset page when search query changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery])
+
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage)
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   )
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -455,10 +477,9 @@ export default function CustomersPage() {
           status: statusLabel as any
         }
       })
-      // Sort by created_at or createdat descending (newest first)
       const sorted = updated.sort((a, b) => {
-        const dateA = new Date(a.createdat || a.created_at || 0).getTime()
-        const dateB = new Date(b.createdat || b.created_at || 0).getTime()
+        const dateA = new Date(a.createdAt || a.created_at || 0).getTime()
+        const dateB = new Date(b.createdAt || b.created_at || 0).getTime()
         return dateB - dateA
       })
       setCustomers(sorted)
@@ -549,7 +570,7 @@ export default function CustomersPage() {
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-red-600 flex items-center gap-2">
+            <DialogTitle className="text-blue-600 flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -557,7 +578,7 @@ export default function CustomersPage() {
             </DialogTitle>
             <DialogDescription className="text-gray-600 text-base mt-2">
               Bạn có chắc chắn muốn xoá khách hàng <span className="font-semibold text-gray-800">"{customerToDelete?.name}"</span> không?
-              <p className="text-sm text-red-600 mt-2">⚠️ Hành động này không thể hoàn tác!</p>
+              <p className="text-sm text-blue-600 mt-2">⚠️ Hành động này không thể hoàn tác!</p>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">
@@ -573,7 +594,7 @@ export default function CustomersPage() {
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-blue-600 text-white hover:bg-blue-700"
             >
               Xoá
             </Button>
@@ -588,7 +609,7 @@ export default function CustomersPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
+            <Button className="w-full sm:w-auto bg-blue-500 text-white hover:bg-blue-700 rounded-xl">
               <Plus className="w-4 h-4 mr-2" />
               Thêm khách hàng
             </Button>
@@ -697,7 +718,7 @@ export default function CustomersPage() {
                 <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl">
                   Hủy
                 </Button>
-                <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl">
+                <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 rounded-xl">
                   {editingCustomer ? "Cập nhật" : "Thêm"}
                 </Button>
               </DialogFooter>
@@ -716,10 +737,10 @@ export default function CustomersPage() {
         />
       </div>
 
-      <Card className="border-gray-200 rounded-2xl overflow-hidden">
-        <CardHeader className="bg-gray-50 border-b border-gray-200">
-          <CardTitle className="text-gray-800">Danh sách khách hàng</CardTitle>
-          <CardDescription className="text-gray-500">
+      <Card className="bg-white border-0 card-shadow rounded-2xl overflow-hidden">
+        <CardHeader className="bg-white border-b border-slate-100 pt-6 pb-4 px-6">
+          <CardTitle className="text-slate-800 font-bold tracking-tight text-lg">Danh sách khách hàng</CardTitle>
+          <CardDescription className="text-xs md:text-sm text-slate-500">
             Tổng cộng {filteredCustomers.length} khách hàng
           </CardDescription>
         </CardHeader>
@@ -733,65 +754,77 @@ export default function CustomersPage() {
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-slate-50/50 border-b border-slate-100">
                     <tr>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Khách hàng</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Liên hệ</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">CCCD</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Địa chỉ</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">Trạng thái</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-600">Thao tác</th>
+                      <th className="text-center py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider w-16">STT</th>
+                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Khách hàng</th>
+                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Liên hệ</th>
+                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">CCCD</th>
+                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Địa chỉ</th>
+                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Trạng thái</th>
+                      <th className="text-right py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCustomers.map((customer) => (
-                      <tr key={customer.id} className="border-b border-gray-50 hover:bg-gray-50">
+                    {paginatedCustomers.map((customer, index) => (
+                      <tr key={customer.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                        <td className="py-3 px-4 text-center text-slate-500 font-medium w-16">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             {customer.customerphoto && customer.customerphoto.length > 0 ? (
                               <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                <User className="w-4 h-4 text-gray-400" />
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                <User className="w-4 h-4 text-slate-400" />
                               </div>
                             )}
-                            <span className="font-medium text-gray-800">{customer.name}</span>
+                            <span className="font-semibold text-slate-800 capitalize">{customer.name}</span>
                           </div>
                         </td>
                         <td className="py-3 px-4">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-sm text-gray-700">
-                              <Phone className="w-3 h-3 text-gray-400" />
+                            <div className="flex items-center gap-2 text-sm text-slate-700">
+                              <Phone className="w-3 h-3 text-slate-400" />
                               {customer.phone}
                             </div>
-                            <a href={customer.facebook} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
-                              Facebook
-                            </a>
+                            {customer.facebook && (
+                              <a href={customer.facebook} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-medium">
+                                Facebook
+                              </a>
+                            )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-mono text-sm text-gray-700">{customer.idcard}</td>
-                        <td className="py-3 px-4 text-sm text-gray-700">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-3 h-3 text-gray-400" />
-                            {customer.address}
-                          </div>
+                        <td className="py-3 px-4 font-mono text-sm text-slate-700">{customer.idcard}</td>
+                        <td className="py-3 px-4 text-sm text-slate-700">
+                          {customer.address ? (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                              <span className="truncate max-w-[200px]">{customer.address}</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
-                          <Badge className={getStatusBadge(customer.status).className}>
+                          <Badge className={`${getStatusBadge(customer.status).className} rounded-full`}>
                             {getStatusBadge(customer.status).label}
                           </Badge>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex justify-end gap-2">
-                            <Button size="sm" variant="ghost" onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }} className="text-gray-600 hover:text-gray-900">
+                            <Button size="sm" variant="ghost" onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }} className="text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg">
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(customer)} className="text-gray-600 hover:text-gray-900">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(customer)} className="text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg">
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleDelete(customer.id)} className="text-red-600 hover:text-red-900">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {user?.permissions.canDelete && (
+                              <Button size="sm" variant="ghost" onClick={() => handleDelete(customer.id)} className="text-blue-600 hover:text-red-900 hover:bg-blue-50 rounded-lg">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -802,7 +835,7 @@ export default function CustomersPage() {
 
               {/* Mobile Card View */}
               <div className="md:hidden divide-y divide-gray-100">
-                {filteredCustomers.map((customer) => (
+                {paginatedCustomers.map((customer) => (
                   <div 
                     key={customer.id} 
                     className="flex gap-3 py-4 px-2 first:pt-2 last:pb-2"
@@ -812,8 +845,8 @@ export default function CustomersPage() {
                       {customer.customerphoto && customer.customerphoto.length > 0 ? (
                         <img src={customer.customerphoto[0]} alt={customer.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                          <User className="w-6 h-6 text-blue-500" />
+                        <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                          <User className="w-6 h-6 text-blue-600" />
                         </div>
                       )}
                     </div>
@@ -859,7 +892,7 @@ export default function CustomersPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                        className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
                         onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }}
                       >
                         <Eye className="h-4 w-4" />
@@ -872,18 +905,47 @@ export default function CustomersPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                        onClick={() => handleDelete(customer.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {user?.permissions.canDelete && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                          onClick={() => handleDelete(customer.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* Phân trang */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t">
+                  <span className="text-xs text-gray-500 mr-2">
+                    Trang {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs border-gray-200 rounded-xl"
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs border-gray-200 rounded-xl"
+                  >
+                    Tiếp
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </CardContent>
@@ -912,7 +974,7 @@ export default function CustomersPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Facebook</p>
-                  <a href={viewingCustomer.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-sm">
+                  <a href={viewingCustomer.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
                     Xem profile
                   </a>
                 </div>

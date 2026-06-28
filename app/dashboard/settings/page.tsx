@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Download, Upload, AlertCircle, CheckCircle, Trash2, RefreshCw } from "lucide-react"
+import { Download, Upload, AlertCircle, CheckCircle, Trash2, RefreshCw, FileJson } from "lucide-react"
 
 interface BackupData {
   timestamp: string
@@ -32,7 +32,99 @@ export default function SettingsPage() {
   // Load backup files on mount
   useEffect(() => {
     loadBackupFiles()
+    checkAndRunAutoBackup()
   }, [])
+
+  // Tự động sao lưu lúc 17h hàng ngày và tự xóa file quá 30 ngày
+  const checkAndRunAutoBackup = async () => {
+    try {
+      const now = new Date()
+      // Chỉ chạy tự động nếu giờ hiện tại từ 17h trở lên
+      if (now.getHours() < 17) {
+        console.log("⏰ Chưa đến 17h, bỏ qua tự động sao lưu.")
+        return
+      }
+
+      const dateStr = now.toISOString().split("T")[0] // YYYY-MM-DD
+      const autoFileName = `auto-backup-${dateStr}.json`
+
+      console.log("⏰ Đang kiểm tra sao lưu tự động cho ngày hôm nay...")
+
+      // Lấy danh sách file trong bucket backups
+      const { data: existingFiles, error: listError } = await supabase.storage
+        .from("backups")
+        .list("", { limit: 100 })
+
+      if (listError) throw listError
+
+      // Lọc các file quá 30 ngày để tự động xóa
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      const filesToDelete: string[] = []
+      const alreadyHasTodayBackup = (existingFiles || []).some(f => {
+        if (f.created_at) {
+          const fileDate = new Date(f.created_at)
+          if (fileDate < thirtyDaysAgo && f.name.endsWith('.json')) {
+            filesToDelete.push(f.name)
+          }
+        }
+        return f.name === autoFileName
+      })
+
+      // Xóa file cũ
+      if (filesToDelete.length > 0) {
+        console.log("🗑️ Tự động xóa các file sao lưu quá 30 ngày:", filesToDelete)
+        await supabase.storage.from("backups").remove(filesToDelete)
+      }
+
+      // Nếu đã có file backup tự động của ngày hôm nay thì dừng
+      if (alreadyHasTodayBackup) {
+        console.log(`✅ Hôm nay (${dateStr}) đã được sao lưu tự động.`)
+        return
+      }
+
+      console.log(`⏰ Đang tiến hành tự động sao lưu ngày ${dateStr}...`)
+
+      // Lấy dữ liệu
+      const { data: customers } = await supabase.from("customers").select("*")
+      const { data: vehicles } = await supabase.from("vehicles").select("*")
+      const { data: rentals } = await supabase.from("rentals").select("*")
+
+      const backupData: BackupData = {
+        timestamp: now.toISOString(),
+        customers: customers || [],
+        vehicles: vehicles || [],
+        rentals: rentals || [],
+      }
+
+      const jsonString = JSON.stringify(backupData, null, 2)
+      const blob = new Blob([jsonString], { type: "application/json" })
+
+      const { error: uploadError } = await supabase.storage
+        .from("backups")
+        .upload(autoFileName, blob, { upsert: false })
+
+      if (uploadError) throw uploadError
+
+      console.log("✅ Sao lưu tự động thành công:", autoFileName)
+
+      // Ghi log hệ thống
+      await supabase.from("access_logs").insert({
+        username: "system",
+        displayName: "Hệ thống tự động",
+        action: "Sao lưu tự động",
+        module: "Hệ thống",
+        details: `Hệ thống tự động sao lưu lúc 17h: ${customers?.length || 0} khách, ${vehicles?.length || 0} xe, ${rentals?.length || 0} đơn`,
+        timestamp: now.toISOString()
+      })
+
+      // Reload danh sách
+      loadBackupFiles()
+    } catch (err) {
+      console.error("Lỗi sao lưu tự động:", err)
+    }
+  }
 
   // Load danh sách backup files từ Supabase Storage
   const loadBackupFiles = async () => {
@@ -163,13 +255,15 @@ export default function SettingsPage() {
 
       // Confirm restore
       const confirmed = window.confirm(
-        `⚠️ BẠN SẼ RESTORE DỮ LIỆU TỪ FILE:\n${fileName}\n\n` +
-        `Lưu tại: ${new Date(backupData.timestamp).toLocaleString('vi-VN')}\n\n` +
-        `📊 Dữ liệu sẽ được nhập:\n` +
-        `- ${backupData.customers.length} khách hàng\n` +
-        `- ${backupData.vehicles.length} xe\n` +
-        `- ${backupData.rentals.length} đơn thuê\n\n` +
-        `⚠️ Dữ liệu hiện tại sẽ bị XÓA!\n\nBạn có chắc chắn không?`
+        `⚠️ CẢNH BÁO KHÔI PHỤC DỮ LIỆU:\n` +
+        `Bạn có chắc chắn muốn khôi phục dữ liệu từ file này? Dữ liệu hiện tại trên hệ thống sẽ bị ghi đè hoàn toàn.\n\n` +
+        `Thông tin file:\n` +
+        `- Tên file: ${fileName}\n` +
+        `- Ngày sao lưu: ${new Date(backupData.timestamp).toLocaleString('vi-VN')}\n` +
+        `- Khách hàng: ${backupData.customers.length}\n` +
+        `- Xe: ${backupData.vehicles.length}\n` +
+        `- Đơn thuê: ${backupData.rentals.length}\n\n` +
+        `Hành động này không thể hoàn tác. Bạn có đồng ý tiếp tục?`
       )
 
       if (!confirmed) {
@@ -357,7 +451,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="p-3 md:p-4 space-y-3 md:space-y-4">
           {message && (
-            <div className={`p-2 md:p-3 rounded-lg flex gap-2 text-sm ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+            <div className={`p-2 md:p-3 rounded-lg flex gap-2 text-sm ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>
               {message.type === 'success' ? (
                 <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               ) : (
@@ -370,18 +464,24 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             {/* Backup Button */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6 text-center">
-              <Download className="w-6 md:w-8 h-6 md:h-8 text-blue-500 mx-auto mb-2" />
+              <Download className="w-6 md:w-8 h-6 md:h-8 text-blue-600 mx-auto mb-2" />
               <h3 className="font-semibold text-sm md:text-base text-gray-900 mb-1 md:mb-2">Sao lưu dữ liệu</h3>
               <p className="text-xs md:text-sm text-gray-600 mb-3 md:mb-4">
                 Xuất tất cả khách hàng, xe, và đơn thuê
               </p>
-              <Button
-                onClick={handleBackup}
-                disabled={loading}
-                className="bg-blue-500 hover:bg-blue-600 text-white w-full text-sm"
-              >
-                {loading ? "Đang xử lý..." : "📥 Sao lưu ngay"}
-              </Button>
+              {user?.permissions.canBackup ? (
+                <Button
+                  onClick={handleBackup}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full text-sm h-10 rounded-xl font-semibold transition-all duration-200"
+                >
+                  {loading ? "Đang xử lý..." : "📥 Sao lưu ngay"}
+                </Button>
+              ) : (
+                <Button disabled className="bg-gray-100 text-gray-400 w-full text-sm h-10 rounded-xl cursor-not-allowed border border-gray-200 font-semibold">
+                  🔒 Không có quyền
+                </Button>
+              )}
             </div>
 
             {/* Restore Button */}
@@ -394,7 +494,7 @@ export default function SettingsPage() {
               {user?.role !== 'admin' ? (
                 <Button
                   disabled={true}
-                  className="bg-gray-300 text-gray-600 w-full cursor-not-allowed text-sm"
+                  className="bg-gray-100 text-gray-400 w-full text-sm h-10 rounded-xl cursor-not-allowed border border-gray-200 font-semibold"
                 >
                   🔒 Chỉ Admin
                 </Button>
@@ -408,7 +508,7 @@ export default function SettingsPage() {
                     input.click()
                   }}
                   disabled={loading}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white w-full text-sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm h-10 rounded-xl font-semibold transition-all duration-200"
                 >
                   {loading ? "Đang xử lý..." : "📤 Chọn file"}
                 </Button>
@@ -454,35 +554,71 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-2 md:space-y-3 max-h-[70vh] overflow-y-auto">
               {backupFiles.map((file) => (
-                <div key={file.name} className="bg-gray-50 p-3 md:p-4 rounded-lg border border-gray-100 hover:border-blue-200 transition-all">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900 break-words">{file.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(file.created_at).toLocaleString('vi-VN')} • {(file.size / 1024).toFixed(2)} KB
+                <div key={file.name} className="bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-100 hover:border-slate-200 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  {/* Left Side: Info */}
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600 flex-shrink-0 mt-0.5">
+                      <FileJson className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-slate-800 break-all">{file.name}</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {new Date(file.created_at).toLocaleString('vi-VN')} | {(file.size / 1024).toFixed(2)} KB
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  
+                  {/* Right Side: Action buttons group */}
+                  <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
                     <Button
                       size="sm"
-                      variant="default"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(file.url)
+                          const blob = await response.blob()
+                          const blobUrl = window.URL.createObjectURL(blob)
+                          const link = document.createElement("a")
+                          link.href = blobUrl
+                          link.download = file.name
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                          window.URL.revokeObjectURL(blobUrl)
+                        } catch (err) {
+                          console.error("Lỗi tải file:", err)
+                          window.open(file.url, "_blank")
+                        }
+                      }}
+                      disabled={loading}
+                      className="border-blue-600 text-blue-600 hover:bg-blue-50 text-xs px-3 h-8 rounded-lg font-medium flex items-center gap-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Tải về
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => handleRestoreFromFile(file.url, file.name)}
                       disabled={loading || user?.role !== 'admin'}
-                      className={`flex-1 text-xs ${user?.role !== 'admin' ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+                      className={`text-xs px-3 h-8 rounded-lg font-semibold border-blue-600 text-blue-600 hover:bg-blue-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed`}
                       title={user?.role !== 'admin' ? 'Chỉ Admin có quyền khôi phục' : ''}
                     >
                       {user?.role !== 'admin' ? '🔒 Chỉ Admin' : 'Khôi phục'}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDeleteBackup(file.name)}
-                      disabled={loading}
-                      className="text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+
+                    {user?.permissions.canBackup && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteBackup(file.name)}
+                        disabled={loading}
+                        className="border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-blue-50 h-8 w-8 rounded-lg flex items-center justify-center p-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

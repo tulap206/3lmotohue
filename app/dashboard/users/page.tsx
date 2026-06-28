@@ -95,7 +95,7 @@ export default function UsersPage() {
     return (
       <div className="p-6">
         <div className="max-w-md mx-auto">
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-red-200 bg-blue-50">
             <CardHeader>
               <CardTitle className="text-red-600 flex items-center gap-2">
                 <Lock className="w-5 h-5" />
@@ -422,7 +422,7 @@ export default function UsersPage() {
                             <AlertDialogCancel>Hủy</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDelete(userAccount.id)}
-                              className="bg-red-600"
+                              className="bg-blue-600"
                             >
                               Xóa
                             </AlertDialogAction>

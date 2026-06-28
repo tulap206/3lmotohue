@@ -463,7 +463,7 @@ export default function ReportsPage() {
   if (!reportData) {
     return (
       <div className="p-6">
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-blue-50 border-red-200">
           <CardContent className="pt-6">
             <p className="text-red-700">Không thể tải dữ liệu báo cáo</p>
           </CardContent>
@@ -547,7 +547,7 @@ export default function ReportsPage() {
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-blue-600 text-white hover:bg-blue-700"
             >
               Xoá
             </Button>
@@ -872,7 +872,7 @@ export default function ReportsPage() {
                               </button>
                               <button
                                 onClick={() => handleDeleteTransaction(tx)}
-                                className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition"
+                                className="text-red-600 hover:text-red-800 hover:bg-blue-50 p-1 rounded transition"
                                 title="Xoá"
                               >
                                 <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
