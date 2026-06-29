@@ -305,8 +305,8 @@ export default function AccessHistoryPage() {
               <History className="w-12 h-12 mx-auto mb-4 text-slate-300" />
               <p>Không có dữ liệu lịch sử</p>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
+          ) : (<>
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
@@ -396,7 +396,85 @@ export default function AccessHistoryPage() {
                 </TableBody>
               </Table>
             </div>
-          )}
+
+            {/* Mobile Card-based List View */}
+            <div className="md:hidden space-y-4 p-4">
+              {paginatedLogs.map((log) => {
+                const actionConfig = actionIconMap[log.action] || {
+                  icon: Activity,
+                  color: "text-slate-600",
+                  bgColor: "bg-slate-50/50",
+                  borderColor: "border-slate-200"
+                }
+                const moduleConfig = moduleIconMap[log.module] || {
+                  icon: Settings,
+                  color: "text-slate-600"
+                }
+                // Dynamic action badge colors fallback based on action content
+                let actionBadgeColor = actionConfig.color
+                let actionBadgeBgColor = actionConfig.bgColor
+                let actionBadgeBorderColor = actionConfig.borderColor
+
+                if (log.action.includes("Xóa") || log.action.includes("Xoá")) {
+                  actionBadgeColor = "text-red-700"
+                  actionBadgeBgColor = "bg-red-50"
+                  actionBadgeBorderColor = "border-red-100"
+                } else if (log.action.includes("Chỉnh sửa") || log.action.includes("Sửa")) {
+                  actionBadgeColor = "text-amber-700"
+                  actionBadgeBgColor = "bg-amber-50"
+                  actionBadgeBorderColor = "border-amber-100"
+                } else if (log.action === "Đăng nhập" || log.action === "Thêm mới") {
+                  actionBadgeColor = "text-emerald-700"
+                  actionBadgeBgColor = "bg-emerald-50"
+                  actionBadgeBorderColor = "border-emerald-100"
+                }
+
+                const ActionIcon = actionConfig.icon
+                const ModuleIcon = moduleConfig.icon
+
+                return (
+                  <div 
+                    key={log.id} 
+                    className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-3 shadow-sm"
+                  >
+                    {/* Header: Action badges and timestamp */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100/50 pb-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${actionBadgeBgColor} ${actionBadgeColor} ${actionBadgeBorderColor}`}>
+                          <ActionIcon className="w-3 h-3" />
+                          {log.action}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-100">
+                          <ModuleIcon className={`w-3 h-3 ${moduleConfig.color}`} />
+                          {log.module}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">{formatDate(log.timestamp)}</span>
+                    </div>
+
+                    {/* Performer info */}
+                    <div className="flex items-center gap-2 text-xs">
+                      <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center uppercase">
+                        {(log.displayName || log.username).charAt(0)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-800">{log.displayName || log.username}</span>
+                        <span className="text-[9px] text-slate-400 font-mono">@{log.username}</span>
+                      </div>
+                    </div>
+
+                    {/* Details content */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-100/50 text-xs text-slate-600">
+                      <div className="break-all leading-relaxed whitespace-pre-wrap">{formatLogDetails(log.details)}</div>
+                      {log.ipAddress && (
+                        <p className="text-[10px] text-slate-400 font-mono pt-1">IP: {log.ipAddress}</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>)}
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
