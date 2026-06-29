@@ -698,7 +698,7 @@ export default function DashboardPage() {
             3L Moto · Tổng quan kinh doanh và vận hành cho thuê xe chuyên nghiệp
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full">
             <Database className="w-3.5 h-3.5 text-blue-600" />
             <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Dữ liệu Supabase</span>
@@ -715,7 +715,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stats Cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {/* Tổng Xe */}
         <MetricCard
           label="Tổng Xe"
@@ -1103,11 +1103,11 @@ export default function DashboardPage() {
                     <CardDescription className="text-blue-600 font-medium text-xs">Quản lý các khoản thu/chi ngoài đơn thuê</CardDescription>
                   </div>
                   
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
                     {/* Add Transaction Dialog */}
                     <Dialog open={isAddTxOpen} onOpenChange={setIsAddTxOpen}>
                       <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-8 font-semibold">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs h-8 font-semibold w-full sm:w-auto">
                           <Plus className="w-3.5 h-3.5 mr-1" />
                           Ghi chép thu/chi
                         </Button>
@@ -1190,7 +1190,7 @@ export default function DashboardPage() {
                     </Dialog>
 
                     {/* Search Field */}
-                    <div className="relative w-44">
+                    <div className="relative w-full sm:w-44">
                       <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
                       <Input
                         type="search"
@@ -1206,7 +1206,7 @@ export default function DashboardPage() {
               <CardContent className="p-3 md:p-4 pt-0">
                 {paginatedTx.length > 0 ? (
                   <div className="space-y-3">
-                    <div className="overflow-x-auto rounded-xl border border-slate-100/80">
+                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-100/80">
                       <table className="w-full text-left border-collapse table-striped">
                         <thead>
                           <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -1280,6 +1280,72 @@ export default function DashboardPage() {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+
+                    {/* Mobile Card-based List */}
+                    <div className="block md:hidden space-y-3">
+                      {paginatedTx.map((tx, index) => (
+                        <div key={tx.id} className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-3 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold">STT: {startTxIndex + index + 1}</span>
+                            <span className={cn(
+                              "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border",
+                              tx.type === "income" 
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                                : "bg-red-50 text-red-700 border-red-100"
+                            )}>
+                              {tx.type === "income" ? "Thu" : "Chi"}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-400">Số tiền:</span>
+                              <span className={cn(
+                                "font-bold",
+                                tx.type === "income" ? "text-emerald-600" : "text-red-600"
+                              )}>
+                                {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")} đ
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-400">Thời gian:</span>
+                              <span className="text-slate-700">{new Date(tx.timestamp).toLocaleString("vi-VN")}</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-slate-400">Người nhập:</span>
+                              <span className="text-slate-700 font-semibold uppercase">{tx.user}</span>
+                            </div>
+                            <div className="pt-1.5 border-t border-slate-100/50">
+                              <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-0.5">Mô tả chi tiết</p>
+                              <p className="text-slate-700 text-xs break-all whitespace-pre-wrap">{tx.description}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 pt-2 border-t border-slate-100/50">
+                            <Button
+                              type="button"
+                              onClick={() => handleEditTx(tx)}
+                              variant="outline"
+                              className="flex-1 h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50"
+                            >
+                              <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                              Sửa
+                            </Button>
+                            {user?.permissions.canDelete && (
+                              <Button
+                                type="button"
+                                onClick={() => { setTxToDelete(tx); setTxDeleteConfirmOpen(true) }}
+                                variant="outline"
+                                className="flex-1 h-9 rounded-xl border-red-100 text-xs text-red-600 font-semibold hover:bg-red-50 hover:border-red-200"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                Xoá
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
 
                     {/* Pagination Controls */}

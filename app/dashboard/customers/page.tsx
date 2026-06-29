@@ -846,87 +846,82 @@ export default function CustomersPage() {
                 </table>
               </div>
 
-              {/* Mobile Card View */}
-              <div className="md:hidden divide-y divide-gray-100">
+              {/* Mobile Card View (Refactored to Card-based List) */}
+              <div className="md:hidden space-y-4">
                 {paginatedCustomers.map((customer) => (
                   <div 
                     key={customer.id} 
-                    className="flex gap-3 py-4 px-2 first:pt-2 last:pb-2"
+                    className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-3 shadow-sm"
                   >
-                    {/* Customer Avatar */}
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden mt-0.5">
-                      {customer.customerphoto && customer.customerphoto.length > 0 ? (
-                        <img src={customer.customerphoto[0]} alt={customer.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-blue-50 flex items-center justify-center">
-                          <User className="w-6 h-6 text-blue-600" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Customer Info - Left Section */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-800 text-base">{customer.name}</h3>
-                        </div>
+                    {/* Header: Name and Status */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-blue-50 flex items-center justify-center">
+                        {customer.customerphoto && customer.customerphoto.length > 0 ? (
+                          <img src={customer.customerphoto[0]} alt={customer.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 text-blue-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-800 text-sm truncate capitalize">{customer.name}</h3>
                         <span
-                          className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border mt-1 ${
                             getStatusBadge(customer.status).className
                           }`}
                         >
                           {getStatusBadge(customer.status).label}
                         </span>
                       </div>
-                      
-                      {/* Contact Info Grid */}
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                        {/* Phone */}
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                          <span className="text-gray-700 font-medium truncate">{customer.phone}</span>
-                        </div>
-                        
-                        {/* CCCD */}
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <span className="text-xs text-gray-500 font-mono truncate">{customer.idcard}</span>
-                        </div>
+                    </div>
+
+                    {/* Details: Contact, CCCD, Address */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-100/50 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Số điện thoại:</span>
+                        <span className="text-slate-700 font-semibold">{customer.phone}</span>
                       </div>
-                      
-                      {/* Address */}
-                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">{customer.address}</span>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Số CCCD:</span>
+                        <span className="text-slate-700 font-mono break-all">{customer.idcard}</span>
+                      </div>
+                      <div className="flex justify-between items-start gap-4">
+                        <span className="text-slate-400 flex-shrink-0">Địa chỉ:</span>
+                        <span className="text-slate-700 text-right truncate max-w-[200px]" title={customer.address}>{customer.address || "—"}</span>
                       </div>
                     </div>
-                    
-                    {/* Actions - Right Section */}
-                    <div className="flex-shrink-0 flex flex-col gap-1">
+
+                    {/* Action buttons (Stretched, easy to touch) */}
+                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100/50">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                        type="button"
                         onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }}
+                        variant="outline"
+                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5" />
+                        Chi tiết
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-amber-500 hover:bg-amber-50"
+                        type="button"
                         onClick={() => handleEdit(customer)}
+                        variant="outline"
+                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3.5 w-3.5" />
+                        Sửa
                       </Button>
-                      {user?.permissions.canDelete && (
+                      {user?.permissions.canDelete ? (
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                          type="button"
                           onClick={() => handleDelete(customer.id)}
+                          variant="outline"
+                          className="h-9 rounded-xl border-red-100 text-xs text-red-600 font-semibold hover:bg-red-50 hover:border-red-200 flex items-center justify-center gap-1"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Xoá
                         </Button>
+                      ) : (
+                        <div className="col-span-1" />
                       )}
                     </div>
                   </div>

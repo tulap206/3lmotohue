@@ -972,85 +972,91 @@ export default function VehiclesPage() {
                 </Table>
               </div>
 
-              {/* Mobile Card View */}
-              <div className="md:hidden divide-y divide-gray-100">
+              {/* Mobile Card View (Refactored to Card-based List) */}
+              <div className="md:hidden space-y-4">
                 {paginatedVehicles.map((vehicle) => (
                   <div 
                     key={vehicle.id} 
-                    className="flex items-center gap-3 py-4 first:pt-0 last:pb-0"
+                    className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-3 shadow-sm"
                   >
-                    {/* Vehicle Icon */}
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                      <Car className="w-5 h-5 text-blue-600" />
-                    </div>
-                    
-                    {/* Vehicle Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="font-medium text-gray-800 truncate">{vehicle.name}</h3>
-                          <p className="text-sm text-gray-500 font-mono">{vehicle.licensePlate}</p>
-                        </div>
-                        <span
-                          className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[vehicle.status].className}`}
-                        >
-                          {statusConfig[vehicle.status].label}
-                        </span>
+                    {/* Header: Name and Status */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-slate-800 text-sm truncate capitalize">{vehicle.name}</h3>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">{vehicle.licensePlate}</p>
                       </div>
-                      
-                      {/* Price */}
-                      <div className="mt-1">
-                        <span className="text-sm font-semibold text-slate-800">
-                          {formatPrice(vehicle.pricePerDay)}/ngày
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Actions */}
-                    <div className="flex-shrink-0 flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-amber-500 hover:bg-amber-50"
-                        onClick={() => openHistoryDialog(vehicle)}
+                      <span
+                        className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusConfig[vehicle.status].className}`}
                       >
-                        <Clock className="h-4 w-4" />
-                        <span className="sr-only">Lịch sử</span>
+                        {statusConfig[vehicle.status].label}
+                      </span>
+                    </div>
+
+                    {/* Details: Price and details */}
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100/50 text-xs">
+                      <div>
+                        <span className="text-slate-400">Giá thuê/ngày:</span>
+                        <p className="font-semibold text-slate-800 mt-0.5 font-mono">{formatPrice(vehicle.pricePerDay)}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">Màu xe:</span>
+                        <p className="font-semibold text-slate-800 mt-0.5">{vehicle.color || "—"}</p>
+                      </div>
+                    </div>
+
+                    {/* Action buttons (Easy to tap, stretched) */}
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100/50">
+                      <Button
+                        type="button"
+                        onClick={() => openDetailDialog(vehicle)}
+                        variant="outline"
+                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Chi tiết
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-emerald-500 hover:bg-emerald-50"
-                        onClick={() => openDetailDialog(vehicle)}
+                        type="button"
+                        onClick={() => openEditDialog(vehicle)}
+                        variant="outline"
+                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5"
                       >
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">Chi tiết</span>
+                        <Pencil className="h-3.5 w-3.5" />
+                        Sửa xe
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => openHistoryDialog(vehicle)}
+                        variant="outline"
+                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                      >
+                        <Clock className="h-3.5 w-3.5" />
+                        Lịch sử
                       </Button>
                       {user?.permissions.canDelete && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                              variant="outline"
+                              className="h-9 rounded-xl border-red-100 text-xs text-red-600 font-semibold hover:bg-red-50 hover:border-red-200 flex items-center justify-center gap-1.5"
                             >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Xóa</span>
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Xoá xe
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent className="bg-white border-gray-200 rounded-2xl mx-4">
                             <AlertDialogHeader>
                               <AlertDialogTitle className="text-gray-800">Xác nhận xóa xe</AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-500">
+                              <AlertDialogDescription className="text-gray-500 text-xs">
                                 Bạn có chắc chắn muốn xóa xe <span className="font-medium text-gray-800">{vehicle.name}</span> ({vehicle.licensePlate})? 
                                 Hành động này không thể hoàn tác.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="border-gray-200 rounded-xl">Hủy</AlertDialogCancel>
+                            <AlertDialogFooter className="mt-4 gap-2">
+                              <AlertDialogCancel className="border-gray-200 rounded-xl text-xs h-9">Hủy</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteVehicle(vehicle.id)}
-                                className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
+                                className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl text-xs h-9"
                               >
                                 Xóa
                               </AlertDialogAction>
