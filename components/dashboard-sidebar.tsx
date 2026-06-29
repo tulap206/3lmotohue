@@ -170,7 +170,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6 px-3 space-y-3">
+        <nav className="flex-1 py-6 px-3 space-y-3 overflow-visible">
           {menuItems.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -179,14 +179,18 @@ export function DashboardSidebar({ children }: SidebarProps) {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift",
+                  "group relative flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift active:scale-95",
                   isActive
                     ? "sidebar-active"
                     : "text-slate-400 hover:bg-slate-50 hover:text-blue-600"
                 )}
                 title={item.title}
               >
-                <item.icon className="w-5 h-5 transition-transform group-hover:scale-110" />
+                <item.icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
+                {/* Tooltip */}
+                <span className="absolute left-full ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-lg z-50">
+                  {item.title}
+                </span>
               </Link>
             )
           })}

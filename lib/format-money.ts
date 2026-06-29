@@ -23,5 +23,5 @@ export const parseMoneyInput = (value: string): number => {
  * Example: 1000000 → "1.000.000 VND"
  */
 export const displayMoney = (value: number): string => {
-  return value.toLocaleString('vi-VN') + ' VNĐ'
+  return value.toLocaleString('vi-VN') + ' đ'
 }

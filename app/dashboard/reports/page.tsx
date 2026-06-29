@@ -475,7 +475,7 @@ export default function ReportsPage() {
   const stats = [
     {
       title: "Doanh Thu",
-      value: `${reportData.totalRevenue.toLocaleString("vi-VN")} VNĐ`,
+      value: `${reportData.totalRevenue.toLocaleString("vi-VN")} đ`,
       change: `${reportData.totalRentals} đơn`,
       icon: DollarSign,
       iconBg: "bg-amber-50",
@@ -483,7 +483,7 @@ export default function ReportsPage() {
     },
     {
       title: "Lợi Nhuận",
-      value: `${reportData.totalProfit.toLocaleString("vi-VN")} VNĐ`,
+      value: `${reportData.totalProfit.toLocaleString("vi-VN")} đ`,
       change: `${reportData.totalProfit > 0 ? "↑" : "↓"} LN`,
       icon: Wallet,
       iconBg: "bg-emerald-50",
@@ -642,7 +642,7 @@ export default function ReportsPage() {
               <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} width={35} />
               <Tooltip
-                formatter={(value: any) => `${value.toLocaleString("vi-VN")} VNĐ`}
+                formatter={(value: any) => `${value.toLocaleString("vi-VN")} đ`}
                 contentStyle={{
                   backgroundColor: "#fff",
                   border: "1px solid #ccc",
@@ -724,7 +724,7 @@ export default function ReportsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Giá/ngày</p>
-                  <p className="font-medium text-gray-800 text-sm">{selectedVehicle.pricePerDay.toLocaleString()} VNĐ</p>
+                  <p className="font-medium text-gray-800 text-sm">{selectedVehicle.pricePerDay.toLocaleString()} đ</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Trạng thái</p>
@@ -736,11 +736,11 @@ export default function ReportsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Giá mua</p>
-                  <p className="font-medium text-gray-800">{selectedVehicle.purchasePrice.toLocaleString("vi-VN")} VNĐ</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.purchasePrice.toLocaleString("vi-VN")} đ</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Doanh thu</p>
-                  <p className="font-medium text-gray-800">{selectedVehicle.totalRevenue.toLocaleString("vi-VN")} VNĐ</p>
+                  <p className="font-medium text-gray-800">{selectedVehicle.totalRevenue.toLocaleString("vi-VN")} đ</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-xs text-gray-500">Ghi chú</p>

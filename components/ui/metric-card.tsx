@@ -6,7 +6,7 @@ interface MetricCardProps {
   icon?: React.ReactNode
   label: string
   value: string | number | React.ReactNode
-  sublabel?: string
+  sublabel?: string | React.ReactNode
   trend?: {
     direction: "up" | "down" | "neutral"
     value?: string

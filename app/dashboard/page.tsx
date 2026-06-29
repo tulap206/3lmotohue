@@ -975,7 +975,7 @@ export default function DashboardPage() {
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} width={35} />
                   <Tooltip
-                    formatter={(value: any) => `${value.toLocaleString("vi-VN")} VNĐ`}
+                    formatter={(value: any) => `${value.toLocaleString("vi-VN")} đ`}
                     contentStyle={{
                       backgroundColor: "#fff",
                       border: "1px solid #ccc",
@@ -1496,7 +1496,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Giá/ngày</p>
-                  <p className="font-medium text-gray-800 text-sm">{selectedVehicleDetail.pricePerDay?.toLocaleString() || 0} VNĐ</p>
+                  <p className="font-medium text-gray-800 text-sm">{selectedVehicleDetail.pricePerDay?.toLocaleString() || 0} đ</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Trạng thái</p>
@@ -1508,7 +1508,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Giá mua</p>
-                  <p className="font-medium text-gray-800 text-sm">{selectedVehicleDetail.purchasePrice?.toLocaleString("vi-VN") || 0} VNĐ</p>
+                  <p className="font-medium text-gray-800 text-sm">{selectedVehicleDetail.purchasePrice?.toLocaleString("vi-VN") || 0} đ</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Ghi chú</p>
