@@ -615,139 +615,142 @@ export default function CustomersPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-800">Khách hàng</h1>
-          <p className="text-gray-500 text-sm">Quản lý thông tin khách hàng thuê xe</p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto bg-blue-500 text-white hover:bg-blue-700 rounded-xl">
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm khách hàng
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-gray-800">
-                {editingCustomer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}
-              </DialogTitle>
-              <DialogDescription className="text-gray-500">
-                {editingCustomer ? "Cập nhật thông tin khách hàng" : "Nhập thông tin khách hàng mới"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-600">Họ và tên</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="VD: Nguyễn Văn A"
-                  className="bg-gray-50 border-gray-200 rounded-xl"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-gray-600">Số điện thoại</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="VD: 0901234567"
-                  className="bg-gray-50 border-gray-200 rounded-xl"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="idcard" className="text-gray-600">Số CCCD/CMND</Label>
-                <Input
-                  id="idcard"
-                  value={formData.idcard}
-                  onChange={(e) => setFormData({ ...formData, idcard: e.target.value })}
-                  placeholder="VD: 079123456789"
-                  className="bg-gray-50 border-gray-200 rounded-xl"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="facebook" className="text-gray-600">Link Facebook</Label>
-                <Input
-                  id="facebook"
-                  value={formData.facebook}
-                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                  placeholder="VD: https://facebook.com/username"
-                  className="bg-gray-50 border-gray-200 rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address" className="text-gray-600">Địa chỉ</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM"
-                  className="bg-gray-50 border-gray-200 rounded-xl"
-                  required
-                />
-              </div>
-              
-              {/* Image Upload Section */}
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <p className="font-medium text-gray-700">Thêm ảnh (tùy chọn)</p>
+      {/* Sticky Action Header */}
+      <div className="sticky top-0 bg-slate-50/95 backdrop-blur-md z-30 py-4 -mx-4 px-4 lg:-mx-8 lg:px-8 border-b border-slate-200 space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-800">Khách hàng</h1>
+            <p className="text-gray-500 text-sm">Quản lý thông tin khách hàng thuê xe</p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto bg-blue-500 text-white hover:bg-blue-700 rounded-xl">
+                <Plus className="w-4 h-4 mr-2" />
+                Thêm khách hàng
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-white border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-gray-800">
+                  {editingCustomer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}
+                </DialogTitle>
+                <DialogDescription className="text-gray-500">
+                  {editingCustomer ? "Cập nhật thông tin khách hàng" : "Nhập thông tin khách hàng mới"}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-gray-600">Họ và tên</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="VD: Nguyễn Văn A"
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-gray-600">Số điện thoại</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="VD: 0901234567"
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="idcard" className="text-gray-600">Số CCCD/CMND</Label>
+                  <Input
+                    id="idcard"
+                    value={formData.idcard}
+                    onChange={(e) => setFormData({ ...formData, idcard: e.target.value })}
+                    placeholder="VD: 079123456789"
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="facebook" className="text-gray-600">Link Facebook</Label>
+                  <Input
+                    id="facebook"
+                    value={formData.facebook}
+                    onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                    placeholder="VD: https://facebook.com/username"
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="text-gray-600">Địa chỉ</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM"
+                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    required
+                  />
+                </div>
                 
-                <ImageUploadButton
-                  label="Ảnh khách hàng"
-                  preview={formData.customerphoto?.[0]}
-                  onImageSelected={(base64) => setFormData({ ...formData, customerphoto: base64 ? [base64] : [] })}
-                />
+                {/* Image Upload Section */}
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <p className="font-medium text-gray-700">Thêm ảnh (tùy chọn)</p>
+                  
+                  <ImageUploadButton
+                    label="Ảnh khách hàng"
+                    preview={formData.customerphoto?.[0]}
+                    onImageSelected={(base64) => setFormData({ ...formData, customerphoto: base64 ? [base64] : [] })}
+                  />
 
-                <ImageUploadButton
-                  label="Ảnh CCCD mặt trước"
-                  preview={formData.cccdfront?.[0]}
-                  onImageSelected={(base64) => setFormData({ ...formData, cccdfront: base64 ? [base64] : [] })}
-                />
+                  <ImageUploadButton
+                    label="Ảnh CCCD mặt trước"
+                    preview={formData.cccdfront?.[0]}
+                    onImageSelected={(base64) => setFormData({ ...formData, cccdfront: base64 ? [base64] : [] })}
+                  />
 
-                <ImageUploadButton
-                  label="Ảnh CCCD mặt sau"
-                  preview={formData.cccdback?.[0]}
-                  onImageSelected={(base64) => setFormData({ ...formData, cccdback: base64 ? [base64] : [] })}
-                />
+                  <ImageUploadButton
+                    label="Ảnh CCCD mặt sau"
+                    preview={formData.cccdback?.[0]}
+                    onImageSelected={(base64) => setFormData({ ...formData, cccdback: base64 ? [base64] : [] })}
+                  />
 
-                <ImageUploadButton
-                  label="Ảnh GPLX mặt trước"
-                  preview={formData.licensefront?.[0]}
-                  onImageSelected={(base64) => setFormData({ ...formData, licensefront: base64 ? [base64] : [] })}
-                />
+                  <ImageUploadButton
+                    label="Ảnh GPLX mặt trước"
+                    preview={formData.licensefront?.[0]}
+                    onImageSelected={(base64) => setFormData({ ...formData, licensefront: base64 ? [base64] : [] })}
+                  />
 
-                <ImageUploadButton
-                  label="Ảnh GPLX mặt sau"
-                  preview={formData.licenseback?.[0]}
-                  onImageSelected={(base64) => setFormData({ ...formData, licenseback: base64 ? [base64] : [] })}
-                />
-              </div>
-              
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl">
-                  Hủy
-                </Button>
-                <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 rounded-xl">
-                  {editingCustomer ? "Cập nhật" : "Thêm"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                  <ImageUploadButton
+                    label="Ảnh GPLX mặt sau"
+                    preview={formData.licenseback?.[0]}
+                    onImageSelected={(base64) => setFormData({ ...formData, licenseback: base64 ? [base64] : [] })}
+                  />
+                </div>
+                
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="rounded-xl">
+                    Hủy
+                  </Button>
+                  <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 rounded-xl">
+                    {editingCustomer ? "Cập nhật" : "Thêm"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <Input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Tìm kiếm theo tên, số điện thoại hoặc Facebook..."
-          className="pl-10 bg-white border-gray-200 rounded-xl"
-        />
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Tìm kiếm theo tên, số điện thoại hoặc Facebook..."
+            className="pl-10 bg-white border-gray-200 rounded-xl focus-visible:ring-blue-500"
+          />
+        </div>
       </div>
 
       <Card className="bg-white border-0 card-shadow rounded-2xl overflow-hidden">
@@ -771,11 +774,11 @@ export default function CustomersPage() {
                     <tr>
                       <th className="text-center py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider w-16">STT</th>
                       <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Khách hàng</th>
-                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Liên hệ</th>
-                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">CCCD</th>
+                      <th className="text-center py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Liên hệ</th>
+                      <th className="text-center py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">CCCD</th>
                       <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Địa chỉ</th>
-                      <th className="text-left py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Trạng thái</th>
-                      <th className="text-right py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Thao tác</th>
+                      <th className="text-center py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Trạng thái</th>
+                      <th className="text-center py-3.5 px-4 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -789,44 +792,44 @@ export default function CustomersPage() {
                             {customer.customerphoto && customer.customerphoto.length > 0 ? (
                               <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-                                <User className="w-4 h-4 text-blue-500" />
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                <User className="w-4 h-4 text-slate-500" />
                               </div>
                             )}
                             <span className="font-semibold text-slate-800 capitalize">{customer.name}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-sm text-slate-700">
-                              <Phone className="w-3 h-3 text-slate-400" />
+                        <td className="py-3 px-4 text-center">
+                          <div className="space-y-1 inline-flex flex-col items-center">
+                            <div className="flex items-center gap-2 text-sm text-slate-700 font-semibold font-mono">
+                              <Phone className="w-3 h-3 text-slate-500" />
                               {customer.phone}
                             </div>
                             {customer.facebook && (
-                              <a href={customer.facebook} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-medium">
+                              <a href={customer.facebook} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-semibold">
                                 Facebook
                               </a>
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-mono text-sm text-slate-700">{customer.idcard}</td>
+                        <td className="py-3 px-4 text-center font-semibold font-mono text-sm text-slate-700">{customer.idcard || <span className="text-slate-500 font-normal">—</span>}</td>
                         <td className="py-3 px-4 text-sm text-slate-700">
                           {customer.address ? (
                             <div className="flex items-center gap-2">
-                              <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                              <span className="truncate max-w-[200px]">{customer.address}</span>
+                              <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                              <span className="truncate max-w-[200px] text-slate-700 font-medium">{customer.address}</span>
                             </div>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-500">—</span>
                           )}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 text-center">
                           <Badge className={`${getStatusBadge(customer.status).className} rounded-full`}>
                             {getStatusBadge(customer.status).label}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="flex justify-end gap-2">
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex justify-center gap-2">
                             <Button size="sm" variant="ghost" onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true); }} className="text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg">
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -834,7 +837,7 @@ export default function CustomersPage() {
                               <Pencil className="w-4 h-4" />
                             </Button>
                             {user?.permissions.canDelete && (
-                              <Button size="sm" variant="ghost" onClick={() => handleDelete(customer.id)} className="text-blue-600 hover:text-red-900 hover:bg-blue-50 rounded-lg">
+                              <Button size="sm" variant="ghost" onClick={() => handleDelete(customer.id)} className="text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg">
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             )}
