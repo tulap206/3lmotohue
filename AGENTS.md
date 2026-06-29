@@ -19,3 +19,9 @@
 
 ### Login without a database
 `contexts/auth-context.tsx` tries Supabase first, then **falls back to hardcoded demo users** when Supabase is unreachable. With placeholder env you can still log in: username `admin`, password `admin`. Data-write features (vehicles/customers/rentals) need a real Supabase project to persist.
+
+### Real Supabase credentials (Cursor Cloud secrets) — important gotcha
+This repo's schema (`vehicles`, `customers`, `rentals`, `transactions`, `auth_users`) matches the Supabase project provided via Cursor Cloud secrets, and login + CRUD work end-to-end against it.
+- **The `NEXT_PUBLIC_SUPABASE_URL` secret is currently set to a publishable key (`sb_publishable_...`), not a project URL.** Next.js treats real env vars as higher precedence than `.env.local`, so if you start the dev server with that injected value, `createClient` throws `Invalid URL` and every page breaks.
+- Fix: the URL must be `https://<project-ref>.supabase.co`. The project ref can be recovered from the anon key by base64url-decoding the JWT payload and reading its `ref` field. Either correct the secret value, or override it for the dev process, e.g. `export NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co` before `npm run dev` (and put the same in `.env.local`).
+- The provided `NEXT_PUBLIC_SUPABASE_ANON_KEY` (JWT) and `SUPABASE_SERVICE_ROLE_KEY` are valid; the anon key permits the client-side inserts the app uses.
