@@ -1,5 +1,28 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+
+const BACKUP_PAGE_SIZE = 1000
+
+async function fetchAllRows(supabase: SupabaseClient, table: string) {
+  const rows: Record<string, unknown>[] = []
+
+  for (let from = 0; ; from += BACKUP_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .order("id", { ascending: true })
+      .range(from, from + BACKUP_PAGE_SIZE - 1)
+
+    if (error) throw error
+
+    const page = data || []
+    rows.push(...page)
+
+    if (page.length < BACKUP_PAGE_SIZE) break
+  }
+
+  return rows
+}
 
 export async function GET(request: Request) {
   // 1. Verify Vercel Cron authorization or CRON_SECRET
@@ -18,29 +41,33 @@ export async function GET(request: Request) {
     return new NextResponse("Unauthorized", { status: 401 })
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({
+      success: false,
+      error: "Missing Supabase service-role backup configuration"
+    }, { status: 500 })
+  }
+
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   try {
     console.log("📦 [Auto-Backup] Starting daily backup...")
 
     // 2. Fetch all data from tables
-    const [customersRes, vehiclesRes, rentalsRes] = await Promise.all([
-      supabase.from("customers").select("*"),
-      supabase.from("vehicles").select("*"),
-      supabase.from("rentals").select("*")
+    const [customers, vehicles, rentals] = await Promise.all([
+      fetchAllRows(supabase, "customers"),
+      fetchAllRows(supabase, "vehicles"),
+      fetchAllRows(supabase, "rentals")
     ])
-
-    if (customersRes.error) throw customersRes.error
-    if (vehiclesRes.error) throw vehiclesRes.error
-    if (rentalsRes.error) throw rentalsRes.error
 
     const backupData = {
       timestamp: new Date().toISOString(),
-      customers: customersRes.data || [],
-      vehicles: vehiclesRes.data || [],
-      rentals: rentalsRes.data || [],
+      customers,
+      vehicles,
+      rentals,
     }
 
     // 3. Upload to Supabase Storage
