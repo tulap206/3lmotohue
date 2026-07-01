@@ -22,6 +22,29 @@ interface BackupFile {
   url: string
 }
 
+const BACKUP_PAGE_SIZE = 1000
+
+const fetchAllBackupRows = async (table: string) => {
+  const rows: any[] = []
+
+  for (let from = 0; ; from += BACKUP_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .range(from, from + BACKUP_PAGE_SIZE - 1)
+
+    if (error) throw error
+
+    rows.push(...(data || []))
+
+    if (!data || data.length < BACKUP_PAGE_SIZE) {
+      break
+    }
+  }
+
+  return rows
+}
+
 export default function SettingsPage() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -86,16 +109,18 @@ export default function SettingsPage() {
 
       console.log(`⏰ Đang tiến hành tự động sao lưu ngày ${dateStr}...`)
 
-      // Lấy dữ liệu
-      const { data: customers } = await supabase.from("customers").select("*")
-      const { data: vehicles } = await supabase.from("vehicles").select("*")
-      const { data: rentals } = await supabase.from("rentals").select("*")
+      // Lấy toàn bộ dữ liệu theo trang để tránh giới hạn mặc định của Supabase.
+      const [customers, vehicles, rentals] = await Promise.all([
+        fetchAllBackupRows("customers"),
+        fetchAllBackupRows("vehicles"),
+        fetchAllBackupRows("rentals"),
+      ])
 
       const backupData: BackupData = {
         timestamp: now.toISOString(),
-        customers: customers || [],
-        vehicles: vehicles || [],
-        rentals: rentals || [],
+        customers,
+        vehicles,
+        rentals,
       }
 
       const jsonString = JSON.stringify(backupData, null, 2)
@@ -115,7 +140,7 @@ export default function SettingsPage() {
         displayName: "Hệ thống tự động",
         action: "Sao lưu tự động",
         module: "Hệ thống",
-        details: `Hệ thống tự động sao lưu lúc 17h: ${customers?.length || 0} khách, ${vehicles?.length || 0} xe, ${rentals?.length || 0} đơn`,
+        details: `Hệ thống tự động sao lưu lúc 17h: ${customers.length} khách, ${vehicles.length} xe, ${rentals.length} đơn`,
         timestamp: now.toISOString()
       })
 
@@ -169,29 +194,19 @@ export default function SettingsPage() {
 
       console.log("📦 Starting backup...")
 
-      // Fetch tất cả dữ liệu
-      const { data: customers, error: customersError } = await supabase
-        .from("customers")
-        .select("*")
-
-      const { data: vehicles, error: vehiclesError } = await supabase
-        .from("vehicles")
-        .select("*")
-
-      const { data: rentals, error: rentalsError } = await supabase
-        .from("rentals")
-        .select("*")
-
-      if (customersError || vehiclesError || rentalsError) {
-        throw new Error("Lỗi khi lấy dữ liệu từ Supabase")
-      }
+      // Fetch tất cả dữ liệu theo trang để file backup không bị cắt ở 1000 dòng.
+      const [customers, vehicles, rentals] = await Promise.all([
+        fetchAllBackupRows("customers"),
+        fetchAllBackupRows("vehicles"),
+        fetchAllBackupRows("rentals"),
+      ])
 
       // Tạo backup object
       const backupData: BackupData = {
         timestamp: new Date().toISOString(),
-        customers: customers || [],
-        vehicles: vehicles || [],
-        rentals: rentals || [],
+        customers,
+        vehicles,
+        rentals,
       }
 
       console.log("✅ Backup data created:", backupData)
@@ -211,12 +226,12 @@ export default function SettingsPage() {
 
       // Log to access_logs
       if (user) {
-        logger.log(user.username, user.displayName, "Sao lưu dữ liệu", "settings", `Sao lưu ${customers?.length || 0} khách, ${vehicles?.length || 0} xe, ${rentals?.length || 0} đơn thuê`)
+        logger.log(user.username, user.displayName, "Sao lưu dữ liệu", "settings", `Sao lưu ${customers.length} khách, ${vehicles.length} xe, ${rentals.length} đơn thuê`)
       }
 
       setMessage({ 
         type: 'success', 
-        text: `✅ Sao lưu thành công!\n- ${customers?.length || 0} khách\n- ${vehicles?.length || 0} xe\n- ${rentals?.length || 0} đơn thuê\n\nFile: ${fileName}` 
+        text: `✅ Sao lưu thành công!\n- ${customers.length} khách\n- ${vehicles.length} xe\n- ${rentals.length} đơn thuê\n\nFile: ${fileName}` 
       })
 
       // Reload backup files
