@@ -80,6 +80,19 @@ export const USERS: { username: string; password: string; user: User }[] = [
       },
     },
   },
+  {
+    username: "sang",
+    password: "admin123",
+    user: {
+      id: "4",
+      username: "sang",
+      displayName: "Sang",
+      role: "staff",
+      permissions: {
+        canDelete: false,
+      },
+    },
+  },
 ]
 
 // Get client IP (simplified for demo)
