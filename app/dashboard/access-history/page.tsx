@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,7 +25,8 @@ import {
   Settings,
   RefreshCw,
   Activity,
-  Database
+  Database,
+  Lock,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -60,6 +63,8 @@ const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> 
 }
 
 export default function AccessHistoryPage() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -68,6 +73,15 @@ export default function AccessHistoryPage() {
   const [filterAction, setFilterAction] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
+
+  useEffect(() => {
+    if (!user || user.role !== "admin") {
+      const timer = setTimeout(() => {
+        router.push("/dashboard")
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [user, router])
 
   const loadAccessLogs = useCallback(async (showLoading = true) => {
     try {
@@ -96,6 +110,8 @@ export default function AccessHistoryPage() {
 
   // Load logs from Supabase
   useEffect(() => {
+    if (!user || user.role !== "admin") return
+
     loadAccessLogs(true)
 
     // Subscribe to real-time events for access_logs
@@ -109,7 +125,7 @@ export default function AccessHistoryPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [loadAccessLogs])
+  }, [loadAccessLogs, user])
 
   // Get unique values for filters (filter out empty strings to prevent Select.Item crash)
   const accounts = Array.from(new Set(accessLogs.map(log => log.username))).filter(Boolean) as string[]
@@ -177,6 +193,33 @@ export default function AccessHistoryPage() {
     }
     
     return formattedMainText
+  }
+
+  if (!user) return null
+
+  if (user.role !== "admin") {
+    return (
+      <div className="p-6">
+        <div className="max-w-md mx-auto">
+          <Card className="border-red-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-red-600 flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Không Có Quyền Truy Cập
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-700 mb-4">
+                Bạn không có quyền truy cập lịch sử truy cập. Chỉ Admin mới có thể xem mục này.
+              </p>
+              <p className="text-sm text-red-600">
+                Bạn sẽ được chuyển hướng về Dashboard trong 3 giây...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {

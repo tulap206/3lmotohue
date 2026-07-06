@@ -171,7 +171,9 @@ export function DashboardSidebar({ children }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 py-6 px-3 space-y-3 overflow-visible">
-          {menuItems.map((item) => {
+          {menuItems
+            .filter((item) => user?.role === "admin" || item.href !== "/dashboard/access-history")
+            .map((item) => {
             const isActive = pathname === item.href
             return (
               <Link
@@ -211,20 +213,22 @@ export function DashboardSidebar({ children }: SidebarProps) {
             </button>
           )}
           
-          {/* Settings Link */}
-          <Link
-            href="/dashboard/settings"
-            onClick={() => setMobileOpen(false)}
-            className={cn(
-              "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift",
-              pathname === "/dashboard/settings"
-                ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
-                : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-500"
-            )}
-            title="Cài đặt - Sao lưu & Khôi phục"
-          >
-            <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
-          </Link>
+          {/* Settings Link - Admin only */}
+          {user?.role === "admin" && (
+            <Link
+              href="/dashboard/settings"
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift",
+                pathname === "/dashboard/settings"
+                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                  : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-500"
+              )}
+              title="Cài đặt - Sao lưu & Khôi phục"
+            >
+              <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
+            </Link>
+          )}
           
           {/* Logout Button */}
           <button

@@ -782,6 +782,10 @@ export default function OrdersPage() {
 
   const handleConfirmDelete = async () => {
     if (!orderToDelete) return
+    if (!user?.permissions.canDelete) {
+      alert("❌ Bạn không có quyền xóa dữ liệu")
+      return
+    }
     
     try {
       const { error } = await supabase

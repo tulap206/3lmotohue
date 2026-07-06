@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Download, Upload, AlertCircle, CheckCircle, Trash2, RefreshCw, FileJson } from "lucide-react"
+import { Download, Upload, AlertCircle, CheckCircle, Trash2, RefreshCw, FileJson, Lock } from "lucide-react"
 
 interface BackupData {
   timestamp: string
@@ -23,6 +24,7 @@ interface BackupFile {
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -31,9 +33,10 @@ export default function SettingsPage() {
 
   // Load backup files on mount
   useEffect(() => {
+    if (!user || user.role !== "admin") return
     loadBackupFiles()
     checkAndRunAutoBackup()
-  }, [])
+  }, [user])
 
   // Tự động sao lưu lúc 17h hàng ngày và tự xóa file quá 30 ngày
   const checkAndRunAutoBackup = async () => {
@@ -164,6 +167,11 @@ export default function SettingsPage() {
   // Backup - Export dữ liệu
   const handleBackup = async () => {
     try {
+      if (user?.role !== "admin") {
+        setMessage({ type: "error", text: "❌ Bạn không có quyền sao lưu dữ liệu" })
+        return
+      }
+
       setLoading(true)
       setMessage(null)
 
@@ -416,6 +424,11 @@ export default function SettingsPage() {
   // Delete backup file
   const handleDeleteBackup = async (fileName: string) => {
     try {
+      if (user?.role !== "admin") {
+        setMessage({ type: "error", text: "❌ Bạn không có quyền xóa file sao lưu" })
+        return
+      }
+
       if (!window.confirm(`Xóa file backup "${fileName}"?`)) return
 
       const { error } = await supabase.storage
@@ -430,6 +443,42 @@ export default function SettingsPage() {
       console.error("Delete error:", error)
       setMessage({ type: 'error', text: `❌ Lỗi xóa: ${(error as any).message}` })
     }
+  }
+
+  useEffect(() => {
+    if (!user || user.role !== "admin") {
+      const timer = setTimeout(() => {
+        router.push("/dashboard")
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [user, router])
+
+  if (!user) return null
+
+  if (user.role !== "admin") {
+    return (
+      <div className="p-6">
+        <div className="max-w-md mx-auto">
+          <Card className="border-red-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-red-600 flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Không Có Quyền Truy Cập
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-700 mb-4">
+                Bạn không có quyền truy cập sao lưu và khôi phục. Chỉ Admin mới có thể sử dụng mục này.
+              </p>
+              <p className="text-sm text-red-600">
+                Bạn sẽ được chuyển hướng về Dashboard trong 3 giây...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (

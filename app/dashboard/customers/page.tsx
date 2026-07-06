@@ -547,6 +547,10 @@ export default function CustomersPage() {
 
   const handleConfirmDelete = async () => {
     if (!customerToDelete) return
+    if (!user?.permissions.canDelete) {
+      alert("❌ Bạn không có quyền xóa dữ liệu")
+      return
+    }
     
     try {
       const { error } = await supabase

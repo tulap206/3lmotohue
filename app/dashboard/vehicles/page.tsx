@@ -476,6 +476,11 @@ export default function VehiclesPage() {
   }
 
   const handleDeleteVehicle = async (id: string) => {
+    if (!user?.permissions.canDelete) {
+      alert("❌ Bạn không có quyền xóa dữ liệu")
+      return
+    }
+
     const vehicleToDelete = vehicles.find((v) => v.id === id)
     try {
       const { error } = await supabase
