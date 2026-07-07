@@ -9,9 +9,9 @@ export const QUY79_BUSINESS = {
   ] as const,
   hotline: "0363.077.775 - 0934.924.195",
   hotlineTel: "0363077775",
-  owner: "Phan Lê Tự Lập",
-  representative: "Phan Lê Tự Lập",
-  operators: "Phan Lê Tự Lập",
+  owner: "Dương Phú Lộc",
+  representative: "Dương Phú Lộc",
+  operators: "Dương Phú Lộc",
   bank: {
     name: "VietinBank",
     accountNumber: "109872584102",
