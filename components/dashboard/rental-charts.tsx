@@ -338,7 +338,7 @@ export function RentalIncomeExpenseChart({
       icon={<TrendingUp className="w-4 h-4" />}
       accent="red"
       headerExtra={
-        <div className="flex gap-3 shrink-0 text-right hidden sm:flex">
+        <div className="hidden sm:flex gap-3 shrink-0 text-right">
           <div>
             <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">Thu</p>
             <p className="text-sm font-bold text-emerald-700 tabular-nums">{formatPrice(totalIncome)}</p>
