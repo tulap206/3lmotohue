@@ -47,13 +47,12 @@ export function MonthlyRevenueChart({
       icon={<TrendingUp className="w-4 h-4" />}
       accent="red"
       headerExtra={
-        <div className="text-right shrink-0 hidden sm:block">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tổng kỳ</p>
-          <p className="text-sm font-bold text-blue-700 tabular-nums">{formatPrice(total)}</p>
+        <div className="flex flex-wrap items-center gap-x-2.5 text-xs text-slate-500">
+          <span className="font-semibold text-blue-700">Tổng kỳ: {formatPrice(total)}</span>
           {peak.revenue > 0 && (
-            <p className="text-xs text-slate-500 mt-0.5">
-              Cao nhất: <span className="font-semibold text-slate-700">{peak.month}</span>
-            </p>
+            <span className="text-[11px]">
+              (Cao nhất: <span className="font-semibold text-slate-700">{peak.month}</span>)
+            </span>
           )}
         </div>
       }
@@ -130,10 +129,7 @@ export function RentalStatusChart({ data }: { data: StatusDatum[] }) {
       icon={<TrendingUp className="w-4 h-4" />}
       accent="red"
       headerExtra={
-        <div className="text-right shrink-0 hidden sm:block">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tổng đơn</p>
-          <p className="text-sm font-bold text-blue-700 tabular-nums">{total}</p>
-        </div>
+        <span className="text-xs font-semibold text-blue-700">Tổng đơn: {total}</span>
       }
     >
       <div className="flex flex-col gap-4 flex-1">
@@ -231,10 +227,7 @@ export function RentalFleetChart({ data }: { data: StatusDatum[] }) {
       icon={<TrendingUp className="w-4 h-4" />}
       accent="red"
       headerExtra={
-        <div className="text-right shrink-0 hidden sm:block">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tổng xe</p>
-          <p className="text-sm font-bold text-blue-700 tabular-nums">{total}</p>
-        </div>
+        <span className="text-xs font-semibold text-blue-700">Tổng xe: {total}</span>
       }
     >
       <div className="flex flex-col gap-4 flex-1">
@@ -338,15 +331,9 @@ export function RentalIncomeExpenseChart({
       icon={<TrendingUp className="w-4 h-4" />}
       accent="red"
       headerExtra={
-        <div className="flex gap-4 sm:gap-3 text-left sm:text-right ml-11 sm:ml-0 mt-1.5 sm:mt-0">
-          <div>
-            <p className="text-[10px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-wide">Thu</p>
-            <p className="text-xs sm:text-sm font-bold text-emerald-700 tabular-nums">{formatPrice(totalIncome)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] sm:text-xs font-semibold text-amber-600 uppercase tracking-wide">Chi</p>
-            <p className="text-xs sm:text-sm font-bold text-amber-700 tabular-nums">{formatPrice(totalExpense)}</p>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
+          <span>Thu: <span className="font-bold text-emerald-700">{formatPrice(totalIncome)}</span></span>
+          <span>Chi: <span className="font-bold text-amber-700">{formatPrice(totalExpense)}</span></span>
         </div>
       }
     >
