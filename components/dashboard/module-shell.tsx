@@ -161,7 +161,8 @@ export function ModuleKpiCard({
       <Card
         className={cn(
           "metric-card card-animate module-card bg-white min-w-0 overflow-hidden",
-          onClick && ["cursor-pointer", ACCENT_KPI_HOVER_CLASS[accent]]
+          onClick && ["cursor-pointer", ACCENT_KPI_HOVER_CLASS[accent]],
+          label === "Quá hạn" && "animate-pulse-red-glow"
         )}
         style={{ animationDelay: `${delay * 60}ms` }}
         onClick={onClick}
