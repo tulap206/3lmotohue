@@ -2,17 +2,10 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
 export async function GET(request: Request) {
-  // 1. Verify Vercel Cron authorization or CRON_SECRET
+  // 1. Verify Vercel Cron authorization via the configured bearer token.
   const authHeader = request.headers.get("authorization")
-  const url = new URL(request.url)
-  const secretParam = url.searchParams.get("secret")
-  
-  const isAuthorized = 
-    authHeader === `Bearer ${process.env.CRON_SECRET}` || 
-    (process.env.CRON_SECRET && secretParam === process.env.CRON_SECRET) ||
-    request.headers.get("x-vercel-cron") === "true" || // Vercel standard cron header
-    url.hostname === "localhost" || // Allow local testing
-    url.hostname === "127.0.0.1"
+  const cronSecret = process.env.CRON_SECRET?.trim()
+  const isAuthorized = Boolean(cronSecret) && authHeader === `Bearer ${cronSecret}`
 
   if (!isAuthorized) {
     return new NextResponse("Unauthorized", { status: 401 })
