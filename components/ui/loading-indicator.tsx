@@ -25,7 +25,7 @@ export function LoadingIndicator({
   return (
     <div className={container}>
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className={`${iconSize} text-blue-500 spinner`} />
+        <Loader2 className={`${iconSize} text-red-500 spinner`} />
         {message && (
           <p className={`${textSize} text-slate-600 font-medium`}>
             {message}
@@ -49,7 +49,7 @@ export function LoadingOverlay() {
 export function InlineLoader({ message = "Đang tải..." }: { message?: string }) {
   return (
     <div className="flex items-center gap-2">
-      <Loader2 className="w-4 h-4 text-blue-500 spinner" />
+      <Loader2 className="w-4 h-4 text-red-500 spinner" />
       <span className="text-sm text-slate-600">{message}</span>
     </div>
   )

@@ -6,20 +6,29 @@ import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchVehicles, fetchRentals } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
+import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard } from "@/components/dashboard/module-shell"
+import {
+  RentalKpiCard,
+  rentalTableHeadClass,
+  rentalFilterInputClass,
+  getRentalVehicleStatusLabel,
+  rentalVehicleStatusBadgeClass,
+} from "@/components/dashboard/rental-ui"
+import { cn } from "@/lib/utils"
+import {
+  EntityFormDialogContent,
+  EntityFormHeader,
+  EntityFormBody,
+  EntityFormSection,
+  EntityFormFooter,
+} from "@/components/dashboard/entity-form-dialog"
+import { formatDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog } from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -27,14 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, ImageIcon } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, ImageIcon, Settings } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
 type VehicleStatus = "available" | "rented" | "maintenance"
@@ -175,8 +176,8 @@ export default function VehiclesPage() {
   const loadVehicles = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true)
     try {
-      // Check if user is demo account (demo)
-      const isDemoAccount = user?.username === "demo"
+      // Check if user is demo account (quy79)
+      const isDemoAccount = user?.username === "quy79"
 
       if (isDemoAccount) {
         setVehicles([])
@@ -213,7 +214,7 @@ export default function VehiclesPage() {
           const startDate = parseVietnamDate(rental.startDate)
           const lastName = rental.customerName.split(/\s+/).pop() || ""
           const cleanPlate = rental.licensePlate.replace(/[\s-]/g, "").toUpperCase()
-          const dateFormatted = startDate.toLocaleDateString("vi-VN").replace(/\//g, "")
+          const dateFormatted = formatDisplayDate(startDate).replace(/\//g, "")
           const code = `${lastName}-${cleanPlate}-${dateFormatted}`
           
           return { ...rental, rentalCode: code }
@@ -267,6 +268,13 @@ export default function VehiclesPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
+
+  const vehicleStats = {
+    total: vehicles.length,
+    available: vehicles.filter((v) => v.status === "available").length,
+    rented: vehicles.filter((v) => v.status === "rented").length,
+    maintenance: vehicles.filter((v) => v.status === "maintenance").length,
+  }
 
   const handleAddVehicle = async () => {
     if (!newVehicle.name || !newVehicle.name.trim()) {
@@ -476,11 +484,6 @@ export default function VehiclesPage() {
   }
 
   const handleDeleteVehicle = async (id: string) => {
-    if (!user?.permissions.canDelete) {
-      alert("❌ Bạn không có quyền xóa dữ liệu")
-      return
-    }
-
     const vehicleToDelete = vehicles.find((v) => v.id === id)
     try {
       const { error } = await supabase
@@ -542,7 +545,7 @@ export default function VehiclesPage() {
         timestamp: purchaseDate,
         description: "Mua xe",
         type: "rent",
-        datetime: purchaseDate.toLocaleString("vi-VN"),
+        datetime: formatDisplayDateTime(purchaseDate),
       })
     }
     
@@ -556,7 +559,7 @@ export default function VehiclesPage() {
         timestamp: bookingDate,
         description: `Đặt xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
         type: "rent",
-        datetime: bookingDate.toLocaleString("vi-VN"),
+        datetime: formatDisplayDateTime(bookingDate),
       })
       
       // Add vehicle receiving (received_at or use startDate)
@@ -567,7 +570,7 @@ export default function VehiclesPage() {
           timestamp: receivingDate,
           description: `Nhận lại xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
           type: "rent",
-          datetime: receivingDate.toLocaleString("vi-VN"),
+          datetime: formatDisplayDateTime(receivingDate),
         })
       }
       
@@ -579,7 +582,7 @@ export default function VehiclesPage() {
           timestamp: returnDate,
           description: `Trả xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
           type: "return",
-          datetime: returnDate.toLocaleString("vi-VN"),
+          datetime: formatDisplayDateTime(returnDate),
         })
       }
     })
@@ -594,31 +597,93 @@ export default function VehiclesPage() {
     return price.toLocaleString("vi-VN") + " đ"
   }
 
+  const getVehiclePerformance = (vehicleId: string) => {
+    const today = new Date()
+    today.setHours(0,0,0,0)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(today.getDate() - 30)
+    thirtyDaysAgo.setHours(0,0,0,0)
+
+    // Filter orders for this vehicle in active or completed status
+    const vehicleOrders = (orders || []).filter(o => o.vehicleId === vehicleId && o.status !== "cancelled" && o.status !== "pending")
+
+    let rentedDays = 0
+    let totalRevenue30d = 0
+
+    vehicleOrders.forEach(o => {
+      const parseVietnamDate = (dateStr: string): Date => {
+        if (!dateStr) return new Date()
+        const parts = dateStr.split("/")
+        if (parts.length === 3) {
+          return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+        }
+        return new Date(dateStr)
+      }
+
+      const start = parseVietnamDate(o.startDate)
+      const end = parseVietnamDate(o.endDate)
+      start.setHours(0,0,0,0)
+      end.setHours(0,0,0,0)
+
+      const overlapStart = start < thirtyDaysAgo ? thirtyDaysAgo : start
+      const overlapEnd = end > today ? today : end
+
+      if (overlapStart <= overlapEnd) {
+        const diffTime = overlapEnd.getTime() - overlapStart.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+        rentedDays += diffDays
+        
+        const dailyRate = o.pricePerDay || 0
+        totalRevenue30d += diffDays * dailyRate
+      }
+    })
+
+    if (rentedDays > 30) rentedDays = 30
+    const utilizationRate = Math.round((rentedDays / 30) * 100)
+
+    return { utilizationRate, revenue30d: totalRevenue30d }
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-800">Quản lý xe</h1>
-          <p className="text-gray-500 text-sm">Quản lý danh sách xe cho thuê của cửa hàng</p>
-        </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+    <ModulePageShell module="rental">
+      <ModuleSubpageHeader
+        module="rental"
+        title="Quản lý xe"
+        subtitle="Quản lý danh sách xe cho thuê của cửa hàng"
+        breadcrumbs={[
+          { label: "Cho thuê xe", href: "/dashboard" },
+          { label: "Quản lý xe" },
+        ]}
+        actions={
+          <Button
+            className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Thêm xe mới
+          </Button>
+        }
+      />
+
+      <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
         if (!lightboxImage) {
           setIsAddDialogOpen(open)
         }
       }}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl">
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm xe mới
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-white border-slate-100 rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Thêm xe mới</DialogTitle>
-              <DialogDescription>Nhập thông tin xe mới vào hệ thống</DialogDescription>
-            </DialogHeader>
-            <div className="form-group py-4">
+        <EntityFormDialogContent accent="blue" maxWidth="2xl">
+          <EntityFormHeader
+            title="Thêm xe mới"
+            description="Nhập thông tin xe mới vào hệ thống"
+          />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleAddVehicle()
+            }}
+          >
+            <EntityFormBody>
+              <EntityFormSection title="Thông tin xe" description="Thông tin cơ bản và giá thuê">
+            <div className="form-group">
               <div className="form-row">
                 <div className="form-field">
                   <Label htmlFor="name" className="form-field-label">Loại xe</Label>
@@ -810,37 +875,63 @@ export default function VehiclesPage() {
                   </label>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="rounded-lg border-slate-200 hover:bg-slate-50">
-                Hủy
-              </Button>
-              <Button onClick={handleAddVehicle} className="bg-blue-600 text-white hover:bg-blue-700 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-                Thêm xe
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              </div>
+              </EntityFormSection>
+            </EntityFormBody>
+            <EntityFormFooter
+              accent="blue"
+              onCancel={() => setIsAddDialogOpen(false)}
+              submitLabel="Thêm xe"
+            />
+          </form>
+        </EntityFormDialogContent>
+      </Dialog>
 
-      {/* Filters */}
-      <Card className="bg-white border-0 card-shadow rounded-2xl">
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <RentalKpiCard label="Tổng số xe" value={vehicleStats.total} sublabel={`${filteredVehicles.length} đang lọc`} />
+          <RentalKpiCard
+            label="Sẵn sàng"
+            value={vehicleStats.available}
+            sublabel="Có thể cho thuê"
+            valueClassName="text-emerald-700"
+            onClick={() => setStatusFilter("available")}
+          />
+          <RentalKpiCard
+            label="Đang thuê"
+            value={vehicleStats.rented}
+            sublabel="Xe đang cho khách"
+            valueClassName="text-sky-700"
+            onClick={() => setStatusFilter("rented")}
+          />
+          <RentalKpiCard
+            label="Bảo trì"
+            value={vehicleStats.maintenance}
+            sublabel="Tạm ngừng cho thuê"
+            valueClassName="text-amber-700"
+            onClick={() => setStatusFilter("maintenance")}
+          />
+        </div>
+
+      <ModuleSectionCard
+        title="Danh sách xe"
+        description={`Quản lý ${filteredVehicles.length} xe cho thuê`}
+        filters={
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
-                placeholder="Tìm kiếm theo loại xe hoặc biển số..."
+                placeholder="Tên xe, biển số..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-50 border-gray-200 rounded-xl"
+                className={cn(rentalFilterInputClass, "pl-9")}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48 bg-gray-50 border-gray-200 rounded-xl">
-                <SelectValue placeholder="Lọc theo trạng thái" />
+              <SelectTrigger className="w-full md:w-48 h-9 rounded-xl border-slate-200 text-sm bg-white">
+                <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-gray-200 rounded-xl">
+              <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="available">Sẵn sàng</SelectItem>
                 <SelectItem value="rented">Đang thuê</SelectItem>
@@ -848,236 +939,176 @@ export default function VehiclesPage() {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Vehicles List */}
-      <Card className="bg-white border-0 card-shadow rounded-2xl">
-        <CardHeader className="bg-white border-b border-slate-100 pt-6 pb-4 px-6">
-          <CardTitle className="text-slate-800 font-bold tracking-tight text-lg">Danh sách xe</CardTitle>
-          <CardDescription className="text-xs md:text-sm text-slate-500">
-            Hiển thị {filteredVehicles.length} / {vehicles.length} xe
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        }
+      >
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <Car className="w-12 h-12 mb-3 opacity-50 animate-pulse" />
-              <p>Đang tải dữ liệu xe...</p>
+            <div className="text-center py-12">
+              <Car className="w-12 h-12 text-slate-200 mx-auto mb-2 animate-pulse" />
+              <p className="text-slate-400 text-sm">Đang tải dữ liệu xe...</p>
             </div>
           ) : filteredVehicles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-              <Car className="w-12 h-12 mb-3 opacity-50" />
-              <p>Không tìm thấy xe nào</p>
+            <div className="text-center py-12">
+              <Car className="w-12 h-12 text-slate-200 mx-auto mb-2" />
+              <p className="text-slate-400 text-sm">Không tìm thấy xe nào</p>
             </div>
           ) : (
             <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block rounded-xl border border-gray-100 overflow-hidden">
-                <Table className="table-striped">
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
-                      <TableHead className="w-16 text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">STT</TableHead>
-                      <TableHead className="text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Loại xe</TableHead>
-                      <TableHead className="text-right font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Giá thuê/ngày</TableHead>
-                      <TableHead className="text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Trạng thái</TableHead>
-                      <TableHead className="text-center w-48 font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedVehicles.map((vehicle, index) => (
-                      <TableRow key={vehicle.id} className="table-row-hover transition-all duration-200">
-                        <TableCell className="table-cell-enhanced text-center text-slate-500 font-medium">
-                          {(currentPage - 1) * itemsPerPage + index + 1}
-                        </TableCell>
-                        <TableCell className="table-cell-enhanced text-center py-3">
-                          <div className="font-semibold text-slate-800 capitalize leading-normal">{vehicle.name}</div>
-                          <div className="text-xs text-slate-500 font-mono mt-1 leading-normal">{vehicle.licensePlate}</div>
-                        </TableCell>
-                        <TableCell className="table-cell-enhanced text-right text-slate-800 font-semibold font-mono text-xs">
-                          {formatPrice(vehicle.pricePerDay)}
-                        </TableCell>
-                        <TableCell className="table-cell-status text-center">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusConfig[vehicle.status].className}`}
-                          >
-                            {statusConfig[vehicle.status].label}
-                          </span>
-                        </TableCell>
-                        <TableCell className="table-cell-status text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="table-action-btn h-8 w-8 text-slate-500 hover:text-amber-500 hover:bg-amber-50"
-                              onClick={() => openHistoryDialog(vehicle)}
-                              title="Lịch sử bảo trì"
-                            >
-                              <Clock className="h-4 w-4" />
-                              <span className="sr-only">Lịch sử</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="table-action-btn h-8 w-8 text-slate-500 hover:text-emerald-500 hover:bg-emerald-50"
-                              onClick={() => openDetailDialog(vehicle)}
-                              title="Chi tiết"
-                            >
-                              <Eye className="h-4 w-4" />
-                              <span className="sr-only">Chi tiết</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="table-action-btn h-8 w-8 text-slate-500 hover:text-blue-500 hover:bg-blue-50"
-                              onClick={() => openEditDialog(vehicle)}
-                              title="Sửa"
-                            >
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Sửa</span>
-                            </Button>
-                            {user?.permissions.canDelete && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="table-action-btn h-8 w-8 text-slate-500 hover:text-blue-500 hover:bg-blue-50"
-                                    title="Xóa"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Xóa</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="bg-white border-gray-200 rounded-2xl">
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle className="text-gray-800">Xác nhận xóa xe</AlertDialogTitle>
-                                    <AlertDialogDescription className="text-gray-500">
-                                      Bạn có chắc chắn muốn xóa xe <span className="font-medium text-gray-800">{vehicle.name}</span> ({vehicle.licensePlate})? 
-                                      Hành động này không thể hoàn tác.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel className="border-gray-200 rounded-xl">Hủy</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteVehicle(vehicle.id)}
-                                      className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
+              <ModuleResponsiveTable
+                desktop={
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
+                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
+                        <th className={rentalTableHeadClass}>Loại xe</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Giá thuê/ngày</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Hiệu suất (30 ngày)</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Trạng thái</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                      {paginatedVehicles.map((vehicle, index) => (
+                        <tr key={vehicle.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span className="font-semibold text-slate-800 capitalize block">{vehicle.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">{vehicle.licensePlate}</span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right text-blue-600 font-semibold font-mono text-xs tabular-nums">
+                            {formatPrice(vehicle.pricePerDay)}
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            {(() => {
+                              const { utilizationRate, revenue30d } = getVehiclePerformance(vehicle.id)
+                              let badgeColor = "text-slate-500 bg-slate-50 border-slate-100"
+                              if (utilizationRate >= 70) {
+                                badgeColor = "text-emerald-700 bg-emerald-50 border-emerald-100"
+                              } else if (utilizationRate >= 30) {
+                                badgeColor = "text-amber-700 bg-amber-50 border-amber-100"
+                              } else if (utilizationRate > 0) {
+                                badgeColor = "text-rose-700 bg-rose-50 border-rose-100"
+                              }
+                              return (
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                                    Lấp đầy: {utilizationRate}%
+                                  </span>
+                                  {revenue30d > 0 && (
+                                    <span className="text-[10px] font-mono text-slate-500 font-semibold tabular-nums">
+                                      {revenue30d.toLocaleString("vi-VN")} đ
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            })()}
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
+                              {getRentalVehicleStatusLabel(vehicle.status)}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg"
+                                onClick={() => openHistoryDialog(vehicle)}
+                                title="Lịch sử bảo trì"
+                              >
+                                <Clock className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+                                onClick={() => openDetailDialog(vehicle)}
+                                title="Chi tiết"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+                                onClick={() => openEditDialog(vehicle)}
+                                title="Chỉnh sửa"
+                              >
+                                <Settings className="w-3.5 h-3.5" />
+                              </Button>
+                              {user?.permissions.canDelete && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50"
+                                      title="Xóa"
                                     >
-                                      Xóa
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Card View (Refactored to Card-based List) */}
-              <div className="md:hidden space-y-4">
-                {paginatedVehicles.map((vehicle) => (
-                  <div 
-                    key={vehicle.id} 
-                    className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-3 shadow-sm"
-                  >
-                    {/* Header: Name and Status */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-slate-800 text-sm truncate capitalize">{vehicle.name}</h3>
-                        <p className="text-xs text-slate-400 font-mono mt-0.5">{vehicle.licensePlate}</p>
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent className="bg-white border-gray-200 rounded-2xl">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle className="text-gray-800">Xác nhận xóa xe</AlertDialogTitle>
+                                      <AlertDialogDescription className="text-gray-500">
+                                        Bạn có chắc chắn muốn xóa xe <span className="font-medium text-gray-800">{vehicle.name}</span> ({vehicle.licensePlate})?
+                                        Hành động này không thể hoàn tác.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel className="border-gray-200 rounded-xl">Hủy</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteVehicle(vehicle.id)}
+                                        className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
+                                      >
+                                        Xóa
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                }
+                mobile={paginatedVehicles.map((vehicle) => (
+                  <ModuleMobileCard key={vehicle.id}>
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <p className="font-semibold text-slate-800">{vehicle.name}</p>
+                        <p className="text-xs text-slate-500 font-mono">{vehicle.licensePlate}</p>
                       </div>
-                      <span
-                        className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusConfig[vehicle.status].className}`}
-                      >
-                        {statusConfig[vehicle.status].label}
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
+                        {getRentalVehicleStatusLabel(vehicle.status)}
                       </span>
                     </div>
-
-                    {/* Details: Price and details */}
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100/50 text-xs">
-                      <div>
-                        <span className="text-slate-400">Giá thuê/ngày:</span>
-                        <p className="font-semibold text-slate-800 mt-0.5 font-mono">{formatPrice(vehicle.pricePerDay)}</p>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Màu xe:</span>
-                        <p className="font-semibold text-slate-800 mt-0.5">{vehicle.color || "—"}</p>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-blue-600 tabular-nums">{formatPrice(vehicle.pricePerDay)}/ngày</span>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)}>
+                          <Clock className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)}>
+                          <Eye className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)}>
+                          <Settings className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Action buttons (Easy to tap, stretched) */}
-                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100/50">
-                      <Button
-                        type="button"
-                        onClick={() => openDetailDialog(vehicle)}
-                        variant="outline"
-                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        Chi tiết
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => openEditDialog(vehicle)}
-                        variant="outline"
-                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Sửa xe
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => openHistoryDialog(vehicle)}
-                        variant="outline"
-                        className="h-9 rounded-xl border-slate-200 text-xs text-slate-700 font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5"
-                      >
-                        <Clock className="h-3.5 w-3.5" />
-                        Lịch sử
-                      </Button>
-                      {user?.permissions.canDelete && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="h-9 rounded-xl border-red-100 text-xs text-red-600 font-semibold hover:bg-red-50 hover:border-red-200 flex items-center justify-center gap-1.5"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Xoá xe
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-white border-gray-200 rounded-2xl mx-4">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="text-gray-800">Xác nhận xóa xe</AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-500 text-xs">
-                                Bạn có chắc chắn muốn xóa xe <span className="font-medium text-gray-800">{vehicle.name}</span> ({vehicle.licensePlate})? 
-                                Hành động này không thể hoàn tác.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="mt-4 gap-2">
-                              <AlertDialogCancel className="border-gray-200 rounded-xl text-xs h-9">Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteVehicle(vehicle.id)}
-                                className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl text-xs h-9"
-                              >
-                                Xóa
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
-                  </div>
+                  </ModuleMobileCard>
                 ))}
-              </div>
-
-              {/* Phân trang */}
+              />
               {totalPages > 1 && (
-                <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t">
-                  <span className="text-xs text-gray-500 mr-2">
+                <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
+                  <span className="text-xs text-slate-500 mr-2">
                     Trang {currentPage} / {totalPages}
                   </span>
                   <Button
@@ -1085,7 +1116,7 @@ export default function VehiclesPage() {
                     disabled={currentPage === 1}
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs border-gray-200 rounded-xl"
+                    className="h-8 text-xs border-slate-200 rounded-xl"
                   >
                     Trước
                   </Button>
@@ -1094,7 +1125,7 @@ export default function VehiclesPage() {
                     disabled={currentPage === totalPages}
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs border-gray-200 rounded-xl"
+                    className="h-8 text-xs border-slate-200 rounded-xl"
                   >
                     Tiếp
                   </Button>
@@ -1103,7 +1134,8 @@ export default function VehiclesPage() {
             </>
           )}
         </CardContent>
-      </Card>
+      </ModuleSectionCard>
+      </div>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
@@ -1111,13 +1143,20 @@ export default function VehiclesPage() {
           setIsEditDialogOpen(open)
         }
       }}>
-        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-gray-800">Chỉnh sửa thông tin xe</DialogTitle>
-            <DialogDescription className="text-gray-500">Cập nhật thông tin xe trong hệ thống</DialogDescription>
-          </DialogHeader>
+        <EntityFormDialogContent accent="blue" maxWidth="2xl">
+          <EntityFormHeader
+            title="Chỉnh sửa thông tin xe"
+            description="Cập nhật thông tin xe trong hệ thống"
+          />
           {editingVehicle && (
-            <div className="grid gap-4 py-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleEditVehicle()
+              }}
+            >
+              <EntityFormBody>
+            <div className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-name" className="text-gray-600">Loại xe</Label>
@@ -1316,16 +1355,15 @@ export default function VehiclesPage() {
                 </div>
               </div>
             </div>
+              </EntityFormBody>
+              <EntityFormFooter
+                accent="blue"
+                onCancel={() => setIsEditDialogOpen(false)}
+                submitLabel="Lưu thay đổi"
+              />
+            </form>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl border-gray-200">
-              Hủy
-            </Button>
-            <Button onClick={handleEditVehicle} className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl">
-              Lưu thay đổi
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        </EntityFormDialogContent>
       </Dialog>
 
       {/* Detail Dialog */}
@@ -1334,14 +1372,11 @@ export default function VehiclesPage() {
           setIsDetailDialogOpen(open)
         }
       }}>
-        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-gray-800 flex items-center gap-2">
-              <Eye className="w-5 h-5 text-blue-600" />
-              Chi tiết xe
-            </DialogTitle>
-            <DialogDescription className="text-gray-500">Thông tin chi tiết của xe trong hệ thống</DialogDescription>
-          </DialogHeader>
+        <EntityFormDialogContent accent="blue" maxWidth="2xl">
+          <EntityFormHeader
+            title="Chi tiết xe"
+            description="Thông tin chi tiết của xe trong hệ thống"
+          />
           {viewingVehicle && (
             <div className="py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1401,6 +1436,60 @@ export default function VehiclesPage() {
                 </div>
               </div>
 
+              {/* #10 Enhanced performance stats */}
+              {(() => {
+                const vId = viewingVehicle.id
+                const parseVN = (s: string): Date => {
+                  const parts = s?.split("/")
+                  if (parts?.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+                  return new Date(s || 0)
+                }
+                const calcUtil = (days: number) => {
+                  const today = new Date(); today.setHours(0,0,0,0)
+                  const from = new Date(); from.setDate(today.getDate() - days); from.setHours(0,0,0,0)
+                  const vOrders = orders.filter(o => o.vehicleId === vId && o.status !== "cancelled" && o.status !== "pending")
+                  let rented = 0; let rev = 0
+                  vOrders.forEach(o => {
+                    const s = parseVN(o.startDate); const e = parseVN(o.endDate)
+                    const os = s < from ? from : s; const oe = e > today ? today : e
+                    if (os <= oe) {
+                      const d = Math.ceil((oe.getTime() - os.getTime()) / 86400000) + 1
+                      rented += d; rev += d * (o.pricePerDay || 0)
+                    }
+                  })
+                  if (rented > days) rented = days
+                  return { pct: Math.round((rented / days) * 100), rev }
+                }
+                const u30 = calcUtil(30); const u60 = calcUtil(60); const u90 = calcUtil(90)
+                const totalRevAccum = orders.filter(o => o.vehicleId === vId && o.status === "completed")
+                  .reduce((s: number, o: any) => s + (o.revenue || o.totalPrice || 0), 0)
+                const totalRentalCount = orders.filter(o => o.vehicleId === vId).length
+                return (
+                  <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hiệu suất khai thác</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[{ label: "30 ngày", data: u30 }, { label: "60 ngày", data: u60 }, { label: "90 ngày", data: u90 }].map(({ label, data }) => (
+                        <div key={label} className="bg-slate-50 rounded-xl p-3 text-center">
+                          <p className="text-xs text-slate-500">{label}</p>
+                          <p className={`text-lg font-extrabold tabular-nums ${data.pct >= 70 ? "text-emerald-600" : data.pct >= 40 ? "text-amber-600" : "text-red-500"}`}>{data.pct}%</p>
+                          <p className="text-[10px] text-slate-400 font-mono">{data.rev.toLocaleString("vi-VN")}đ</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-emerald-50 rounded-xl p-3">
+                        <p className="text-xs text-emerald-600">Tổng doanh thu lũy kế</p>
+                        <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{totalRevAccum.toLocaleString("vi-VN")}đ</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <p className="text-xs text-slate-500">Tổng số đơn thuê</p>
+                        <p className="text-sm font-extrabold text-slate-700">{totalRentalCount} đơn</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Vehicle Images */}
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="text-xs text-gray-500 mb-3">Ảnh xe</p>
@@ -1454,7 +1543,7 @@ export default function VehiclesPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-gray-100">
             <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)} className="rounded-xl border-gray-200">
               Đóng
             </Button>
@@ -1468,22 +1557,17 @@ export default function VehiclesPage() {
               <Pencil className="w-4 h-4 mr-2" />
               Chỉnh sửa
             </Button>
-          </DialogFooter>
-        </DialogContent>
+          </div>
+        </EntityFormDialogContent>
       </Dialog>
 
       {/* History Dialog */}
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-card-foreground flex items-center gap-2">
-              <Clock className="w-5 h-5 text-chart-4" />
-              Lịch sử xe
-            </DialogTitle>
-            <DialogDescription>
-              {historyVehicle ? `${historyVehicle.name} - ${historyVehicle.licensePlate}` : ""}
-            </DialogDescription>
-          </DialogHeader>
+        <EntityFormDialogContent accent="blue" maxWidth="2xl" className="overflow-hidden flex flex-col max-h-[80vh]">
+          <EntityFormHeader
+            title="Lịch sử xe"
+            description={historyVehicle ? `${historyVehicle.name} - ${historyVehicle.licensePlate}` : "Hoạt động cho thuê và bảo trì"}
+          />
           <div className="flex-1 overflow-y-auto py-4">
             {historyVehicle && (
               <div className="space-y-4">
@@ -1519,12 +1603,12 @@ export default function VehiclesPage() {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)}>
+          <div className="flex justify-end pt-4 border-t border-gray-100">
+            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="rounded-xl">
               Đóng
             </Button>
-          </DialogFooter>
-        </DialogContent>
+          </div>
+        </EntityFormDialogContent>
       </Dialog>
 
       {/* Lightbox Modal */}
@@ -1534,6 +1618,6 @@ export default function VehiclesPage() {
           onClose={() => setLightboxImage(null)} 
         />
       )}
-    </div>
+    </ModulePageShell>
   )
 }

@@ -1,5 +1,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { ACCENT_BTN_CLASS, type ModuleAccent } from "@/lib/module-theme"
 
 interface EmptyStateProps {
   icon?: React.ReactNode
@@ -10,6 +12,7 @@ interface EmptyStateProps {
     onClick: () => void
   }
   size?: "sm" | "md" | "lg"
+  accent?: ModuleAccent
 }
 
 export function EmptyState({
@@ -18,6 +21,7 @@ export function EmptyState({
   description,
   action,
   size = "md",
+  accent = "red",
 }: EmptyStateProps) {
   const containerSize =
     size === "sm" ? "py-12 px-6" : size === "lg" ? "py-24 px-8" : "py-16 px-6"
@@ -51,7 +55,7 @@ export function EmptyState({
       {action && (
         <Button
           onClick={action.onClick}
-          className="bg-blue-500 hover:bg-blue-600 text-white transition-all"
+          className={cn(ACCENT_BTN_CLASS[accent], "transition-all")}
         >
           {action.label}
         </Button>
@@ -64,10 +68,12 @@ export function EmptyTable({
   title = "Không có dữ liệu",
   description = "Chưa có dữ liệu để hiển thị. Hãy tạo mới hoặc import dữ liệu.",
   action,
+  accent = "red",
 }: {
   title?: string
   description?: string
   action?: { label: string; onClick: () => void }
+  accent?: ModuleAccent
 }) {
   return (
     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
@@ -76,6 +82,7 @@ export function EmptyTable({
         description={description}
         action={action}
         size="md"
+        accent={accent}
       />
     </div>
   )

@@ -1,26 +1,96 @@
 import { supabase } from './supabase'
 
+// Development logging - only logs in development mode
+const isDev = typeof window !== 'undefined' && process.env.NODE_ENV === 'development'
+
+const devLog = (level: string, ...args: any[]) => {
+  if (isDev) {
+    const timestamp = new Date().toLocaleTimeString('vi-VN')
+    switch(level) {
+      case 'info':
+        console.log(`[${timestamp}]`, ...args)
+        break
+      case 'error':
+        console.error(`[${timestamp}]`, ...args)
+        break
+      case 'warn':
+        console.warn(`[${timestamp}]`, ...args)
+        break
+      case 'debug':
+        console.debug(`[${timestamp}]`, ...args)
+        break
+    }
+  }
+}
+
+// Get client IP
+const getClientIP = async () => {
+  try {
+    return 'Client'
+  } catch (err) {
+    return 'Unknown'
+  }
+}
+
+// Get device info from user agent
+const getDeviceInfo = () => {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+  let device = 'Unknown'
+
+  if (/Mobile|Android|iPhone/.test(ua)) device = 'Mobile'
+  else if (/iPad|Tablet/.test(ua)) device = 'Tablet'
+  else device = 'Desktop'
+
+  let os = 'Unknown'
+  if (/Windows/.test(ua)) os = 'Windows'
+  else if (/Mac/.test(ua)) os = 'macOS'
+  else if (/Linux/.test(ua)) os = 'Linux'
+  else if (/Android/.test(ua)) os = 'Android'
+  else if (/iPhone|iPad/.test(ua)) os = 'iOS'
+
+  let browser = 'Unknown'
+  if (/Chrome/.test(ua)) browser = 'Chrome'
+  else if (/Safari/.test(ua)) browser = 'Safari'
+  else if (/Firefox/.test(ua)) browser = 'Firefox'
+  else if (/Edge/.test(ua)) browser = 'Edge'
+
+  return { device, os, browser, userAgent: ua }
+}
+
 /**
  * Central logging utility - logs all user activities to Supabase access_logs table
+ * Development logs only output in development mode (NODE_ENV=development)
  */
 export const logger = {
+  // Development-only logging
+  info: (...args: any[]) => devLog('info', ...args),
+  error: (...args: any[]) => devLog('error', ...args),
+  warn: (...args: any[]) => devLog('warn', ...args),
+  debug: (...args: any[]) => devLog('debug', ...args),
+
   async log(username: string, displayName: string, action: string, module: string, details: string) {
     try {
+      const ipAddress = await getClientIP()
+      const deviceInfo = getDeviceInfo()
+      const deviceStr = `${deviceInfo.device} - ${deviceInfo.os} - ${deviceInfo.browser}`
+      const detailsWithDevice = `${details} [Thiết bị: ${deviceStr}]`
+
       const { error } = await supabase.from('access_logs').insert([{
         username,
-        displayname: displayName,  // Column is lowercase 'displayname'
+        displayName: displayName,
         action,
         module,
-        details,
+        details: detailsWithDevice,
         timestamp: new Date().toISOString(),
+        ipAddress: ipAddress,
       }])
       if (error) {
-        console.error('Logger error:', error.message)
+        devLog('error', 'Logger error:', error.message)
         return
       }
-      console.log(`✅ Logged: ${action} - ${module}`)
+      devLog('info', `✅ Logged: ${action} - ${module}`)
     } catch (e) {
-      console.error('Logger exception:', e)
+      devLog('error', 'Logger exception:', e)
     }
   },
 

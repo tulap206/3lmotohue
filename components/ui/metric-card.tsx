@@ -1,6 +1,5 @@
 import React from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
 
 interface MetricCardProps {
   icon?: React.ReactNode
@@ -15,7 +14,6 @@ interface MetricCardProps {
   iconColor?: string
   delay?: number
   onClick?: () => void
-  valueClassName?: string
 }
 
 export function MetricCard({
@@ -25,55 +23,43 @@ export function MetricCard({
   sublabel,
   trend,
   backgroundColor = "bg-white",
-  iconColor = "text-blue-500",
+  iconColor = "text-red-500",
   delay = 0,
   onClick,
-  valueClassName,
 }: MetricCardProps) {
-  // Compute text length safely if value is a React node
-  const textLength = React.isValidElement(value) ? 2 : String(value).length;
-
   return (
     <Card
-      className={cn(
-        backgroundColor === "bg-white" ? "bg-white border-slate-200" : "glass-card border-slate-100/50",
-        "hover-lift transition-smooth cursor-pointer shadow-xs relative overflow-hidden rounded-2xl"
-      )}
+      className={`metric-card card-animate ${backgroundColor} cursor-pointer`}
       style={{ animationDelay: `${delay * 60}ms` }}
       onClick={onClick}
     >
-      {/* Premium ambient light spot */}
-      <div className="absolute -top-6 -right-6 w-16 h-16 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
-      
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-        <div className="space-y-0.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p>
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 px-5 pt-5 pb-2">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-600">{label}</p>
           {sublabel && (
             <p className="text-xs text-slate-500">{sublabel}</p>
           )}
         </div>
         {icon && (
-          <div className={`${iconColor} flex-shrink-0 w-9 h-9 rounded-xl bg-slate-50/50 backdrop-blur-xs flex items-center justify-center border border-slate-100/80 shadow-2xs`}>
+          <div className={`${iconColor} text-xl flex-shrink-0`}>
             {icon}
           </div>
         )}
       </CardHeader>
-      <CardContent className="px-4 pb-4 pt-1 space-y-2">
+      <CardContent className="space-y-2 px-5 pb-5 pt-1">
         <div className="flex items-baseline gap-3">
-          <div className={cn(
-            "font-black tracking-tight truncate",
-            valueClassName || "text-slate-800",
-            textLength > 12 
+          <div className={`font-extrabold text-slate-900 truncate tracking-tight ${
+            String(value).length > 12 
               ? "text-base xl:text-lg" 
-              : textLength > 8 
+              : String(value).length > 8 
                 ? "text-lg xl:text-xl" 
                 : "text-xl xl:text-2xl"
-          )} title={String(value)}>
+          }`} title={String(value)}>
             {value}
           </div>
           {trend && (
             <div
-              className={`text-xs font-semibold flex items-center gap-1 ${
+              className={`text-sm font-medium flex items-center gap-1 ${
                 trend.direction === "up"
                   ? "text-emerald-600"
                   : trend.direction === "down"
@@ -91,4 +77,3 @@ export function MetricCard({
     </Card>
   )
 }
-

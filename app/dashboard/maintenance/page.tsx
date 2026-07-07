@@ -1,21 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { getVehiclesDueMaintenance, markVehicleAsMaintained, MaintenanceVehicle } from "@/lib/supabase"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +20,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp } from "lucide-react"
 import { toast } from "sonner"
+import {
+  ModulePageShell,
+  ModuleSubpageHeader,
+  ModuleSectionCard,
+  ModuleResponsiveTable,
+  ModuleMobileCard,
+} from "@/components/dashboard/module-shell"
+import { RentalKpiCard, rentalTableHeadClass, rentalFilterInputClass } from "@/components/dashboard/rental-ui"
+import { cn } from "@/lib/utils"
 
 export default function MaintenancePage() {
   const { user } = useAuth()
@@ -49,8 +49,8 @@ export default function MaintenancePage() {
     try {
       setLoading(true)
 
-      // Check if user is demo account (demo)
-      const isDemoAccount = user?.username === "demo"
+      // Check if user is demo account (quy79)
+      const isDemoAccount = user?.username === "quy79"
 
       if (isDemoAccount) {
         setVehicles([])
@@ -108,271 +108,212 @@ export default function MaintenancePage() {
     currentPage * itemsPerPage
   )
 
-  return (
-    <div className="space-y-6">
-      {/* Title Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800">🔧 Bảo trì xe</h1>
-          <p className="text-slate-500 text-xs mt-1">
-            Danh sách xe đến hạn bảo trì (cứ 1000 KM bảo trì 1 lần)
-          </p>
-        </div>
-        <Button
-          onClick={loadVehicles}
-          variant="outline"
-          size="sm"
-          disabled={loading}
-          className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm"
-        >
-          <RefreshCw className="w-4 h-4 mr-2" />
-          {loading ? "Đang tải..." : "Tải lại"}
-        </Button>
-      </div>
+  const getOverdueKm = (km: number) => km - Math.floor(km / 1000) * 1000
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Tìm kiếm xe theo biển số hoặc tên xe..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white border-slate-200 rounded-xl"
+  const maintenanceStats = {
+    total: vehicles.length,
+    filtered: filteredVehicles.length,
+    urgent: vehicles.filter((v) => getOverdueKm(v.current_km) >= 300).length,
+    avgOverdue:
+      vehicles.length > 0
+        ? Math.round(vehicles.reduce((sum, v) => sum + getOverdueKm(v.current_km), 0) / vehicles.length)
+        : 0,
+  }
+
+  return (
+    <ModulePageShell module="rental">
+      <ModuleSubpageHeader
+        module="rental"
+        title="Bảo trì xe"
+        subtitle="Danh sách xe đến hạn bảo trì (cứ 1000 KM bảo trì 1 lần)"
+        breadcrumbs={[
+          { label: "Cho thuê xe", href: "/dashboard" },
+          { label: "Bảo trì xe" },
+        ]}
+        actions={
+          <Button
+            onClick={loadVehicles}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {loading ? "Đang tải..." : "Tải lại"}
+          </Button>
+        }
+      />
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <RentalKpiCard label="Xe cần bảo trì" value={maintenanceStats.total} sublabel={`${maintenanceStats.filtered} đang lọc`} />
+          <RentalKpiCard label="Cần gấp" value={maintenanceStats.urgent} sublabel="Quá hạn ≥ 300 km" valueClassName="text-blue-700" />
+          <RentalKpiCard label="KM quá hạn TB" value={maintenanceStats.avgOverdue} sublabel="km trung bình" valueClassName="text-amber-700" />
+          <RentalKpiCard
+            label="Mốc bảo trì"
+            value="1.000"
+            sublabel="km / lần bảo trì"
+            valueClassName="text-slate-700"
           />
         </div>
-        <Select value={sortOrder} onValueChange={setSortOrder}>
-          <SelectTrigger className="w-full sm:w-64 bg-white border-slate-200 rounded-xl">
-            <SelectValue placeholder="Sắp xếp" />
-          </SelectTrigger>
-          <SelectContent className="bg-white border-slate-200 rounded-xl">
-            <SelectItem value="desc">KM quá hạn: Cao đến thấp</SelectItem>
-            <SelectItem value="asc">KM quá hạn: Thấp đến cao</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* Main Content Card */}
-      <Card className="bg-white border-0 card-shadow rounded-2xl overflow-hidden">
-        <CardHeader className="bg-white border-b border-slate-100 pt-6 pb-4 px-6">
-          <CardTitle className="text-slate-800 font-bold tracking-tight text-lg">Xe cần bảo trì</CardTitle>
-          <CardDescription className="text-xs md:text-sm text-slate-500">
-            Hiển thị {filteredVehicles.length} xe cần bảo trì ngay
-          </CardDescription>
-        </CardHeader>
+      <ModuleSectionCard
+        title="Xe cần bảo trì"
+        description={`Quản lý ${filteredVehicles.length} xe cần bảo trì`}
+        filters={
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                placeholder="Tìm biển số, tên xe..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={cn(rentalFilterInputClass, "pl-9")}
+              />
+            </div>
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="w-full md:w-56 h-9 rounded-xl border-slate-200 text-sm bg-white">
+                <SelectValue placeholder="Sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">KM quá hạn: Cao → thấp</SelectItem>
+                <SelectItem value="asc">KM quá hạn: Thấp → cao</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      >
         <CardContent className="p-0">
           {filteredVehicles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
-                <Check className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Tuyệt vời! 🎉</h3>
-              <p className="text-muted-foreground">
-                Không có xe nào cần bảo trì phù hợp bộ lọc tìm kiếm
-              </p>
+            <div className="text-center py-12">
+              <Check className="w-12 h-12 text-emerald-200 mx-auto mb-2" />
+              <p className="text-slate-400 text-sm">Không có xe nào cần bảo trì phù hợp bộ lọc</p>
             </div>
           ) : (
-            <>
-            <div className="hidden md:block overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50/50 hover:bg-slate-50/50 border-b border-slate-100">
-                    <TableHead className="w-16 text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">STT</TableHead>
-                    <TableHead className="font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Tên xe</TableHead>
-                    <TableHead className="font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Biển số</TableHead>
-                    <TableHead className="text-right font-semibold text-slate-500 text-[11px] uppercase tracking-wider">KM hiện tại</TableHead>
-                    <TableHead className="text-right font-semibold text-slate-500 text-[11px] uppercase tracking-wider">KM cần bảo trì</TableHead>
-                    <TableHead className="text-right font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Quá hạn</TableHead>
-                    <TableHead className="text-center font-semibold text-slate-500 text-[11px] uppercase tracking-wider">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedVehicles.map((vehicle, index) => {
-                    const mntKm = Math.floor(vehicle.current_km / 1000) * 1000
-                    const overKm = vehicle.current_km - mntKm
-                    return (
-                      <TableRow key={vehicle.id} className="hover:bg-slate-50/30 transition-colors">
-                        <TableCell className="text-center text-slate-500 font-medium w-16">
-                          {(currentPage - 1) * itemsPerPage + index + 1}
-                        </TableCell>
-                        <TableCell className="font-medium text-slate-800 capitalize">{vehicle.name}</TableCell>
-                        <TableCell className="font-mono text-xs font-semibold text-slate-600">{vehicle.licensePlate === "(Đang làm)" ? "—" : vehicle.licensePlate}</TableCell>
-                        <TableCell className="text-right font-mono text-xs text-slate-700">{vehicle.current_km.toLocaleString()} km</TableCell>
-                        <TableCell className="text-right font-mono text-xs text-slate-900 font-semibold">
-                          {mntKm.toLocaleString()} km
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1 font-mono text-xs">
-                            {overKm > 0 && (
-                              <AlertTriangle className={cn("w-3.5 h-3.5", overKm >= 300 ? "text-red-500" : "text-orange-500")} />
-                            )}
-                            <span className={cn(
-                              "font-bold",
-                              overKm === 0 
-                                ? "text-slate-500 font-medium" 
-                                : overKm >= 300 
-                                  ? "text-red-600" 
-                                  : "text-orange-600"
-                            )}>
+            <ModuleResponsiveTable
+              desktop={
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
+                      <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
+                      <th className={rentalTableHeadClass}>Tên xe</th>
+                      <th className={rentalTableHeadClass}>Biển số</th>
+                      <th className={cn(rentalTableHeadClass, "text-right")}>KM hiện tại</th>
+                      <th className={cn(rentalTableHeadClass, "text-right")}>KM cần bảo trì</th>
+                      <th className={cn(rentalTableHeadClass, "text-right")}>Quá hạn</th>
+                      <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                    {paginatedVehicles.map((vehicle, index) => {
+                      const mntKm = Math.floor(vehicle.current_km / 1000) * 1000
+                      const overKm = vehicle.current_km - mntKm
+                      return (
+                        <tr key={vehicle.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                          </td>
+                          <td className="py-3.5 px-4 font-semibold text-slate-800">{vehicle.name}</td>
+                          <td className="py-3.5 px-4 font-mono text-xs font-semibold text-slate-600">{vehicle.licensePlate}</td>
+                          <td className="py-3.5 px-4 text-right font-mono text-xs tabular-nums">{vehicle.current_km.toLocaleString()} km</td>
+                          <td className="py-3.5 px-4 text-right font-mono text-xs font-semibold tabular-nums">{mntKm.toLocaleString()} km</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <span className="inline-flex items-center gap-1 font-mono text-xs text-orange-600 font-bold">
+                              <AlertTriangle className="w-3.5 h-3.5" />
                               +{overKm.toLocaleString()} km
                             </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-slate-200 bg-slate-50 text-slate-600 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold text-xs h-8 rounded-lg transition-colors"
-                                disabled={maintaining === vehicle.id}
-                              >
-                                <Check className="w-3.5 h-3.5 mr-1" />
-                                {maintaining === vehicle.id ? "Đang lưu..." : "Đã bảo trì"}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-white rounded-2xl border-0 card-shadow">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-slate-800 font-bold text-lg">Xác nhận bảo trì?</AlertDialogTitle>
-                                <AlertDialogDescription className="text-sm text-slate-500">
-                                  Bạn chắc chắn {vehicle.name} ({vehicle.licensePlate}) đã bảo trì xong ở {vehicle.current_km.toLocaleString()} km? Mốc bảo trì tiếp theo sẽ được tính từ mốc này.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="rounded-xl border-slate-200">Hủy</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleMaintained(vehicle.id, vehicle.name, vehicle.current_km)}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
-                                >
-                                  Xác nhận
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Mobile Card-based List view */}
-            <div className="md:hidden space-y-4 p-4">
-              {paginatedVehicles.map((vehicle, index) => {
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center justify-end">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg"
+                                    disabled={maintaining === vehicle.id}
+                                    title="Đã bảo trì"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="bg-white rounded-2xl border-0 card-shadow">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-slate-800 font-bold text-lg">Xác nhận bảo trì?</AlertDialogTitle>
+                                    <AlertDialogDescription className="text-sm text-slate-500">
+                                      Bạn chắc chắn {vehicle.name} ({vehicle.licensePlate}) đã bảo trì xong ở {vehicle.current_km.toLocaleString()} km? Mốc bảo trì tiếp theo sẽ được tính từ mốc này.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="rounded-xl border-slate-200">Hủy</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleMaintained(vehicle.id, vehicle.name, vehicle.current_km)}
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
+                                    >
+                                      Xác nhận
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              }
+              mobile={paginatedVehicles.map((vehicle) => {
                 const mntKm = Math.floor(vehicle.current_km / 1000) * 1000
                 const overKm = vehicle.current_km - mntKm
                 return (
-                  <div 
-                    key={vehicle.id} 
-                    className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl space-y-3 shadow-sm"
-                  >
-                    {/* Header: Vehicle Name & Plate */}
-                    <div className="flex items-start justify-between gap-3">
+                  <ModuleMobileCard key={vehicle.id}>
+                    <div className="flex justify-between items-start gap-2">
                       <div>
-                        <h3 className="font-bold text-slate-800 text-sm capitalize">{vehicle.name}</h3>
-                        <p className="text-xs text-slate-400 font-mono mt-0.5">{vehicle.licensePlate === "(Đang làm)" ? "—" : vehicle.licensePlate}</p>
+                        <p className="font-semibold text-slate-800">{vehicle.name}</p>
+                        <p className="text-xs text-slate-500 font-mono">{vehicle.licensePlate}</p>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-bold">STT: {(currentPage - 1) * itemsPerPage + index + 1}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-orange-50 text-orange-700 border-orange-100 shrink-0">
+                        +{overKm.toLocaleString()} km
+                      </span>
                     </div>
-
-                    {/* Details block */}
-                    <div className="space-y-1.5 pt-2 border-t border-slate-100/50 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Số KM hiện tại:</span>
-                        <span className="text-slate-700 font-mono font-medium">{vehicle.current_km.toLocaleString()} km</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Mốc bảo trì:</span>
-                        <span className="text-slate-700 font-mono font-medium">{mntKm.toLocaleString()} km</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Số KM quá hạn:</span>
-                        <div className="flex items-center gap-1 font-mono">
-                          {overKm > 0 && (
-                            <AlertTriangle className={cn("w-3.5 h-3.5", overKm >= 300 ? "text-red-500" : "text-orange-500")} />
-                          )}
-                          <span className={cn(
-                            "font-bold",
-                            overKm === 0 
-                              ? "text-slate-500 font-medium" 
-                              : overKm >= 300 
-                                ? "text-red-600" 
-                                : "text-orange-600"
-                          )}>
-                            +{overKm.toLocaleString()} km
-                          </span>
-                        </div>
-                      </div>
+                    <div className="flex justify-between items-center text-xs text-slate-500">
+                      <span className="tabular-nums">{vehicle.current_km.toLocaleString()} km</span>
+                      <span className="tabular-nums">Mốc: {mntKm.toLocaleString()} km</span>
                     </div>
-
-                    {/* Action button: Big and easy to tap */}
-                    <div className="pt-2 border-t border-slate-100/50">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            type="button"
-                            className="w-full bg-slate-100 text-slate-700 hover:bg-emerald-600 hover:text-white rounded-xl h-10 text-xs font-bold transition-all flex items-center justify-center gap-2"
-                            disabled={maintaining === vehicle.id}
-                          >
-                            <Check className="w-4 h-4" />
-                            {maintaining === vehicle.id ? "Đang lưu..." : "Xác nhận đã bảo trì xong"}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-white rounded-2xl border-0 card-shadow mx-4">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-slate-800 font-bold text-base">Xác nhận bảo trì?</AlertDialogTitle>
-                            <AlertDialogDescription className="text-xs text-slate-500">
-                              Bạn chắc chắn {vehicle.name} ({vehicle.licensePlate}) đã bảo trì xong ở {vehicle.current_km.toLocaleString()} km? Mốc bảo trì tiếp theo sẽ được tính từ mốc này.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="mt-4 gap-2">
-                            <AlertDialogCancel className="rounded-xl border-slate-200 text-xs h-9">Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleMaintained(vehicle.id, vehicle.name, vehicle.current_km)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs h-9"
-                            >
-                              Xác nhận
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
+                  </ModuleMobileCard>
                 )
               })}
-            </div>
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
-                <span className="text-xs text-slate-500 mr-2">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <Button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs border-slate-200 rounded-xl"
-                >
-                  Trước
-                </Button>
-                <Button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs border-slate-200 rounded-xl"
-                >
-                  Tiếp
-                </Button>
-              </div>
-            )}
-            </>
+            />
           )}
         </CardContent>
-      </Card>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
+            <span className="text-xs text-slate-500 mr-2">
+              Trang {currentPage} / {totalPages}
+            </span>
+            <Button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs border-slate-200 rounded-xl"
+            >
+              Trước
+            </Button>
+            <Button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs border-slate-200 rounded-xl"
+            >
+              Tiếp
+            </Button>
+          </div>
+        )}
+      </ModuleSectionCard>
+      </div>
 
       {/* Collapsible Guidelines Section */}
       <div className="bg-blue-50/50 border border-blue-100 rounded-xl overflow-hidden">
@@ -394,6 +335,6 @@ export default function MaintenancePage() {
           </div>
         )}
       </div>
-    </div>
+    </ModulePageShell>
   )
 }
