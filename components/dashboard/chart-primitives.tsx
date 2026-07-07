@@ -42,7 +42,7 @@ export function ChartShell({
     <div className="relative flex flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)] h-full">
       <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${accentClass}`} />
       <div className="px-4 pt-4 pb-2 border-b border-slate-100/80">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div className="flex items-start gap-2.5 min-w-0">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 border border-slate-100 text-slate-600">
               {icon}
@@ -52,7 +52,7 @@ export function ChartShell({
               <p className="text-xs text-slate-500 mt-0.5 leading-snug">{description}</p>
             </div>
           </div>
-          {headerExtra}
+          {headerExtra && <div className="shrink-0">{headerExtra}</div>}
         </div>
       </div>
       <div className="p-4 flex-1 flex flex-col">{children}</div>
