@@ -2179,7 +2179,7 @@ export default function OrdersPage() {
                     <p className="font-bold uppercase text-slate-800">ĐẠI DIỆN BÊN B (CỬA HÀNG)</p>
                     <p className="text-xs text-slate-400 italic mt-0.5">(Ký và đóng dấu)</p>
                     <div className="h-16" />
-                    <p className="font-bold text-slate-900">Trần Đức Quý</p>
+                    <p className="font-bold text-slate-900">{QUY79_BUSINESS.representative}</p>
                   </div>
                 </div>
 
