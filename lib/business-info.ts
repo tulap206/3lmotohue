@@ -15,8 +15,8 @@ export const QUY79_BUSINESS = {
   bank: {
     name: "SHB",
     accountNumber: "2222629999",
-    accountHolder: "DUONG PHU LOC",
-    accountHolderLatin: "DUONG PHU LOC",
+    accountHolder: "PHAN LE TU LAP",
+    accountHolderLatin: "PHAN LE TU LAP",
   },
   facebookUrl: "https://www.facebook.com/profile.php?id=100057429789995",
   website: "3lmotohue.vercel.app",
