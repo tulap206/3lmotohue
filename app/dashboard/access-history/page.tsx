@@ -38,9 +38,6 @@ export default function AccessHistoryPage() {
   }, [])
 
   useEffect(() => {
-    const canView = user?.role === "admin" || (user?.permissions as any)?.canViewAccessHistory
-    if (!canView) return
-
     loadAccessLogs(true)
 
     const channel = supabase
@@ -53,9 +50,7 @@ export default function AccessHistoryPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [loadAccessLogs, user?.role, (user?.permissions as any)?.canViewAccessHistory])
-
-  const canView = user?.role === "admin" || (user?.permissions as any)?.canViewAccessHistory
+  }, [loadAccessLogs])
 
   return (
     <ModulePageShell module="rental">
@@ -73,7 +68,7 @@ export default function AccessHistoryPage() {
         logs={accessLogs}
         loading={loading}
         onRefresh={() => loadAccessLogs(true)}
-        allowed={!!canView}
+        allowed={true}
       />
     </ModulePageShell>
   )
