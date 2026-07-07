@@ -12,8 +12,8 @@ export type ModuleTheme = {
 export const MODULE_THEME: Record<ModuleId, ModuleTheme> = {
   rental: {
     id: "rental",
-    accent: "red",
-    titleSuffix: "CHO THUÊ XE 79",
+    accent: "blue",
+    titleSuffix: "CHO THUÊ XE 3LMOTO",
     adminClass: "rental-admin",
     label: "Cho thuê xe",
   },
@@ -83,7 +83,7 @@ export const ACCENT_ICON_CLASS: Record<ModuleAccent, string> = {
 }
 
 export const MODULE_CHART_PALETTE: Record<ModuleId, string[]> = {
-  rental: ["#DC2626", "#059669", "#0369A1", "#7C6BA8", "#64748B"],
+  rental: ["#2563EB", "#059669", "#0369A1", "#7C6BA8", "#64748B"],
   sales: ["#2563EB", "#059669", "#D97706", "#7C6BA8", "#64748B"],
   pawnshop: ["#D97706", "#059669", "#0369A1", "#7C6BA8", "#C2410C", "#64748B"],
   loan: ["#059669", "#DC2626", "#2563EB", "#94A3B8", "#D97706"],
