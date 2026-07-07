@@ -1346,8 +1346,8 @@ export default function OrdersPage() {
                                 {getRentalOrderStatusLabel(order.status, isOverdue)}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4">
-                              <div className="flex items-center justify-end gap-1 flex-wrap">
+                            <td className="py-3.5 px-4 whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1">
                                 {/* #5 Quick action */}
                                 {order.status === "pending" && (
                                   <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-emerald-700 hover:text-emerald-800 rounded-lg hover:bg-emerald-50 gap-1" onClick={() => updateOrderStatus(order.id, "active")} title="Giao xe">
