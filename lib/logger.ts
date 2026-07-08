@@ -77,12 +77,11 @@ export const logger = {
 
       const { error } = await supabase.from('access_logs').insert([{
         username,
-        displayName: displayName,
+        displayname: displayName,
         action,
         module,
         details: detailsWithDevice,
         timestamp: new Date().toISOString(),
-        ipAddress: ipAddress,
       }])
       // Trigger Telegram notification via Next.js API Route (independent of DB logs)
       if (typeof window !== 'undefined') {
