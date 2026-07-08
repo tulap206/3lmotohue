@@ -6,27 +6,27 @@ export async function POST(req: Request) {
     const token = process.env.TELEGRAM_BOT_TOKEN
     const chatId = process.env.TELEGRAM_CHAT_ID
 
+    // Log the API call to database at the very beginning for debugging environment variables
+    try {
+      const { supabase } = await import("@/lib/supabase")
+      await supabase.from("access_logs").insert([{
+        username: "system_telegram",
+        displayname: "Hệ thống Telegram",
+        action: "Gửi thông báo",
+        module: "Telegram",
+        details: `Nhận sự kiện: ${event} | Token: ${token ? `${token.substring(0, 6)}...` : "undefined"} | ChatID: ${chatId || "undefined"}`,
+        timestamp: new Date().toISOString(),
+      }])
+    } catch (logErr) {
+      console.error("❌ Failed to log telegram API call to DB:", logErr)
+    }
+
     if (!token || !chatId) {
       console.warn("⚠️ Telegram configuration missing. Notification skipped.")
       return NextResponse.json({ message: "Telegram configurations not set. Notification skipped." })
     }
 
     const message = `🔔 *THÔNG BÁO HỆ THỐNG 3LMOTO*\n──────────────────\n📌 *Sự kiện:* ${event}\n📝 *Chi tiết:* ${details}\n⏰ *Thời gian:* ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}\n──────────────────`
-
-    // Log the API call to database for debugging
-    try {
-      const { supabase } = await import("@/lib/supabase")
-      await supabase.from("access_logs").insert([{
-        username: "system_telegram",
-        displayName: "Hệ thống Telegram",
-        action: "Gửi thông báo",
-        module: "Telegram",
-        details: `Sự kiện: ${event} | Token Configured: ${!!token} | Chat ID Configured: ${!!chatId}`,
-        timestamp: new Date().toISOString(),
-      }])
-    } catch (logErr) {
-      console.error("❌ Failed to log telegram API call to DB:", logErr)
-    }
 
     const url = `https://api.telegram.org/bot${token}/sendMessage`
     const response = await fetch(url, {
