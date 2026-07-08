@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+// API route handler for Telegram notifications
 export async function POST(req: Request) {
   try {
     const { event, details } = await req.json()
