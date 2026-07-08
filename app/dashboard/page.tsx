@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -752,6 +753,7 @@ export default function DashboardPage() {
             value={stats.overdueRentals}
             valueClassName="text-amber-700"
             sublabel="đơn thuê"
+            icon={<Image src="/siren.png" alt="Cảnh báo" width={28} height={28} className="object-contain" />}
             onClick={() => router.push("/dashboard/orders?status=overdue")}
           />
           <RentalKpiCard
