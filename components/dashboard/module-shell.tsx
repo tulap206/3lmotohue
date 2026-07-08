@@ -157,16 +157,36 @@ export function ModuleKpiCard({
   delay?: number
 }) {
   if (variant === "hero") {
+    const isOverdue = label === "Quá hạn"
     return (
-      <Card
-        className={cn(
-          "metric-card card-animate module-card bg-white min-w-0 overflow-hidden",
-          onClick && ["cursor-pointer", ACCENT_KPI_HOVER_CLASS[accent]],
-          label === "Quá hạn" && "animate-pulse-red-glow"
+      <>
+        {isOverdue && (
+          <style>{`
+            @keyframes pulse-red-glow-direct {
+              0%, 100% {
+                border-color: rgba(239, 68, 68, 0.2) !important;
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.05) !important;
+              }
+              50% {
+                border-color: rgba(239, 68, 68, 0.9) !important;
+                box-shadow: 0 0 14px 3px rgba(239, 68, 68, 0.4) !important;
+              }
+            }
+            .animate-pulse-red-glow-direct {
+              animation: pulse-red-glow-direct 2s infinite ease-in-out !important;
+              border: 1.5px solid rgba(239, 68, 68, 0.2) !important;
+            }
+          `}</style>
         )}
-        style={{ animationDelay: `${delay * 60}ms` }}
-        onClick={onClick}
-      >
+        <Card
+          className={cn(
+            "metric-card card-animate module-card bg-white min-w-0 overflow-hidden",
+            onClick && ["cursor-pointer", ACCENT_KPI_HOVER_CLASS[accent]],
+            isOverdue && "animate-pulse-red-glow-direct"
+          )}
+          style={{ animationDelay: `${delay * 60}ms` }}
+          onClick={onClick}
+        >
         <CardHeader className="flex flex-row items-start justify-between space-y-0 px-3.5 pt-3.5 pb-1 sm:px-4 sm:pt-4">
           <div className="space-y-0.5 min-w-0 flex-1 min-h-[2.25rem]">
             <p className="text-[11px] sm:text-xs font-semibold text-slate-600 leading-snug truncate">{label}</p>
@@ -187,6 +207,7 @@ export function ModuleKpiCard({
           </div>
         </CardContent>
       </Card>
+      </>
     )
   }
 
