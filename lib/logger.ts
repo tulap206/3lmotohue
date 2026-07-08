@@ -89,6 +89,18 @@ export const logger = {
         return
       }
       devLog('info', `✅ Logged: ${action} - ${module}`)
+
+      // Send Telegram notification automatically
+      if (typeof window !== 'undefined') {
+        fetch('/api/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: `${action} - Phân hệ: ${module}`,
+            details: `Người thực hiện: *${displayName}* (${username})\nNội dung: ${details}\nThiết bị: ${deviceStr}`,
+          }),
+        }).catch((err) => devLog('error', 'Telegram notification error:', err))
+      }
     } catch (e) {
       devLog('error', 'Logger exception:', e)
     }
