@@ -90,7 +90,7 @@ export const logger = {
       }
       devLog('info', `✅ Logged: ${action} - ${module}`)
 
-      // Send Telegram notification automatically
+      // Trigger Telegram notification via Next.js API Route
       if (typeof window !== 'undefined') {
         fetch('/api/telegram', {
           method: 'POST',
