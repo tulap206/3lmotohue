@@ -84,13 +84,7 @@ export const logger = {
         timestamp: new Date().toISOString(),
         ipAddress: ipAddress,
       }])
-      if (error) {
-        devLog('error', 'Logger error:', error.message)
-        return
-      }
-      devLog('info', `✅ Logged: ${action} - ${module}`)
-
-      // Trigger Telegram notification via Next.js API Route
+      // Trigger Telegram notification via Next.js API Route (independent of DB logs)
       if (typeof window !== 'undefined') {
         fetch('/api/telegram', {
           method: 'POST',
@@ -101,6 +95,12 @@ export const logger = {
           }),
         }).catch((err) => devLog('error', 'Telegram notification error:', err))
       }
+
+      if (error) {
+        devLog('error', 'Logger error:', error.message)
+        return
+      }
+      devLog('info', `✅ Logged: ${action} - ${module}`)
     } catch (e) {
       devLog('error', 'Logger exception:', e)
     }
