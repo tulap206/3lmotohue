@@ -11,6 +11,13 @@ export function parseDisplayDate(value: string | Date | null | undefined): Date 
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
 
   const raw = String(value).trim()
+  
+  // Parse full datetime strings directly to preserve time (hours/minutes)
+  if (raw.includes("T") || raw.includes(":")) {
+    const parsed = new Date(raw)
+    if (!Number.isNaN(parsed.getTime())) return parsed
+  }
+
   const vn = DD_MM_YYYY.exec(raw)
   if (vn) {
     return new Date(Number(vn[3]), Number(vn[2]) - 1, Number(vn[1]))

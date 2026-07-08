@@ -14,7 +14,7 @@ export async function POST(req: Request) {
         displayname: "Hệ thống Telegram",
         action: "Gửi thông báo",
         module: "Telegram",
-        details: `Nhận sự kiện: ${event} | Token: ${token ? `${token.substring(0, 6)}...` : "undefined"} | ChatID: ${chatId || "undefined"}`,
+        details: `Nhận sự kiện: ${event} | Token: ${token ? `${token.substring(0, 22)}...${token.substring(token.length - 5)} (L:${token.length})` : "N/A"} | ChatID: ${chatId || "N/A"}`,
         timestamp: new Date().toISOString(),
       }])
     } catch (logErr) {
