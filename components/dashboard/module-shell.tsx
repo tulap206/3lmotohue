@@ -197,8 +197,8 @@ export function ModuleKpiCard({
         <CardContent className="px-3.5 pb-3.5 pt-0.5 sm:px-4 sm:pb-4">
           <div
             className={cn(
-              "font-extrabold text-slate-900 tracking-tight tabular-nums leading-tight min-w-0 break-all",
-              "text-sm sm:text-base xl:text-lg",
+              "font-extrabold text-slate-900 tracking-tight tabular-nums leading-tight min-w-0 whitespace-nowrap",
+              "text-xs sm:text-sm md:text-base xl:text-lg",
               valueClassName
             )}
             title={valueTitle}
