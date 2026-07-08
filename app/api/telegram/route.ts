@@ -23,10 +23,35 @@ export async function POST(req: Request) {
 
     if (!token || !chatId) {
       console.warn("⚠️ Telegram configuration missing. Notification skipped.")
-      return NextResponse.json({ message: "Telegram configurations not set. Notification skipped." })
+      try {
+        const { supabase } = await import("@/lib/supabase")
+        await supabase.from("access_logs").insert([{
+          username: "system_telegram_error",
+          displayname: "Hệ thống Telegram Lỗi",
+          action: "Thiếu cấu hình",
+          module: "Telegram",
+          details: `Thiếu biến cấu hình trên Vercel. Token: ${!!token} | ChatID: ${!!chatId}`,
+          timestamp: new Date().toISOString(),
+        }])
+      } catch (e) {}
+      return NextResponse.json({ message: "Telegram configurations not set." }, { status: 400 })
     }
 
-    const message = `🔔 *THÔNG BÁO HỆ THỐNG 3LMOTO*\n──────────────────\n📌 *Sự kiện:* ${event}\n📝 *Chi tiết:* ${details}\n⏰ *Thời gian:* ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}\n──────────────────`
+    // HTML escape helper
+    const escapeHtml = (text: string) => {
+      if (!text) return ""
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+    }
+
+    // Escape event and details for safe HTML parsing
+    const safeEvent = escapeHtml(event)
+    // Convert bold markdown syntax (*bold*) to HTML bold (<b>bold</b>) after escaping
+    const safeDetails = escapeHtml(details).replace(/\*(.*?)\*/g, "<b>$1</b>")
+
+    const message = `🔔 <b>THÔNG BÁO HỆ THỐNG 3LMOTO</b>\n──────────────────\n📌 <b>Sự kiện:</b> ${safeEvent}\n📝 <b>Chi tiết:</b> ${safeDetails}\n⏰ <b>Thời gian:</b> ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}\n──────────────────`
 
     const url = `https://api.telegram.org/bot${token}/sendMessage`
     const response = await fetch(url, {
@@ -35,7 +60,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         chat_id: chatId,
         text: message,
-        parse_mode: "Markdown",
+        parse_mode: "HTML",
       }),
     })
 
@@ -47,7 +72,7 @@ export async function POST(req: Request) {
         const { supabase } = await import("@/lib/supabase")
         await supabase.from("access_logs").insert([{
           username: "system_telegram_error",
-          displayName: "Hệ thống Telegram Lỗi",
+          displayname: "Hệ thống Telegram Lỗi",
           action: "Lỗi Telegram",
           module: "Telegram",
           details: `Lỗi: ${data.description} | Token: ${token ? token.substring(0, 8) + "..." : "N/A"}`,
@@ -65,7 +90,7 @@ export async function POST(req: Request) {
       const { supabase } = await import("@/lib/supabase")
       await supabase.from("access_logs").insert([{
         username: "system_telegram_exception",
-        displayName: "Ngoại lệ Telegram",
+        displayname: "Ngoại lệ Telegram",
         action: "Lỗi Ngoại lệ",
         module: "Telegram",
         details: `Ngoại lệ: ${error.message}`,
