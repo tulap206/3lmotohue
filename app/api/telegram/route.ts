@@ -3,8 +3,8 @@ import { NextResponse } from "next/server"
 export async function POST(req: Request) {
   try {
     const { event, details } = await req.json()
-    const token = process.env.TELEGRAM_BOT_TOKEN
-    const chatId = process.env.TELEGRAM_CHAT_ID
+    const token = process.env.TELEGRAM_BOT_TOKEN?.trim()
+    const chatId = process.env.TELEGRAM_CHAT_ID?.trim()
 
     // Log the API call to database at the very beginning for debugging environment variables
     try {
