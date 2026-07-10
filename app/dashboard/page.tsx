@@ -19,6 +19,7 @@ import {
   Edit2,
   Trash2,
   TrendingUp,
+  Search,
 } from "lucide-react"
 import { SkeletonMetricCards, SkeletonTable } from "@/components/ui/skeleton-loader"
 import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeExpenseChart } from "@/components/dashboard/rental-charts"
@@ -303,6 +304,8 @@ export default function DashboardPage() {
   // Reports & Transactions States
   const [monthlyRevenue, setMonthlyRevenue] = useState<{ month: string; revenue: number }[]>([])
   const [transactions, setTransactions] = useState<any[]>([])
+  const [txSearchQuery, setTxSearchQuery] = useState("")
+  const [txCurrentPage, setTxCurrentPage] = useState(1)
   const [isAddTxOpen, setIsAddTxOpen] = useState(false)
   const [isEditTxOpen, setIsEditTxOpen] = useState(false)
   const [editingTx, setEditingTx] = useState<any | null>(null)
@@ -569,6 +572,32 @@ export default function DashboardPage() {
       })
   }, [orders])
 
+  // Filtered and paginated transactions for Dashboard
+  const txItemsPerPage = 10
+
+  const filteredTransactions = useMemo(() => {
+    return transactions
+      .filter((tx) => {
+        const query = txSearchQuery.toLowerCase().trim()
+        if (!query) return true
+
+        const matchDescription = (tx.description || "").toLowerCase().includes(query)
+        const matchUser = (tx.user || "").toLowerCase().includes(query)
+        const matchAmount = String(tx.amount || "").includes(query)
+        const matchType = (tx.type === "income" ? "thu" : "chi").includes(query)
+
+        return matchDescription || matchUser || matchAmount || matchType
+      })
+      .sort((a, b) => new Date(b.timestamp || b.created_at || 0).getTime() - new Date(a.timestamp || a.created_at || 0).getTime())
+  }, [transactions, txSearchQuery])
+
+  const txTotalPages = Math.max(1, Math.ceil(filteredTransactions.length / txItemsPerPage))
+  const txSafePage = Math.min(txCurrentPage, txTotalPages)
+
+  const paginatedTransactions = useMemo(() => {
+    return filteredTransactions.slice((txSafePage - 1) * txItemsPerPage, txSafePage * txItemsPerPage)
+  }, [filteredTransactions, txSafePage])
+
   // Transactions CRUD handlers
   const handleAddTx = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -799,15 +828,29 @@ export default function DashboardPage() {
 
         <ModuleSectionCard
           title="Giao dịch gần đây"
-          description="10 giao dịch thu/chi mới nhất"
+          description="Quản lý các giao dịch thu/chi trong hệ thống"
           filters={
-            <Button
-              onClick={() => setIsAddTxOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-9 rounded-xl text-sm font-semibold shrink-0"
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Nhập Thu/Chi
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[200px] max-w-xs">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  placeholder="Tìm kiếm giao dịch..."
+                  value={txSearchQuery}
+                  onChange={(e) => {
+                    setTxSearchQuery(e.target.value)
+                    setTxCurrentPage(1)
+                  }}
+                  className="h-9 rounded-xl border-slate-200 bg-white pl-8 text-sm focus-visible:ring-blue-500"
+                />
+              </div>
+              <Button
+                onClick={() => setIsAddTxOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white h-9 rounded-xl text-sm font-semibold shrink-0"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                Nhập Thu/Chi
+              </Button>
+            </div>
           }
         >
           <CardContent className="p-0">
@@ -815,97 +858,132 @@ export default function DashboardPage() {
               <div className="text-center py-12">
                 <p className="text-slate-400 text-sm">Chưa có giao dịch nào</p>
               </div>
+            ) : filteredTransactions.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate-400 text-sm">Không tìm thấy giao dịch nào trùng khớp</p>
+              </div>
             ) : (
-              <ModuleResponsiveTable
-                desktop={
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
-                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
-                        <th className={rentalTableHeadClass}>Loại</th>
-                        <th className={rentalTableHeadClass}>Mô tả</th>
-                        <th className={cn(rentalTableHeadClass, "text-right")}>Số tiền</th>
-                        <th className={rentalTableHeadClass}>Người thực hiện</th>
-                        {user?.role === "admin" && (
-                          <th className={cn(rentalTableHeadClass, "text-center w-24")}>Tác vụ</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
-                      {transactions
-                        .slice()
-                        .sort((a, b) => new Date(b.timestamp || b.created_at || 0).getTime() - new Date(a.timestamp || a.created_at || 0).getTime())
-                        .slice(0, 10)
-                        .map((tx, index) => (
-                        <tr key={tx.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
-                          <td className="py-3 px-4 text-center text-xs text-slate-400 font-medium">{index + 1}</td>
-                          <td className="py-3 px-4">
-                            <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
-                              tx.type === "income"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                : "bg-blue-50 text-blue-700 border-red-100"
-                            }`}>
-                              {getRentalTransactionTypeLabel(tx.type)}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-slate-600">{tx.description}</td>
-                          <td className={`py-3 px-4 text-right font-semibold tabular-nums ${
-                            tx.type === "income" ? "text-emerald-700" : "text-blue-600"
-                          }`}>
-                            {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
-                          </td>
-                          <td className="py-3 px-4 text-slate-500">{tx.user}</td>
+              <>
+                <ModuleResponsiveTable
+                  desktop={
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
+                          <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
+                          <th className={rentalTableHeadClass}>Loại</th>
+                          <th className={rentalTableHeadClass}>Mô tả</th>
+                          <th className={cn(rentalTableHeadClass, "text-right")}>Số tiền</th>
+                          <th className={rentalTableHeadClass}>Người thực hiện</th>
                           {user?.role === "admin" && (
-                            <td className="py-3 px-4 text-center">
-                              <div className="flex gap-1 justify-center">
-                                <button
-                                  onClick={() => handleEditTx(tx)}
-                                  className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
-                                  title="Sửa"
-                                >
-                                  <Edit2 className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteTx(tx)}
-                                  className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
-                                  title="Xoá"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
+                            <th className={cn(rentalTableHeadClass, "text-center w-24")}>Tác vụ</th>
                           )}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                }
-                mobile={transactions
-                  .slice()
-                  .sort((a, b) => new Date(b.timestamp || b.created_at || 0).getTime() - new Date(a.timestamp || a.created_at || 0).getTime())
-                  .slice(0, 10)
-                  .map((tx, index) => (
-                  <ModuleMobileCard key={tx.id}>
-                    <div className="flex justify-between items-start gap-2">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
-                        tx.type === "income"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                          : "bg-blue-50 text-blue-700 border-red-100"
-                      }`}>
-                        {getRentalTransactionTypeLabel(tx.type)}
-                      </span>
-                      <span className="text-xs text-slate-400">#{index + 1}</span>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                        {paginatedTransactions.map((tx, index) => (
+                          <tr key={tx.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
+                            <td className="py-3 px-4 text-center text-xs text-slate-400 font-medium">
+                              {(txSafePage - 1) * txItemsPerPage + index + 1}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                                tx.type === "income"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                  : "bg-blue-50 text-blue-700 border-red-100"
+                              }`}>
+                                {getRentalTransactionTypeLabel(tx.type)}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-600">{tx.description}</td>
+                            <td className={`py-3 px-4 text-right font-semibold tabular-nums ${
+                              tx.type === "income" ? "text-emerald-700" : "text-blue-600"
+                            }`}>
+                              {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
+                            </td>
+                            <td className="py-3 px-4 text-slate-500">{tx.user}</td>
+                            {user?.role === "admin" && (
+                              <td className="py-3 px-4 text-center">
+                                <div className="flex gap-1 justify-center">
+                                  <button
+                                    onClick={() => handleEditTx(tx)}
+                                    className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
+                                    title="Sửa"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteTx(tx)}
+                                    className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
+                                    title="Xoá"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  }
+                  mobile={paginatedTransactions.map((tx, index) => (
+                    <ModuleMobileCard key={tx.id}>
+                      <div className="flex justify-between items-start gap-2">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                          tx.type === "income"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : "bg-blue-50 text-blue-700 border-red-100"
+                        }`}>
+                          {getRentalTransactionTypeLabel(tx.type)}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          #{(txSafePage - 1) * txItemsPerPage + index + 1}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700">{tx.description}</p>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-blue-600"}`}>
+                          {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
+                        </span>
+                        <span className="text-slate-500">{tx.user}</span>
+                      </div>
+                    </ModuleMobileCard>
+                  ))}
+                />
+
+                {/* Pagination Footer */}
+                <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/20 px-4 py-3 sm:px-6">
+                  <div className="text-xs text-slate-500">
+                    Hiển thị <span className="font-semibold text-slate-700">{paginatedTransactions.length}</span> trong{" "}
+                    <span className="font-semibold text-slate-700">{filteredTransactions.length}</span> giao dịch
+                  </div>
+                  {txTotalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        onClick={() => setTxCurrentPage((prev) => Math.max(1, prev - 1))}
+                        disabled={txSafePage === 1}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-lg border-slate-200 text-xs px-2.5"
+                      >
+                        Trang trước
+                      </Button>
+                      <div className="flex items-center gap-1 font-semibold text-xs text-slate-600 px-2 tabular-nums">
+                        <span>{txSafePage}</span> / <span>{txTotalPages}</span>
+                      </div>
+                      <Button
+                        onClick={() => setTxCurrentPage((prev) => Math.min(txTotalPages, prev + 1))}
+                        disabled={txSafePage === txTotalPages}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-lg border-slate-200 text-xs px-2.5"
+                      >
+                        Trang sau
+                      </Button>
                     </div>
-                    <p className="text-sm text-slate-700">{tx.description}</p>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-blue-600"}`}>
-                        {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
-                      </span>
-                      <span className="text-slate-500">{tx.user}</span>
-                    </div>
-                  </ModuleMobileCard>
-                ))}
-              />
+                  )}
+                </div>
+              </>
             )}
           </CardContent>
         </ModuleSectionCard>
