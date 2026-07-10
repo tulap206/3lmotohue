@@ -1089,18 +1089,43 @@ export default function VehiclesPage() {
                         {getRentalVehicleStatusLabel(vehicle.status)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-blue-600 tabular-nums">{formatPrice(vehicle.pricePerDay)}/ngày</span>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)}>
-                          <Clock className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)}>
-                          <Eye className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)}>
-                          <Settings className="w-3.5 h-3.5" />
-                        </Button>
+                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
+                      <span className="font-bold text-blue-600 tabular-nums text-xs">{formatPrice(vehicle.pricePerDay)}/ngày</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openHistoryDialog(vehicle)}
+                          className="text-slate-500 hover:text-blue-600 p-1"
+                          title="Lịch sử"
+                        >
+                          <Clock className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openDetailDialog(vehicle)}
+                          className="text-slate-500 hover:text-blue-600 p-1"
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openEditDialog(vehicle)}
+                          className="text-slate-500 hover:text-blue-600 p-1"
+                          title="Chỉnh sửa"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        {user?.permissions.canDelete && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${vehicle.name} (${vehicle.licensePlate})?`)) {
+                                handleDeleteVehicle(vehicle.id)
+                              }
+                            }}
+                            className="text-blue-600 hover:text-blue-700 p-1"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </ModuleMobileCard>

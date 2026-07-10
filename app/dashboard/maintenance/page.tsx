@@ -281,6 +281,20 @@ export default function MaintenancePage() {
                       <span className="tabular-nums">{vehicle.current_km.toLocaleString()} km</span>
                       <span className="tabular-nums">Mốc: {mntKm.toLocaleString()} km</span>
                     </div>
+                    
+                    {/* Mobile action bar */}
+                    <div className="flex justify-end items-center mt-2 pt-2 border-t border-slate-100/50">
+                      <Button
+                        onClick={() => {
+                          if (window.confirm(`Bạn chắc chắn ${vehicle.name} (${vehicle.licensePlate}) đã bảo trì xong ở ${vehicle.current_km.toLocaleString()} km?`)) {
+                            handleMaintained(vehicle.id, vehicle.name, vehicle.current_km)
+                          }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold h-7 px-2.5"
+                      >
+                        Bảo trì xong
+                      </Button>
+                    </div>
                   </ModuleMobileCard>
                 )
               })}

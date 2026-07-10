@@ -912,11 +912,41 @@ export default function CustomersPage() {
                       </span>
                     </div>
                     {customer.address && (
-                      <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+                      <p className="text-xs text-slate-500 truncate flex items-center gap-1 mb-2">
                         <MapPin className="w-3 h-3 shrink-0" />
                         {customer.address}
                       </p>
                     )}
+                    
+                    {/* Mobile action bar */}
+                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
+                      <span className="text-[10px] text-slate-400">Đơn thuê: {customer.totalrentals || 0}</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleViewDetails(customer)}
+                          className="text-slate-500 hover:text-blue-600 p-1"
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditClick(customer)}
+                          className="text-slate-500 hover:text-blue-600 p-1"
+                          title="Sửa"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        {user?.permissions.canDelete && (
+                          <button
+                            onClick={() => handleDeleteClick(customer)}
+                            className="text-blue-600 hover:text-blue-700 p-1"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </ModuleMobileCard>
                 ))}
               />
