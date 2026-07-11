@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { logger } from "@/lib/logger"
+import { toast } from "sonner"
 
 export type UserRole = "admin" | "staff"
 
@@ -106,6 +107,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([])
 
   useEffect(() => {
+    // Intercept window.alert to show beautiful custom sonner toasts
+    if (typeof window !== "undefined") {
+      window.alert = (message: string) => {
+        if (!message) return
+        
+        let cleanMessage = message.replace(/^[⚠️❌✓ℹ️🔔]\s*/g, "")
+        const lines = cleanMessage.split("\n")
+        const title = lines[0]
+        // Filter out empty lines from description
+        const description = lines.slice(1).filter(l => l.trim() !== "").join("\n")
+        
+        const isWarning = message.includes("⚠️") || message.toLowerCase().includes("cảnh báo") || message.toLowerCase().includes("vui lòng") || message.toLowerCase().includes("chưa") || message.toLowerCase().includes("yêu cầu")
+        const isError = message.includes("❌") || message.toLowerCase().includes("lỗi") || message.toLowerCase().includes("thất bại") || message.toLowerCase().includes("không thể") || message.toLowerCase().includes("sự cố")
+        const isSuccess = message.includes("✓") || message.toLowerCase().includes("thành công") || message.toLowerCase().includes("hoàn thành") || message.toLowerCase().includes("thực hiện xong") || message.toLowerCase().includes("đã được lưu")
+        
+        const options = {
+          description: description || undefined,
+          duration: isError ? 6000 : isWarning ? 5000 : 4000,
+        }
+
+        if (isError) {
+          toast.error(title, options)
+        } else if (isWarning) {
+          toast.warning(title, options)
+        } else if (isSuccess) {
+          toast.success(title, options)
+        } else {
+          toast.info(title, options)
+        }
+      }
+    }
+
     const init = async () => {
       try {
         // Check for saved session

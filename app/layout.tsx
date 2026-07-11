@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 // import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/contexts/auth-context'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 // const inter = Inter({ 
@@ -34,6 +35,22 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster 
+          richColors 
+          position="top-right" 
+          closeButton 
+          theme="light" 
+          toastOptions={{
+            style: {
+              borderRadius: '16px',
+              border: '1px solid rgba(226, 232, 240, 0.8)',
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+              padding: '12px 16px',
+            },
+          }}
+        />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
