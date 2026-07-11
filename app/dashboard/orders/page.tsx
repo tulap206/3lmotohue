@@ -495,7 +495,7 @@ export default function OrdersPage() {
 
     const conflictingRental = orders.find((order) => {
       if (order.vehicleId !== vehicle.id) return false
-      if (order.status === "cancelled") return false
+      if (order.status === "cancelled" || order.status === "completed") return false
       
       const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
       const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
@@ -670,7 +670,7 @@ export default function OrdersPage() {
     const conflictingRental = orders.find((order) => {
       if (order.id === editingOrder.id) return false // Ignore current order
       if (order.vehicleId !== vehicle.id) return false
-      if (order.status === "cancelled") return false // Ignore cancelled rentals
+      if (order.status === "cancelled" || order.status === "completed") return false // Ignore cancelled/completed rentals
       
       const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
       const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))

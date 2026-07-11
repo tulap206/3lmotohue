@@ -172,7 +172,7 @@ export default function DashboardPage() {
 
     const conflictingRental = orders.find((order) => {
       if (order.vehicleId !== vehicle.id) return false
-      if (order.status === "cancelled") return false
+      if (order.status === "cancelled" || order.status === "completed") return false
       
       const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
       const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))

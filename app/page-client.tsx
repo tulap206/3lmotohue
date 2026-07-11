@@ -97,7 +97,7 @@ export default function LandingPage() {
       const conflictingVehicleIds = new Set(
         rentals
           .filter((rental: any) => {
-            if (rental.status === "cancelled") return false
+            if (rental.status === "cancelled" || rental.status === "completed") return false
             
             // Convert dd/mm/yyyy from Supabase to Date objects
             const parseDate = (dStr: string) => {
