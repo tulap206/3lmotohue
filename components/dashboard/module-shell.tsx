@@ -187,7 +187,7 @@ export function ModuleKpiCard({
           style={{ animationDelay: `${delay * 60}ms` }}
           onClick={onClick}
         >
-          <CardContent className="p-3 flex flex-col justify-between h-full min-h-[5.25rem] space-y-1.5">
+          <CardContent className="px-3 py-2 flex flex-col justify-between h-full min-h-[3.65rem] space-y-1">
             <div className="flex justify-between items-start w-full">
               <div className="space-y-0.5 min-w-0 flex-1">
                 <p className="text-[11px] font-semibold text-slate-500 leading-tight">{label}</p>
