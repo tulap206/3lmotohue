@@ -923,22 +923,33 @@ export default function CustomersPage() {
                       <span className="text-[10px] text-slate-400">Đơn thuê: {customer.totalrentals || 0}</span>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleViewDetails(customer)}
+                          onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }}
+                          className="text-slate-500 hover:text-blue-600 p-1"
+                          title="Lịch sử thuê"
+                        >
+                          <Clock className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true) }}
                           className="text-slate-500 hover:text-blue-600 p-1"
                           title="Xem chi tiết"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleEditClick(customer)}
+                          onClick={() => handleEdit(customer)}
                           className="text-slate-500 hover:text-blue-600 p-1"
                           title="Sửa"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Settings className="w-4 h-4" />
                         </button>
                         {user?.permissions.canDelete && (
                           <button
-                            onClick={() => handleDeleteClick(customer)}
+                            onClick={() => {
+                              if (window.confirm(`Bạn có chắc chắn muốn xóa khách hàng ${customer.name}?`)) {
+                                handleDelete(customer.id)
+                              }
+                            }}
                             className="text-blue-600 hover:text-blue-700 p-1"
                             title="Xóa"
                           >
