@@ -527,13 +527,12 @@ export default function DashboardPage() {
     const utilizationPct = totalVehicleDays > 0 ? Math.round((totalRentedDays / totalVehicleDays) * 100) : 0
 
     // Revenue this month: from completed orders whose endDate falls in this month
-    const revenueThisMonth = orders
-      .filter(o => {
-        if (o.status !== "completed") return false
-        const end = parseVN(o.endDate)
-        return end.getMonth() === currentMonth && end.getFullYear() === currentYear
-      })
-      .reduce((sum: number, o: any) => sum + (o.revenue || o.totalPrice || 0), 0)
+    const completedOrdersThisMonth = orders.filter(o => {
+      if (o.status !== "completed") return false
+      const end = parseVN(o.endDate)
+      return end.getMonth() === currentMonth && end.getFullYear() === currentYear
+    })
+    const revenueThisMonth = completedOrdersThisMonth.reduce((sum: number, o: any) => sum + (o.revenue || o.totalPrice || 0), 0)
 
     // Commission report: group active orders by homeName
     const commissionMap: Record<string, { count: number; total: number }> = {}
@@ -545,7 +544,7 @@ export default function DashboardPage() {
     })
     const commissionReport = Object.entries(commissionMap).map(([name, val]) => ({ name, ...val }))
 
-    return { utilizationPct, revenueThisMonth, commissionReport }
+    return { utilizationPct, revenueThisMonth, profitThisMonth: revenueThisMonth, ordersCountThisMonth: completedOrdersThisMonth.length, commissionReport }
   }, [vehicles, orders])
 
   const overdueOrderRows = useMemo(() => {
@@ -738,12 +737,6 @@ export default function DashboardPage() {
       <ModuleBrandHeader
         module="rental"
         subtitle="3L Moto Moto · Tổng quan kinh doanh và vận hành cho thuê xe chuyên nghiệp"
-        badge={
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-red-100 rounded-full">
-            <Database className="w-3.5 h-3.5 text-blue-600" />
-            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Dữ liệu Supabase</span>
-          </div>
-        }
         actions={
           <Button
             onClick={() => setIsDialogOpen(true)}
@@ -755,63 +748,95 @@ export default function DashboardPage() {
         }
       />
 
-      <div className="space-y-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
-          <RentalKpiCard
-            variant="hero"
-            label="Tổng xe"
-            value={stats.totalVehicles}
-            onClick={() => router.push("/dashboard/vehicles")}
-          />
-          <RentalKpiCard
-            variant="hero"
-            label="Xe đang thuê"
-            value={stats.activeRentals}
-            valueClassName="text-blue-700"
-            onClick={() => router.push("/dashboard/orders?status=active")}
-          />
-          <RentalKpiCard
-            variant="hero"
-            label="Đơn thuê"
-            value={stats.totalRentals}
-            onClick={() => router.push("/dashboard/orders")}
-          />
-          <RentalKpiCard
-            variant="hero"
-            label="Quá hạn"
-            value={stats.overdueRentals}
-            valueClassName="text-amber-700"
-            sublabel="đơn thuê"
-            icon={<Image src="/siren.png" alt="Cảnh báo" width={28} height={28} className="object-contain" />}
-            onClick={() => router.push("/dashboard/orders?status=overdue")}
-          />
-          <RentalKpiCard
-            variant="hero"
-            label="Doanh thu"
-            value={formatPrice(stats.totalRevenue)}
-            valueClassName="text-emerald-700"
-          />
-          <RentalKpiCard
-            variant="hero"
-            label="Lợi nhuận"
-            value={formatPrice(stats.totalProfit)}
-            valueClassName="text-blue-700"
-          />
-          <RentalKpiCard
-            variant="hero"
-            label="Lấp đầy tháng này"
-            value={`${thisMonthKpis.utilizationPct}%`}
-            sublabel="tỷ lệ sử dụng"
-            valueClassName={thisMonthKpis.utilizationPct >= 70 ? "text-emerald-700" : thisMonthKpis.utilizationPct >= 40 ? "text-amber-600" : "text-blue-600"}
-          />
-          <RentalKpiCard
-            variant="hero"
-            label="Doanh thu tháng này"
-            value={formatPrice(thisMonthKpis.revenueThisMonth)}
-            sublabel="đơn đã hoàn thành"
-            valueClassName="text-emerald-700"
-            icon={<TrendingUp className="w-4 h-4" />}
-          />
+      <div className="space-y-6">
+        {/* Nhóm chỉ số vận hành */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Vận hành đội xe</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <RentalKpiCard
+              variant="hero"
+              label="Tổng xe"
+              value={stats.totalVehicles}
+              sublabel="trong hệ thống"
+              onClick={() => router.push("/dashboard/vehicles")}
+            />
+            <RentalKpiCard
+              variant="hero"
+              label="Xe đang thuê"
+              value={stats.activeRentals}
+              valueClassName="text-blue-700"
+              sublabel="khách đang chạy"
+              onClick={() => router.push("/dashboard/orders?status=active")}
+            />
+            <RentalKpiCard
+              variant="hero"
+              label="Đơn thuê"
+              value={stats.totalRentals}
+              sublabel="tổng số đơn"
+              onClick={() => router.push("/dashboard/orders")}
+            />
+            <RentalKpiCard
+              variant="hero"
+              label={`Đơn tháng ${new Date().getMonth() + 1}`}
+              value={thisMonthKpis.ordersCountThisMonth}
+              sublabel="đơn hoàn thành"
+              onClick={() => router.push("/dashboard/orders")}
+            />
+            <RentalKpiCard
+              variant="hero"
+              label="Quá hạn"
+              value={stats.overdueRentals}
+              valueClassName="text-amber-700"
+              sublabel="đơn trễ hạn trả"
+              onClick={() => router.push("/dashboard/orders?status=overdue")}
+            />
+          </div>
+        </div>
+
+        {/* Nhóm chỉ số tài chính */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Hiệu suất tài chính</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <RentalKpiCard
+              variant="hero"
+              label="Tổng doanh thu"
+              value={formatPrice(stats.totalRevenue)}
+              valueClassName="text-emerald-700"
+              sublabel="doanh thu lũy kế"
+            />
+            <RentalKpiCard
+              variant="hero"
+              label="Tổng lợi nhuận"
+              value={formatPrice(stats.totalProfit)}
+              valueClassName="text-blue-700"
+              sublabel="lợi nhuận lũy kế"
+            />
+            <RentalKpiCard
+              variant="hero"
+              label={`Doanh thu tháng ${new Date().getMonth() + 1}`}
+              value={formatPrice(thisMonthKpis.revenueThisMonth)}
+              sublabel="đơn đã hoàn tất"
+              valueClassName="text-emerald-700"
+            />
+            <RentalKpiCard
+              variant="hero"
+              label={`Lợi nhuận tháng ${new Date().getMonth() + 1}`}
+              value={formatPrice(thisMonthKpis.profitThisMonth)}
+              sublabel="thuần từ thuê xe"
+              valueClassName="text-blue-700"
+            />
+            <RentalKpiCard
+              variant="hero"
+              label="Tỷ lệ lấp đầy"
+              value={`${thisMonthKpis.utilizationPct}%`}
+              sublabel="hiệu suất sử dụng xe"
+              valueClassName={thisMonthKpis.utilizationPct >= 70 ? "text-emerald-700" : thisMonthKpis.utilizationPct >= 40 ? "text-amber-600" : "text-blue-600"}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">

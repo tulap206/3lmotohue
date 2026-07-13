@@ -187,26 +187,26 @@ export function ModuleKpiCard({
           style={{ animationDelay: `${delay * 60}ms` }}
           onClick={onClick}
         >
-        <CardHeader className="flex flex-row items-start justify-between space-y-0 px-3.5 pt-3.5 pb-1 sm:px-4 sm:pt-4">
-          <div className="space-y-0.5 min-w-0 flex-1 min-h-[2.25rem]">
-            <p className="text-[11px] sm:text-xs font-semibold text-slate-600 leading-snug truncate">{label}</p>
-            {sublabel && <p className="text-[10px] sm:text-xs text-slate-500 truncate">{sublabel}</p>}
-          </div>
-          {icon && <div className={cn(iconColor || ACCENT_TITLE_CLASS[accent], "text-lg shrink-0 ml-1")}>{icon}</div>}
-        </CardHeader>
-        <CardContent className="px-3.5 pb-3.5 pt-0.5 sm:px-4 sm:pb-4">
-          <div
-            className={cn(
-              "font-extrabold text-slate-900 tracking-tight tabular-nums leading-tight min-w-0 whitespace-nowrap",
-              "text-xs sm:text-sm md:text-base xl:text-lg",
-              valueClassName
-            )}
-            title={valueTitle}
-          >
-            {value}
-          </div>
-        </CardContent>
-      </Card>
+          <CardContent className="p-3 flex flex-col justify-between h-full min-h-[5.25rem] space-y-1.5">
+            <div className="flex justify-between items-start w-full">
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-slate-500 leading-tight">{label}</p>
+                {sublabel && <p className="text-[10px] text-slate-400 leading-none">{sublabel}</p>}
+              </div>
+              {icon && <div className={cn(iconColor || ACCENT_TITLE_CLASS[accent], "text-sm shrink-0 ml-1")}>{icon}</div>}
+            </div>
+            <div
+              className={cn(
+                "font-extrabold text-slate-800 tracking-tight tabular-nums leading-none min-w-0 whitespace-nowrap",
+                "text-sm sm:text-base xl:text-lg",
+                valueClassName
+              )}
+              title={valueTitle}
+            >
+              {value}
+            </div>
+          </CardContent>
+        </Card>
       </>
     )
   }
