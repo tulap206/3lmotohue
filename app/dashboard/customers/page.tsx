@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
 import { logger } from "@/lib/logger"
 import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -907,33 +907,14 @@ export default function CustomersPage() {
                   </ModuleMobileCard>
                 ))}
               />
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-white rounded-b-2xl">
-                  <div className="text-sm text-slate-500 font-medium hidden sm:block">
-                    Hiển thị trang <span className="font-bold text-slate-700">{currentPage}</span> / <span className="font-bold text-slate-700">{totalPages}</span> (Tổng {filteredCustomers.length} khách)
-                  </div>
-                  <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
-                    <Button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-sm border-slate-200 rounded-xl"
-                    >
-                      Trước
-                    </Button>
-                    <Button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-sm border-slate-200 rounded-xl"
-                    >
-                      Tiếp
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <ModulePagination
+                page={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredCustomers.length}
+                itemLabel="khách"
+                onPageChange={setCurrentPage}
+                className="rounded-b-2xl"
+              />
             </>
           )}
         </CardContent>

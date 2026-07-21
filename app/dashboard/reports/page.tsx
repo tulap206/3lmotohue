@@ -18,6 +18,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X } from "lucide-react"
+import { ModulePagination } from "@/components/dashboard/module-shell"
 import {
   BarChart,
   Bar,
@@ -139,18 +140,6 @@ export default function ReportsPage() {
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex)
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
-    }
-  }
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
-  }
 
   // Reset to page 1 when search changes
   const handleSearchChange = (value: string) => {
@@ -888,31 +877,14 @@ export default function ReportsPage() {
                 </table>
               </div>
 
-              {/* Pagination Controls */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 pt-3 gap-2 sm:gap-0">
-                <div className="text-sm text-gray-600">
-                  <span>{startIndex + 1}</span> - <span>{Math.min(endIndex, filteredTransactions.length)}</span> / <span>{filteredTransactions.length}</span> {searchQuery && <span className="text-gray-500 text-sm">(lọc từ {transactions.length})</span>}
-                </div>
-                <div className="flex gap-1 md:gap-2">
-                  <button
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-sm md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    ← Trước
-                  </button>
-                  <div className="px-2 md:px-3 py-1 md:py-2 border border-gray-300 rounded bg-gray-50">
-                    <span className="text-sm md:text-sm font-medium">{currentPage} / {totalPages}</span>
-                  </div>
-                  <button
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-sm md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    Tiếp →
-                  </button>
-                </div>
-              </div>
+              <ModulePagination
+                page={currentPage}
+                totalPages={Math.max(1, totalPages)}
+                totalItems={filteredTransactions.length}
+                itemLabel="giao dịch"
+                onPageChange={setCurrentPage}
+                className="border-t border-gray-200 pt-3 mt-0 px-0 bg-transparent"
+              />
             </div>
           ) : (
             <div className="text-center py-6 text-gray-500">

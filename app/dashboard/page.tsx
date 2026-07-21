@@ -25,7 +25,7 @@ import { SkeletonMetricCards, SkeletonTable } from "@/components/ui/skeleton-loa
 import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeExpenseChart } from "@/components/dashboard/rental-charts"
 import { OverdueOrdersPanel, CommissionHomeReportPanel } from "@/components/dashboard/rental-overview-panels"
 import { RentalKpiCard, rentalTableHeadClass, getRentalTransactionTypeLabel } from "@/components/dashboard/rental-ui"
-import { ModulePageShell, ModuleBrandHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleBrandHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination } from "@/components/dashboard/module-shell"
 import { cn } from "@/lib/utils"
 import {
   EntityFormDialogContent,
@@ -1010,38 +1010,14 @@ export default function DashboardPage() {
                   ))}
                 />
 
-                {/* Pagination Footer */}
-                <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/20 px-4 py-3 sm:px-6">
-                  <div className="text-sm text-slate-500">
-                    Hiển thị <span className="font-semibold text-slate-700">{paginatedTransactions.length}</span> trong{" "}
-                    <span className="font-semibold text-slate-700">{filteredTransactions.length}</span> giao dịch
-                  </div>
-                  {txTotalPages > 1 && (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        onClick={() => setTxCurrentPage((prev) => Math.max(1, prev - 1))}
-                        disabled={txSafePage === 1}
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-lg border-slate-200 text-sm px-2.5"
-                      >
-                        Trang trước
-                      </Button>
-                      <div className="flex items-center gap-1 font-semibold text-sm text-slate-600 px-2 tabular-nums">
-                        <span>{txSafePage}</span> / <span>{txTotalPages}</span>
-                      </div>
-                      <Button
-                        onClick={() => setTxCurrentPage((prev) => Math.min(txTotalPages, prev + 1))}
-                        disabled={txSafePage === txTotalPages}
-                        variant="outline"
-                        size="sm"
-                        className="h-8 rounded-lg border-slate-200 text-sm px-2.5"
-                      >
-                        Trang sau
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                <ModulePagination
+                  page={txSafePage}
+                  totalPages={txTotalPages}
+                  totalItems={filteredTransactions.length}
+                  itemLabel="giao dịch"
+                  onPageChange={setTxCurrentPage}
+                  className="bg-slate-50/20 sm:px-6"
+                />
               </>
             )}
           </CardContent>

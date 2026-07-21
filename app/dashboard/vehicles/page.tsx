@@ -8,7 +8,7 @@ import { useRentalData } from "@/contexts/rental-data-context"
 import { supabase } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -1110,70 +1110,14 @@ export default function VehiclesPage() {
                   </ModuleMobileCard>
                 ))}
               />
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-white rounded-b-2xl">
-                  <div className="text-sm text-slate-500 font-medium hidden sm:block">
-                    Hiển thị trang <span className="font-bold text-slate-700">{currentPage}</span> / <span className="font-bold text-slate-700">{totalPages}</span> (Tổng {filteredVehicles.length} xe)
-                  </div>
-                  <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
-                    <Button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-sm border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
-                    >
-                      Trước
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                        if (
-                          page === 1 ||
-                          page === totalPages ||
-                          Math.abs(page - currentPage) <= 1
-                        ) {
-                          return (
-                            <Button
-                              key={page}
-                              onClick={() => setCurrentPage(page)}
-                              variant={currentPage === page ? "default" : "outline"}
-                              size="sm"
-                              className={cn(
-                                "h-8 w-8 text-sm rounded-xl font-bold transition-all",
-                                currentPage === page
-                                  ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
-                                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                              )}
-                            >
-                              {page}
-                            </Button>
-                          )
-                        }
-                        if (
-                          page === 2 ||
-                          page === totalPages - 1
-                        ) {
-                          return (
-                            <span key={page} className="text-slate-400 text-sm px-1 select-none">
-                              ...
-                            </span>
-                          )
-                        }
-                        return null
-                      })}
-                    </div>
-                    <Button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 text-sm border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
-                    >
-                      Tiếp
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <ModulePagination
+                page={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredVehicles.length}
+                itemLabel="xe"
+                onPageChange={setCurrentPage}
+                className="rounded-b-2xl"
+              />
             </>
           )}
         </CardContent>

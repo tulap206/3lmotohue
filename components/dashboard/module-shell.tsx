@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   type ModuleAccent,
@@ -387,5 +388,110 @@ export function ModuleMobileCard({
 }) {
   return (
     <div className={cn("module-table-row px-4 py-3 space-y-2", className)}>{children}</div>
+  )
+}
+
+function buildPaginationPages(current: number, total: number): (number | "ellipsis")[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const pages: (number | "ellipsis")[] = [1]
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  if (start > 2) pages.push("ellipsis")
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (end < total - 1) pages.push("ellipsis")
+  pages.push(total)
+  return pages
+}
+
+/** Numbered pagination footer for module list tables. */
+export function ModulePagination({
+  page,
+  totalPages,
+  totalItems,
+  onPageChange,
+  itemLabel,
+  className,
+}: {
+  page: number
+  totalPages: number
+  totalItems?: number
+  onPageChange: (page: number) => void
+  itemLabel?: string
+  className?: string
+}) {
+  if (totalPages <= 1) return null
+
+  const safePage = Math.min(Math.max(1, page), totalPages)
+  const pages = buildPaginationPages(safePage, totalPages)
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-t border-slate-100 bg-white",
+        className
+      )}
+    >
+      <div className="text-sm text-slate-500 font-medium hidden sm:block">
+        Trang <span className="font-bold text-slate-700">{safePage}</span>
+        {" / "}
+        <span className="font-bold text-slate-700">{totalPages}</span>
+        {typeof totalItems === "number" && (
+          <>
+            {" "}
+            (Tổng {totalItems}
+            {itemLabel ? ` ${itemLabel}` : ""})
+          </>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 ml-auto sm:ml-0 flex-wrap justify-end">
+        <Button
+          type="button"
+          onClick={() => onPageChange(Math.max(1, safePage - 1))}
+          disabled={safePage === 1}
+          variant="outline"
+          size="sm"
+          className="h-8 text-sm border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
+        >
+          Trước
+        </Button>
+        <div className="flex items-center gap-1">
+          {pages.map((p, idx) =>
+            p === "ellipsis" ? (
+              <span key={`e-${idx}`} className="text-slate-400 text-sm px-1 select-none">
+                …
+              </span>
+            ) : (
+              <Button
+                key={p}
+                type="button"
+                onClick={() => onPageChange(p)}
+                variant={safePage === p ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "h-8 w-8 text-sm rounded-xl font-bold transition-all",
+                  safePage === p
+                    ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                )}
+              >
+                {p}
+              </Button>
+            )
+          )}
+        </div>
+        <Button
+          type="button"
+          onClick={() => onPageChange(Math.min(totalPages, safePage + 1))}
+          disabled={safePage === totalPages}
+          variant="outline"
+          size="sm"
+          className="h-8 text-sm border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
+        >
+          Tiếp
+        </Button>
+      </div>
+    </div>
   )
 }

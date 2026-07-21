@@ -32,6 +32,7 @@ import {
   ModuleSectionCard,
   ModuleResponsiveTable,
   ModuleMobileCard,
+  ModulePagination,
 } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
@@ -315,31 +316,13 @@ export default function MaintenancePage() {
             />
           )}
         </CardContent>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
-            <span className="text-sm text-slate-500 mr-2">
-              Trang {currentPage} / {totalPages}
-            </span>
-            <Button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              variant="outline"
-              size="sm"
-              className="h-8 text-sm border-slate-200 rounded-xl"
-            >
-              Trước
-            </Button>
-            <Button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              variant="outline"
-              size="sm"
-              className="h-8 text-sm border-slate-200 rounded-xl"
-            >
-              Tiếp
-            </Button>
-          </div>
-        )}
+        <ModulePagination
+          page={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredVehicles.length}
+          itemLabel="xe"
+          onPageChange={setCurrentPage}
+        />
       </ModuleSectionCard>
       </div>
 
