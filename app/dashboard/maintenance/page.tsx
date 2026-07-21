@@ -233,7 +233,7 @@ export default function MaintenancePage() {
                             </button>
                           </td>
                           <td className="py-3.5 px-4">
-                            <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-xs shadow-sm tracking-wider uppercase">
+                            <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-sm shadow-sm tracking-wider uppercase">
                               {vehicle.licensePlate}
                             </span>
                           </td>
@@ -299,13 +299,13 @@ export default function MaintenancePage() {
                         >
                           {vehicle.name}
                         </button>
-                        <p className="text-xs text-slate-500 font-mono">{vehicle.licensePlate}</p>
+                        <p className="text-sm text-slate-500 font-mono">{vehicle.licensePlate}</p>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-orange-50 text-orange-700 border-orange-100 shrink-0">
+                      <span className="text-sm font-bold px-2 py-0.5 rounded-full border bg-orange-50 text-orange-700 border-orange-100 shrink-0">
                         +{overKm.toLocaleString()} km
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-xs text-slate-500">
+                    <div className="flex justify-between items-center text-sm text-slate-500">
                       <span className="tabular-nums">{vehicle.current_km.toLocaleString()} km</span>
                       <span className="tabular-nums">Mốc: {mntKm.toLocaleString()} km</span>
                     </div>
@@ -317,7 +317,7 @@ export default function MaintenancePage() {
         </CardContent>
         {totalPages > 1 && (
           <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
-            <span className="text-xs text-slate-500 mr-2">
+            <span className="text-sm text-slate-500 mr-2">
               Trang {currentPage} / {totalPages}
             </span>
             <Button
@@ -325,7 +325,7 @@ export default function MaintenancePage() {
               disabled={currentPage === 1}
               variant="outline"
               size="sm"
-              className="h-8 text-xs border-slate-200 rounded-xl"
+              className="h-8 text-sm border-slate-200 rounded-xl"
             >
               Trước
             </Button>
@@ -334,7 +334,7 @@ export default function MaintenancePage() {
               disabled={currentPage === totalPages}
               variant="outline"
               size="sm"
-              className="h-8 text-xs border-slate-200 rounded-xl"
+              className="h-8 text-sm border-slate-200 rounded-xl"
             >
               Tiếp
             </Button>
@@ -364,12 +364,12 @@ export default function MaintenancePage() {
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "inline-flex items-center text-[11px] font-bold px-2 py-1 rounded-full border",
+                      "inline-flex items-center text-sm font-bold px-2 py-1 rounded-full border",
                       rentalVehicleStatusBadgeClass(v.status)
                     )}>
                       {getRentalVehicleStatusLabel(v.status)}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full border bg-orange-50 text-orange-700 border-orange-100">
+                    <span className="inline-flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-full border bg-orange-50 text-orange-700 border-orange-100">
                       <AlertTriangle className="w-3 h-3" />
                       Quá hạn +{overKm.toLocaleString("vi-VN")} km
                     </span>
@@ -377,30 +377,30 @@ export default function MaintenancePage() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-orange-50 border border-orange-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-orange-600 uppercase">KM hiện tại</p>
+                      <p className="text-sm font-semibold text-orange-600 uppercase">KM hiện tại</p>
                       <p className="text-sm font-extrabold text-orange-700 tabular-nums">{v.current_km.toLocaleString("vi-VN")} km</p>
                     </div>
                     <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-amber-600 uppercase">Mốc bảo trì</p>
+                      <p className="text-sm font-semibold text-amber-600 uppercase">Mốc bảo trì</p>
                       <p className="text-sm font-extrabold text-amber-700 tabular-nums">{mntKm.toLocaleString("vi-VN")} km</p>
                     </div>
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
+                      <p className="text-sm font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
                       <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase">Tổng đơn</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase">Tổng đơn</p>
                       <p className="text-sm font-extrabold text-slate-800">{vOrders.length} đơn</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Giá mua</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Giá mua</p>
                       <p className="text-sm font-bold text-slate-800 tabular-nums">{formatPrice(v.purchasePrice)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Lần BT gần nhất</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Lần BT gần nhất</p>
                       <p className="text-sm font-bold text-slate-800 tabular-nums">
                         {(v.last_maintenance_km ?? 0).toLocaleString("vi-VN")} km
                       </p>
@@ -409,17 +409,17 @@ export default function MaintenancePage() {
 
                   {v.notes && v.notes.trim() && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
-                      <p className="text-xs text-slate-700 whitespace-pre-line">{v.notes}</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {recentOrders.map((o) => (
-                          <div key={o.id} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
+                          <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
                             <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
                             <span className="font-bold tabular-nums text-blue-600 shrink-0">
@@ -435,7 +435,7 @@ export default function MaintenancePage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.vehicleImages.map((img, index) => (
                               <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
@@ -447,7 +447,7 @@ export default function MaintenancePage() {
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.documentImages.map((img, index) => (
                               <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
@@ -461,7 +461,7 @@ export default function MaintenancePage() {
                   ) : (
                     <div className="flex items-center gap-2 text-slate-400 bg-slate-50 border border-slate-100 p-3 rounded-xl">
                       <ImageIcon className="w-4 h-4" />
-                      <span className="text-xs">Chưa có ảnh xe / giấy tờ</span>
+                      <span className="text-sm">Chưa có ảnh xe / giấy tờ</span>
                     </div>
                   )}
 
@@ -503,7 +503,7 @@ export default function MaintenancePage() {
         </button>
         {isGuideOpen && (
           <div className="px-5 pb-5 pt-1 border-t border-blue-100/50">
-            <ul className="text-xs md:text-sm text-blue-800/90 space-y-2">
+            <ul className="text-sm text-blue-800/90 space-y-2">
               <li>• Xe được đánh dấu cần bảo trì khi ODO đạt bội số của 1000 KM</li>
               <li>• Ví dụ: Xe mới chưa bảo trì (0 KM) → cần bảo trì lần đầu ở 1000 KM</li>
               <li>• Sau khi bảo trì 1000 KM → lần tiếp theo ở 2000 KM, 3000 KM, v.v...</li>

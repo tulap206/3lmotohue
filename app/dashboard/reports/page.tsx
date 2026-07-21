@@ -623,7 +623,7 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent className="p-3">
               <div className="text-xl md:text-2xl font-bold break-words">{stat.value}</div>
-              <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
+              <p className="text-sm text-gray-500 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
         ))}
@@ -633,7 +633,7 @@ export default function ReportsPage() {
       <Card>
         <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
           <CardTitle className="text-base md:text-lg">Doanh Thu Theo Tháng</CardTitle>
-          <CardDescription className="text-xs md:text-sm">Doanh thu hàng tháng</CardDescription>
+          <CardDescription className="text-sm md:text-sm">Doanh thu hàng tháng</CardDescription>
         </CardHeader>
         <CardContent className="p-3 md:p-4">
           <ResponsiveContainer width="100%" height={280}>
@@ -660,7 +660,7 @@ export default function ReportsPage() {
       <Card>
         <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
           <CardTitle className="text-base md:text-lg">Xe Top Doanh Thu</CardTitle>
-          <CardDescription className="text-xs md:text-sm">Top 5 xe có doanh thu cao nhất</CardDescription>
+          <CardDescription className="text-sm md:text-sm">Top 5 xe có doanh thu cao nhất</CardDescription>
         </CardHeader>
         <CardContent className="p-3 md:p-4">
           {reportData.topVehicles.length > 0 ? (
@@ -684,7 +684,7 @@ export default function ReportsPage() {
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm text-gray-900 break-words">{vehicle.name}</p>
-                    <p className="text-xs text-gray-500">{vehicle.rentals} lần thuê</p>
+                    <p className="text-sm text-gray-500">{vehicle.rentals} lần thuê</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="font-semibold text-sm text-blue-600 break-words">
@@ -711,39 +711,39 @@ export default function ReportsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <p className="text-xs text-gray-500">Tên xe</p>
+                  <p className="text-sm text-gray-500">Tên xe</p>
                   <p className="font-medium text-gray-800 text-sm">{selectedVehicle.name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Biển số</p>
+                  <p className="text-sm text-gray-500">Biển số</p>
                   <p className="font-medium text-gray-800 text-sm">{selectedVehicle.licensePlate}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Màu sắc</p>
+                  <p className="text-sm text-gray-500">Màu sắc</p>
                   <p className="font-medium text-gray-800 text-sm">{selectedVehicle.color}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Giá/ngày</p>
+                  <p className="text-sm text-gray-500">Giá/ngày</p>
                   <p className="font-medium text-gray-800 text-sm">{selectedVehicle.pricePerDay.toLocaleString()} đ</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Trạng thái</p>
+                  <p className="text-sm text-gray-500">Trạng thái</p>
                   <p className="font-medium text-gray-800">{selectedVehicle.status}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Km hiện tại</p>
+                  <p className="text-sm text-gray-500">Km hiện tại</p>
                   <p className="font-medium text-gray-800">{selectedVehicle.current_km} km</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Giá mua</p>
+                  <p className="text-sm text-gray-500">Giá mua</p>
                   <p className="font-medium text-gray-800">{selectedVehicle.purchasePrice.toLocaleString("vi-VN")} đ</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Doanh thu</p>
+                  <p className="text-sm text-gray-500">Doanh thu</p>
                   <p className="font-medium text-gray-800">{selectedVehicle.totalRevenue.toLocaleString("vi-VN")} đ</p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-xs text-gray-500">Ghi chú</p>
+                  <p className="text-sm text-gray-500">Ghi chú</p>
                   <p className="font-medium text-gray-800">{selectedVehicle.notes || "Không có"}</p>
                 </div>
               </div>
@@ -758,7 +758,7 @@ export default function ReportsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
             <div>
               <CardTitle className="text-base md:text-lg">Theo Dõi Thu/Chi</CardTitle>
-              <CardDescription className="text-red-600 font-medium text-xs md:text-sm">Quản lý các khoản thu/chi nằm ngoài đơn thuê xe</CardDescription>
+              <CardDescription className="text-red-600 font-medium text-sm md:text-sm">Quản lý các khoản thu/chi nằm ngoài đơn thuê xe</CardDescription>
             </div>
             <Dialog open={isAddTransactionOpen} onOpenChange={setIsAddTransactionOpen}>
               <Button onClick={() => setIsAddTransactionOpen(true)} className="bg-blue-500 text-white hover:bg-blue-600 text-sm w-full sm:w-auto">
@@ -837,7 +837,7 @@ export default function ReportsPage() {
           {transactions.length > 0 ? (
             <div className="space-y-3 md:space-y-4">
               <div className="overflow-x-auto">
-                <table className="w-full text-xs md:text-sm">
+                <table className="w-full text-sm md:text-sm">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="text-left p-2 md:p-3 font-semibold text-gray-700">Thời gian</th>
@@ -850,14 +850,14 @@ export default function ReportsPage() {
                   <tbody>
                     {paginatedTransactions.map((tx) => (
                       <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="p-2 md:p-3 text-gray-600 text-xs">{new Date(tx.timestamp).toLocaleString("vi-VN")}</td>
+                        <td className="p-2 md:p-3 text-gray-600 text-sm">{new Date(tx.timestamp).toLocaleString("vi-VN")}</td>
                         <td className="p-2 md:p-3">
                           <span className={tx.type === "income" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
                             {tx.type === "income" ? "✓" : "✗"} {tx.description}
                           </span>
                         </td>
-                        <td className="p-2 md:p-3 text-gray-600 hidden sm:table-cell text-xs">{tx.user}</td>
-                        <td className={`p-2 md:p-3 text-right font-semibold text-xs md:text-sm ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
+                        <td className="p-2 md:p-3 text-gray-600 hidden sm:table-cell text-sm">{tx.user}</td>
+                        <td className={`p-2 md:p-3 text-right font-semibold text-sm md:text-sm ${tx.type === "income" ? "text-green-600" : "text-red-600"}`}>
                           {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")}
                         </td>
                         <td className="p-2 md:p-3 text-center">
@@ -879,7 +879,7 @@ export default function ReportsPage() {
                               </button>
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-xs">Admin</span>
+                            <span className="text-gray-400 text-sm">Admin</span>
                           )}
                         </td>
                       </tr>
@@ -890,24 +890,24 @@ export default function ReportsPage() {
 
               {/* Pagination Controls */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 pt-3 gap-2 sm:gap-0">
-                <div className="text-xs text-gray-600">
-                  <span>{startIndex + 1}</span> - <span>{Math.min(endIndex, filteredTransactions.length)}</span> / <span>{filteredTransactions.length}</span> {searchQuery && <span className="text-gray-500 text-xs">(lọc từ {transactions.length})</span>}
+                <div className="text-sm text-gray-600">
+                  <span>{startIndex + 1}</span> - <span>{Math.min(endIndex, filteredTransactions.length)}</span> / <span>{filteredTransactions.length}</span> {searchQuery && <span className="text-gray-500 text-sm">(lọc từ {transactions.length})</span>}
                 </div>
                 <div className="flex gap-1 md:gap-2">
                   <button
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
-                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-xs md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-sm md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     ← Trước
                   </button>
                   <div className="px-2 md:px-3 py-1 md:py-2 border border-gray-300 rounded bg-gray-50">
-                    <span className="text-xs md:text-sm font-medium">{currentPage} / {totalPages}</span>
+                    <span className="text-sm md:text-sm font-medium">{currentPage} / {totalPages}</span>
                   </div>
                   <button
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages}
-                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-xs md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="px-2 md:px-3 py-1 md:py-2 rounded border border-gray-300 text-sm md:text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     Tiếp →
                   </button>
@@ -954,19 +954,19 @@ export default function ReportsPage() {
             <CardContent className="text-sm text-gray-700 space-y-3 p-3 md:p-4">
               <div className="grid grid-cols-2 gap-2 md:gap-3">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">🚗 Tổng xe</p>
+                  <p className="text-sm text-gray-500 mb-1">🚗 Tổng xe</p>
                   <p className="font-semibold text-base md:text-lg text-gray-800">{reportData.totalVehicles}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">👥 Tổng khách</p>
+                  <p className="text-sm text-gray-500 mb-1">👥 Tổng khách</p>
                   <p className="font-semibold text-base md:text-lg text-gray-800">{reportData.totalCustomers}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">📋 Tổng đơn</p>
+                  <p className="text-sm text-gray-500 mb-1">📋 Tổng đơn</p>
                   <p className="font-semibold text-base md:text-lg text-gray-800">{reportData.totalRentals}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">💰 Doanh thu</p>
+                  <p className="text-sm text-gray-500 mb-1">💰 Doanh thu</p>
                   <p className="font-semibold text-base md:text-lg text-blue-600 break-words text-sm md:text-base">{reportData.totalRevenue.toLocaleString("vi-VN")}</p>
                 </div>
               </div>
@@ -974,19 +974,19 @@ export default function ReportsPage() {
               <div className="border-t border-blue-200 pt-3">
                 <div className="grid grid-cols-2 gap-2 md:gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">📈 Lợi nhuận</p>
+                    <p className="text-sm text-gray-500 mb-1">📈 Lợi nhuận</p>
                     <p className="font-semibold text-base md:text-lg text-emerald-600 break-words text-sm md:text-base">{reportData.totalProfit.toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">📥 Tổng thu</p>
+                    <p className="text-sm text-gray-500 mb-1">📥 Tổng thu</p>
                     <p className="font-semibold text-base md:text-lg text-green-600 break-words text-sm md:text-base">+{(rentalRevenue + totalIncome).toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">📤 Tổng chi</p>
+                    <p className="text-sm text-gray-500 mb-1">📤 Tổng chi</p>
                     <p className="font-semibold text-base md:text-lg text-red-600 text-sm md:text-base">-{totalExpense.toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">💵 Tiền hiện có</p>
+                    <p className="text-sm text-gray-500 mb-1">💵 Tiền hiện có</p>
                     <p className={`font-semibold text-base md:text-lg ${cashOnHand >= 0 ? 'text-blue-600' : 'text-red-600'} text-sm md:text-base break-words`}>
                       {cashOnHand.toLocaleString("vi-VN")}
                     </p>

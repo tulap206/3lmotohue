@@ -51,7 +51,7 @@ function PanelPagination({
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-slate-100/90 bg-slate-50/40">
-      <p className="text-xs text-slate-500 tabular-nums">
+      <p className="text-sm text-slate-500 tabular-nums">
         {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, totalItems)} / {totalItems}
       </p>
       <div className="flex items-center gap-1 justify-end">
@@ -61,14 +61,14 @@ function PanelPagination({
           size="sm"
           disabled={page === 1}
           onClick={() => onPageChange(page - 1)}
-          className="h-8 rounded-lg px-2.5 text-xs font-semibold border-slate-200"
+          className="h-8 rounded-lg px-2.5 text-sm font-semibold border-slate-200"
         >
           <ChevronLeft className="w-3.5 h-3.5 mr-0.5" />
           Trước
         </Button>
         {pages.map((p, idx) =>
           p === "ellipsis" ? (
-            <span key={`e-${idx}`} className="px-1 text-slate-400 text-xs">
+            <span key={`e-${idx}`} className="px-1 text-slate-400 text-sm">
               …
             </span>
           ) : (
@@ -79,7 +79,7 @@ function PanelPagination({
               size="sm"
               onClick={() => onPageChange(p)}
               className={cn(
-                "h-8 w-8 rounded-lg p-0 text-xs font-bold",
+                "h-8 w-8 rounded-lg p-0 text-sm font-bold",
                 page === p ? accentClass : "border-slate-200"
               )}
             >
@@ -93,7 +93,7 @@ function PanelPagination({
           size="sm"
           disabled={page === totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="h-8 rounded-lg px-2.5 text-xs font-semibold border-slate-200"
+          className="h-8 rounded-lg px-2.5 text-sm font-semibold border-slate-200"
         >
           Sau
           <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
@@ -141,9 +141,9 @@ export function OverdueOrdersPanel({
       accent="rose"
       headerExtra={
         <div className="text-right shrink-0">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tổng</p>
+          <p className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Tổng</p>
           <p className="text-lg font-extrabold text-rose-600 tabular-nums leading-none">{orders.length}</p>
-          <p className="text-[10px] text-slate-500 mt-0.5">đơn</p>
+          <p className="text-sm text-slate-500 mt-0.5">đơn</p>
         </div>
       }
     >
@@ -152,10 +152,10 @@ export function OverdueOrdersPanel({
           <table className="w-full text-left border-collapse text-sm min-w-[320px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-10">#</th>
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Khách</th>
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Xe</th>
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Quá hạn</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider w-10">#</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider">Khách</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Xe</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider text-right">Quá hạn</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -165,24 +165,24 @@ export function OverdueOrdersPanel({
                   className="group cursor-pointer hover:bg-rose-50/40 transition-colors"
                   onClick={() => router.push(`/dashboard/orders?status=overdue`)}
                 >
-                  <td className="py-2.5 px-4 text-xs text-slate-400 font-medium tabular-nums">
+                  <td className="py-2.5 px-4 text-sm text-slate-400 font-medium tabular-nums">
                     {(safePage - 1) * PAGE_SIZE + index + 1}
                   </td>
                   <td className="py-2.5 px-4 min-w-0">
                     <p className="font-semibold text-slate-800 truncate text-sm">{row.customerName}</p>
-                    <p className="text-[11px] text-slate-500 sm:hidden truncate">
+                    <p className="text-sm text-slate-500 sm:hidden truncate">
                       {row.vehicleName} · {row.licensePlate}
                     </p>
                   </td>
                   <td className="py-2.5 px-4 hidden sm:table-cell min-w-0">
                     <p className="text-slate-700 truncate">{row.vehicleName}</p>
-                    <p className="text-[11px] text-slate-400">{row.licensePlate}</p>
+                    <p className="text-sm text-slate-400">{row.licensePlate}</p>
                   </td>
                   <td className="py-2.5 px-4 text-right whitespace-nowrap">
-                    <span className="inline-flex items-center text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md tabular-nums">
+                    <span className="inline-flex items-center text-sm font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md tabular-nums">
                       {row.daysOver} ngày
                     </span>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Hạn {row.endDate}</p>
+                    <p className="text-sm text-slate-400 mt-0.5">Hạn {row.endDate}</p>
                   </td>
                 </tr>
               ))}
@@ -240,7 +240,7 @@ export function CommissionHomeReportPanel({
       accent="amber"
       headerExtra={
         <div className="text-right shrink-0 max-w-[8rem]">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Tổng</p>
+          <p className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Tổng</p>
           <p className="text-sm font-extrabold text-amber-700 tabular-nums leading-tight truncate" title={formatPrice(grandTotal)}>
             {formatPrice(grandTotal)}
           </p>
@@ -252,10 +252,10 @@ export function CommissionHomeReportPanel({
           <table className="w-full text-left border-collapse text-sm min-w-[280px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-10">#</th>
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Home</th>
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Đơn</th>
-                <th className="py-2.5 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Hoa hồng</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider w-10">#</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider">Home</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider text-center">Đơn</th>
+                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider text-right">Hoa hồng</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -263,7 +263,7 @@ export function CommissionHomeReportPanel({
                 const pct = grandTotal > 0 ? (row.total / grandTotal) * 100 : 0
                 return (
                   <tr key={row.name} className="hover:bg-amber-50/30 transition-colors">
-                    <td className="py-2.5 px-4 text-xs text-slate-400 font-medium tabular-nums">
+                    <td className="py-2.5 px-4 text-sm text-slate-400 font-medium tabular-nums">
                       {(safePage - 1) * PAGE_SIZE + index + 1}
                     </td>
                     <td className="py-2.5 px-4 min-w-0">
@@ -276,7 +276,7 @@ export function CommissionHomeReportPanel({
                       </div>
                     </td>
                     <td className="py-2.5 px-4 text-center">
-                      <span className="inline-flex min-w-[1.75rem] justify-center text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md tabular-nums">
+                      <span className="inline-flex min-w-[1.75rem] justify-center text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md tabular-nums">
                         {row.count}
                       </span>
                     </td>

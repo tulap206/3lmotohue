@@ -48,7 +48,7 @@ export function ChartShell({
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-bold text-slate-900 tracking-tight">{title}</h3>
-            <p className="text-xs text-slate-500 mt-0.5 leading-snug">{description}</p>
+            <p className="text-sm text-slate-500 mt-0.5 leading-snug">{description}</p>
             {headerExtra && <div className="mt-1.5">{headerExtra}</div>}
           </div>
         </div>

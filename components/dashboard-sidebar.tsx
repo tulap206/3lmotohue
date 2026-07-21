@@ -190,7 +190,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
               >
                 <item.icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
                 {/* Tooltip */}
-                <span className="absolute left-full ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-lg z-50">
+                <span className="absolute left-full ml-3 px-3 py-1.5 bg-slate-800 text-white text-sm font-semibold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-lg z-50">
                   {item.title}
                 </span>
               </Link>

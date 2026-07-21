@@ -91,7 +91,7 @@ export function BackupAccessDenied() {
     <div className="rounded-2xl border border-red-100 bg-blue-50/40 p-6 text-center">
       <ShieldAlert className="mx-auto mb-2 h-10 w-10 text-red-500" />
       <h3 className="text-sm font-bold text-red-800">Truy cập bị hạn chế</h3>
-      <p className="mt-1 text-xs text-blue-600">Bạn không có quyền sao lưu và khôi phục dữ liệu.</p>
+      <p className="mt-1 text-sm text-blue-600">Bạn không có quyền sao lưu và khôi phục dữ liệu.</p>
     </div>
   )
 }
@@ -146,10 +146,10 @@ export function BackupRestorePanel({
             </div>
             <div className="min-w-0">
               <h2 className="truncate text-sm font-bold text-slate-800">Sao lưu & khôi phục</h2>
-              <p className="truncate text-xs text-slate-500">{moduleName}</p>
+              <p className="truncate text-sm text-slate-500">{moduleName}</p>
             </div>
           </div>
-          <span className={cn("hidden shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline", styles.badge)}>
+          <span className={cn("hidden shrink-0 rounded-full px-2 py-0.5 text-sm font-semibold sm:inline", styles.badge)}>
             {scopeLabel}
           </span>
         </div>
@@ -157,7 +157,7 @@ export function BackupRestorePanel({
         {message && (
           <div
             className={cn(
-              "mx-4 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-xs",
+              "mx-4 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-sm",
               message.type === "success"
                 ? "border-emerald-100 bg-emerald-50 text-emerald-800"
                 : "border-red-100 bg-blue-50 text-red-800"
@@ -186,8 +186,8 @@ export function BackupRestorePanel({
                 )}
               >
                 <CloudUpload className={cn("h-5 w-5", styles.icon.split(" ")[0])} />
-                <span className="text-xs font-bold text-slate-800">Sao lưu</span>
-                <span className="text-[10px] leading-tight text-slate-400">Lên đám mây</span>
+                <span className="text-sm font-bold text-slate-800">Sao lưu</span>
+                <span className="text-sm leading-tight text-slate-400">Lên đám mây</span>
               </button>
 
               <button
@@ -200,10 +200,10 @@ export function BackupRestorePanel({
                 )}
               >
                 <Upload className="h-5 w-5 text-emerald-600" />
-                <span className="text-xs font-bold text-slate-800">
+                <span className="text-sm font-bold text-slate-800">
                   {canRestore ? "Khôi phục" : "Chỉ Admin"}
                 </span>
-                <span className="text-[10px] leading-tight text-slate-400">Từ file JSON</span>
+                <span className="text-sm leading-tight text-slate-400">Từ file JSON</span>
               </button>
               <input
                 ref={uploadRef}
@@ -220,7 +220,7 @@ export function BackupRestorePanel({
                 size="sm"
                 onClick={onBackup}
                 disabled={loading || !canBackup}
-                className={cn("h-8 flex-1 rounded-lg text-xs font-semibold", styles.backupBtn)}
+                className={cn("h-8 flex-1 rounded-lg text-sm font-semibold", styles.backupBtn)}
               >
                 {loading ? "Đang xử lý..." : "Thực hiện sao lưu"}
               </Button>
@@ -229,13 +229,13 @@ export function BackupRestorePanel({
                 variant="outline"
                 onClick={() => uploadRef.current?.click()}
                 disabled={loading || !canRestore}
-                className="h-8 flex-1 rounded-lg border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                className="h-8 flex-1 rounded-lg border-emerald-200 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
               >
                 Chọn file
               </Button>
             </div>
 
-            <p className="rounded-lg border border-amber-100 bg-amber-50/80 px-2.5 py-2 text-[10px] leading-relaxed text-amber-800">
+            <p className="rounded-lg border border-amber-100 bg-amber-50/80 px-2.5 py-2 text-sm leading-relaxed text-amber-800">
               Khôi phục sẽ ghi đè toàn bộ dữ liệu {scopeLabel.toLowerCase()} hiện tại. Kiểm tra kỹ trước khi xác nhận.
             </p>
           </div>
@@ -243,13 +243,13 @@ export function BackupRestorePanel({
           <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-100 lg:col-span-8">
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2">
               <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-800">Bản sao lưu trên đám mây</p>
-                <p className="truncate text-[10px] text-slate-400">
+                <p className="text-sm font-bold text-slate-800">Bản sao lưu trên đám mây</p>
+                <p className="truncate text-sm text-slate-400">
                   {fileHint || "Các file JSON lưu trên Supabase Storage"}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
-                <span className="rounded-md bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 tabular-nums">
+                <span className="rounded-md bg-white px-1.5 py-0.5 text-sm font-semibold text-slate-500 tabular-nums">
                   {files.length} file
                 </span>
                 <Button
@@ -266,19 +266,19 @@ export function BackupRestorePanel({
 
             <div className="min-h-0 flex-1 overflow-hidden">
               {filesLoading ? (
-                <div className="flex h-40 items-center justify-center text-xs text-slate-400">
+                <div className="flex h-40 items-center justify-center text-sm text-slate-400">
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                   Đang tải...
                 </div>
               ) : files.length === 0 ? (
-                <div className="flex h-40 flex-col items-center justify-center gap-1 text-xs text-slate-400">
+                <div className="flex h-40 flex-col items-center justify-center gap-1 text-sm text-slate-400">
                   <FileJson className="h-6 w-6 text-slate-300" />
                   Chưa có bản sao lưu
                 </div>
               ) : (
                 <div className="max-h-[min(340px,calc(100vh-16rem))] overflow-y-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="sticky top-0 z-10 bg-white text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  <table className="w-full text-left text-sm">
+                    <thead className="sticky top-0 z-10 bg-white text-sm font-semibold uppercase tracking-wide text-slate-400">
                       <tr className="border-b border-slate-100">
                         <th className="px-3 py-2 font-semibold">Tên file</th>
                         <th className="hidden px-2 py-2 font-semibold sm:table-cell">Thời gian</th>
@@ -318,7 +318,7 @@ export function BackupRestorePanel({
                                 variant="ghost"
                                 onClick={() => onRestoreFile(file.url, file.name)}
                                 disabled={loading || !canRestore}
-                                className="h-7 rounded-md px-2 text-[10px] font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700 disabled:text-slate-300"
+                                className="h-7 rounded-md px-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700 disabled:text-slate-300"
                               >
                                 {canRestore ? "Khôi phục" : "🔒"}
                               </Button>

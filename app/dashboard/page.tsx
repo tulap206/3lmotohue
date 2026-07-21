@@ -786,7 +786,7 @@ export default function DashboardPage() {
         {/* Nhóm chỉ số vận hành */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Vận hành đội xe</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Vận hành đội xe</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <RentalKpiCard
@@ -832,7 +832,7 @@ export default function DashboardPage() {
         {/* Nhóm chỉ số tài chính */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Hiệu suất tài chính</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Hiệu suất tài chính</h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <RentalKpiCard
@@ -941,11 +941,11 @@ export default function DashboardPage() {
                       <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
                         {paginatedTransactions.map((tx, index) => (
                           <tr key={tx.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
-                            <td className="py-3 px-4 text-center text-xs text-slate-400 font-medium">
+                            <td className="py-3 px-4 text-center text-sm text-slate-400 font-medium">
                               {(txSafePage - 1) * txItemsPerPage + index + 1}
                             </td>
                             <td className="py-3 px-4">
-                              <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                              <span className={`inline-flex text-sm font-semibold px-2 py-0.5 rounded-md border ${
                                 tx.type === "income"
                                   ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                                   : "bg-blue-50 text-blue-700 border-red-100"
@@ -988,19 +988,19 @@ export default function DashboardPage() {
                   mobile={paginatedTransactions.map((tx, index) => (
                     <ModuleMobileCard key={tx.id}>
                       <div className="flex justify-between items-start gap-2">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                        <span className={`text-sm font-semibold px-2 py-0.5 rounded-md border ${
                           tx.type === "income"
                             ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                             : "bg-blue-50 text-blue-700 border-red-100"
                         }`}>
                           {getRentalTransactionTypeLabel(tx.type)}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-sm text-slate-400">
                           #{(txSafePage - 1) * txItemsPerPage + index + 1}
                         </span>
                       </div>
                       <p className="text-sm text-slate-700">{tx.description}</p>
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="flex justify-between items-center text-sm">
                         <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-blue-600"}`}>
                           {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
                         </span>
@@ -1012,7 +1012,7 @@ export default function DashboardPage() {
 
                 {/* Pagination Footer */}
                 <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/20 px-4 py-3 sm:px-6">
-                  <div className="text-xs text-slate-500">
+                  <div className="text-sm text-slate-500">
                     Hiển thị <span className="font-semibold text-slate-700">{paginatedTransactions.length}</span> trong{" "}
                     <span className="font-semibold text-slate-700">{filteredTransactions.length}</span> giao dịch
                   </div>
@@ -1023,11 +1023,11 @@ export default function DashboardPage() {
                         disabled={txSafePage === 1}
                         variant="outline"
                         size="sm"
-                        className="h-8 rounded-lg border-slate-200 text-xs px-2.5"
+                        className="h-8 rounded-lg border-slate-200 text-sm px-2.5"
                       >
                         Trang trước
                       </Button>
-                      <div className="flex items-center gap-1 font-semibold text-xs text-slate-600 px-2 tabular-nums">
+                      <div className="flex items-center gap-1 font-semibold text-sm text-slate-600 px-2 tabular-nums">
                         <span>{txSafePage}</span> / <span>{txTotalPages}</span>
                       </div>
                       <Button
@@ -1035,7 +1035,7 @@ export default function DashboardPage() {
                         disabled={txSafePage === txTotalPages}
                         variant="outline"
                         size="sm"
-                        className="h-8 rounded-lg border-slate-200 text-xs px-2.5"
+                        className="h-8 rounded-lg border-slate-200 text-sm px-2.5"
                       >
                         Trang sau
                       </Button>
@@ -1240,7 +1240,7 @@ export default function DashboardPage() {
                                   }}
                                   className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
                                 >
-                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-xs text-gray-400">({customer.id})</span>
+                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-sm text-gray-400">({customer.id})</span>
                                 </div>
                               ))
                             )}
@@ -1255,8 +1255,8 @@ export default function DashboardPage() {
                         ℹ️ <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
                       </EntityFormInfoBox>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Tên khách hàng <span className="text-red-500">*</span></Label>
-                        <p className="text-xs text-slate-400">Họ và tên đầy đủ của khách</p>
+                        <Label className="text-gray-600 text-sm">Tên khách hàng <span className="text-red-500">*</span></Label>
+                        <p className="text-sm text-slate-400">Họ và tên đầy đủ của khách</p>
                         <Input
                           placeholder="VD: Nguyễn Văn A"
                           value={newCustomerName}
@@ -1266,7 +1266,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Số điện thoại</Label>
+                        <Label className="text-gray-600 text-sm">Số điện thoại</Label>
                         <Input
                           placeholder="Nhập số điện thoại..."
                           value={newCustomerPhone}
@@ -1275,7 +1275,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Số CCCD khách *</Label>
+                        <Label className="text-gray-600 text-sm">Số CCCD khách *</Label>
                         <Input
                           placeholder="Nhập số CCCD..."
                           value={newCustomerCCCD}
@@ -1285,7 +1285,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Ảnh khách</Label>
+                        <Label className="text-gray-600 text-sm">Ảnh khách</Label>
                         <Input
                           type="file"
                           accept="image/*"
@@ -1294,7 +1294,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Ảnh CCCD khách</Label>
+                        <Label className="text-gray-600 text-sm">Ảnh CCCD khách</Label>
                         <Input
                           type="file"
                           accept="image/*"
@@ -1308,8 +1308,8 @@ export default function DashboardPage() {
 
                 <EntityFormSection title="🚗 2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
                   <div className="space-y-2 relative">
-                    <Label htmlFor="vehicle" className="text-gray-600 text-xs">Chọn xe thuê <span className="text-red-500">*</span></Label>
-                    <p className="text-xs text-slate-400">Tìm theo tên xe hoặc biển số</p>
+                    <Label htmlFor="vehicle" className="text-gray-600 text-sm">Chọn xe thuê <span className="text-red-500">*</span></Label>
+                    <p className="text-sm text-slate-400">Tìm theo tên xe hoặc biển số</p>
                     <Input
                       placeholder="Nhập tên xe hoặc biển số..."
                       value={vehicleSearch}
@@ -1339,7 +1339,7 @@ export default function DashboardPage() {
                                 }}
                                 className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
                               >
-                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-xs text-gray-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
+                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-sm bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-sm text-gray-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
                               </div>
                             ))
                           )}
@@ -1353,7 +1353,7 @@ export default function DashboardPage() {
                 <EntityFormSection title="📋 3. Chi tiết hợp đồng thuê" description="Nhập ngày thuê, thời hạn và tiền đặt cọc">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label htmlFor="startDate" className="text-gray-600 text-xs">Ngày bắt đầu</Label>
+                      <Label htmlFor="startDate" className="text-gray-600 text-sm">Ngày bắt đầu</Label>
                       <Input
                         id="startDate"
                         type="date"
@@ -1364,7 +1364,7 @@ export default function DashboardPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="endDate" className="text-gray-600 text-xs">Ngày kết thúc</Label>
+                      <Label htmlFor="endDate" className="text-gray-600 text-sm">Ngày kết thúc</Label>
                       <Input
                         id="endDate"
                         type="date"
@@ -1377,7 +1377,7 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="deposit" className="text-gray-600 text-xs">Tiền đặt cọc (VND)</Label>
+                    <Label htmlFor="deposit" className="text-gray-600 text-sm">Tiền đặt cọc (VND)</Label>
                     <Input
                       id="deposit"
                       type="text"
@@ -1406,7 +1406,7 @@ export default function DashboardPage() {
                   {hasCommission && (
                     <div className="grid grid-cols-1 gap-3 pt-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
                       <div className="space-y-1">
-                        <Label htmlFor="homeName" className="text-gray-600 text-xs">Tên Home</Label>
+                        <Label htmlFor="homeName" className="text-gray-600 text-sm">Tên Home</Label>
                         <Input
                           id="homeName"
                           type="text"
@@ -1417,7 +1417,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="commissionHome" className="text-gray-600 text-xs">Chia hoa hồng cho Home (VND/ngày)</Label>
+                        <Label htmlFor="commissionHome" className="text-gray-600 text-sm">Chia hoa hồng cho Home (VND/ngày)</Label>
                         <Input
                           id="commissionHome"
                           type="text"

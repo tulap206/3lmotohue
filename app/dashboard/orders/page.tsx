@@ -954,7 +954,7 @@ export default function OrdersPage() {
                       {opt.label}
                       <span
                         className={cn(
-                          "inline-flex min-w-[1.35rem] h-5 items-center justify-center rounded-md px-1 text-[11px] font-extrabold tabular-nums",
+                          "inline-flex min-w-[1.35rem] h-5 items-center justify-center rounded-md px-1 text-sm font-extrabold tabular-nums",
                           active
                             ? "bg-white/20 text-white"
                             : "bg-slate-200/80 text-slate-600"
@@ -1037,7 +1037,7 @@ export default function OrdersPage() {
                                   }}
                                   className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
                                 >
-                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-xs text-gray-400">({customer.id})</span>
+                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-sm text-gray-400">({customer.id})</span>
                                 </div>
                               ))
                             )}
@@ -1052,8 +1052,8 @@ export default function OrdersPage() {
                         ℹ <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
                       </EntityFormInfoBox>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Tên khách hàng <span className="text-blue-500">*</span></Label>
-                        <p className="text-xs text-slate-400">Họ và tên đầy đủ của khách</p>
+                        <Label className="text-gray-600 text-sm">Tên khách hàng <span className="text-blue-500">*</span></Label>
+                        <p className="text-sm text-slate-400">Họ và tên đầy đủ của khách</p>
                         <Input
                           placeholder="VD: Nguyễn Văn A"
                           value={newCustomerName}
@@ -1063,8 +1063,8 @@ export default function OrdersPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Số điện thoại</Label>
-                        <p className="text-xs text-slate-400">Dùng để liên lạc với khách hàng</p>
+                        <Label className="text-gray-600 text-sm">Số điện thoại</Label>
+                        <p className="text-sm text-slate-400">Dùng để liên lạc với khách hàng</p>
                         <Input
                           placeholder="VD: 0912345678"
                           value={newCustomerPhone}
@@ -1073,8 +1073,8 @@ export default function OrdersPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">Số CCCD khách <span className="text-blue-500">*</span></Label>
-                        <p className="text-xs text-slate-400">Số chứng minh thư hoặc CCCD</p>
+                        <Label className="text-gray-600 text-sm">Số CCCD khách <span className="text-blue-500">*</span></Label>
+                        <p className="text-sm text-slate-400">Số chứng minh thư hoặc CCCD</p>
                         <Input
                           placeholder="VD: 123456789012"
                           value={newCustomerCCCD}
@@ -1084,8 +1084,8 @@ export default function OrdersPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">📸 Ảnh khách (tùy chọn)</Label>
-                        <p className="text-xs text-slate-400">Ảnh chân dung để xác minh danh tính</p>
+                        <Label className="text-gray-600 text-sm">📸 Ảnh khách (tùy chọn)</Label>
+                        <p className="text-sm text-slate-400">Ảnh chân dung để xác minh danh tính</p>
                         <Input
                           type="file"
                           accept="image/*"
@@ -1094,8 +1094,8 @@ export default function OrdersPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-xs">📸 Ảnh CCCD khách (tùy chọn)</Label>
-                        <p className="text-xs text-slate-400">Ảnh mặt trước chứng minh thư</p>
+                        <Label className="text-gray-600 text-sm">📸 Ảnh CCCD khách (tùy chọn)</Label>
+                        <p className="text-sm text-slate-400">Ảnh mặt trước chứng minh thư</p>
                         <Input
                           type="file"
                           accept="image/*"
@@ -1109,8 +1109,8 @@ export default function OrdersPage() {
 
                 <EntityFormSection title="🚗 2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
                   <div className="space-y-2 relative">
-                    <Label htmlFor="vehicle" className="text-gray-600 text-xs">Chọn xe thuê <span className="text-blue-500">*</span></Label>
-                    <p className="text-xs text-slate-400">Tìm theo tên xe hoặc biển số</p>
+                    <Label htmlFor="vehicle" className="text-gray-600 text-sm">Chọn xe thuê <span className="text-blue-500">*</span></Label>
+                    <p className="text-sm text-slate-400">Tìm theo tên xe hoặc biển số</p>
                     <Input
                       placeholder="VD: Toyota Vios hoặc 75AA-12345..."
                       value={vehicleSearch}
@@ -1140,7 +1140,7 @@ export default function OrdersPage() {
                                 }}
                                 className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
                               >
-                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-xs text-gray-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
+                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-sm bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-sm text-gray-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
                               </div>
                             ))
                           )}
@@ -1153,7 +1153,7 @@ export default function OrdersPage() {
 
                 <EntityFormSection title="📋 3. Chi tiết hợp đồng thuê" description="Nhập loại thuê, ngày thuê, thời hạn và tiền đặt cọc">
                   <div className="space-y-1">
-                    <Label className="text-gray-600 text-xs">Loại thuê <span className="text-blue-500">*</span></Label>
+                    <Label className="text-gray-600 text-sm">Loại thuê <span className="text-blue-500">*</span></Label>
                     <EntityFormToggle
                       value={formData.rentalTerm}
                       onChange={(val) => setFormData({ ...formData, rentalTerm: val as RentalTerm })}
@@ -1165,8 +1165,8 @@ export default function OrdersPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label htmlFor="startDate" className="text-gray-600 text-xs">Ngày bắt đầu <span className="text-blue-500">*</span></Label>
-                      <p className="text-xs text-slate-400">Ngày khách nhận xe</p>
+                      <Label htmlFor="startDate" className="text-gray-600 text-sm">Ngày bắt đầu <span className="text-blue-500">*</span></Label>
+                      <p className="text-sm text-slate-400">Ngày khách nhận xe</p>
                       <Input
                         id="startDate"
                         type="date"
@@ -1177,8 +1177,8 @@ export default function OrdersPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="endDate" className="text-gray-600 text-xs">Ngày kết thúc <span className="text-blue-500">*</span></Label>
-                      <p className="text-xs text-slate-400">Ngày khách trả xe</p>
+                      <Label htmlFor="endDate" className="text-gray-600 text-sm">Ngày kết thúc <span className="text-blue-500">*</span></Label>
+                      <p className="text-sm text-slate-400">Ngày khách trả xe</p>
                       <Input
                         id="endDate"
                         type="date"
@@ -1191,8 +1191,8 @@ export default function OrdersPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="deposit" className="text-gray-600 text-xs">Tiền đặt cọc <span className="text-blue-500">*</span></Label>
-                    <p className="text-xs text-slate-400">Tiền cọc để bảo vệ xe (thường 30-50% giá thuê)</p>
+                    <Label htmlFor="deposit" className="text-gray-600 text-sm">Tiền đặt cọc <span className="text-blue-500">*</span></Label>
+                    <p className="text-sm text-slate-400">Tiền cọc để bảo vệ xe (thường 30-50% giá thuê)</p>
                     <Input
                       id="deposit"
                       type="text"
@@ -1221,8 +1221,8 @@ export default function OrdersPage() {
                   {hasCommission && (
                     <div className="grid grid-cols-1 gap-3 pt-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
                       <div className="space-y-1">
-                        <Label htmlFor="homeName" className="text-gray-600 text-xs">Tên Home</Label>
-                        <p className="text-xs text-slate-400">Tên đơn vị/người chia hoa hồng</p>
+                        <Label htmlFor="homeName" className="text-gray-600 text-sm">Tên Home</Label>
+                        <p className="text-sm text-slate-400">Tên đơn vị/người chia hoa hồng</p>
                         <Input
                           id="homeName"
                           type="text"
@@ -1233,8 +1233,8 @@ export default function OrdersPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="commissionHome" className="text-gray-600 text-xs">Chia hoa hồng cho Home (VND/ngày)</Label>
-                        <p className="text-xs text-slate-400">Tiền hoa hồng/ngày cho đơn vị (VD: 20.000đ/ngày)</p>
+                        <Label htmlFor="commissionHome" className="text-gray-600 text-sm">Chia hoa hồng cho Home (VND/ngày)</Label>
+                        <p className="text-sm text-slate-400">Tiền hoa hồng/ngày cho đơn vị (VD: 20.000đ/ngày)</p>
                         <Input
                           id="commissionHome"
                           type="text"
@@ -1361,7 +1361,7 @@ export default function OrdersPage() {
                         const isOverdue = isOrderOverdue(order)
                         return (
                           <tr key={order.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
-                            <td className="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                            <td className="py-3.5 px-4 text-center text-sm text-slate-400 font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                             <td className="py-3.5 px-4 min-w-[100px] max-w-[140px]">
                               <button
                                 className="font-semibold text-slate-900 hover:text-slate-700 hover:underline text-left capitalize line-clamp-2 block"
@@ -1379,7 +1379,7 @@ export default function OrdersPage() {
                                   {order.vehicleName}
                                 </button>
                                 <div>
-                                  <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-xs shadow-sm tracking-wider uppercase whitespace-nowrap">
+                                  <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
                                     {order.licensePlate}
                                   </span>
                                 </div>
@@ -1387,17 +1387,17 @@ export default function OrdersPage() {
                             </td>
                             <td className="py-3.5 px-4 text-center text-sm font-semibold text-slate-700">
                               <div className="whitespace-nowrap">{formatDisplayDate(order.startDate)}</div>
-                              <div className="whitespace-nowrap"><span className="text-slate-400 text-xs mr-1">→</span>{formatDisplayDate(order.endDate)}</div>
+                              <div className="whitespace-nowrap"><span className="text-slate-400 text-sm mr-1">→</span>{formatDisplayDate(order.endDate)}</div>
                             </td>
                             <td className="py-3.5 px-4 text-center font-semibold text-slate-700 whitespace-nowrap">{order.totalDays} ngày</td>
-                            <td className="py-3.5 px-4 text-right font-mono text-xs tabular-nums text-blue-600 font-bold whitespace-nowrap">{order.pricePerDay.toLocaleString("vi-VN")} đ</td>
+                            <td className="py-3.5 px-4 text-right font-mono text-sm tabular-nums text-blue-600 font-bold whitespace-nowrap">{order.pricePerDay.toLocaleString("vi-VN")} đ</td>
                             <td className="py-3.5 px-4 text-right">
-                              <div className="font-bold font-mono text-xs tabular-nums text-blue-600 whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</div>
+                              <div className="font-bold font-mono text-sm tabular-nums text-blue-600 whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</div>
                               <div className="flex items-center justify-end mt-0.5">
                                 {order.deposit > 0 ? (
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">Đã cọc {order.deposit.toLocaleString("vi-VN")}đ</span>
+                                  <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">Đã cọc {order.deposit.toLocaleString("vi-VN")}đ</span>
                                 ) : (
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 whitespace-nowrap">Chưa cọc</span>
+                                  <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 whitespace-nowrap">Chưa cọc</span>
                                 )}
                               </div>
                             </td>
@@ -1411,7 +1411,7 @@ export default function OrdersPage() {
                               )}
                             </td>
                             <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                              <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${rentalOrderStatusBadgeClass(order.status, isOverdue)}`}>
+                              <span className={`inline-flex items-center text-sm font-bold px-2 py-0.5 rounded-full border ${rentalOrderStatusBadgeClass(order.status, isOverdue)}`}>
                                 {getRentalOrderStatusLabel(order.status, isOverdue)}
                               </span>
                             </td>
@@ -1419,12 +1419,12 @@ export default function OrdersPage() {
                               <div className="flex items-center justify-end gap-1 flex-nowrap">
                                 {/* #5 Quick action */}
                                 {order.status === "pending" && (
-                                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-emerald-700 hover:text-emerald-800 rounded-lg hover:bg-emerald-50 gap-1" onClick={() => updateOrderStatus(order.id, "active")} title="Giao xe">
+                                  <Button variant="ghost" size="sm" className="h-7 px-2 text-sm text-emerald-700 hover:text-emerald-800 rounded-lg hover:bg-emerald-50 gap-1" onClick={() => updateOrderStatus(order.id, "active")} title="Giao xe">
                                     <Play className="w-3 h-3" />Giao
                                   </Button>
                                 )}
                                 {(order.status === "active" || isOrderOverdue(order)) && (
-                                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-50 gap-1" onClick={() => openCompleteWithLateFee(order.id)} title="Hoàn thành">
+                                  <Button variant="ghost" size="sm" className="h-7 px-2 text-sm text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-50 gap-1" onClick={() => openCompleteWithLateFee(order.id)} title="Hoàn thành">
                                     <CheckCircle className="w-3 h-3" />Xong
                                   </Button>
                                 )}
@@ -1458,17 +1458,17 @@ export default function OrdersPage() {
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-800 truncate">{order.customerName}</p>
                           <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                            <span className="text-xs text-slate-700 font-medium">{order.vehicleName}</span>
-                            <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-1.5 py-0.5 rounded text-[10px] shadow-sm tracking-wider uppercase">
+                            <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
+                            <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-1.5 py-0.5 rounded text-sm shadow-sm tracking-wider uppercase">
                               {order.licensePlate}
                             </span>
                           </div>
                         </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalOrderStatusBadgeClass(order.status, isOverdue)}`}>
+                        <span className={`text-sm font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalOrderStatusBadgeClass(order.status, isOverdue)}`}>
                           {getRentalOrderStatusLabel(order.status, isOverdue)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
                         <Calendar className="w-3 h-3 shrink-0" />
                         <span>{formatDisplayDate(order.startDate)} → {formatDisplayDate(order.endDate)}</span>
                         <span className="text-slate-300">·</span>
@@ -1477,18 +1477,18 @@ export default function OrdersPage() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-1.5">
                           {order.deposit > 0 ? (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">Đã cọc</span>
+                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">Đã cọc</span>
                           ) : (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">Chưa cọc</span>
+                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">Chưa cọc</span>
                           )}
                           {(order.status === "pending") && (
-                            <button className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-600 text-white" onClick={() => updateOrderStatus(order.id, "active")}>Giao xe</button>
+                            <button className="text-sm font-semibold px-2 py-0.5 rounded bg-emerald-600 text-white" onClick={() => updateOrderStatus(order.id, "active")}>Giao xe</button>
                           )}
                           {(order.status === "active" || isOverdue) && (
-                            <button className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-600 text-white" onClick={() => openCompleteWithLateFee(order.id)}>Xong</button>
+                            <button className="text-sm font-semibold px-2 py-0.5 rounded bg-blue-600 text-white" onClick={() => openCompleteWithLateFee(order.id)}>Xong</button>
                           )}
                         </div>
-                        <span className="font-bold text-blue-600 tabular-nums text-xs">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
+                        <span className="font-bold text-blue-600 tabular-nums text-sm">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
                       </div>
                     </ModuleMobileCard>
                   )
@@ -1496,7 +1496,7 @@ export default function OrdersPage() {
               />
               {totalPages > 1 && (
                 <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
-                  <span className="text-xs text-slate-500 mr-2">
+                  <span className="text-sm text-slate-500 mr-2">
                     Trang {currentPage} / {totalPages}
                   </span>
                   <Button
@@ -1504,7 +1504,7 @@ export default function OrdersPage() {
                     disabled={currentPage === 1}
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs border-slate-200 rounded-xl"
+                    className="h-8 text-sm border-slate-200 rounded-xl"
                   >
                     Trước
                   </Button>
@@ -1513,7 +1513,7 @@ export default function OrdersPage() {
                     disabled={currentPage === totalPages}
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs border-slate-200 rounded-xl"
+                    className="h-8 text-sm border-slate-200 rounded-xl"
                   >
                     Tiếp
                   </Button>
@@ -1542,13 +1542,13 @@ export default function OrdersPage() {
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={cn(
-                      "inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full border",
+                      "inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border",
                       rentalOrderStatusBadgeClass(o.status, overdue)
                     )}>
                       {getRentalOrderStatusLabel(o.status, overdue)}
                     </span>
                     <span className={cn(
-                      "inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full border",
+                      "inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border",
                       term === "long"
                         ? "bg-violet-50 text-violet-700 border-violet-100"
                         : "bg-sky-50 text-sky-700 border-sky-100"
@@ -1556,11 +1556,11 @@ export default function OrdersPage() {
                       {getRentalTermLabel(term)}
                     </span>
                     {o.deposit > 0 ? (
-                      <span className="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-100">
+                      <span className="inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-100">
                         Đã cọc
                       </span>
                     ) : (
-                      <span className="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-100">
+                      <span className="inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-100">
                         Chưa cọc
                       </span>
                     )}
@@ -1568,11 +1568,11 @@ export default function OrdersPage() {
 
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-blue-600 uppercase">Tổng tiền thuê</p>
+                      <p className="text-sm font-semibold text-blue-600 uppercase">Tổng tiền thuê</p>
                       <p className="text-lg font-extrabold text-blue-700 tabular-nums">{formatPrice(o.totalPrice)}</p>
                     </div>
                     <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-amber-600 uppercase">Tiền cọc</p>
+                      <p className="text-sm font-semibold text-amber-600 uppercase">Tiền cọc</p>
                       <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(o.deposit)}</p>
                     </div>
                     <div className={cn(
@@ -1584,7 +1584,7 @@ export default function OrdersPage() {
                           : "bg-slate-50 border-slate-100"
                     )}>
                       <p className={cn(
-                        "text-[10px] font-semibold uppercase",
+                        "text-sm font-semibold uppercase",
                         o.status === "completed" ? "text-emerald-600"
                           : o.status === "cancelled" ? "text-amber-600"
                           : "text-slate-500"
@@ -1610,9 +1610,9 @@ export default function OrdersPage() {
                         openCustomerDetail(o.customerId)
                       }}
                     >
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Khách hàng</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Khách hàng</p>
                       <p className="font-bold text-slate-900">{o.customerName}</p>
-                      <p className="text-[10px] text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
+                      <p className="text-sm text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
                     </div>
                     <div
                       className="bg-slate-50 border border-slate-100 rounded-xl p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
@@ -1621,39 +1621,39 @@ export default function OrdersPage() {
                         openVehicleDetail(o.vehicleId)
                       }}
                     >
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Xe thuê</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Xe thuê</p>
                       <p className="font-bold text-slate-900">{o.vehicleName}</p>
-                      <p className="text-xs font-mono text-slate-500">{o.licensePlate || "Chưa biển"}</p>
-                      <p className="text-[10px] text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
+                      <p className="text-sm font-mono text-slate-500">{o.licensePlate || "Chưa biển"}</p>
+                      <p className="text-sm text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Nhận xe</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Nhận xe</p>
                       <p className="text-sm font-bold text-slate-800">{formatDisplayDate(o.startDate)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Trả xe</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Trả xe</p>
                       <p className="text-sm font-bold text-slate-800">{formatDisplayDate(o.endDate)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Số ngày</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số ngày</p>
                       <p className="text-sm font-bold text-slate-800">{o.totalDays} ngày</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Giá/ngày</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Giá/ngày</p>
                       <p className="text-sm font-bold text-slate-800 tabular-nums">{formatPrice(o.pricePerDay)}</p>
                     </div>
                     {o.extraFees > 0 && (
                       <div className="bg-orange-50 border border-orange-100 rounded-xl p-3">
-                        <p className="text-[10px] font-semibold text-orange-600 uppercase mb-0.5">Phí phát sinh</p>
+                        <p className="text-sm font-semibold text-orange-600 uppercase mb-0.5">Phí phát sinh</p>
                         <p className="text-sm font-bold text-orange-700 tabular-nums">{formatPrice(o.extraFees)}</p>
                       </div>
                     )}
                     {commissionTotal > 0 && (
                       <div className="bg-violet-50 border border-violet-100 rounded-xl p-3">
-                        <p className="text-[10px] font-semibold text-violet-600 uppercase mb-0.5">HH Home{o.homeName ? ` · ${o.homeName}` : ""}</p>
+                        <p className="text-sm font-semibold text-violet-600 uppercase mb-0.5">HH Home{o.homeName ? ` · ${o.homeName}` : ""}</p>
                         <p className="text-sm font-bold text-violet-700 tabular-nums">{formatPrice(commissionTotal)}</p>
                       </div>
                     )}
@@ -1661,36 +1661,36 @@ export default function OrdersPage() {
 
                   {notesClean && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
-                      <p className="text-xs text-slate-700 whitespace-pre-line">{notesClean}</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-line">{notesClean}</p>
                     </div>
                   )}
 
                   {(o.status === "completed" || o.status === "cancelled") && (
                     <div className="border border-slate-100 rounded-xl overflow-hidden">
                       <div className="bg-slate-50 px-3 py-2">
-                        <p className="text-xs font-bold text-slate-700">Chi tiết tài chính</p>
+                        <p className="text-sm font-bold text-slate-700">Chi tiết tài chính</p>
                       </div>
                       <div className="p-3 space-y-1.5">
                         {o.status === "completed" ? (
                           <>
-                            <div className="flex justify-between text-xs">
+                            <div className="flex justify-between text-sm">
                               <span className="text-slate-500">Tiền thuê xe</span>
                               <span className="font-bold text-emerald-600 tabular-nums">+{formatPrice(o.totalPrice)}</span>
                             </div>
                             {o.extraFees > 0 && (
-                              <div className="flex justify-between text-xs">
+                              <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Phí phát sinh</span>
                                 <span className="font-bold text-emerald-600 tabular-nums">+{formatPrice(o.extraFees)}</span>
                               </div>
                             )}
                             {commissionTotal > 0 && (
-                              <div className="flex justify-between text-xs">
+                              <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Hoa hồng Home</span>
                                 <span className="font-bold text-rose-600 tabular-nums">-{formatPrice(commissionTotal)}</span>
                               </div>
                             )}
-                            <div className="flex justify-between text-xs">
+                            <div className="flex justify-between text-sm">
                               <span className="text-slate-500">Trả cọc khách</span>
                               <span className="font-medium text-slate-400 tabular-nums">-{formatPrice(o.deposit)}</span>
                             </div>
@@ -1701,12 +1701,12 @@ export default function OrdersPage() {
                           </>
                         ) : (
                           <>
-                            <div className="flex justify-between text-xs">
+                            <div className="flex justify-between text-sm">
                               <span className="text-slate-500">Khách hủy — mất cọc</span>
                               <span className="font-bold text-amber-600 tabular-nums">+{formatPrice(o.deposit)}</span>
                             </div>
                             {o.extraFees > 0 && (
-                              <div className="flex justify-between text-xs">
+                              <div className="flex justify-between text-sm">
                                 <span className="text-slate-500">Phí phát sinh</span>
                                 <span className="font-bold text-amber-600 tabular-nums">+{formatPrice(o.extraFees)}</span>
                               </div>
@@ -1723,10 +1723,10 @@ export default function OrdersPage() {
 
                   <div className="bg-slate-950 text-white rounded-xl p-4 flex flex-col items-center gap-2">
                     <div className="flex items-center justify-between w-full border-b border-slate-800 pb-2">
-                      <span className="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                      <span className="text-sm bg-blue-600 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                         QR SHB
                       </span>
-                      <span className="text-[10px] text-slate-400">{QUY79_BUSINESS.hotline}</span>
+                      <span className="text-sm text-slate-400">{QUY79_BUSINESS.hotline}</span>
                     </div>
                     <div className="w-36 h-36 bg-white p-1.5 rounded-lg overflow-hidden shadow-md">
                       <img
@@ -1736,7 +1736,7 @@ export default function OrdersPage() {
                       />
                     </div>
                     <p className="font-bold text-blue-400 text-sm tabular-nums">{formatPrice(o.totalPrice)}</p>
-                    <p className="text-[10px] text-slate-400 text-center">Quét QR để thanh toán cọc / tất toán</p>
+                    <p className="text-sm text-slate-400 text-center">Quét QR để thanh toán cọc / tất toán</p>
                   </div>
 
                   <div className="flex gap-2 pt-1 flex-wrap">
@@ -2016,14 +2016,14 @@ export default function OrdersPage() {
                         <span className="font-medium text-slate-700">{cust.phone || "Chưa có SĐT"}</span>
                       </p>
                       {cust.address && (
-                        <p className="text-xs text-slate-500 flex items-start gap-1">
+                        <p className="text-sm text-slate-500 flex items-start gap-1">
                           <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
                           {cust.address}
                         </p>
                       )}
                       <div className="pt-1">
                         <span className={cn(
-                          "inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border",
+                          "inline-flex items-center text-sm font-bold px-2 py-0.5 rounded-full border",
                           rentalCustomerStatusBadgeClass(cust.status)
                         )}>
                           {getRentalCustomerStatusLabel(cust.status)}
@@ -2034,22 +2034,22 @@ export default function OrdersPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Số CCCD / CMND</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số CCCD / CMND</p>
                       <p className="text-sm font-bold text-slate-800 font-mono">{cust.idcard || "—"}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Tổng lần thuê</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Tổng lần thuê</p>
                       <p className="text-lg font-extrabold text-slate-800">{cust.totalrentals || custRentals.length} lượt</p>
                     </div>
                   </div>
 
                   {docImages.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh tài liệu</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh tài liệu</p>
                       <div className="grid grid-cols-2 gap-3">
                         {docImages.map((img) => (
                           <div key={img.label}>
-                            <p className="text-[10px] font-medium text-slate-400 mb-1">{img.label}</p>
+                            <p className="text-sm font-medium text-slate-400 mb-1">{img.label}</p>
                             <img
                               src={img.src}
                               alt={img.label}
@@ -2064,10 +2064,10 @@ export default function OrdersPage() {
 
                   {custRentals.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {custRentals.slice(0, 4).map((r) => (
-                          <div key={r.id} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
+                          <div key={r.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{r.vehicleName}</span>
                             <span className="text-slate-400 font-mono shrink-0">{r.licensePlate}</span>
                             <span className="font-bold tabular-nums text-blue-600 shrink-0">
@@ -2076,7 +2076,7 @@ export default function OrdersPage() {
                           </div>
                         ))}
                         {custRentals.length > 4 && (
-                          <p className="text-[11px] text-slate-400 text-center">+{custRentals.length - 4} đơn khác</p>
+                          <p className="text-sm text-slate-400 text-center">+{custRentals.length - 4} đơn khác</p>
                         )}
                       </div>
                     </div>
@@ -2147,13 +2147,13 @@ export default function OrdersPage() {
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "inline-flex items-center text-[11px] font-bold px-2 py-1 rounded-full border",
+                      "inline-flex items-center text-sm font-bold px-2 py-1 rounded-full border",
                       rentalVehicleStatusBadgeClass(v.status)
                     )}>
                       {getRentalVehicleStatusLabel(v.status)}
                     </span>
                     {v.category && (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-sm text-slate-500">
                         Phân loại: <span className="font-medium text-slate-800">{v.category === "car" ? "Ô tô" : "Xe máy"}</span>
                       </span>
                     )}
@@ -2161,15 +2161,15 @@ export default function OrdersPage() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
+                      <p className="text-sm font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
                       <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
                     </div>
                     <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-amber-600 uppercase">Giá mua</p>
+                      <p className="text-sm font-semibold text-amber-600 uppercase">Giá mua</p>
                       <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(v.purchasePrice)}</p>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-emerald-600 uppercase">Tổng thu</p>
+                      <p className="text-sm font-semibold text-emerald-600 uppercase">Tổng thu</p>
                       <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{formatPrice(totalRevenue)}</p>
                     </div>
                     <div className={cn(
@@ -2177,7 +2177,7 @@ export default function OrdersPage() {
                       profit >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
                     )}>
                       <p className={cn(
-                        "text-[10px] font-semibold uppercase",
+                        "text-sm font-semibold uppercase",
                         profit >= 0 ? "text-emerald-600" : "text-blue-600"
                       )}>Lợi nhuận</p>
                       <p className={cn(
@@ -2191,39 +2191,39 @@ export default function OrdersPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Số KM hiện tại</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số KM hiện tại</p>
                       <p className="text-sm font-bold text-slate-800">{(v.current_km || 0).toLocaleString("vi-VN")} km</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Ngày đã cho thuê</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Ngày đã cho thuê</p>
                       <p className="text-sm font-bold text-slate-800">{v.totalRentalDays || 0} ngày</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Lấp đầy 30 ngày</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Lấp đầy 30 ngày</p>
                       <p className={cn(
                         "text-sm font-extrabold tabular-nums",
                         u30.pct >= 70 ? "text-emerald-600" : u30.pct >= 40 ? "text-amber-600" : "text-blue-500"
                       )}>{u30.pct}%</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Tổng đơn thuê</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Tổng đơn thuê</p>
                       <p className="text-sm font-bold text-slate-800">{totalRentalCount} đơn</p>
                     </div>
                   </div>
 
                   {v.notes && v.notes.trim() && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
-                      <p className="text-xs text-slate-700 whitespace-pre-line">{v.notes}</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {recentOrders.map((o) => (
-                          <div key={o.id} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
+                          <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
                             <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
                             <span className="font-bold tabular-nums text-blue-600 shrink-0">
@@ -2239,7 +2239,7 @@ export default function OrdersPage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.vehicleImages.map((img, index) => (
                               <div
@@ -2258,7 +2258,7 @@ export default function OrdersPage() {
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.documentImages.map((img, index) => (
                               <div
@@ -2362,7 +2362,7 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-2 gap-6 text-sm mb-6">
                   {/* Customer Info */}
                   <div className="border border-slate-200 rounded-xl p-4">
-                    <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-xs">
+                    <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-sm">
                       BÊN A: BÊN THUÊ XE (KHÁCH HÀNG)
                     </h3>
                     <div className="space-y-1.5">
@@ -2378,7 +2378,7 @@ export default function OrdersPage() {
 
                 {/* Vehicle Specifications */}
                 <div className="border border-slate-200 rounded-xl p-4 mb-6">
-                  <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-3 uppercase text-xs">CHI TIẾT PHƯƠNG TIỆN CHO THUÊ</h3>
+                  <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-3 uppercase text-sm">CHI TIẾT PHƯƠNG TIỆN CHO THUÊ</h3>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                     <p><span className="text-slate-500">Tên xe máy:</span> <span className="font-bold">{printingOrder.vehicleName}</span></p>
                     <p><span className="text-slate-500">Biển kiểm soát:</span> <span className="font-bold">{printingOrder.licensePlate}</span></p>
@@ -2389,7 +2389,7 @@ export default function OrdersPage() {
 
                 {/* Financial Details */}
                 <div className="border-2 border-slate-200 rounded-2xl p-5 bg-slate-50/50 mb-6">
-                  <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-1.5 mb-3 uppercase text-xs">THỜI GIAN & CHI TIẾT THANH TOÁN</h3>
+                  <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-1.5 mb-3 uppercase text-sm">THỜI GIAN & CHI TIẾT THANH TOÁN</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-slate-700">
                       <span>Thời gian thuê xe:</span>
@@ -2421,8 +2421,8 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Terms and Conditions */}
-                <div className="border border-slate-200 rounded-xl p-4 mb-6 text-xs text-slate-600 leading-relaxed">
-                  <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-xs">ĐIỀU KHOẢN THỎA THUẬN</h3>
+                <div className="border border-slate-200 rounded-xl p-4 mb-6 text-sm text-slate-600 leading-relaxed">
+                  <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-sm">ĐIỀU KHOẢN THỎA THUẬN</h3>
                   <ol className="list-decimal pl-4 space-y-1.5">
                     <li>Bên thuê xe (Bên A) cam kết tự bảo quản xe máy thuê, không sử dụng xe vào mục đích vi phạm pháp luật Việt Nam.</li>
                     <li>Bên A phải tự chịu chi phí xăng dầu, vá lốp xe trong quá trình di chuyển thuê xe.</li>
@@ -2435,20 +2435,20 @@ export default function OrdersPage() {
                 <div className="grid grid-cols-2 text-center text-sm mt-8 mb-16">
                   <div>
                     <p className="font-bold uppercase text-slate-800">ĐẠI DIỆN BÊN A (KHÁCH THUÊ)</p>
-                    <p className="text-xs text-slate-400 italic mt-0.5">(Ký và ghi rõ họ tên)</p>
+                    <p className="text-sm text-slate-400 italic mt-0.5">(Ký và ghi rõ họ tên)</p>
                     <div className="h-16" />
                     <p className="font-bold text-slate-900">{printingOrder.customerName}</p>
                   </div>
                   <div>
                     <p className="font-bold uppercase text-slate-800">ĐẠI DIỆN BÊN B (CỬA HÀNG)</p>
-                    <p className="text-xs text-slate-400 italic mt-0.5">(Ký và đóng dấu)</p>
+                    <p className="text-sm text-slate-400 italic mt-0.5">(Ký và đóng dấu)</p>
                     <div className="h-16" />
                     <p className="font-bold text-slate-900">Trần Đức Quý</p>
                   </div>
                 </div>
 
                 {/* Footer Notes */}
-                <div className="text-center text-xs text-slate-400 border-t border-slate-100 pt-4 leading-relaxed">
+                <div className="text-center text-sm text-slate-400 border-t border-slate-100 pt-4 leading-relaxed">
                   Cảm ơn Quý khách đã tin tưởng và sử dụng dịch vụ cho thuê xe máy tại Hệ thống Xe máy Quy79.<br />
                   Biên nhận này làm căn cứ bàn giao tài sản và hoàn trả tiền đặt cọc cựu sau khi kiểm tra trả xe.
                 </div>

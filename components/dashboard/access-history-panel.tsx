@@ -215,7 +215,7 @@ export function AccessHistoryDenied({
       <div className="module-card flex flex-1 flex-col items-center justify-center rounded-xl border border-red-100 bg-red-50/30 px-6 py-10 text-center">
         <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-red-500" />
         <h3 className="text-sm font-bold text-red-800">Truy cập bị hạn chế</h3>
-        <p className="mt-1 text-xs text-red-600">{message}</p>
+        <p className="mt-1 text-sm text-red-600">{message}</p>
       </div>
     </div>
   )
@@ -402,15 +402,15 @@ export function AccessHistoryPanel({
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-sm font-bold text-slate-800">{title}</h2>
                   {scopeLabel && (
-                    <span className={cn("hidden rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:inline", styles.badge)}>
+                    <span className={cn("hidden rounded-full border px-2 py-0.5 text-sm font-semibold sm:inline", styles.badge)}>
                       {scopeLabel}
                     </span>
                   )}
-                  <span className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-slate-600">
+                  <span className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-sm font-semibold tabular-nums text-slate-600">
                     {filteredLogs.length}
                   </span>
                 </div>
-                <p className="hidden truncate text-[10px] text-slate-500 sm:block">{description}</p>
+                <p className="hidden truncate text-sm text-slate-500 sm:block">{description}</p>
               </div>
             </div>
 
@@ -423,7 +423,7 @@ export function AccessHistoryPanel({
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="h-8 rounded-lg border-slate-200 bg-white pl-8 text-xs"
+                className="h-8 rounded-lg border-slate-200 bg-white pl-8 text-sm"
               />
             </div>
 
@@ -434,7 +434,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-xs text-slate-800 font-medium">
+              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-sm text-slate-800 font-medium">
                 <SelectValue placeholder="Tài khoản" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -456,7 +456,7 @@ export function AccessHistoryPanel({
                   setCurrentPage(1)
                 }}
               >
-                <SelectTrigger className="h-8 w-[11rem] rounded-lg border-slate-200 bg-white text-xs text-slate-800 font-medium">
+                <SelectTrigger className="h-8 w-[11rem] rounded-lg border-slate-200 bg-white text-sm text-slate-800 font-medium">
                   <SelectValue placeholder="Phân hệ" />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
@@ -477,7 +477,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-xs text-slate-800 font-medium">
+              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-sm text-slate-800 font-medium">
                 <SelectValue placeholder="Hành động" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -508,13 +508,13 @@ export function AccessHistoryPanel({
           {filteredLogs.length === 0 ? (
             <div className="flex h-32 flex-col items-center justify-center text-slate-400">
               <History className="mb-2 h-8 w-8 text-slate-200" />
-              <p className="text-xs font-medium">Không có dữ liệu lịch sử</p>
+              <p className="text-sm font-medium">Không có dữ liệu lịch sử</p>
             </div>
           ) : (
             <div className={layout === "page" ? "h-full overflow-x-auto" : "overflow-x-auto"}>
               <table className="access-history-table w-full min-w-[720px] border-collapse text-left">
                 <thead className="sticky top-0 z-10 bg-white">
-                  <tr className="border-b border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <tr className="border-b border-slate-100 text-sm font-bold uppercase tracking-wider text-slate-500">
                     <th className="w-10 px-3 py-2 text-center">STT</th>
                     <th className="w-[7.5rem] px-2 py-2">Thời gian</th>
                     <th className="w-[8.5rem] px-2 py-2">Người dùng</th>
@@ -538,23 +538,23 @@ export function AccessHistoryPanel({
 
                     return (
                       <tr key={log.id} className="access-history-row hover:bg-slate-50/70">
-                        <td className="px-3 py-0 text-center text-xs font-semibold text-slate-400">
+                        <td className="px-3 py-0 text-center text-sm font-semibold text-slate-400">
                           {(safePage - 1) * itemsPerPage + index + 1}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-0 font-mono text-xs text-slate-500 font-medium">
+                        <td className="whitespace-nowrap px-2 py-0 font-mono text-sm text-slate-500 font-medium">
                           {formatCompactDate(log.timestamp)}
                         </td>
                         <td className="px-2 py-0">
                           <div className="truncate font-bold text-slate-800 text-[13px]" title={log.displayName}>
                             {log.displayName}
                           </div>
-                          <div className="truncate font-mono text-xs text-slate-400 mt-0.5">@{log.username}</div>
+                          <div className="truncate font-mono text-sm text-slate-400 mt-0.5">@{log.username}</div>
                         </td>
                         <td className="px-2 py-0">
                           <div className="flex items-center gap-1">
                             <span
                               className={cn(
-                                "inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-xs font-bold",
+                                "inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-sm font-bold",
                                 actionConfig.bg,
                                 actionConfig.color
                               )}
@@ -563,7 +563,7 @@ export function AccessHistoryPanel({
                               <span className="truncate">{log.action}</span>
                             </span>
                           </div>
-                          <div className="mt-1 flex items-center gap-1 truncate text-xs text-slate-500 font-medium">
+                          <div className="mt-1 flex items-center gap-1 truncate text-sm text-slate-500 font-medium">
                             <ModuleIcon className={cn("h-2.5 w-2.5 shrink-0", moduleConfig.color)} />
                             <span className="truncate">{log.module}</span>
                           </div>
@@ -573,7 +573,7 @@ export function AccessHistoryPanel({
                             {log.details || "—"}
                           </p>
                           {log.ipAddress && (
-                            <p className="mt-0.5 font-mono text-[11px] text-red-500">IP {log.ipAddress}</p>
+                            <p className="mt-0.5 font-mono text-sm text-red-500">IP {log.ipAddress}</p>
                           )}
                         </td>
                       </tr>
@@ -587,7 +587,7 @@ export function AccessHistoryPanel({
 
         {/* Footer */}
         <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50/50 px-3 py-2.5 md:px-4">
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-500">
             <span className="font-medium text-slate-700">{paginatedLogs.length}</span>
             <span className="text-slate-400"> / {filteredLogs.length} kết quả</span>
             <span className="mx-1.5 text-slate-300">·</span>
@@ -619,7 +619,7 @@ export function AccessHistoryPanel({
               }, [])
               .map((p, idx) =>
                 p === "..." ? (
-                  <span key={`ellipsis-${idx}`} className="px-1 text-xs text-slate-400">…</span>
+                  <span key={`ellipsis-${idx}`} className="px-1 text-sm text-slate-400">…</span>
                 ) : (
                   <Button
                     key={p}
@@ -627,7 +627,7 @@ export function AccessHistoryPanel({
                     variant={safePage === p ? "default" : "outline"}
                     size="icon"
                     className={cn(
-                      "h-7 w-7 rounded-md text-xs font-semibold",
+                      "h-7 w-7 rounded-md text-sm font-semibold",
                       safePage === p
                         ? "bg-slate-800 text-white border-slate-800 hover:bg-slate-700"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"

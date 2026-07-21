@@ -12,12 +12,12 @@ import {
 } from "@/lib/module-theme"
 
 export const moduleTableHeadClass =
-  "py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wide"
+  "py-3 px-4 text-sm font-semibold text-slate-500 uppercase tracking-wide"
 
 export const moduleTableBodyClass = "text-sm text-slate-700"
 
 export const moduleBadgeClass =
-  "inline-flex items-center justify-center text-xs font-semibold px-2.5 py-0.5 rounded-md border whitespace-nowrap"
+  "inline-flex items-center justify-center text-sm font-semibold px-2.5 py-0.5 rounded-md border whitespace-nowrap"
 
 export const moduleFilterInputClass = "h-9 bg-white border-slate-200 text-sm rounded-xl"
 
@@ -104,7 +104,7 @@ export function ModuleSubpageHeader({
     >
       <div className="min-w-0">
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 mb-1.5">
+          <nav className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500 mb-1.5">
             {breadcrumbs.map((crumb, i) => (
               <span key={crumb.label} className="flex items-center gap-1.5">
                 {i > 0 && <span className="text-slate-300">›</span>}
@@ -205,8 +205,8 @@ export function ModuleKpiCard({
           <CardContent className="relative z-10 px-4 py-3 flex flex-col justify-between h-full min-h-[5.25rem] space-y-1.5">
             <div className="flex justify-between items-start w-full gap-2">
               <div className="space-y-0.5 min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-slate-500 leading-tight">{label}</p>
-                {sublabel && <p className="text-[10px] text-slate-400 leading-snug">{sublabel}</p>}
+                <p className="text-sm font-semibold text-slate-500 leading-tight">{label}</p>
+                {sublabel && <p className="text-xs text-slate-400 leading-snug">{sublabel}</p>}
               </div>
               {icon && (
                 <div className={cn(iconColor || ACCENT_TITLE_CLASS[accent], "text-sm shrink-0")}>{icon}</div>
@@ -247,9 +247,9 @@ export function ModuleKpiCard({
         </div>
       )}
       <CardContent className="relative z-10 p-4">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+        <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
         <p className={cn("text-xl font-extrabold text-slate-900 mt-1 tabular-nums", valueClassName)}>{value}</p>
-        {sublabel && <p className="text-xs text-slate-500 mt-0.5">{sublabel}</p>}
+        {sublabel && <p className="text-sm text-slate-500 mt-0.5">{sublabel}</p>}
       </CardContent>
     </Card>
   )
@@ -298,7 +298,7 @@ export function ModuleSectionCard({
             <div>
               <CardTitle className="text-base font-bold text-slate-800">{title}</CardTitle>
               {description && (
-                <CardDescription className="text-xs text-slate-500 mt-0.5">{description}</CardDescription>
+                <CardDescription className="text-sm text-slate-500 mt-0.5">{description}</CardDescription>
               )}
             </div>
             {badge}

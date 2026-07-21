@@ -553,7 +553,7 @@
 }
 
 .pawnshop-admin .pawn-table-head th {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -601,7 +601,7 @@
 .sales-admin th.module-table-head,
 .loan-admin th.module-table-head,
 .pawnshop-admin th.module-table-head {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

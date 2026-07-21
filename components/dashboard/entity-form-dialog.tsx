@@ -106,8 +106,8 @@ export function EntityFormSection({
   return (
     <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
       <div className="border-b border-slate-100 pb-2">
-        <h3 className="font-bold text-slate-800 text-sm">{title}</h3>
-        {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+        <h3 className="font-bold text-slate-800 text-base">{title}</h3>
+        {description && <p className="text-sm text-slate-500 mt-0.5">{description}</p>}
       </div>
       {children}
     </div>
@@ -131,7 +131,7 @@ export function EntityFormToggle({
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
+            "flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all",
             value === opt.value
               ? "bg-white shadow text-slate-800"
               : "text-slate-500 hover:text-slate-700"
@@ -157,11 +157,11 @@ export function EntityFormField({
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-gray-600 text-xs font-medium">
+      <label className="text-gray-600 text-sm font-medium">
         {label}
         {required && <span className="text-red-500"> *</span>}
       </label>
-      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+      {hint && <p className="text-sm text-slate-400">{hint}</p>}
       {children}
     </div>
   )
@@ -182,7 +182,7 @@ export function EntityFormInfoBox({
         : "bg-blue-50 border-blue-100 text-blue-800"
 
   return (
-    <div className={cn("border rounded-lg p-2.5 text-xs", styles)}>{children}</div>
+    <div className={cn("border rounded-lg p-2.5 text-sm", styles)}>{children}</div>
   )
 }
 
@@ -203,7 +203,7 @@ export function EntityFormTip({
         : "bg-green-50 border-green-100 text-green-800"
 
   return (
-    <div className={cn("border rounded-lg p-3 text-xs", styles)}>
+    <div className={cn("border rounded-lg p-3 text-sm", styles)}>
       <p className="font-semibold mb-1">{title}</p>
       <ul className="space-y-1">
         {items.map((item) => (

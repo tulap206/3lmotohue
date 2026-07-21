@@ -814,7 +814,7 @@ export default function VehiclesPage() {
                   ))}
                   <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
+                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -851,7 +851,7 @@ export default function VehiclesPage() {
                   ))}
                   <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
+                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -957,7 +957,7 @@ export default function VehiclesPage() {
                     <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
                       {paginatedVehicles.map((vehicle, index) => (
                         <tr key={vehicle.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
-                          <td className="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
+                          <td className="py-3.5 px-4 text-center text-sm text-slate-400 font-medium">
                             {startIndex + index + 1}
                           </td>
                           <td className="py-3.5 px-4 font-medium text-slate-900">
@@ -970,7 +970,7 @@ export default function VehiclesPage() {
                                 {vehicle.name}
                               </button>
                               <div>
-                                <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-xs shadow-sm tracking-wider uppercase">
+                                <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-sm shadow-sm tracking-wider uppercase">
                                   {vehicle.licensePlate}
                                 </span>
                               </div>
@@ -984,11 +984,11 @@ export default function VehiclesPage() {
                               const { utilizationRate, revenue30d } = vehiclePerformanceMap[vehicle.id] || { utilizationRate: 0, revenue30d: 0 }
                               return (
                                 <div className="flex flex-col items-center gap-1">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-bold bg-blue-50 text-blue-700 border border-blue-100">
                                     Lấp đầy: {utilizationRate}%
                                   </span>
                                   {revenue30d > 0 && (
-                                    <span className="text-xs font-bold text-slate-500 tabular-nums">
+                                    <span className="text-sm font-bold text-slate-500 tabular-nums">
                                       {formatPrice(revenue30d)}
                                     </span>
                                   )}
@@ -998,7 +998,7 @@ export default function VehiclesPage() {
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             <span className={cn(
-                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-bold border",
                               rentalVehicleStatusBadgeClass(vehicle.status)
                             )}>
                               {getRentalVehicleStatusLabel(vehicle.status)}
@@ -1084,16 +1084,16 @@ export default function VehiclesPage() {
                           {vehicle.name}
                         </button>
                         <div>
-                          <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2 py-0.5 rounded text-[11px] shadow-sm tracking-wider uppercase">
+                          <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2 py-0.5 rounded text-sm shadow-sm tracking-wider uppercase">
                             {vehicle.licensePlate}
                           </span>
                         </div>
                       </div>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
+                      <span className={`text-sm font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
                         {getRentalVehicleStatusLabel(vehicle.status)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-xs mt-2">
+                    <div className="flex justify-between items-center text-sm mt-2">
                       <span className="font-bold text-blue-600 tabular-nums">{formatPrice(vehicle.pricePerDay)}/ngày</span>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)}>
@@ -1112,7 +1112,7 @@ export default function VehiclesPage() {
               />
               {totalPages > 1 && (
                 <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-white rounded-b-2xl">
-                  <div className="text-xs text-slate-500 font-medium hidden sm:block">
+                  <div className="text-sm text-slate-500 font-medium hidden sm:block">
                     Hiển thị trang <span className="font-bold text-slate-700">{currentPage}</span> / <span className="font-bold text-slate-700">{totalPages}</span> (Tổng {filteredVehicles.length} xe)
                   </div>
                   <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
@@ -1121,7 +1121,7 @@ export default function VehiclesPage() {
                       disabled={currentPage === 1}
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
+                      className="h-8 text-sm border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
                     >
                       Trước
                     </Button>
@@ -1139,7 +1139,7 @@ export default function VehiclesPage() {
                               variant={currentPage === page ? "default" : "outline"}
                               size="sm"
                               className={cn(
-                                "h-8 w-8 text-xs rounded-xl font-bold transition-all",
+                                "h-8 w-8 text-sm rounded-xl font-bold transition-all",
                                 currentPage === page
                                   ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
                                   : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -1154,7 +1154,7 @@ export default function VehiclesPage() {
                           page === totalPages - 1
                         ) {
                           return (
-                            <span key={page} className="text-slate-400 text-xs px-1 select-none">
+                            <span key={page} className="text-slate-400 text-sm px-1 select-none">
                               ...
                             </span>
                           )
@@ -1167,7 +1167,7 @@ export default function VehiclesPage() {
                       disabled={currentPage === totalPages}
                       variant="outline"
                       size="sm"
-                      className="h-8 text-xs border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
+                      className="h-8 text-sm border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
                     >
                       Tiếp
                     </Button>
@@ -1348,7 +1348,7 @@ export default function VehiclesPage() {
                   ))}
                   <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
+                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1386,7 +1386,7 @@ export default function VehiclesPage() {
                   ))}
                   <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-xs text-gray-400 mt-1">Thêm ảnh</span>
+                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1458,13 +1458,13 @@ export default function VehiclesPage() {
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "inline-flex items-center text-[11px] font-bold px-2 py-1 rounded-full border",
+                      "inline-flex items-center text-sm font-bold px-2 py-1 rounded-full border",
                       rentalVehicleStatusBadgeClass(v.status)
                     )}>
                       {getRentalVehicleStatusLabel(v.status)}
                     </span>
                     {v.category && (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-sm text-slate-500">
                         Phân loại: <span className="font-medium text-slate-800">{v.category === "car" ? "Ô tô" : "Xe máy"}</span>
                       </span>
                     )}
@@ -1472,15 +1472,15 @@ export default function VehiclesPage() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
+                      <p className="text-sm font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
                       <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
                     </div>
                     <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-amber-600 uppercase">Giá mua</p>
+                      <p className="text-sm font-semibold text-amber-600 uppercase">Giá mua</p>
                       <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(v.purchasePrice)}</p>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-emerald-600 uppercase">Tổng thu</p>
+                      <p className="text-sm font-semibold text-emerald-600 uppercase">Tổng thu</p>
                       <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{formatPrice(totalRevenue)}</p>
                     </div>
                     <div className={cn(
@@ -1488,7 +1488,7 @@ export default function VehiclesPage() {
                       profit >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
                     )}>
                       <p className={cn(
-                        "text-[10px] font-semibold uppercase",
+                        "text-sm font-semibold uppercase",
                         profit >= 0 ? "text-emerald-600" : "text-blue-600"
                       )}>Lợi nhuận</p>
                       <p className={cn(
@@ -1502,39 +1502,39 @@ export default function VehiclesPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Số KM hiện tại</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số KM hiện tại</p>
                       <p className="text-sm font-bold text-slate-800">{(v.current_km || 0).toLocaleString("vi-VN")} km</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Ngày đã cho thuê</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Ngày đã cho thuê</p>
                       <p className="text-sm font-bold text-slate-800">{v.totalRentalDays || 0} ngày</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Lấp đầy 30 ngày</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Lấp đầy 30 ngày</p>
                       <p className={cn(
                         "text-sm font-extrabold tabular-nums",
                         u30.pct >= 70 ? "text-emerald-600" : u30.pct >= 40 ? "text-amber-600" : "text-blue-500"
                       )}>{u30.pct}%</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Tổng đơn thuê</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Tổng đơn thuê</p>
                       <p className="text-sm font-bold text-slate-800">{totalRentalCount} đơn</p>
                     </div>
                   </div>
 
                   {v.notes && v.notes.trim() && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
-                      <p className="text-xs text-slate-700 whitespace-pre-line">{v.notes}</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {recentOrders.map((o) => (
-                          <div key={o.id} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
+                          <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
                             <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
                             <span className="font-bold tabular-nums text-blue-600 shrink-0">
@@ -1550,7 +1550,7 @@ export default function VehiclesPage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.vehicleImages.map((img, index) => (
                               <div
@@ -1569,7 +1569,7 @@ export default function VehiclesPage() {
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.documentImages.map((img, index) => (
                               <div
@@ -1646,10 +1646,10 @@ export default function VehiclesPage() {
                           }`} />
                           <div className="bg-muted/30 rounded-lg p-3">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${historyTypeConfig[log.type].className}`}>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${historyTypeConfig[log.type].className}`}>
                                 {historyTypeConfig[log.type].label}
                               </span>
-                              <span className="text-xs text-muted-foreground">{log.datetime}</span>
+                              <span className="text-sm text-muted-foreground">{log.datetime}</span>
                             </div>
                             <p className="text-sm text-card-foreground">{log.description}</p>
                           </div>

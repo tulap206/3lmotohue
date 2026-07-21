@@ -13,13 +13,13 @@ export function PrintBusinessHeader({
         {QUY79_BUSINESS.brandName}
       </h1>
       {QUY79_BUSINESS.branches.map((branch, index) => (
-        <p key={branch} className="text-xs text-slate-600 mt-1">
+        <p key={branch} className="text-sm text-slate-600 mt-1">
           Cơ sở {index + 1}: {branch}
         </p>
       ))}
-      <p className="text-xs text-slate-600">Hotline: {QUY79_BUSINESS.hotline}</p>
+      <p className="text-sm text-slate-600">Hotline: {QUY79_BUSINESS.hotline}</p>
       <h2 className="text-xl font-bold uppercase mt-4 tracking-wide text-slate-800">{documentTitle}</h2>
-      {metaLine ? <p className="text-xs text-slate-500 font-mono mt-1">{metaLine}</p> : null}
+      {metaLine ? <p className="text-sm text-slate-500 font-mono mt-1">{metaLine}</p> : null}
     </div>
   )
 }
@@ -33,7 +33,7 @@ export function PrintShopPartyBlock({
 }) {
   return (
     <div className="border border-slate-200 rounded-xl p-4">
-      <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-xs">
+      <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-sm">
         {title}
       </h3>
       <div className="space-y-1.5 text-sm">
