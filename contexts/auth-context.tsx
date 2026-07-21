@@ -96,9 +96,16 @@ export const USERS: { username: string; password: string; user: User }[] = [
   },
 ]
 
-// Get client IP (simplified for demo)
-const getClientIP = () => {
-  return "192.168.1." + Math.floor(Math.random() * 255)
+// Get client IP via server route
+const getClientIP = async () => {
+  try {
+    const res = await fetch("/api/client-ip", { cache: "no-store" })
+    if (!res.ok) return "Unknown"
+    const data = await res.json()
+    return typeof data?.ip === "string" && data.ip ? data.ip : "Unknown"
+  } catch {
+    return "Unknown"
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -177,12 +184,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const addAccessLog = async (action: string, module: string, details: string) => {
     if (!user) return
     
+    const ipAddress = await getClientIP()
     const newLog = {
       username: user.username,
       displayname: user.displayName,
       action,
       module,
       details,
+      ip_address: ipAddress,
       timestamp: new Date().toISOString(),
     }
     
@@ -210,7 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       action,
       module,
       details,
-      ipAddress: getClientIP(),
+      ipAddress,
       timestamp: new Date(),
     }
     

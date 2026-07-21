@@ -23,12 +23,16 @@ const devLog = (level: string, ...args: any[]) => {
   }
 }
 
-// Get client IP
+// Get client IP via server route (reads proxy headers)
 const getClientIP = async () => {
   try {
-    return 'Client'
-  } catch (err) {
-    return 'Unknown'
+    if (typeof window === "undefined") return "Server"
+    const res = await fetch("/api/client-ip", { cache: "no-store" })
+    if (!res.ok) return "Unknown"
+    const data = await res.json()
+    return typeof data?.ip === "string" && data.ip ? data.ip : "Unknown"
+  } catch {
+    return "Unknown"
   }
 }
 
@@ -81,6 +85,7 @@ export const logger = {
         action,
         module,
         details: detailsWithDevice,
+        ip_address: ipAddress,
         timestamp: new Date().toISOString(),
       }])
       // Trigger Telegram notification via Next.js API Route (independent of DB logs)

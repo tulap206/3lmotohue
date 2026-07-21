@@ -38,6 +38,8 @@ export interface AccessLogRecord {
   details: string
   timestamp: string
   ipAddress?: string
+  ip_address?: string
+  displayname?: string
   created_at?: string
 }
 
@@ -162,15 +164,37 @@ const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> 
   "Quản lý người dùng": { icon: Users, color: "text-cyan-600" },
 }
 
+function extractIpFromDetails(details: string): string | undefined {
+  if (!details) return undefined
+  const match = details.match(/IP:\s*([0-9a-fA-F:.]+)/i) || details.match(/\bIP\s+([0-9a-fA-F:.]+)/i)
+  return match?.[1]
+}
+
+function stripIpFromDetails(details: string): string {
+  if (!details) return ""
+  return details
+    .replace(/IP:\s*[0-9a-fA-F:.]+\s*\|\s*/i, "")
+    .replace(/IP:\s*[0-9a-fA-F:.]+\s*/i, "")
+    .trim()
+}
+
 function normalizeLog(log: AccessLogRecord): AccessLogRecord {
+  const rawDetails = log.details || ""
+  const ipAddress =
+    log.ipAddress ||
+    log.ip_address ||
+    extractIpFromDetails(rawDetails) ||
+    undefined
+
   return {
     ...log,
     timestamp: log.timestamp || log.created_at || "",
     username: log.username || "",
-    displayName: log.displayName || log.username || "",
-    details: log.details || "",
+    displayName: log.displayName || log.displayname || log.username || "",
+    details: stripIpFromDetails(rawDetails),
     module: log.module || "",
     action: log.action || "",
+    ipAddress,
   }
 }
 
@@ -349,7 +373,8 @@ export function AccessHistoryPanel({
             log.username.toLowerCase().includes(q) ||
             log.displayName.toLowerCase().includes(q) ||
             log.module.toLowerCase().includes(q) ||
-            log.action.toLowerCase().includes(q)
+            log.action.toLowerCase().includes(q) ||
+            (log.ipAddress || "").toLowerCase().includes(q)
           const matchAccount = filterAccount === "all" || log.username === filterAccount
           const matchModule = filterModule === "all" || getModuleLabel(log.module) === filterModule
           const matchAction = filterAction === "all" || getActionLabel(log.action) === filterAction
@@ -572,9 +597,9 @@ export function AccessHistoryPanel({
                           <p className="truncate text-slate-600 font-medium text-[13px]" title={log.details}>
                             {log.details || "—"}
                           </p>
-                          {log.ipAddress && (
-                            <p className="mt-0.5 font-mono text-sm text-red-500">IP {log.ipAddress}</p>
-                          )}
+                          <p className="mt-0.5 font-mono text-sm font-semibold text-red-600" title={log.ipAddress || undefined}>
+                            IP {log.ipAddress || "—"}
+                          </p>
                         </td>
                       </tr>
                     )

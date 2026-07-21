@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
       displayname: 'Khách truy cập',
       action: 'Truy cập',
       module: 'Trang chủ',
-      details: `IP: ${ip} | Thiết bị: ${deviceName}`,
+      details: `Thiết bị: ${deviceName}`,
+      ip_address: ip,
       timestamp: new Date().toISOString()
     }])
 
