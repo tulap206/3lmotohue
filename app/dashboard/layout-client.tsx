@@ -1,18 +1,23 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, Suspense } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { RentalDataProvider } from "@/contexts/rental-data-context"
 import { Loader2 } from "lucide-react"
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+const RENTAL_PATHS = [
+  "/dashboard/vehicles",
+  "/dashboard/customers",
+  "/dashboard/orders",
+  "/dashboard/maintenance",
+]
+
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -32,5 +37,33 @@ export default function DashboardLayout({
     return null
   }
 
-  return <DashboardSidebar>{children}</DashboardSidebar>
+  const isRentalPath = RENTAL_PATHS.some((p) => pathname.startsWith(p))
+
+  return (
+    <DashboardSidebar>
+      {isRentalPath ? (
+        <RentalDataProvider>{children}</RentalDataProvider>
+      ) : (
+        children
+      )}
+    </DashboardSidebar>
+  )
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center gradient-bg">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        </div>
+      }
+    >
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </Suspense>
+  )
 }

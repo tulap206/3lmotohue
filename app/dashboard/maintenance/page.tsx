@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { getVehiclesDueMaintenance, markVehicleAsMaintained, MaintenanceVehicle } from "@/lib/supabase"
-import { CardContent } from "@/components/ui/card"
+import { useRentalData } from "@/contexts/rental-data-context"
+import { markVehicleAsMaintained, calculateMaintenanceStatus, MaintenanceVehicle } from "@/lib/supabase"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +20,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp } from "lucide-react"
+import {
+  EntityFormDialogContent,
+  EntityFormHeader,
+} from "@/components/dashboard/entity-form-dialog"
+import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import {
   ModulePageShell,
@@ -27,53 +33,46 @@ import {
   ModuleResponsiveTable,
   ModuleMobileCard,
 } from "@/components/dashboard/module-shell"
-import { RentalKpiCard, rentalTableHeadClass, rentalFilterInputClass } from "@/components/dashboard/rental-ui"
+import {
+  RentalKpiCard,
+  rentalTableHeadClass,
+  rentalFilterInputClass,
+  getRentalVehicleStatusLabel,
+  rentalVehicleStatusBadgeClass,
+} from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
+import { formatDisplayDate } from "@/lib/format-date"
 
 export default function MaintenancePage() {
   const { user } = useAuth()
-  const [vehicles, setVehicles] = useState<MaintenanceVehicle[]>([])
-  const [loading, setLoading] = useState(true)
+  const { vehicles: allVehicles, orders, isLoading: loading, refresh } = useRentalData()
   const [maintaining, setMaintaining] = useState<string | null>(null)
+  const [viewingVehicle, setViewingVehicle] = useState<MaintenanceVehicle | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortOrder, setSortOrder] = useState("desc")
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const itemsPerPage = 15
 
-  useEffect(() => {
-    loadVehicles()
-  }, [])
+  // Derive maintenance vehicles list from shared context
+  const vehicles: MaintenanceVehicle[] = useMemo(() => {
+    return allVehicles
+      .map(v => calculateMaintenanceStatus(v))
+      .filter(v => v.km_until_maintenance <= 0)
+  }, [allVehicles])
 
-  const loadVehicles = async () => {
-    try {
-      setLoading(true)
-
-      // Check if user is demo account (quy79)
-      const isDemoAccount = user?.username === "quy79"
-
-      if (isDemoAccount) {
-        setVehicles([])
-        setLoading(false)
-        return
-      }
-
-      const data = await getVehiclesDueMaintenance()
-      setVehicles(data)
-    } catch (error) {
-      toast.error("Lỗi tải dữ liệu xe")
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
+  const openDetailDialog = (vehicle: MaintenanceVehicle) => {
+    setViewingVehicle(vehicle)
   }
+
+  const formatPrice = (n: number) => `${(n || 0).toLocaleString("vi-VN")}đ`
 
   const handleMaintained = async (vehicleId: string, vehicleName: string, currentKm: number) => {
     try {
       setMaintaining(vehicleId)
       await markVehicleAsMaintained(vehicleId, currentKm)
       toast.success(`✓ ${vehicleName} đã bảo trì xong`)
-      await loadVehicles()
+      await refresh()
     } catch (error) {
       toast.error("Lỗi cập nhật bảo trì")
       console.error(error)
@@ -87,38 +86,47 @@ export default function MaintenancePage() {
     setCurrentPage(1)
   }, [searchQuery, sortOrder, vehicles])
 
-  const filteredVehicles = vehicles
-    .filter(vehicle => {
-      const matchQuery = 
-        vehicle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase())
-      return matchQuery
-    })
-    .sort((a, b) => {
-      const aMnt = Math.floor(a.current_km / 1000) * 1000
-      const aOver = a.current_km - aMnt
-      const bMnt = Math.floor(b.current_km / 1000) * 1000
-      const bOver = b.current_km - bMnt
-      return sortOrder === "desc" ? bOver - aOver : aOver - bOver
-    })
+  const filteredVehicles = useMemo(() => {
+    return vehicles
+      .filter(vehicle => {
+        const matchQuery = 
+          vehicle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase())
+        return matchQuery
+      })
+      .sort((a, b) => {
+        const aMnt = Math.floor(a.current_km / 1000) * 1000
+        const aOver = a.current_km - aMnt
+        const bMnt = Math.floor(b.current_km / 1000) * 1000
+        const bOver = b.current_km - bMnt
+        return sortOrder === "desc" ? bOver - aOver : aOver - bOver
+      })
+  }, [vehicles, searchQuery, sortOrder])
 
-  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage)
-  const paginatedVehicles = filteredVehicles.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredVehicles.length / itemsPerPage)
+  }, [filteredVehicles])
+
+  const paginatedVehicles = useMemo(() => {
+    return filteredVehicles.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    )
+  }, [filteredVehicles, currentPage])
 
   const getOverdueKm = (km: number) => km - Math.floor(km / 1000) * 1000
 
-  const maintenanceStats = {
-    total: vehicles.length,
-    filtered: filteredVehicles.length,
-    urgent: vehicles.filter((v) => getOverdueKm(v.current_km) >= 300).length,
-    avgOverdue:
-      vehicles.length > 0
-        ? Math.round(vehicles.reduce((sum, v) => sum + getOverdueKm(v.current_km), 0) / vehicles.length)
-        : 0,
-  }
+  const maintenanceStats = useMemo(() => {
+    return {
+      total: vehicles.length,
+      filtered: filteredVehicles.length,
+      urgent: vehicles.filter((v) => getOverdueKm(v.current_km) >= 300).length,
+      avgOverdue:
+        vehicles.length > 0
+          ? Math.round(vehicles.reduce((sum, v) => sum + getOverdueKm(v.current_km), 0) / vehicles.length)
+          : 0,
+    }
+  }, [vehicles, filteredVehicles])
 
   return (
     <ModulePageShell module="rental">
@@ -131,25 +139,27 @@ export default function MaintenancePage() {
           { label: "Bảo trì xe" },
         ]}
         actions={
-          <Button
-            onClick={loadVehicles}
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            {loading ? "Đang tải..." : "Tải lại"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={refresh}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+              className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm h-10 px-4 font-bold"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              {loading ? "Đang tải..." : "Tải lại"}
+            </Button>
+          </div>
         }
       />
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <RentalKpiCard label="Xe cần bảo trì" value={maintenanceStats.total} sublabel={`${maintenanceStats.filtered} đang lọc`} />
-          <RentalKpiCard label="Cần gấp" value={maintenanceStats.urgent} sublabel="Quá hạn ≥ 300 km" valueClassName="text-blue-700" />
-          <RentalKpiCard label="KM quá hạn TB" value={maintenanceStats.avgOverdue} sublabel="km trung bình" valueClassName="text-amber-700" />
-          <RentalKpiCard
+          <RentalKpiCard variant="hero" label="Xe cần bảo trì" value={maintenanceStats.total} sublabel={`${maintenanceStats.filtered} đang lọc`} />
+          <RentalKpiCard variant="hero" label="Cần gấp" value={maintenanceStats.urgent} sublabel="Quá hạn ≥ 300 km" valueClassName="text-blue-700" />
+          <RentalKpiCard variant="hero" label="KM quá hạn TB" value={maintenanceStats.avgOverdue} sublabel="km trung bình" valueClassName="text-amber-700" />
+          <RentalKpiCard variant="hero"
             label="Mốc bảo trì"
             value="1.000"
             sublabel="km / lần bảo trì"
@@ -158,24 +168,24 @@ export default function MaintenancePage() {
         </div>
 
       <ModuleSectionCard
-        title="Xe cần bảo trì"
-        description={`Quản lý ${filteredVehicles.length} xe cần bảo trì`}
+        title="Danh sách xe cần bảo trì"
+        description={`Quản lý ${filteredVehicles.length} phương tiện quá hạn hoặc tới hạn bảo dưỡng`}
         filters={
           <div className="flex flex-wrap gap-2 w-full lg:w-auto">
-            <div className="relative flex-1 md:w-64">
+            <div className="relative flex-1 lg:w-48">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
                 placeholder="Tìm biển số, tên xe..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn(rentalFilterInputClass, "pl-9")}
+                className={cn(rentalFilterInputClass, "pl-9 h-10")}
               />
             </div>
             <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger className="w-full md:w-56 h-9 rounded-xl border-slate-200 text-sm bg-white">
+              <SelectTrigger className="w-full lg:w-56 h-10 rounded-xl border-slate-200 text-sm bg-white">
                 <SelectValue placeholder="Sắp xếp" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-slate-100 rounded-xl">
                 <SelectItem value="desc">KM quá hạn: Cao → thấp</SelectItem>
                 <SelectItem value="asc">KM quá hạn: Thấp → cao</SelectItem>
               </SelectContent>
@@ -194,14 +204,14 @@ export default function MaintenancePage() {
               desktop={
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
-                      <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
-                      <th className={rentalTableHeadClass}>Tên xe</th>
-                      <th className={rentalTableHeadClass}>Biển số</th>
-                      <th className={cn(rentalTableHeadClass, "text-right")}>KM hiện tại</th>
-                      <th className={cn(rentalTableHeadClass, "text-right")}>KM cần bảo trì</th>
-                      <th className={cn(rentalTableHeadClass, "text-right")}>Quá hạn</th>
-                      <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
+                    <tr className="bg-slate-50 border-b border-slate-200">
+                      <th className={cn(rentalTableHeadClass, "w-12 text-center text-slate-600")}>STT</th>
+                      <th className={cn(rentalTableHeadClass, "text-slate-600")}>Tên xe</th>
+                      <th className={cn(rentalTableHeadClass, "text-slate-600")}>Biển số</th>
+                      <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>KM hiện tại</th>
+                      <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>KM cần bảo trì</th>
+                      <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Quá hạn</th>
+                      <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
@@ -210,15 +220,27 @@ export default function MaintenancePage() {
                       const overKm = vehicle.current_km - mntKm
                       return (
                         <tr key={vehicle.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
-                          <td className="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
+                          <td className="py-3.5 px-4 text-center text-sm text-slate-400 font-semibold">
                             {(currentPage - 1) * itemsPerPage + index + 1}
                           </td>
-                          <td className="py-3.5 px-4 font-semibold text-slate-800">{vehicle.name}</td>
-                          <td className="py-3.5 px-4 font-mono text-xs font-semibold text-slate-600">{vehicle.licensePlate}</td>
-                          <td className="py-3.5 px-4 text-right font-mono text-xs tabular-nums">{vehicle.current_km.toLocaleString()} km</td>
-                          <td className="py-3.5 px-4 text-right font-mono text-xs font-semibold tabular-nums">{mntKm.toLocaleString()} km</td>
+                          <td className="py-3.5 px-4">
+                            <button
+                              type="button"
+                              className="font-bold text-slate-800 text-[15px] hover:text-slate-700 hover:underline text-left"
+                              onClick={() => openDetailDialog(vehicle)}
+                            >
+                              {vehicle.name}
+                            </button>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-xs shadow-sm tracking-wider uppercase">
+                              {vehicle.licensePlate}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-mono text-sm font-medium text-slate-800 tabular-nums">{vehicle.current_km.toLocaleString()} km</td>
+                          <td className="py-3.5 px-4 text-right font-mono text-sm font-semibold text-slate-800 tabular-nums">{mntKm.toLocaleString()} km</td>
                           <td className="py-3.5 px-4 text-right">
-                            <span className="inline-flex items-center gap-1 font-mono text-xs text-orange-600 font-bold">
+                            <span className="inline-flex items-center gap-1 font-mono text-sm text-orange-600 font-bold">
                               <AlertTriangle className="w-3.5 h-3.5" />
                               +{overKm.toLocaleString()} km
                             </span>
@@ -270,7 +292,13 @@ export default function MaintenancePage() {
                   <ModuleMobileCard key={vehicle.id}>
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <p className="font-semibold text-slate-800">{vehicle.name}</p>
+                        <button
+                          type="button"
+                          className="font-semibold text-slate-800 hover:text-slate-700 hover:underline text-left"
+                          onClick={() => openDetailDialog(vehicle)}
+                        >
+                          {vehicle.name}
+                        </button>
                         <p className="text-xs text-slate-500 font-mono">{vehicle.licensePlate}</p>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-orange-50 text-orange-700 border-orange-100 shrink-0">
@@ -280,20 +308,6 @@ export default function MaintenancePage() {
                     <div className="flex justify-between items-center text-xs text-slate-500">
                       <span className="tabular-nums">{vehicle.current_km.toLocaleString()} km</span>
                       <span className="tabular-nums">Mốc: {mntKm.toLocaleString()} km</span>
-                    </div>
-                    
-                    {/* Mobile action bar */}
-                    <div className="flex justify-end items-center mt-2 pt-2 border-t border-slate-100/50">
-                      <Button
-                        onClick={() => {
-                          if (window.confirm(`Bạn chắc chắn ${vehicle.name} (${vehicle.licensePlate}) đã bảo trì xong ở ${vehicle.current_km.toLocaleString()} km?`)) {
-                            handleMaintained(vehicle.id, vehicle.name, vehicle.current_km)
-                          }
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-semibold h-7 px-2.5"
-                      >
-                        Bảo trì xong
-                      </Button>
                     </div>
                   </ModuleMobileCard>
                 )
@@ -328,6 +342,155 @@ export default function MaintenancePage() {
         )}
       </ModuleSectionCard>
       </div>
+
+      {/* Vehicle Detail Dialog */}
+      <Dialog open={!!viewingVehicle} onOpenChange={(open) => !open && setViewingVehicle(null)}>
+        <EntityFormDialogContent accent="blue" maxWidth="lg">
+          {viewingVehicle && (() => {
+            const v = viewingVehicle
+            const mntKm = Math.floor(v.current_km / 1000) * 1000
+            const overKm = v.current_km - mntKm
+            const vOrders = orders.filter((o) => o.vehicleId === v.id)
+            const recentOrders = [...vOrders]
+              .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
+              .slice(0, 4)
+
+            return (
+              <>
+                <EntityFormHeader
+                  title={v.name}
+                  description={`${v.licensePlate || "Chưa biển"}${v.color ? ` · ${v.color}` : ""}`}
+                />
+                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                  <div className="flex items-center justify-between">
+                    <span className={cn(
+                      "inline-flex items-center text-[11px] font-bold px-2 py-1 rounded-full border",
+                      rentalVehicleStatusBadgeClass(v.status)
+                    )}>
+                      {getRentalVehicleStatusLabel(v.status)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full border bg-orange-50 text-orange-700 border-orange-100">
+                      <AlertTriangle className="w-3 h-3" />
+                      Quá hạn +{overKm.toLocaleString("vi-VN")} km
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-orange-600 uppercase">KM hiện tại</p>
+                      <p className="text-sm font-extrabold text-orange-700 tabular-nums">{v.current_km.toLocaleString("vi-VN")} km</p>
+                    </div>
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-amber-600 uppercase">Mốc bảo trì</p>
+                      <p className="text-sm font-extrabold text-amber-700 tabular-nums">{mntKm.toLocaleString("vi-VN")} km</p>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
+                      <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase">Tổng đơn</p>
+                      <p className="text-sm font-extrabold text-slate-800">{vOrders.length} đơn</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Giá mua</p>
+                      <p className="text-sm font-bold text-slate-800 tabular-nums">{formatPrice(v.purchasePrice)}</p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Lần BT gần nhất</p>
+                      <p className="text-sm font-bold text-slate-800 tabular-nums">
+                        {(v.last_maintenance_km ?? 0).toLocaleString("vi-VN")} km
+                      </p>
+                    </div>
+                  </div>
+
+                  {v.notes && v.notes.trim() && (
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-xs text-slate-700 whitespace-pre-line">{v.notes}</p>
+                    </div>
+                  )}
+
+                  {recentOrders.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-1.5">
+                        {recentOrders.map((o) => (
+                          <div key={o.id} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
+                            <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
+                            <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
+                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                              {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(v.vehicleImages?.length > 0 || v.documentImages?.length > 0) ? (
+                    <div className="space-y-3">
+                      {v.vehicleImages?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {v.vehicleImages.map((img, index) => (
+                              <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
+                                <img src={img} alt={`Xe ${index + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {v.documentImages?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {v.documentImages.map((img, index) => (
+                              <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
+                                <img src={img} alt={`Giấy tờ ${index + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-slate-400 bg-slate-50 border border-slate-100 p-3 rounded-xl">
+                      <ImageIcon className="w-4 h-4" />
+                      <span className="text-xs">Chưa có ảnh xe / giấy tờ</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-9 text-sm"
+                      onClick={() => setViewingVehicle(null)}
+                    >
+                      Đóng
+                    </Button>
+                    <Button
+                      className="flex-1 h-9 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+                      disabled={maintaining === v.id}
+                      onClick={async () => {
+                        await handleMaintained(v.id, v.name, v.current_km)
+                        setViewingVehicle(null)
+                      }}
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1.5" />
+                      Đã bảo trì
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )
+          })()}
+        </EntityFormDialogContent>
+      </Dialog>
 
       {/* Collapsible Guidelines Section */}
       <div className="bg-blue-50/50 border border-blue-100 rounded-xl overflow-hidden">

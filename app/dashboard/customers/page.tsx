@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { showError, showWarning } from "@/lib/toast-utils"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
+import { useRentalData } from "@/contexts/rental-data-context"
 import { logger } from "@/lib/logger"
+import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
 import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
@@ -23,6 +25,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -32,14 +35,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Settings, Clock, Calendar } from "lucide-react"
+import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Settings, Clock, Calendar, History } from "lucide-react"
 
 interface Customer {
   id: string
   name: string
   phone: string
-  facebook: string
   address: string
   idcard: string
   totalrentals: number
@@ -109,8 +110,7 @@ const ImageUploadButton = ({
 
 export default function CustomersPage() {
   const { user } = useAuth()
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [loading, setLoading] = useState(true)
+  const { customers, setCustomers, orders: rentals, isLoading: loading } = useRentalData()
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
@@ -120,13 +120,11 @@ export default function CustomersPage() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null)
-  const [rentals, setRentals] = useState<any[]>([])
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    facebook: "",
     address: "",
     idcard: "",
     customerphoto: [] as string[],
@@ -136,115 +134,71 @@ export default function CustomersPage() {
     licenseback: [] as string[],
   })
 
-  const loadData = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true)
 
-      // Check if user is demo account (quy79)
-      const isDemoAccount = user?.username === "quy79"
+  const [filterStatus, setFilterStatus] = useState("all")
 
-      if (isDemoAccount) {
-        setCustomers([])
-        setLoading(false)
-        return
+  const filteredCustomers = useMemo(() => {
+    return customers.filter(
+      (customer) => {
+        const matchesSearch =
+          customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          customer.phone.includes(searchQuery)
+        
+        const matchesStatus = filterStatus === "all" || customer.status === filterStatus
+        
+        return matchesSearch && matchesStatus
       }
+    )
+  }, [customers, searchQuery, filterStatus])
 
-      const [customersData, rentalsData] = await Promise.all([
-        fetchCustomers(),
-        fetchRentals()
-      ])
-      setRentals(rentalsData || [])
-
-      const updated = customersData.map((customer) => {
-        const activeRental = rentalsData.find(
-          (rental: any) => rental.customerId === customer.id && rental.status === "active"
-        )
-        const pendingRental = rentalsData.find(
-          (rental: any) => rental.customerId === customer.id && rental.status === "pending"
-        )
-        
-        let statusLabel = "active"
-        if (activeRental) {
-          statusLabel = "renting"
-        } else if (pendingRental) {
-          statusLabel = "pending"
-        } else if (customer.status === "inactive") {
-          statusLabel = "inactive"
-        }
-        
-        return {
-          ...customer,
-          status: statusLabel as any
-        }
-      })
-
-      const sorted = updated.sort((a, b) => {
-        const dateA = new Date(a.createdAt || a.created_at || 0).getTime()
-        const dateB = new Date(b.createdAt || b.created_at || 0).getTime()
-        return dateB - dateA
-      })
-      setCustomers(sorted)
-    } catch (error) {
-      console.error("Failed to load customers:", error)
-    } finally {
-      if (showLoading) setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadData(true)
-
-    // Subscribe to real-time changes
-    const channel = supabase
-      .channel("customers-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, () => {
-        loadData(false)
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, () => {
-        loadData(false)
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [loadData])
-
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.phone.includes(searchQuery) ||
-      customer.facebook.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  // Reset page when search query changes
+  // Reset page when search query or status filter changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery])
+  }, [searchQuery, filterStatus])
 
-  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage)
-  const paginatedCustomers = filteredCustomers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredCustomers.length / itemsPerPage)
+  }, [filteredCustomers])
 
-  const customerStats = {
-    total: customers.length,
-    renting: customers.filter((c) => c.status === "renting").length,
-    pending: customers.filter((c) => c.status === "pending").length,
-    inactive: customers.filter((c) => c.status === "inactive").length,
-  }
+  const paginatedCustomers = useMemo(() => {
+    return filteredCustomers.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    )
+  }, [filteredCustomers, currentPage])
+
+  const customerStats = useMemo(() => {
+    const now = new Date()
+    const month = now.getMonth()
+    const year = now.getFullYear()
+    const newThisMonth = customers.filter((c) => {
+      const raw = c.created_at || c.createdAt
+      if (!raw) return false
+      const d = new Date(raw)
+      if (Number.isNaN(d.getTime())) return false
+      return d.getMonth() === month && d.getFullYear() === year
+    }).length
+
+    return {
+      total: customers.length,
+      renting: customers.filter((c) => c.status === "renting").length,
+      pending: customers.filter((c) => c.status === "pending").length,
+      inactive: customers.filter((c) => c.status === "inactive").length,
+      month: month + 1,
+      newThisMonth,
+    }
+  }, [customers])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Validate required fields
     if (!formData.name || formData.name.trim() === '') {
-      alert('Vui lòng nhập tên khách hàng')
+      showWarning('Vui lòng nhập tên khách hàng')
       return
     }
     if (!formData.phone || formData.phone.trim() === '') {
-      alert('Vui lòng nhập số điện thoại')
+      showWarning('Vui lòng nhập số điện thoại')
       return
     }
     
@@ -261,13 +215,13 @@ export default function CustomersPage() {
       // Upload images to Supabase Storage
       const uploadImage = async (base64: string, folder: string, fileName: string) => {
         if (!base64 || base64.length === 0) {
-          console.log(`⏭️ Skipping ${fileName} - empty base64`)
+          console.log(`⏭ Skipping ${fileName} - empty base64`)
           return null
         }
         
         // Validate it's actually base64
         if (!base64.startsWith('data:')) {
-          console.log(`⏭️ Skipping ${fileName} - not base64 (is URL)`)
+          console.log(`⏭ Skipping ${fileName} - not base64 (is URL)`)
           return null
         }
         
@@ -377,7 +331,7 @@ export default function CustomersPage() {
           console.log(`✅ Uploaded ${result.key}: ${result.url}`)
           uploadedImages[result.key as keyof typeof uploadedImages] = [result.url]
         } else if (result) {
-          console.warn(`⚠️ No URL for ${result.key}`)
+          console.warn(`⚠ No URL for ${result.key}`)
         }
       })
       
@@ -393,7 +347,6 @@ export default function CustomersPage() {
         const updateData: any = {
           name: formData.name,
           phone: formData.phone,
-          facebook: formData.facebook,
           address: formData.address,
           idcard: formData.idcard,
         }
@@ -439,7 +392,7 @@ export default function CustomersPage() {
         )
         
         if (existingCustomer) {
-          alert(`⚠️ Khách hàng với số điện thoại "${formData.phone}" đã tồn tại!\n\nTên: ${existingCustomer.name}\nĐịa chỉ: ${existingCustomer.address}`)
+          showWarning(`Khách hàng với số điện thoại "${formData.phone}" đã tồn tại!`, `Tên: ${existingCustomer.name}\nĐịa chỉ: ${existingCustomer.address}`)
           return
         }
         
@@ -448,7 +401,7 @@ export default function CustomersPage() {
           .insert([{
             name: formData.name,
             phone: formData.phone,
-            facebook: formData.facebook,
+            facebook: "",
             address: formData.address,
             idcard: formData.idcard,
             totalrentals: 0,
@@ -500,7 +453,7 @@ export default function CustomersPage() {
       resetForm()
     } catch (error) {
       console.error("Error saving customer:", error)
-      alert('Lỗi: ' + (error as any).message)
+      showError('Lỗi: ' + (error as any).message)
     }
   }
 
@@ -508,7 +461,6 @@ export default function CustomersPage() {
     setFormData({ 
       name: "", 
       phone: "", 
-      facebook: "", 
       address: "", 
       idcard: "",
       customerphoto: [],
@@ -520,12 +472,16 @@ export default function CustomersPage() {
     setEditingCustomer(null)
   }
 
+  const openDetailDialog = (customer: Customer) => {
+    setViewingCustomer(customer)
+    setIsDetailDialogOpen(true)
+  }
+
   const handleEdit = (customer: Customer) => {
     setEditingCustomer(customer)
     setFormData({
       name: customer.name,
       phone: customer.phone,
-      facebook: customer.facebook,
       address: customer.address,
       idcard: customer.idcard,
       customerphoto: customer.customerphoto || [],
@@ -591,7 +547,7 @@ export default function CustomersPage() {
             </DialogTitle>
             <DialogDescription className="text-gray-600 text-base mt-2">
               Bạn có chắc chắn muốn xoá khách hàng <span className="font-semibold text-gray-800">"{customerToDelete?.name}"</span> không?
-              <p className="text-sm text-blue-600 mt-2">⚠️ Hành động này không thể hoàn tác!</p>
+              <p className="text-sm text-blue-600 mt-2">⚠ Hành động này không thể hoàn tác!</p>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">
@@ -625,13 +581,15 @@ export default function CustomersPage() {
           { label: "Khách hàng" },
         ]}
         actions={
-          <Button
-            className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
-            onClick={() => setIsDialogOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Thêm khách hàng
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl h-10 font-bold"
+              onClick={() => { setEditingCustomer(null); resetForm(); setIsDialogOpen(true) }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Thêm khách hàng
+            </Button>
+          </div>
         }
       />
 
@@ -674,16 +632,6 @@ export default function CustomersPage() {
                     placeholder="VD: 079123456789"
                     className="bg-gray-50 border-gray-200 rounded-xl"
                     required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="facebook" className="text-gray-600">Link Facebook</Label>
-                  <Input
-                    id="facebook"
-                    value={formData.facebook}
-                    onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                    placeholder="VD: https://facebook.com/username"
-                    className="bg-gray-50 border-gray-200 rounded-xl"
                   />
                 </div>
                 <div className="space-y-2">
@@ -745,33 +693,50 @@ export default function CustomersPage() {
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <RentalKpiCard label="Tổng khách hàng" value={customerStats.total} sublabel={`${filteredCustomers.length} đang lọc`} />
-          <RentalKpiCard label="Đang thuê" value={customerStats.renting} sublabel="Khách đang giữ xe" valueClassName="text-blue-700" />
-          <RentalKpiCard label="Chờ giao xe" value={customerStats.pending} sublabel="Đơn chờ xử lý" valueClassName="text-amber-700" />
-          <RentalKpiCard label="Ngừng hoạt động" value={customerStats.inactive} sublabel="Không giao dịch" valueClassName="text-slate-600" />
+          <RentalKpiCard
+            variant="hero"
+            label="Tổng khách hàng"
+            value={customerStats.total}
+            sublabel={
+              <>
+                <span className="block">{filteredCustomers.length} đang lọc</span>
+                <span className="block mt-0.5">
+                  Số khách tháng {customerStats.month}: {customerStats.newThisMonth} khách
+                </span>
+              </>
+            }
+          />
+          <RentalKpiCard variant="hero" label="Đang thuê" value={customerStats.renting} sublabel="Khách đang giữ xe" valueClassName="text-blue-700" />
+          <RentalKpiCard variant="hero" label="Chờ giao xe" value={customerStats.pending} sublabel="Đơn chờ xử lý" valueClassName="text-amber-700" />
+          <RentalKpiCard variant="hero" label="Ngừng hoạt động" value={customerStats.inactive} sublabel="Không giao dịch" valueClassName="text-slate-600" />
         </div>
 
       <ModuleSectionCard
         title="Danh sách khách hàng"
-        description={`Quản lý ${filteredCustomers.length} khách hàng`}
+        description={`Quản lý ${filteredCustomers.length} khách hàng trong hệ thống`}
         filters={
           <div className="flex flex-wrap gap-2 w-full lg:w-auto">
-            <div className="relative flex-1 md:w-64">
+            <div className="relative flex-1 lg:w-48">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tên, SĐT, CCCD..."
-                className={cn(rentalFilterInputClass, "pl-9")}
+                className={cn(rentalFilterInputClass, "pl-9 h-10")}
               />
             </div>
-            <Button
-              onClick={() => { setEditingCustomer(null); resetForm(); setIsDialogOpen(true) }}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-9 rounded-xl text-sm font-semibold shrink-0"
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Thêm khách
-            </Button>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full lg:w-40 h-10 rounded-xl border-slate-200 text-sm bg-white">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-slate-100 rounded-xl">
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="active">Hoạt động</SelectItem>
+                <SelectItem value="renting">Đang thuê xe</SelectItem>
+                <SelectItem value="pending">Chờ giao xe</SelectItem>
+                <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         }
       >
@@ -787,14 +752,14 @@ export default function CustomersPage() {
                 desktop={
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
-                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
-                        <th className={rentalTableHeadClass}>Khách hàng</th>
-                        <th className={cn(rentalTableHeadClass, "text-center")}>Liên hệ</th>
-                        <th className={cn(rentalTableHeadClass, "text-center")}>CCCD</th>
-                        <th className={rentalTableHeadClass}>Địa chỉ</th>
-                        <th className={cn(rentalTableHeadClass, "text-center")}>Trạng thái</th>
-                        <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className={cn(rentalTableHeadClass, "w-12 text-center text-slate-600")}>STT</th>
+                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Khách hàng</th>
+                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Liên hệ</th>
+                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>CCCD</th>
+                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Địa chỉ</th>
+                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
+                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
@@ -808,82 +773,83 @@ export default function CustomersPage() {
                               {customer.customerphoto && customer.customerphoto.length > 0 ? (
                                 <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                  <User className="w-4 h-4 text-slate-500" />
+                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
+                                  {customer.name.charAt(0).toUpperCase()}
                                 </div>
                               )}
-                              <span className="font-semibold text-slate-800 capitalize">{customer.name}</span>
+                              <div>
+                                 <button
+                                   type="button"
+                                   className="font-bold text-slate-800 hover:text-slate-700 hover:underline text-left"
+                                   onClick={() => openDetailDialog(customer)}
+                                 >
+                                   {customer.name}
+                                 </button>
+                                 <p className="text-[11px] text-slate-400 font-medium">
+                                   Đã thuê: <span className="font-bold text-blue-600">{customer.totalrentals} lượt</span>
+                                 </p>
+                              </div>
                             </div>
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <div className="space-y-1 inline-flex flex-col items-center">
-                              <div className="flex items-center gap-2 text-sm text-slate-700 font-semibold font-mono">
-                                <Phone className="w-3 h-3 text-slate-500" />
-                                {customer.phone}
-                              </div>
-                              {customer.facebook && (
-                                <a href={customer.facebook} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-semibold">
-                                  Facebook
-                                </a>
-                              )}
+                            <div className="flex flex-col items-center gap-0.5 text-xs">
+                              <span className="font-medium text-slate-700 inline-flex items-center gap-1">
+                                <Phone className="w-3 h-3 text-slate-400" /> {customer.phone}
+                              </span>
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 text-center font-semibold font-mono text-sm text-slate-700">{customer.idcard || <span className="text-slate-400 font-normal">—</span>}</td>
-                          <td className="py-3.5 px-4 text-sm text-slate-700">
-                            {customer.address ? (
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                                <span className="truncate max-w-[200px] font-medium">{customer.address}</span>
-                              </div>
-                            ) : (
-                              <span className="text-slate-400">—</span>
-                            )}
+                          <td className="py-3.5 px-4 text-center text-xs font-semibold font-mono text-slate-600">
+                            {customer.idcard || "—"}
+                          </td>
+                          <td className="py-3.5 px-4 text-xs text-slate-500 max-w-[200px] truncate">
+                            {customer.address}
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${rentalCustomerStatusBadgeClass(customer.status)}`}>
+                            <span className={cn(
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                              rentalCustomerStatusBadgeClass(customer.status)
+                            )}>
                               {getRentalCustomerStatusLabel(customer.status)}
                             </span>
                           </td>
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center justify-end gap-1">
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex justify-end gap-1">
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
                                 onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }}
                                 title="Lịch sử thuê"
                               >
                                 <Clock className="w-3.5 h-3.5" />
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
-                                onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true) }}
+                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
+                                onClick={() => openDetailDialog(customer)}
                                 title="Chi tiết"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
                                 onClick={() => handleEdit(customer)}
                                 title="Chỉnh sửa"
                               >
                                 <Settings className="w-3.5 h-3.5" />
                               </Button>
-                              {user?.permissions.canDelete && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50"
-                                  onClick={() => handleDelete(customer.id)}
-                                  title="Xóa"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0 border-red-200 rounded-lg hover:bg-blue-50 text-blue-500"
+                                onClick={() => handleDelete(customer.id)}
+                                title="Xóa"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -894,96 +860,78 @@ export default function CustomersPage() {
                 mobile={paginatedCustomers.map((customer) => (
                   <ModuleMobileCard key={customer.id}>
                     <div className="flex justify-between items-start gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2">
                         {customer.customerphoto && customer.customerphoto.length > 0 ? (
-                          <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                          <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                            <User className="w-4 h-4 text-blue-600" />
+                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
+                            {customer.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 truncate">{customer.name}</p>
-                          <p className="text-xs text-slate-500 font-mono">{customer.phone}</p>
+                        <div>
+                          <button
+                            type="button"
+                            className="font-bold text-slate-800 text-sm hover:text-slate-700 hover:underline text-left"
+                            onClick={() => openDetailDialog(customer)}
+                          >
+                            {customer.name}
+                          </button>
+                          <p className="text-[11px] text-slate-500">Đã thuê: <span className="font-bold text-blue-600">{customer.totalrentals} lượt</span></p>
                         </div>
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalCustomerStatusBadgeClass(customer.status)}`}>
                         {getRentalCustomerStatusLabel(customer.status)}
                       </span>
                     </div>
-                    {customer.address && (
-                      <p className="text-xs text-slate-500 truncate flex items-center gap-1 mb-2">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        {customer.address}
-                      </p>
-                    )}
-                    
-                    {/* Mobile action bar */}
-                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
-                      <span className="text-[10px] text-slate-400">Đơn thuê: {customer.totalrentals || 0}</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }}
-                          className="text-slate-500 hover:text-blue-600 p-1"
-                          title="Lịch sử thuê"
-                        >
-                          <Clock className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => { setViewingCustomer(customer); setIsDetailDialogOpen(true) }}
-                          className="text-slate-500 hover:text-blue-600 p-1"
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(customer)}
-                          className="text-slate-500 hover:text-blue-600 p-1"
-                          title="Sửa"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </button>
-                        {user?.permissions.canDelete && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Bạn có chắc chắn muốn xóa khách hàng ${customer.name}?`)) {
-                                handleDelete(customer.id)
-                              }
-                            }}
-                            className="text-blue-600 hover:text-blue-700 p-1"
-                            title="Xóa"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                      <div className="flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        {customer.phone}
                       </div>
+                      <div className="flex items-center gap-1 truncate">
+                        <MapPin className="w-3 h-3 text-slate-400" />
+                        {customer.address}
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-1 mt-2">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }}>
+                        <Clock className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(customer)} title="Chi tiết">
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => handleEdit(customer)}>
+                        <Settings className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </ModuleMobileCard>
                 ))}
               />
               {totalPages > 1 && (
-                <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
-                  <span className="text-xs text-slate-500 mr-2">
-                    Trang {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs border-slate-200 rounded-xl"
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs border-slate-200 rounded-xl"
-                  >
-                    Tiếp
-                  </Button>
+                <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-white rounded-b-2xl">
+                  <div className="text-xs text-slate-500 font-medium hidden sm:block">
+                    Hiển thị trang <span className="font-bold text-slate-700">{currentPage}</span> / <span className="font-bold text-slate-700">{totalPages}</span> (Tổng {filteredCustomers.length} khách)
+                  </div>
+                  <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
+                    <Button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs border-slate-200 rounded-xl"
+                    >
+                      Trước
+                    </Button>
+                    <Button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs border-slate-200 rounded-xl"
+                    >
+                      Tiếp
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
@@ -1016,7 +964,7 @@ export default function CustomersPage() {
                     <p className="text-lg font-extrabold text-emerald-700">{cRentals.filter(r => r.status === "completed").length}</p>
                   </div>
                   <div className="bg-blue-50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-red-500">Tổng doanh thu</p>
+                    <p className="text-xs text-blue-500">Tổng doanh thu</p>
                     <p className="text-sm font-extrabold text-blue-700 tabular-nums">{totalRev.toLocaleString("vi-VN")}đ</p>
                   </div>
                 </div>
@@ -1025,7 +973,7 @@ export default function CustomersPage() {
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {cRentals.map(r => {
-                      const statusColor = r.status === "completed" ? "text-emerald-700 bg-emerald-50 border-emerald-100" : r.status === "cancelled" ? "text-slate-500 bg-slate-50 border-slate-100" : r.status === "active" ? "text-blue-700 bg-blue-50 border-red-100" : "text-amber-700 bg-amber-50 border-amber-100"
+                      const statusColor = r.status === "completed" ? "text-emerald-700 bg-emerald-50 border-emerald-100" : r.status === "cancelled" ? "text-slate-500 bg-slate-50 border-slate-100" : r.status === "active" ? "text-blue-700 bg-blue-50 border-blue-100" : "text-amber-700 bg-amber-50 border-amber-100"
                       const statusLabel = { pending: "Chờ giao", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }[r.status as string] || r.status
                       return (
                         <div key={r.id} className="py-3 space-y-1.5">
@@ -1057,90 +1005,143 @@ export default function CustomersPage() {
         </EntityFormDialogContent>
       </Dialog>
 
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <EntityFormDialogContent accent="blue" maxWidth="2xl">
-          <EntityFormHeader
-            title="Chi tiết khách hàng"
-            description="Thông tin chi tiết của khách hàng trong hệ thống"
-          />
-          {viewingCustomer && (
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500">Tên</p>
-                  <p className="font-medium text-gray-800">{viewingCustomer.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Số điện thoại</p>
-                  <p className="font-medium text-gray-800">{viewingCustomer.phone}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">CCCD/CMND</p>
-                  <p className="font-medium text-gray-800 font-mono">{viewingCustomer.idcard}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Facebook</p>
-                  <a href={viewingCustomer.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                    Xem profile
-                  </a>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-xs text-gray-500">Địa chỉ</p>
-                  <p className="font-medium text-gray-800">{viewingCustomer.address}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Trạng thái</p>
-                  <Badge className={`rounded-full border ${rentalCustomerStatusBadgeClass(viewingCustomer.status)}`}>
-                    {getRentalCustomerStatusLabel(viewingCustomer.status)}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Số lần thuê</p>
-                  <p className="font-medium text-gray-800">{viewingCustomer.totalrentals}</p>
-                </div>
-              </div>
+      <Dialog open={isDetailDialogOpen} onOpenChange={(open) => {
+        setIsDetailDialogOpen(open)
+        if (!open) setViewingCustomer(null)
+      }}>
+        <EntityFormDialogContent accent="blue" maxWidth="lg">
+          {viewingCustomer && (() => {
+            const cust = viewingCustomer
+            const custRentals = rentals
+              .filter((r) => r.customerId === cust.id)
+              .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
+            const docImages = [
+              ...(cust.cccdfront?.[0] ? [{ label: "CCCD mặt trước", src: cust.cccdfront[0] }] : []),
+              ...(cust.cccdback?.[0] ? [{ label: "CCCD mặt sau", src: cust.cccdback[0] }] : []),
+              ...(cust.licensefront?.[0] ? [{ label: "GPLX mặt trước", src: cust.licensefront[0] }] : []),
+              ...(cust.licenseback?.[0] ? [{ label: "GPLX mặt sau", src: cust.licenseback[0] }] : []),
+            ]
+            return (
+              <>
+                <EntityFormHeader
+                  title="Chi tiết khách hàng"
+                  description={getRentalCustomerStatusLabel(cust.status)}
+                />
+                <div className="p-4 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0">
+                      {cust.customerphoto && cust.customerphoto.length > 0 ? (
+                        <img
+                          src={cust.customerphoto[0]}
+                          alt="Ảnh khách"
+                          className="w-20 h-20 rounded-xl object-cover border border-slate-200 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center">
+                          <User className="w-8 h-8 text-slate-300" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-lg font-extrabold text-slate-900">{cust.name}</p>
+                      <p className="text-sm text-slate-500 flex items-center gap-1">
+                        <Phone className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="font-medium text-slate-700">{cust.phone || "Chưa có SĐT"}</span>
+                      </p>
+                      {cust.address && (
+                        <p className="text-xs text-slate-500 flex items-start gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                          {cust.address}
+                        </p>
+                      )}
+                      <div className="pt-1">
+                        <span className={cn(
+                          "inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full border",
+                          rentalCustomerStatusBadgeClass(cust.status)
+                        )}>
+                          {getRentalCustomerStatusLabel(cust.status)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Images Section */}
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <p className="font-medium text-gray-700">Ảnh tài liệu</p>
-                
-                {viewingCustomer.customerphoto && viewingCustomer.customerphoto.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-2">Ảnh khách hàng</p>
-                    <img src={viewingCustomer.customerphoto[0]} alt="Customer" className="w-full max-w-xs rounded-lg border border-gray-200" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Số CCCD / CMND</p>
+                      <p className="text-sm font-bold text-slate-800 font-mono">{cust.idcard || "—"}</p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Tổng lần thuê</p>
+                      <p className="text-lg font-extrabold text-slate-800">{cust.totalrentals || custRentals.length} lượt</p>
+                    </div>
                   </div>
-                )}
-                
-                {viewingCustomer.cccdfront && viewingCustomer.cccdfront.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-2">CCCD mặt trước</p>
-                    <img src={viewingCustomer.cccdfront[0]} alt="CCCD Front" className="w-full max-w-xs rounded-lg border border-gray-200" />
+
+                  {docImages.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh tài liệu</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {docImages.map((img) => (
+                          <div key={img.label}>
+                            <p className="text-[10px] font-medium text-slate-400 mb-1">{img.label}</p>
+                            <img
+                              src={img.src}
+                              alt={img.label}
+                              className="w-full rounded-xl border border-slate-200 shadow-sm object-cover aspect-video"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {custRentals.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-1.5">
+                        {custRentals.slice(0, 4).map((r) => (
+                          <div key={r.id} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
+                            <span className="font-bold text-slate-700 truncate">{r.vehicleName}</span>
+                            <span className="text-slate-400 font-mono shrink-0">{r.licensePlate}</span>
+                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                              {(r.totalPrice || 0).toLocaleString("vi-VN")}đ
+                            </span>
+                          </div>
+                        ))}
+                        {custRentals.length > 4 && (
+                          <p className="text-[11px] text-slate-400 text-center">+{custRentals.length - 4} đơn khác</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-9 text-sm"
+                      onClick={() => {
+                        setIsDetailDialogOpen(false)
+                        setHistoryCustomer(cust)
+                        setIsHistoryDialogOpen(true)
+                      }}
+                    >
+                      <History className="w-3.5 h-3.5 mr-1.5" />
+                      Xem lịch sử
+                    </Button>
+                    <Button
+                      className="flex-1 h-9 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => {
+                        setIsDetailDialogOpen(false)
+                        handleEdit(cust)
+                      }}
+                    >
+                      <Settings className="w-3.5 h-3.5 mr-1.5" />
+                      Chỉnh sửa
+                    </Button>
                   </div>
-                )}
-                
-                {viewingCustomer.cccdback && viewingCustomer.cccdback.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-2">CCCD mặt sau</p>
-                    <img src={viewingCustomer.cccdback[0]} alt="CCCD Back" className="w-full max-w-xs rounded-lg border border-gray-200" />
-                  </div>
-                )}
-                
-                {viewingCustomer.licensefront && viewingCustomer.licensefront.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-2">GPLX mặt trước</p>
-                    <img src={viewingCustomer.licensefront[0]} alt="License Front" className="w-full max-w-xs rounded-lg border border-gray-200" />
-                  </div>
-                )}
-                
-                {viewingCustomer.licenseback && viewingCustomer.licenseback.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-2">GPLX mặt sau</p>
-                    <img src={viewingCustomer.licenseback[0]} alt="License Back" className="w-full max-w-xs rounded-lg border border-gray-200" />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+                </div>
+              </>
+            )
+          })()}
         </EntityFormDialogContent>
       </Dialog>
     </ModulePageShell>

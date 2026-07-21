@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { getRentalTerm, buildRentalTermPayload, embedRentalTermInNotes } from '@/lib/rental-term'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -44,7 +45,7 @@ export interface Customer {
   address: string
   idcard: string
   totalrentals: number
-  status: "active" | "inactive"
+  status: "active" | "inactive" | "renting" | "pending"
   customerphoto: string[]
   cccdfront: string[]
   cccdback: string[]
@@ -71,11 +72,14 @@ export interface Rental {
   notes: string
   revenue: number
   status: "pending" | "active" | "completed" | "cancelled"
-  createdAt: string
+  createdAt?: string
   created_at?: string
   rentalCode?: string // Optional: generated in-memory
   commissionHome?: number
   homeName?: string
+  rentalTerm?: "short" | "long"
+  received_at?: string
+  completed_at?: string
 }
 
 export interface Transaction {
@@ -183,12 +187,28 @@ export const fetchAccessLogs = async () => {
 
 // Insert/Update Rentals
 export const insertRental = async (rental: Omit<Rental, 'id' | 'created_at' | 'createdAt'>) => {
+  const term = getRentalTerm(rental)
+  const termPayload = buildRentalTermPayload(term, rental.notes)
+  const rentalWithTerm = { ...rental, ...termPayload }
+
   const { data, error } = await supabase
     .from('rentals')
-    .insert([rental])
+    .insert([rentalWithTerm])
     .select()
-  
+
   if (error) {
+    if (/rentalTerm/i.test(error.message || "")) {
+      const { rentalTerm: _omit, ...withoutCol } = rentalWithTerm
+      const { data: data2, error: error2 } = await supabase
+        .from('rentals')
+        .insert([{ ...withoutCol, notes: embedRentalTermInNotes(rental.notes, term) }])
+        .select()
+      if (error2) {
+        console.error('Error inserting rental:', error2)
+        throw error2
+      }
+      return data2?.[0]
+    }
     console.error('Error inserting rental:', error)
     throw error
   }
@@ -196,13 +216,34 @@ export const insertRental = async (rental: Omit<Rental, 'id' | 'created_at' | 'c
 }
 
 export const updateRental = async (id: string, rental: Partial<Rental>) => {
+  let payload = { ...rental }
+  if (rental.rentalTerm || rental.notes !== undefined) {
+    const term = getRentalTerm({ rentalTerm: rental.rentalTerm, notes: rental.notes })
+    const termPayload = buildRentalTermPayload(term, rental.notes ?? "")
+    payload = { ...payload, ...termPayload }
+  }
+
   const { data, error } = await supabase
     .from('rentals')
-    .update(rental)
+    .update(payload)
     .eq('id', id)
     .select()
-  
+
   if (error) {
+    if (/rentalTerm/i.test(error.message || "") && payload.rentalTerm) {
+      const { rentalTerm: _omit, ...withoutCol } = payload
+      const term = getRentalTerm({ rentalTerm: rental.rentalTerm, notes: rental.notes })
+      const { data: data2, error: error2 } = await supabase
+        .from('rentals')
+        .update({ ...withoutCol, notes: embedRentalTermInNotes(rental.notes, term) })
+        .eq('id', id)
+        .select()
+      if (error2) {
+        console.error('Error updating rental:', error2)
+        throw error2
+      }
+      return data2?.[0]
+    }
     console.error('Error updating rental:', error)
     throw error
   }

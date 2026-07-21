@@ -43,9 +43,9 @@ export interface AccessLogRecord {
 
 export type AccessHistoryModuleKey = "rental" | "sales" | "pawnshop" | "loan"
 type AccessHistoryLayout = "page" | "embedded"
-type AccessHistoryAccent = "red" | "blue" | "amber" | "emerald"
+type AccessHistoryAccent = "red" | "blue" | "amber" | "emerald" | "violet"
 
-const EMBEDDED_ROWS = 9
+const EMBEDDED_ROWS = 10
 const PAGE_ROWS = 12
 
 const MODULE_CONFIG: Record<
@@ -60,12 +60,12 @@ const MODULE_CONFIG: Record<
   }
 > = {
   rental: {
-    accent: "red",
+    accent: "blue",
     layout: "page",
     title: "Lịch sử truy cập",
     description: "Theo dõi hoạt động phân hệ cho thuê",
     scopeLabel: "Cho thuê xe",
-    hideModuleFilter: false,
+    hideModuleFilter: true,
   },
   sales: {
     accent: "blue",
@@ -95,7 +95,7 @@ const MODULE_CONFIG: Record<
 
 const layoutHeight: Record<AccessHistoryLayout, string> = {
   page: "h-[calc(100dvh-7rem)] max-h-[calc(100dvh-7rem)]",
-  embedded: "h-[calc(100dvh-15rem)] max-h-[calc(100dvh-15rem)]",
+  embedded: "",
 }
 
 const accentStyles: Record<
@@ -105,8 +105,8 @@ const accentStyles: Record<
   red: {
     stripe: "from-red-400 to-red-600",
     ring: "ring-red-500/20",
-    badge: "bg-blue-50 text-blue-700 border-red-100",
-    icon: "text-blue-600 bg-blue-50",
+    badge: "bg-red-50 text-red-700 border-red-100",
+    icon: "text-red-600 bg-red-50",
   },
   blue: {
     stripe: "from-blue-400 to-blue-600",
@@ -126,6 +126,12 @@ const accentStyles: Record<
     badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
     icon: "text-emerald-600 bg-emerald-50",
   },
+  violet: {
+    stripe: "from-violet-400 to-violet-650 to-violet-600",
+    ring: "ring-violet-500/20",
+    badge: "bg-violet-50 text-violet-750 text-violet-700 border-violet-100",
+    icon: "text-violet-600 bg-violet-50",
+  },
 }
 
 const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
@@ -133,8 +139,8 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
   "Đăng xuất": { icon: LogOut, color: "text-slate-600", bg: "bg-slate-100" },
   "Thêm mới": { icon: Plus, color: "text-blue-700", bg: "bg-blue-50" },
   "Chỉnh sửa": { icon: Pencil, color: "text-amber-700", bg: "bg-amber-50" },
-  "Xóa": { icon: Trash2, color: "text-blue-700", bg: "bg-blue-50" },
-  "Xoá": { icon: Trash2, color: "text-blue-700", bg: "bg-blue-50" },
+  "Xóa": { icon: Trash2, color: "text-red-700", bg: "bg-red-50" },
+  "Xoá": { icon: Trash2, color: "text-red-700", bg: "bg-red-50" },
   "Sao lưu": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
   "Sao lưu dữ liệu": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
   "Sao lưu tự động": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
@@ -145,7 +151,7 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
 
 const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> = {
   "Hệ thống": { icon: Settings, color: "text-slate-500" },
-  "Quản lý xe": { icon: Car, color: "text-blue-600" },
+  "Quản lý xe": { icon: Car, color: "text-red-600" },
   "Quản lý khách hàng": { icon: Users, color: "text-emerald-600" },
   "Đơn thuê": { icon: ClipboardList, color: "text-amber-600" },
   "Cho vay": { icon: Wallet, color: "text-emerald-600" },
@@ -168,11 +174,32 @@ function normalizeLog(log: AccessLogRecord): AccessLogRecord {
   }
 }
 
+function getModuleLabel(mod: string) {
+  const lower = mod.toLowerCase()
+  if (lower === "rental" || lower.includes("thuê xe") || lower.includes("đơn thuê") || lower.includes("khách thuê") || lower.includes("quản lý xe")) return "Cho thuê xe"
+  if (lower === "sales" || lower.includes("mua bán") || lower.includes("xe máy") || lower.includes("khách hàng")) return "Mua bán xe"
+  if (lower === "pawnshop" || lower.includes("cầm đồ") || lower.includes("đồ cầm") || lower.includes("khách cầm") || lower.includes("đơn cầm")) return "Cầm đồ"
+  if (lower === "loan" || lower.includes("cho vay") || lower.includes("khách vay") || lower.includes("đơn vay")) return "Cho vay"
+  if (lower === "system" || lower.includes("hệ thống") || lower.includes("tài khoản") || lower.includes("sao lưu") || lower.includes("cài đặt") || lower === "settings") return "Cài đặt hệ thống"
+  return "Cài đặt hệ thống"
+}
+
+function getActionLabel(act: string) {
+  const lower = act.toLowerCase()
+  if (lower.includes("đăng nhập") || lower === "login") return "Đăng nhập"
+  if (lower.includes("đăng xuất") || lower === "logout") return "Đăng xuất"
+  if (lower.includes("thêm") || lower.includes("tạo") || lower === "insert" || lower === "create") return "Thêm mới"
+  if (lower.includes("sửa") || lower.includes("cập nhật") || lower === "edit" || lower === "update") return "Chỉnh sửa"
+  if (lower.includes("xóa") || lower.includes("xoá") || lower === "delete" || lower === "remove") return "Xóa"
+  return act
+}
+
 function formatCompactDate(dateString: string) {
   return formatDisplayDateTime(dateString)
 }
 
 function panelShellClass(layout: AccessHistoryLayout) {
+  if (layout === "embedded") return "access-history-panel flex flex-col"
   return cn("access-history-panel flex min-h-0 flex-col", layoutHeight[layout])
 }
 
@@ -185,10 +212,10 @@ export function AccessHistoryDenied({
 }) {
   return (
     <div className={panelShellClass(layout)}>
-      <div className="module-card flex flex-1 flex-col items-center justify-center rounded-xl border border-red-100 bg-blue-50/30 px-6 py-10 text-center">
+      <div className="module-card flex flex-1 flex-col items-center justify-center rounded-xl border border-red-100 bg-red-50/30 px-6 py-10 text-center">
         <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-red-500" />
         <h3 className="text-sm font-bold text-red-800">Truy cập bị hạn chế</h3>
-        <p className="mt-1 text-xs text-blue-600">{message}</p>
+        <p className="mt-1 text-xs text-red-600">{message}</p>
       </div>
     </div>
   )
@@ -200,12 +227,16 @@ export function AccessHistoryModuleSection({
   loading,
   onRefresh,
   allowed,
+  itemsPerPage,
+  dbUsers = [],
 }: {
   module: AccessHistoryModuleKey
   logs: AccessLogRecord[]
   loading: boolean
   onRefresh: () => void
   allowed: boolean
+  itemsPerPage?: number
+  dbUsers?: any[]
 }) {
   const config = MODULE_CONFIG[module]
 
@@ -224,6 +255,8 @@ export function AccessHistoryModuleSection({
       description={config.description}
       scopeLabel={config.scopeLabel}
       hideModuleFilter={config.hideModuleFilter}
+      itemsPerPage={itemsPerPage}
+      dbUsers={dbUsers}
     />
   )
 }
@@ -239,6 +272,7 @@ export function AccessHistoryPanel({
   layout = "page",
   accent = "red",
   itemsPerPage: itemsPerPageProp,
+  dbUsers = [],
 }: {
   logs: AccessLogRecord[]
   loading: boolean
@@ -250,29 +284,60 @@ export function AccessHistoryPanel({
   layout?: AccessHistoryLayout
   accent?: AccessHistoryAccent
   itemsPerPage?: number
+  dbUsers?: any[]
 }) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterAccount, setFilterAccount] = useState("all")
+  const [filterAccount, setFilterAccount] = useState("admin")
   const [filterModule, setFilterModule] = useState("all")
   const [filterAction, setFilterAction] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
 
   const styles = accentStyles[accent]
   const itemsPerPage = itemsPerPageProp ?? (layout === "page" ? PAGE_ROWS : EMBEDDED_ROWS)
-  const normalizedLogs = useMemo(() => logs.map(normalizeLog), [logs])
+  
+  // Normalize và tự động lọc log theo phân hệ nếu hideModuleFilter là true
+  const normalizedLogs = useMemo(() => {
+    const baseLogs = logs.map(normalizeLog)
+    if (hideModuleFilter && scopeLabel) {
+      return baseLogs.filter(log => getModuleLabel(log.module) === scopeLabel)
+    }
+    return baseLogs
+  }, [logs, hideModuleFilter, scopeLabel])
 
-  const accounts = useMemo(
-    () => Array.from(new Set(normalizedLogs.map((log) => log.username))).filter(Boolean),
-    [normalizedLogs]
-  )
-  const modules = useMemo(
-    () => Array.from(new Set(normalizedLogs.map((log) => log.module))).filter(Boolean),
-    [normalizedLogs]
-  )
-  const actions = useMemo(
-    () => Array.from(new Set(normalizedLogs.map((log) => log.action))).filter(Boolean),
-    [normalizedLogs]
-  )
+  // Danh sách tài khoản hiện hành của dự án, lấy từ dbUsers (nếu có) kết hợp với log thực tế
+  const accounts = useMemo(() => {
+    const fromDb = dbUsers.map((u) => u.username).filter(Boolean);
+    const fromLogs = normalizedLogs.map((log) => log.username).filter(Boolean);
+    const combined = Array.from(new Set([...fromDb, ...fromLogs]))
+      .filter((username) => username.toLowerCase() !== "system");
+    
+    // Đảm bảo admin luôn ở đầu
+    const sorted = combined.sort((a, b) => {
+      if (a.toLowerCase() === "admin") return -1;
+      if (b.toLowerCase() === "admin") return 1;
+      return a.localeCompare(b);
+    });
+    return sorted;
+  }, [normalizedLogs, dbUsers])
+
+  // Danh sách các phân hệ chuẩn hóa tiếng Việt
+  const modules = useMemo(() => {
+    const defaultModules = ["Cho thuê xe", "Mua bán xe", "Cầm đồ", "Cho vay", "Cài đặt hệ thống"]
+    const rawModules = Array.from(new Set(normalizedLogs.map((log) => getModuleLabel(log.module)))).filter(Boolean)
+    return defaultModules.filter((m) => (rawModules as string[]).includes(m))
+  }, [normalizedLogs])
+
+  // Lọc hành động động khớp với phân hệ đang lọc
+  const actions = useMemo(() => {
+    let filteredForAction = normalizedLogs
+    if (filterModule !== "all") {
+      filteredForAction = normalizedLogs.filter((log) => getModuleLabel(log.module) === filterModule)
+    }
+    const rawActions = Array.from(new Set(filteredForAction.map((log) => getActionLabel(log.action)))).filter(Boolean)
+
+    const priority = ["Đăng nhập", "Đăng xuất", "Thêm mới", "Chỉnh sửa", "Xóa"]
+    return priority.filter((p) => rawActions.includes(p)).concat(rawActions.filter((a) => !priority.includes(a)))
+  }, [normalizedLogs, filterModule])
 
   const filteredLogs = useMemo(
     () =>
@@ -286,8 +351,8 @@ export function AccessHistoryPanel({
             log.module.toLowerCase().includes(q) ||
             log.action.toLowerCase().includes(q)
           const matchAccount = filterAccount === "all" || log.username === filterAccount
-          const matchModule = filterModule === "all" || log.module === filterModule
-          const matchAction = filterAction === "all" || log.action === filterAction
+          const matchModule = filterModule === "all" || getModuleLabel(log.module) === filterModule
+          const matchAction = filterAction === "all" || getActionLabel(log.action) === filterAction
           return matchSearch && matchAccount && matchModule && matchAction
         })
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
@@ -319,7 +384,8 @@ export function AccessHistoryPanel({
     <div className={panelShellClass(layout)}>
       <div
         className={cn(
-          "module-card relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm ring-1",
+          "module-card relative flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm ring-1",
+          layout === "page" && "min-h-0 flex-1",
           styles.ring
         )}
       >
@@ -368,7 +434,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-8 w-[8.25rem] rounded-lg border-slate-200 bg-white text-xs">
+              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-xs text-slate-800 font-medium">
                 <SelectValue placeholder="Tài khoản" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -386,14 +452,15 @@ export function AccessHistoryPanel({
                 value={filterModule}
                 onValueChange={(value) => {
                   setFilterModule(value)
+                  setFilterAction("all") // Reset action filter when module changes
                   setCurrentPage(1)
                 }}
               >
-                <SelectTrigger className="h-8 w-[8.25rem] rounded-lg border-slate-200 bg-white text-xs">
-                  <SelectValue placeholder="Mục" />
+                <SelectTrigger className="h-8 w-[11rem] rounded-lg border-slate-200 bg-white text-xs text-slate-800 font-medium">
+                  <SelectValue placeholder="Phân hệ" />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
-                  <SelectItem value="all">Tất cả mục</SelectItem>
+                  <SelectItem value="all">Tất cả phân hệ</SelectItem>
                   {modules.map((moduleName) => (
                     <SelectItem key={moduleName} value={moduleName}>
                       {moduleName}
@@ -410,7 +477,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-8 w-[8.25rem] rounded-lg border-slate-200 bg-white text-xs">
+              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-xs text-slate-800 font-medium">
                 <SelectValue placeholder="Hành động" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -437,17 +504,17 @@ export function AccessHistoryPanel({
         </div>
 
         {/* Table */}
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <div className={layout === "page" ? "min-h-0 flex-1 overflow-hidden" : ""}>
           {filteredLogs.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-slate-400">
+            <div className="flex h-32 flex-col items-center justify-center text-slate-400">
               <History className="mb-2 h-8 w-8 text-slate-200" />
               <p className="text-xs font-medium">Không có dữ liệu lịch sử</p>
             </div>
           ) : (
-            <div className="h-full overflow-x-auto">
+            <div className={layout === "page" ? "h-full overflow-x-auto" : "overflow-x-auto"}>
               <table className="access-history-table w-full min-w-[720px] border-collapse text-left">
                 <thead className="sticky top-0 z-10 bg-white">
-                  <tr className="border-b border-slate-100 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <tr className="border-b border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500">
                     <th className="w-10 px-3 py-2 text-center">STT</th>
                     <th className="w-[7.5rem] px-2 py-2">Thời gian</th>
                     <th className="w-[8.5rem] px-2 py-2">Người dùng</th>
@@ -455,7 +522,7 @@ export function AccessHistoryPanel({
                     <th className="px-3 py-2">Chi tiết</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 text-[11px] text-slate-700">
+                <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
                   {paginatedLogs.map((log, index) => {
                     const actionConfig = actionIconMap[log.action] || {
                       icon: Activity,
@@ -471,23 +538,23 @@ export function AccessHistoryPanel({
 
                     return (
                       <tr key={log.id} className="access-history-row hover:bg-slate-50/70">
-                        <td className="px-3 py-0 text-center text-[10px] font-medium text-slate-400">
+                        <td className="px-3 py-0 text-center text-xs font-semibold text-slate-400">
                           {(safePage - 1) * itemsPerPage + index + 1}
                         </td>
-                        <td className="whitespace-nowrap px-2 py-0 font-mono text-[10px] text-slate-500">
+                        <td className="whitespace-nowrap px-2 py-0 font-mono text-xs text-slate-500 font-medium">
                           {formatCompactDate(log.timestamp)}
                         </td>
                         <td className="px-2 py-0">
-                          <div className="truncate font-medium text-slate-800" title={log.displayName}>
+                          <div className="truncate font-bold text-slate-800 text-[13px]" title={log.displayName}>
                             {log.displayName}
                           </div>
-                          <div className="truncate font-mono text-[9px] text-slate-400">@{log.username}</div>
+                          <div className="truncate font-mono text-xs text-slate-400 mt-0.5">@{log.username}</div>
                         </td>
                         <td className="px-2 py-0">
                           <div className="flex items-center gap-1">
                             <span
                               className={cn(
-                                "inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                                "inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-xs font-bold",
                                 actionConfig.bg,
                                 actionConfig.color
                               )}
@@ -496,28 +563,22 @@ export function AccessHistoryPanel({
                               <span className="truncate">{log.action}</span>
                             </span>
                           </div>
-                          <div className="mt-0.5 flex items-center gap-1 truncate text-[9px] text-slate-500">
+                          <div className="mt-1 flex items-center gap-1 truncate text-xs text-slate-500 font-medium">
                             <ModuleIcon className={cn("h-2.5 w-2.5 shrink-0", moduleConfig.color)} />
                             <span className="truncate">{log.module}</span>
                           </div>
                         </td>
                         <td className="px-3 py-0">
-                          <p className="truncate text-slate-600" title={log.details}>
+                          <p className="truncate text-slate-600 font-medium text-[13px]" title={log.details}>
                             {log.details || "—"}
                           </p>
                           {log.ipAddress && (
-                            <p className="mt-0.5 font-mono text-[9px] text-slate-400">IP {log.ipAddress}</p>
+                            <p className="mt-0.5 font-mono text-[11px] text-red-500">IP {log.ipAddress}</p>
                           )}
                         </td>
                       </tr>
                     )
                   })}
-                  {emptySlots > 0 &&
-                    Array.from({ length: emptySlots }).map((_, i) => (
-                      <tr key={`empty-${i}`} className="access-history-row access-history-row--empty" aria-hidden>
-                        <td colSpan={5} />
-                      </tr>
-                    ))}
                 </tbody>
               </table>
             </div>
@@ -525,8 +586,8 @@ export function AccessHistoryPanel({
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50/50 px-3 py-2 md:px-4">
-          <p className="text-[10px] text-slate-500">
+        <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50/50 px-3 py-2.5 md:px-4">
+          <p className="text-xs text-slate-500">
             <span className="font-medium text-slate-700">{paginatedLogs.length}</span>
             <span className="text-slate-400"> / {filteredLogs.length} kết quả</span>
             <span className="mx-1.5 text-slate-300">·</span>
@@ -542,6 +603,40 @@ export function AccessHistoryPanel({
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => {
+                if (totalPages <= 7) return true
+                if (p === 1 || p === totalPages) return true
+                if (Math.abs(p - safePage) <= 2) return true
+                return false
+              })
+              .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                if (idx > 0 && typeof arr[idx - 1] === "number" && (p as number) - (arr[idx - 1] as number) > 1) {
+                  acc.push("...")
+                }
+                acc.push(p)
+                return acc
+              }, [])
+              .map((p, idx) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 text-xs text-slate-400">…</span>
+                ) : (
+                  <Button
+                    key={p}
+                    onClick={() => setCurrentPage(p as number)}
+                    variant={safePage === p ? "default" : "outline"}
+                    size="icon"
+                    className={cn(
+                      "h-7 w-7 rounded-md text-xs font-semibold",
+                      safePage === p
+                        ? "bg-slate-800 text-white border-slate-800 hover:bg-slate-700"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    {p}
+                  </Button>
+                )
+              )}
             <Button
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={safePage === totalPages}

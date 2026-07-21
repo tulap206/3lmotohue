@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { showError, showWarning } from "@/lib/toast-utils"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchVehicles, fetchRentals } from "@/lib/supabase"
+import { useRentalData } from "@/contexts/rental-data-context"
+import { supabase } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard } from "@/components/dashboard/module-shell"
@@ -47,7 +49,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, ImageIcon, Settings } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, ImageIcon, Settings, History } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
 type VehicleStatus = "available" | "rented" | "maintenance"
@@ -142,11 +144,10 @@ const historyTypeConfig: Record<HistoryType, { label: string; className: string 
   maintenance: { label: "Bảo trì", className: "bg-amber-50 text-amber-600" },
 }
 
+
 export default function VehiclesPage() {
   const { user, addAccessLog } = useAuth()
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
-  const [orders, setOrders] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { vehicles, setVehicles, orders, setOrders, isLoading } = useRentalData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
@@ -173,120 +174,104 @@ export default function VehiclesPage() {
     documentImages: [] as File[],
   })
 
-  const loadVehicles = useCallback(async (showLoading = true) => {
-    if (showLoading) setIsLoading(true)
-    try {
-      // Check if user is demo account (quy79)
-      const isDemoAccount = user?.username === "quy79"
-
-      if (isDemoAccount) {
-        setVehicles([])
-        setIsLoading(false)
-        return
-      }
-
-      const [vehiclesData, rentalsData] = await Promise.all([
-        fetchVehicles(),
-        fetchRentals(),
-      ])
-
-      // Sort vehicles by created_at descending (newest first) - client-side backup
-      const sorted = vehiclesData.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime()
-        const dateB = new Date(b.created_at || 0).getTime()
-        return dateB - dateA // DESC (newest first)
-      })
-      setVehicles(sorted)
-      
-      // Generate rentalCode for each rental if not already present
-      const rentalsWithCodes = (rentalsData || []).map((rental) => {
-        if (!rental.rentalCode) {
-          // Parse DD/MM/YYYY format date
-          const parseVietnamDate = (dateStr: string): Date => {
-            if (!dateStr) return new Date(0)
-            const parts = dateStr.split("/")
-            if (parts.length === 3) {
-              return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-            }
-            return new Date(dateStr)
-          }
-          
-          const startDate = parseVietnamDate(rental.startDate)
-          const lastName = rental.customerName.split(/\s+/).pop() || ""
-          const cleanPlate = rental.licensePlate.replace(/[\s-]/g, "").toUpperCase()
-          const dateFormatted = formatDisplayDate(startDate).replace(/\//g, "")
-          const code = `${lastName}-${cleanPlate}-${dateFormatted}`
-          
-          return { ...rental, rentalCode: code }
-        }
-        return rental
-      })
-      setOrders(rentalsWithCodes)
-    } catch (error) {
-      console.error("Failed to fetch data:", error)
-      setVehicles([])
-      setOrders([])
-    } finally {
-      if (showLoading) setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadVehicles(true)
-
-    // Subscribe to real-time changes
-    const channel = supabase
-      .channel("vehicles-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "vehicles" }, () => {
-        loadVehicles(false)
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, () => {
-        loadVehicles(false)
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [loadVehicles])
-
-  const filteredVehicles = vehicles.filter((vehicle) => {
-    const matchesSearch =
-      vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter((vehicle) => {
+      const matchesSearch =
+        vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
+  }, [vehicles, searchTerm, statusFilter])
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm, statusFilter])
 
-  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage)
-  const paginatedVehicles = filteredVehicles.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredVehicles.length / itemsPerPage)
+  }, [filteredVehicles])
 
-  const vehicleStats = {
-    total: vehicles.length,
-    available: vehicles.filter((v) => v.status === "available").length,
-    rented: vehicles.filter((v) => v.status === "rented").length,
-    maintenance: vehicles.filter((v) => v.status === "maintenance").length,
-  }
+  const startIndex = (currentPage - 1) * itemsPerPage
+  
+  const paginatedVehicles = useMemo(() => {
+    return filteredVehicles.slice(
+      startIndex,
+      currentPage * itemsPerPage
+    )
+  }, [filteredVehicles, startIndex])
+
+  const vehicleStats = useMemo(() => {
+    return {
+      total: vehicles.length,
+      available: vehicles.filter((v) => v.status === "available").length,
+      rented: vehicles.filter((v) => v.status === "rented").length,
+      maintenance: vehicles.filter((v) => v.status === "maintenance").length,
+    }
+  }, [vehicles])
+
+  const vehiclePerformanceMap = useMemo(() => {
+    const today = new Date()
+    today.setHours(0,0,0,0)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(today.getDate() - 30)
+    thirtyDaysAgo.setHours(0,0,0,0)
+
+    const map: Record<string, { utilizationRate: number; revenue30d: number }> = {}
+
+    const parseVietnamDate = (dateStr: string): Date => {
+      if (!dateStr) return new Date()
+      const parts = dateStr.split("/")
+      if (parts.length === 3) {
+        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+      }
+      return new Date(dateStr)
+    }
+
+    vehicles.forEach(vehicle => {
+      const vehicleOrders = (orders || []).filter(o => o.vehicleId === vehicle.id && o.status !== "cancelled" && o.status !== "pending")
+      let rentedDays = 0
+      let totalRevenue30d = 0
+
+      vehicleOrders.forEach(o => {
+        const start = parseVietnamDate(o.startDate)
+        const end = parseVietnamDate(o.endDate)
+        start.setHours(0,0,0,0)
+        end.setHours(0,0,0,0)
+
+        const overlapStart = start < thirtyDaysAgo ? thirtyDaysAgo : start
+        const overlapEnd = end > today ? today : end
+
+        if (overlapStart <= overlapEnd) {
+          const diffTime = overlapEnd.getTime() - overlapStart.getTime()
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+          rentedDays += diffDays
+          
+          const dailyRate = o.pricePerDay || 0
+          totalRevenue30d += diffDays * dailyRate
+        }
+      })
+
+      if (rentedDays > 30) rentedDays = 30
+      const utilizationRate = Math.round((rentedDays / 30) * 100)
+      map[vehicle.id] = { utilizationRate, revenue30d: totalRevenue30d }
+    })
+
+    return map
+  }, [vehicles, orders])
 
   const handleAddVehicle = async () => {
     if (!newVehicle.name || !newVehicle.name.trim()) {
-      alert("⚠️ Vui lòng nhập Loại xe!")
+      showWarning("Vui lòng nhập Loại xe!")
       return
     }
     if (!newVehicle.licensePlate || !newVehicle.licensePlate.trim()) {
-      alert("⚠️ Vui lòng nhập Biển số xe!")
+      showWarning("Vui lòng nhập Biển số xe!")
       return
     }
     if (!newVehicle.pricePerDay) {
-      alert("⚠️ Vui lòng nhập Giá thuê!")
+      showWarning("Vui lòng nhập Giá thuê!")
       return
     }
 
@@ -297,7 +282,7 @@ export default function VehiclesPage() {
         )
         
         if (existingVehicle) {
-          alert(`⚠️ Xe với biển số "${newVehicle.licensePlate}" đã tồn tại!\n\nTên xe: ${existingVehicle.name}\nGiá: ${existingVehicle.pricePerDay.toLocaleString('vi-VN')} VND/ngày`)
+          showWarning(`Xe với biển số "${newVehicle.licensePlate}" đã tồn tại!`, `Tên xe: ${existingVehicle.name}\nGiá: ${existingVehicle.pricePerDay.toLocaleString('vi-VN')} VND/ngày`)
           return
         }
         
@@ -344,7 +329,7 @@ export default function VehiclesPage() {
         
         if (error) {
           console.error("Error adding vehicle:", error)
-          alert(`❌ Lỗi: ${error.message}`)
+          showError(`Lỗi: ${error.message}`)
         } else if (data && data.length > 0) {
           const insertedVehicle = data[0]
           // Add new vehicle and sort (newest first)
@@ -359,7 +344,7 @@ export default function VehiclesPage() {
           setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", category: "bike", vehicleImages: [], documentImages: [] })
           setIsAddDialogOpen(false)
         } else {
-          console.warn("⚠️ No data returned after vehicle insertion")
+          console.warn("⚠ No data returned after vehicle insertion")
           // Fallback if success but no data returned
           const updated = [...vehicles, vehicle]
           setVehicles(updated)
@@ -367,7 +352,7 @@ export default function VehiclesPage() {
         }
       } catch (error) {
         console.error("Error adding vehicle:", error)
-        alert(`❌ Lỗi: ${error instanceof Error ? error.message : "Unknown"}`)
+        showError(`Lỗi: ${error instanceof Error ? error.message : "Unknown"}`)
       }
   }
 
@@ -464,7 +449,7 @@ export default function VehiclesPage() {
         
         if (error) {
           console.error("Error updating vehicle:", error)
-          alert(`❌ Lỗi khi cập nhật: ${error.message}`)
+          showError(`Lỗi khi cập nhật: ${error.message}`)
         } else {
           // Sync with state
           const fullUpdatedVehicle = {
@@ -478,7 +463,7 @@ export default function VehiclesPage() {
         }
       } catch (error) {
         console.error("Error updating vehicle:", error)
-        alert(`❌ Lỗi: ${error instanceof Error ? error.message : "Unknown"}`)
+        showError(`Lỗi: ${error instanceof Error ? error.message : "Unknown"}`)
       }
     }
   }
@@ -655,13 +640,15 @@ export default function VehiclesPage() {
           { label: "Quản lý xe" },
         ]}
         actions={
-          <Button
-            className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
-            onClick={() => setIsAddDialogOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Thêm xe mới
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl h-10 font-bold"
+              onClick={() => setIsAddDialogOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Thêm xe mới
+            </Button>
+          </div>
         }
       />
 
@@ -819,7 +806,7 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'vehicle')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -856,7 +843,7 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'document')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -889,22 +876,22 @@ export default function VehiclesPage() {
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <RentalKpiCard label="Tổng số xe" value={vehicleStats.total} sublabel={`${filteredVehicles.length} đang lọc`} />
-          <RentalKpiCard
+          <RentalKpiCard variant="hero" label="Tổng số xe" value={vehicleStats.total} sublabel={`${filteredVehicles.length} đang lọc`} />
+          <RentalKpiCard variant="hero"
             label="Sẵn sàng"
             value={vehicleStats.available}
             sublabel="Có thể cho thuê"
             valueClassName="text-emerald-700"
             onClick={() => setStatusFilter("available")}
           />
-          <RentalKpiCard
+          <RentalKpiCard variant="hero"
             label="Đang thuê"
             value={vehicleStats.rented}
             sublabel="Xe đang cho khách"
             valueClassName="text-sky-700"
             onClick={() => setStatusFilter("rented")}
           />
-          <RentalKpiCard
+          <RentalKpiCard variant="hero"
             label="Bảo trì"
             value={vehicleStats.maintenance}
             sublabel="Tạm ngừng cho thuê"
@@ -914,24 +901,24 @@ export default function VehiclesPage() {
         </div>
 
       <ModuleSectionCard
-        title="Danh sách xe"
-        description={`Quản lý ${filteredVehicles.length} xe cho thuê`}
+        title="Danh sách xe cho thuê"
+        description={`Quản lý ${filteredVehicles.length} phương tiện trong hệ thống`}
         filters={
           <div className="flex flex-wrap gap-2 w-full lg:w-auto">
-            <div className="relative flex-1 md:w-64">
+            <div className="relative flex-1 lg:w-48">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
                 placeholder="Tên xe, biển số..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={cn(rentalFilterInputClass, "pl-9")}
+                className={cn(rentalFilterInputClass, "pl-9 h-10")}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48 h-9 rounded-xl border-slate-200 text-sm bg-white">
+              <SelectTrigger className="w-full lg:w-40 h-10 rounded-xl border-slate-200 text-sm bg-white">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-slate-100 rounded-xl">
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="available">Sẵn sàng</SelectItem>
                 <SelectItem value="rented">Đang thuê</SelectItem>
@@ -958,47 +945,51 @@ export default function VehiclesPage() {
                 desktop={
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
-                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
-                        <th className={rentalTableHeadClass}>Loại xe</th>
-                        <th className={cn(rentalTableHeadClass, "text-right")}>Giá thuê/ngày</th>
-                        <th className={cn(rentalTableHeadClass, "text-center")}>Hiệu suất (30 ngày)</th>
-                        <th className={cn(rentalTableHeadClass, "text-center")}>Trạng thái</th>
-                        <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className={cn(rentalTableHeadClass, "w-12 text-center text-slate-600")}>STT</th>
+                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Loại xe</th>
+                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Giá thuê/ngày</th>
+                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Hiệu suất (30 ngày)</th>
+                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
+                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
                       {paginatedVehicles.map((vehicle, index) => (
                         <tr key={vehicle.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
                           <td className="py-3.5 px-4 text-center text-xs text-slate-400 font-medium">
-                            {(currentPage - 1) * itemsPerPage + index + 1}
+                            {startIndex + index + 1}
                           </td>
-                          <td className="py-3.5 px-4 text-center">
-                            <span className="font-semibold text-slate-800 capitalize block">{vehicle.name}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">{vehicle.licensePlate}</span>
+                          <td className="py-3.5 px-4 font-medium text-slate-900">
+                            <div className="flex flex-col gap-1.5">
+                              <button
+                                type="button"
+                                className="font-bold text-slate-800 text-[15px] hover:text-slate-700 hover:underline text-left block"
+                                onClick={() => openDetailDialog(vehicle)}
+                              >
+                                {vehicle.name}
+                              </button>
+                              <div>
+                                <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-xs shadow-sm tracking-wider uppercase">
+                                  {vehicle.licensePlate}
+                                </span>
+                              </div>
+                            </div>
                           </td>
-                          <td className="py-3.5 px-4 text-right text-blue-600 font-semibold font-mono text-xs tabular-nums">
+                          <td className="py-3.5 px-4 text-right font-bold text-blue-600 tabular-nums">
                             {formatPrice(vehicle.pricePerDay)}
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             {(() => {
-                              const { utilizationRate, revenue30d } = getVehiclePerformance(vehicle.id)
-                              let badgeColor = "text-slate-500 bg-slate-50 border-slate-100"
-                              if (utilizationRate >= 70) {
-                                badgeColor = "text-emerald-700 bg-emerald-50 border-emerald-100"
-                              } else if (utilizationRate >= 30) {
-                                badgeColor = "text-amber-700 bg-amber-50 border-amber-100"
-                              } else if (utilizationRate > 0) {
-                                badgeColor = "text-rose-700 bg-rose-50 border-rose-100"
-                              }
+                              const { utilizationRate, revenue30d } = vehiclePerformanceMap[vehicle.id] || { utilizationRate: 0, revenue30d: 0 }
                               return (
-                                <div className="flex flex-col items-center gap-0.5">
-                                  <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
                                     Lấp đầy: {utilizationRate}%
                                   </span>
                                   {revenue30d > 0 && (
-                                    <span className="text-[10px] font-mono text-slate-500 font-semibold tabular-nums">
-                                      {revenue30d.toLocaleString("vi-VN")} đ
+                                    <span className="text-xs font-bold text-slate-500 tabular-nums">
+                                      {formatPrice(revenue30d)}
                                     </span>
                                   )}
                                 </div>
@@ -1006,46 +997,49 @@ export default function VehiclesPage() {
                             })()}
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
+                            <span className={cn(
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                              rentalVehicleStatusBadgeClass(vehicle.status)
+                            )}>
                               {getRentalVehicleStatusLabel(vehicle.status)}
                             </span>
                           </td>
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center justify-end gap-1">
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex justify-end gap-1">
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg"
+                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
                                 onClick={() => openHistoryDialog(vehicle)}
-                                title="Lịch sử bảo trì"
+                                title="Xem lịch sử"
                               >
                                 <Clock className="w-3.5 h-3.5" />
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
                                 onClick={() => openDetailDialog(vehicle)}
                                 title="Chi tiết"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
                                 onClick={() => openEditDialog(vehicle)}
                                 title="Chỉnh sửa"
                               >
-                                <Settings className="w-3.5 h-3.5" />
+                                <Pencil className="w-3.5 h-3.5" />
                               </Button>
-                              {user?.permissions.canDelete && (
+                              {user?.role === "admin" && (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
-                                      variant="ghost"
+                                      variant="outline"
                                       size="sm"
-                                      className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50"
+                                      className="h-7 w-7 p-0 border-red-200 rounded-lg hover:bg-blue-50 text-blue-500"
                                       title="Xóa"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -1063,7 +1057,7 @@ export default function VehiclesPage() {
                                       <AlertDialogCancel className="border-gray-200 rounded-xl">Hủy</AlertDialogCancel>
                                       <AlertDialogAction
                                         onClick={() => handleDeleteVehicle(vehicle.id)}
-                                        className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
+                                        className="bg-blue-500 text-white hover:bg-red-600 rounded-xl"
                                       >
                                         Xóa
                                       </AlertDialogAction>
@@ -1081,79 +1075,103 @@ export default function VehiclesPage() {
                 mobile={paginatedVehicles.map((vehicle) => (
                   <ModuleMobileCard key={vehicle.id}>
                     <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <p className="font-semibold text-slate-800">{vehicle.name}</p>
-                        <p className="text-xs text-slate-500 font-mono">{vehicle.licensePlate}</p>
+                      <div className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          className="font-bold text-slate-800 text-[15px] hover:text-slate-700 hover:underline text-left"
+                          onClick={() => openDetailDialog(vehicle)}
+                        >
+                          {vehicle.name}
+                        </button>
+                        <div>
+                          <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2 py-0.5 rounded text-[11px] shadow-sm tracking-wider uppercase">
+                            {vehicle.licensePlate}
+                          </span>
+                        </div>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
                         {getRentalVehicleStatusLabel(vehicle.status)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
-                      <span className="font-bold text-blue-600 tabular-nums text-xs">{formatPrice(vehicle.pricePerDay)}/ngày</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => openHistoryDialog(vehicle)}
-                          className="text-slate-500 hover:text-blue-600 p-1"
-                          title="Lịch sử"
-                        >
-                          <Clock className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openDetailDialog(vehicle)}
-                          className="text-slate-500 hover:text-blue-600 p-1"
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openEditDialog(vehicle)}
-                          className="text-slate-500 hover:text-blue-600 p-1"
-                          title="Chỉnh sửa"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        {user?.permissions.canDelete && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${vehicle.name} (${vehicle.licensePlate})?`)) {
-                                handleDeleteVehicle(vehicle.id)
-                              }
-                            }}
-                            className="text-blue-600 hover:text-blue-700 p-1"
-                            title="Xóa"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                    <div className="flex justify-between items-center text-xs mt-2">
+                      <span className="font-bold text-blue-600 tabular-nums">{formatPrice(vehicle.pricePerDay)}/ngày</span>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)}>
+                          <Clock className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)}>
+                          <Eye className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)}>
+                          <Settings className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </div>
                   </ModuleMobileCard>
                 ))}
               />
               {totalPages > 1 && (
-                <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
-                  <span className="text-xs text-slate-500 mr-2">
-                    Trang {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs border-slate-200 rounded-xl"
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs border-slate-200 rounded-xl"
-                  >
-                    Tiếp
-                  </Button>
+                <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-white rounded-b-2xl">
+                  <div className="text-xs text-slate-500 font-medium hidden sm:block">
+                    Hiển thị trang <span className="font-bold text-slate-700">{currentPage}</span> / <span className="font-bold text-slate-700">{totalPages}</span> (Tổng {filteredVehicles.length} xe)
+                  </div>
+                  <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
+                    <Button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
+                    >
+                      Trước
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          Math.abs(page - currentPage) <= 1
+                        ) {
+                          return (
+                            <Button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              className={cn(
+                                "h-8 w-8 text-xs rounded-xl font-bold transition-all",
+                                currentPage === page
+                                  ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                              )}
+                            >
+                              {page}
+                            </Button>
+                          )
+                        }
+                        if (
+                          page === 2 ||
+                          page === totalPages - 1
+                        ) {
+                          return (
+                            <span key={page} className="text-slate-400 text-xs px-1 select-none">
+                              ...
+                            </span>
+                          )
+                        }
+                        return null
+                      })}
+                    </div>
+                    <Button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs border-slate-200 rounded-xl px-2.5 font-bold hover:bg-slate-50 text-slate-600"
+                    >
+                      Tiếp
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
@@ -1322,7 +1340,7 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'vehicle', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1360,7 +1378,7 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'document', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1397,203 +1415,218 @@ export default function VehiclesPage() {
           setIsDetailDialogOpen(open)
         }
       }}>
-        <EntityFormDialogContent accent="blue" maxWidth="2xl">
-          <EntityFormHeader
-            title="Chi tiết xe"
-            description="Thông tin chi tiết của xe trong hệ thống"
-          />
-          {viewingVehicle && (
-            <div className="py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Loại xe</p>
-                  <p className="text-sm font-medium text-gray-800">{viewingVehicle.name}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Biển số</p>
-                  <p className="text-sm font-medium text-gray-800 font-mono">{viewingVehicle.licensePlate}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Màu xe</p>
-                  <p className="text-sm font-medium text-gray-800">{viewingVehicle.color || "Chưa cập nhật"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Trạng thái</p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig[viewingVehicle.status].className}`}>
-                    {statusConfig[viewingVehicle.status].label}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Giá thuê (theo ngày)</p>
-                  <p className="text-sm font-medium text-blue-600">{formatPrice(viewingVehicle.pricePerDay)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Số KM hiện tại</p>
-                  <p className="text-sm font-medium text-gray-800">{viewingVehicle.current_km.toLocaleString("vi-VN")} km</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Giá mua xe</p>
-                  <p className="text-sm font-medium text-gray-800">{formatPrice(viewingVehicle.purchasePrice)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Số ngày đã cho thuê</p>
-                  <p className="text-sm font-medium text-gray-800">{viewingVehicle.totalRentalDays} ngày</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Tổng thu</p>
-                  <p className="text-sm font-medium text-emerald-600">{formatPrice(viewingVehicle.totalRevenue ?? 0)}</p>
-                </div>
-                <div className="col-span-2 space-y-1">
-                  <p className="text-xs text-gray-500">Lợi nhuận</p>
-                  <p className="text-sm font-medium text-blue-600">{formatPrice(viewingVehicle.profit ?? 0)}</p>
-                </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 mb-2">Ghi chú</p>
-                <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-xl">{viewingVehicle.notes || "Không có ghi chú"}</p>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Tỷ suất lợi nhuận trên vốn:</span>
-                  <span className="font-semibold text-blue-600">
-                    {viewingVehicle.purchasePrice > 0 ? (((viewingVehicle.profit ?? 0) / viewingVehicle.purchasePrice) * 100).toFixed(1) : 0}%
-                  </span>
-                </div>
-              </div>
+        <EntityFormDialogContent accent="blue" maxWidth="lg">
+          {viewingVehicle && (() => {
+            const v = viewingVehicle
+            const profit = v.profit ?? 0
+            const totalRevenue = v.totalRevenue ?? 0
+            const vId = v.id
+            const parseVN = (s: string): Date => {
+              const parts = s?.split("/")
+              if (parts?.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+              return new Date(s || 0)
+            }
+            const calcUtil = (days: number) => {
+              const today = new Date(); today.setHours(0, 0, 0, 0)
+              const from = new Date(); from.setDate(today.getDate() - days); from.setHours(0, 0, 0, 0)
+              const vOrders = orders.filter(o => o.vehicleId === vId && o.status !== "cancelled" && o.status !== "pending")
+              let rented = 0; let rev = 0
+              vOrders.forEach(o => {
+                const s = parseVN(o.startDate); const e = parseVN(o.endDate)
+                const os = s < from ? from : s; const oe = e > today ? today : e
+                if (os <= oe) {
+                  const d = Math.ceil((oe.getTime() - os.getTime()) / 86400000) + 1
+                  rented += d; rev += d * (o.pricePerDay || 0)
+                }
+              })
+              if (rented > days) rented = days
+              return { pct: Math.round((rented / days) * 100), rev }
+            }
+            const u30 = calcUtil(30)
+            const totalRentalCount = orders.filter(o => o.vehicleId === vId).length
+            const recentOrders = orders
+              .filter(o => o.vehicleId === vId)
+              .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
+              .slice(0, 4)
 
-              {/* #10 Enhanced performance stats */}
-              {(() => {
-                const vId = viewingVehicle.id
-                const parseVN = (s: string): Date => {
-                  const parts = s?.split("/")
-                  if (parts?.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-                  return new Date(s || 0)
-                }
-                const calcUtil = (days: number) => {
-                  const today = new Date(); today.setHours(0,0,0,0)
-                  const from = new Date(); from.setDate(today.getDate() - days); from.setHours(0,0,0,0)
-                  const vOrders = orders.filter(o => o.vehicleId === vId && o.status !== "cancelled" && o.status !== "pending")
-                  let rented = 0; let rev = 0
-                  vOrders.forEach(o => {
-                    const s = parseVN(o.startDate); const e = parseVN(o.endDate)
-                    const os = s < from ? from : s; const oe = e > today ? today : e
-                    if (os <= oe) {
-                      const d = Math.ceil((oe.getTime() - os.getTime()) / 86400000) + 1
-                      rented += d; rev += d * (o.pricePerDay || 0)
-                    }
-                  })
-                  if (rented > days) rented = days
-                  return { pct: Math.round((rented / days) * 100), rev }
-                }
-                const u30 = calcUtil(30); const u60 = calcUtil(60); const u90 = calcUtil(90)
-                const totalRevAccum = orders.filter(o => o.vehicleId === vId && o.status === "completed")
-                  .reduce((s: number, o: any) => s + (o.revenue || o.totalPrice || 0), 0)
-                const totalRentalCount = orders.filter(o => o.vehicleId === vId).length
-                return (
-                  <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Hiệu suất khai thác</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[{ label: "30 ngày", data: u30 }, { label: "60 ngày", data: u60 }, { label: "90 ngày", data: u90 }].map(({ label, data }) => (
-                        <div key={label} className="bg-slate-50 rounded-xl p-3 text-center">
-                          <p className="text-xs text-slate-500">{label}</p>
-                          <p className={`text-lg font-extrabold tabular-nums ${data.pct >= 70 ? "text-emerald-600" : data.pct >= 40 ? "text-amber-600" : "text-red-500"}`}>{data.pct}%</p>
-                          <p className="text-[10px] text-slate-400 font-mono">{data.rev.toLocaleString("vi-VN")}đ</p>
+            return (
+              <>
+                <EntityFormHeader
+                  title={v.name}
+                  description={`${v.licensePlate || "Chưa biển"}${v.color ? ` · ${v.color}` : ""}`}
+                />
+                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                  <div className="flex items-center justify-between">
+                    <span className={cn(
+                      "inline-flex items-center text-[11px] font-bold px-2 py-1 rounded-full border",
+                      rentalVehicleStatusBadgeClass(v.status)
+                    )}>
+                      {getRentalVehicleStatusLabel(v.status)}
+                    </span>
+                    {v.category && (
+                      <span className="text-xs text-slate-500">
+                        Phân loại: <span className="font-medium text-slate-800">{v.category === "car" ? "Ô tô" : "Xe máy"}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
+                      <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
+                    </div>
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-amber-600 uppercase">Giá mua</p>
+                      <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(v.purchasePrice)}</p>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-emerald-600 uppercase">Tổng thu</p>
+                      <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{formatPrice(totalRevenue)}</p>
+                    </div>
+                    <div className={cn(
+                      "border rounded-xl p-3",
+                      profit >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
+                    )}>
+                      <p className={cn(
+                        "text-[10px] font-semibold uppercase",
+                        profit >= 0 ? "text-emerald-600" : "text-blue-600"
+                      )}>Lợi nhuận</p>
+                      <p className={cn(
+                        "text-sm font-extrabold tabular-nums",
+                        profit >= 0 ? "text-emerald-700" : "text-blue-600"
+                      )}>
+                        {profit >= 0 ? "+" : ""}{formatPrice(profit)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Số KM hiện tại</p>
+                      <p className="text-sm font-bold text-slate-800">{(v.current_km || 0).toLocaleString("vi-VN")} km</p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Ngày đã cho thuê</p>
+                      <p className="text-sm font-bold text-slate-800">{v.totalRentalDays || 0} ngày</p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Lấp đầy 30 ngày</p>
+                      <p className={cn(
+                        "text-sm font-extrabold tabular-nums",
+                        u30.pct >= 70 ? "text-emerald-600" : u30.pct >= 40 ? "text-amber-600" : "text-blue-500"
+                      )}>{u30.pct}%</p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Tổng đơn thuê</p>
+                      <p className="text-sm font-bold text-slate-800">{totalRentalCount} đơn</p>
+                    </div>
+                  </div>
+
+                  {v.notes && v.notes.trim() && (
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-xs text-slate-700 whitespace-pre-line">{v.notes}</p>
+                    </div>
+                  )}
+
+                  {recentOrders.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-1.5">
+                        {recentOrders.map((o) => (
+                          <div key={o.id} className="flex items-center justify-between text-xs bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
+                            <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
+                            <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
+                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                              {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(v.vehicleImages?.length > 0 || v.documentImages?.length > 0) && (
+                    <div className="space-y-3">
+                      {v.vehicleImages?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {v.vehicleImages.map((img, index) => (
+                              <div
+                                key={index}
+                                className="aspect-square rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setLightboxImage(img)
+                                }}
+                              >
+                                <img src={img} alt={`Xe ${index + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
+                      {v.documentImages?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {v.documentImages.map((img, index) => (
+                              <div
+                                key={index}
+                                className="aspect-square rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setLightboxImage(img)
+                                }}
+                              >
+                                <img src={img} alt={`Giấy tờ ${index + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-emerald-50 rounded-xl p-3">
-                        <p className="text-xs text-emerald-600">Tổng doanh thu lũy kế</p>
-                        <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{totalRevAccum.toLocaleString("vi-VN")}đ</p>
-                      </div>
-                      <div className="bg-slate-50 rounded-xl p-3">
-                        <p className="text-xs text-slate-500">Tổng số đơn thuê</p>
-                        <p className="text-sm font-extrabold text-slate-700">{totalRentalCount} đơn</p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })()}
+                  )}
 
-              {/* Vehicle Images */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 mb-3">Ảnh xe</p>
-                {viewingVehicle.vehicleImages.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {viewingVehicle.vehicleImages.map((img, index) => (
-                      <div 
-                        key={index} 
-                        className="aspect-square rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90 hover:shadow-md transition-all"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setLightboxImage(img)
-                        }}
-                      >
-                        <img src={img} alt={`Xe ${index + 1}`} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-9 text-sm"
+                      onClick={() => {
+                        setIsDetailDialogOpen(false)
+                        openHistoryDialog(v)
+                      }}
+                    >
+                      <History className="w-3.5 h-3.5 mr-1.5" />
+                      Xem lịch sử
+                    </Button>
+                    <Button
+                      className="flex-1 h-9 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => {
+                        setIsDetailDialogOpen(false)
+                        openEditDialog(v)
+                      }}
+                    >
+                      <Settings className="w-3.5 h-3.5 mr-1.5" />
+                      Chỉnh sửa
+                    </Button>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-gray-400 bg-gray-50 p-4 rounded-xl">
-                    <ImageIcon className="w-5 h-5" />
-                    <span className="text-sm">Chưa có ảnh xe</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Document Images */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 mb-3">Ảnh giấy tờ xe</p>
-                {viewingVehicle.documentImages.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {viewingVehicle.documentImages.map((img, index) => (
-                      <div 
-                        key={index} 
-                        className="aspect-square rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:opacity-90 hover:shadow-md transition-all"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setLightboxImage(img)
-                        }}
-                      >
-                        <img src={img} alt={`Giấy tờ ${index + 1}`} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-gray-400 bg-gray-50 p-4 rounded-xl">
-                    <ImageIcon className="w-5 h-5" />
-                    <span className="text-sm">Chưa có ảnh giấy tờ xe</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-gray-100">
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)} className="rounded-xl border-gray-200">
-              Đóng
-            </Button>
-            <Button 
-              onClick={() => {
-                setIsDetailDialogOpen(false)
-                if (viewingVehicle) openEditDialog(viewingVehicle)
-              }} 
-              className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl"
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Chỉnh sửa
-            </Button>
-          </div>
+                </div>
+              </>
+            )
+          })()}
         </EntityFormDialogContent>
       </Dialog>
 
       {/* History Dialog */}
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-        <EntityFormDialogContent accent="blue" maxWidth="2xl" className="overflow-hidden flex flex-col max-h-[80vh]">
+        <EntityFormDialogContent accent="blue" maxWidth="2xl">
           <EntityFormHeader
             title="Lịch sử xe"
             description={historyVehicle ? `${historyVehicle.name} - ${historyVehicle.licensePlate}` : "Hoạt động cho thuê và bảo trì"}
           />
-          <div className="flex-1 overflow-y-auto py-4">
+          <div className="max-h-[450px] overflow-y-auto pr-2 py-4 my-2 scrollbar-thin">
             {historyVehicle && (
               <div className="space-y-4">
                 {getVehicleHistory(historyVehicle.id).length === 0 ? (
@@ -1628,8 +1661,8 @@ export default function VehiclesPage() {
               </div>
             )}
           </div>
-          <div className="flex justify-end pt-4 border-t border-gray-100">
-            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="rounded-xl">
+          <div className="flex justify-end pt-4 border-t border-gray-100 mt-2">
+            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="rounded-xl border-gray-200">
               Đóng
             </Button>
           </div>

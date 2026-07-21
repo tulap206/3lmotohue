@@ -147,7 +147,7 @@ export function ModuleKpiCard({
   accent?: ModuleAccent
   label: string
   value: React.ReactNode
-  sublabel?: string
+  sublabel?: React.ReactNode
   valueClassName?: string
   valueTitle?: string
   onClick?: () => void

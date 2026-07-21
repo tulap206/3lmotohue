@@ -38,20 +38,24 @@ export const EntityFormDialogContent = React.forwardRef<
     accent?: EntityFormAccent
     className?: string
     children: React.ReactNode
-    maxWidth?: "md" | "xl" | "2xl" | "3xl"
+    maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl"
   }
 >(function EntityFormDialogContent(
   { accent = "red", className, children, maxWidth = "xl" },
   ref
 ) {
   const maxW =
-    maxWidth === "md"
-      ? "max-w-md"
-      : maxWidth === "2xl"
-        ? "max-w-2xl"
-        : maxWidth === "3xl"
-          ? "max-w-3xl"
-          : "max-w-xl"
+    maxWidth === "sm"
+      ? "max-w-sm"
+      : maxWidth === "md"
+        ? "max-w-md"
+        : maxWidth === "lg"
+          ? "max-w-lg"
+          : maxWidth === "2xl"
+            ? "max-w-2xl"
+            : maxWidth === "3xl"
+              ? "max-w-3xl"
+              : "max-w-xl"
 
   return (
     <DialogContent

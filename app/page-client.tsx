@@ -22,7 +22,6 @@ export default function LandingPage() {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    facebook: "",
     address: "",
     startDate: "",
     endDate: "",
@@ -145,7 +144,7 @@ export default function LandingPage() {
         const newCustomer = await insertCustomer({
           name: formData.name,
           phone: formData.phone,
-          facebook: formData.facebook || "",
+          facebook: "",
           address: formData.address || "",
           idcard: "",
           totalrentals: 0,

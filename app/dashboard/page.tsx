@@ -272,8 +272,42 @@ export default function DashboardPage() {
           created_at: now,
           commissionHome: commissionHomeVal,
           homeName: homeNameVal,
+          rentalTerm: "short",
         }])
         .select()
+
+      if (error && /rentalTerm/i.test(error.message || "")) {
+        const fallback = await supabase.from('rentals').insert([{
+          customerId,
+          customerName,
+          vehicleId: vehicle.id,
+          vehicleName: vehicle.name,
+          licensePlate: vehicle.licensePlate,
+          startDate: startDateVN,
+          endDate: toStoredDateValue(formData.endDate),
+          totalDays,
+          pricePerDay: vehicle.pricePerDay,
+          totalPrice,
+          deposit: parseMoneyInput(formData.deposit),
+          extraFees: 0,
+          notes: "[rentalTerm:short]",
+          revenue: 0,
+          status: "pending",
+          created_at: now,
+          commissionHome: commissionHomeVal,
+          homeName: homeNameVal,
+        }]).select()
+        if (fallback.error) {
+          console.error("Error creating rental:", fallback.error)
+          alert(`❌ Lỗi: ${fallback.error.message}`)
+          return
+        }
+        if (fallback.data && fallback.data.length > 0) {
+          loadDashboardData(false)
+          resetForm()
+        }
+        return
+      }
 
       if (error) {
         console.error("Error creating rental:", error)
