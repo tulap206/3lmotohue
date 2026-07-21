@@ -1,7 +1,15 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   AlertCircle,
   CheckCircle2,
@@ -13,6 +21,10 @@ import {
   ShieldAlert,
   Trash2,
   Upload,
+  Users,
+  Bike,
+  ClipboardList,
+  Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDisplayDateTime } from "@/lib/format-date"
@@ -24,6 +36,14 @@ export interface BackupFileItem {
   created_at: string
   size: number
   url: string
+}
+
+type BackupPreviewData = {
+  timestamp?: string
+  customers?: unknown[]
+  vehicles?: unknown[]
+  rentals?: unknown[]
+  [key: string]: unknown
 }
 
 const accentStyles: Record<
@@ -66,7 +86,26 @@ function formatFileDate(iso: string) {
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
-  return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+}
+
+function asRecord(item: unknown): Record<string, unknown> | null {
+  if (item && typeof item === "object" && !Array.isArray(item)) {
+    return item as Record<string, unknown>
+  }
+  return null
+}
+
+function pickLabel(item: unknown, keys: string[], fallback: string) {
+  const row = asRecord(item)
+  if (!row) return fallback
+  for (const key of keys) {
+    const value = row[key]
+    if (typeof value === "string" && value.trim()) return value
+    if (typeof value === "number") return String(value)
+  }
+  return fallback
 }
 
 async function downloadBackupFile(file: BackupFileItem) {
@@ -134,218 +173,441 @@ export function BackupRestorePanel({
   const uploadRef = useRef<HTMLInputElement>(null)
   const styles = accentStyles[accent]
 
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailFile, setDetailFile] = useState<BackupFileItem | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState<string | null>(null)
+  const [detailData, setDetailData] = useState<BackupPreviewData | null>(null)
+  const [detailRaw, setDetailRaw] = useState<string>("")
+
+  const openBackupDetail = async (file: BackupFileItem) => {
+    setDetailFile(file)
+    setDetailOpen(true)
+    setDetailLoading(true)
+    setDetailError(null)
+    setDetailData(null)
+    setDetailRaw("")
+
+    try {
+      const response = await fetch(file.url)
+      if (!response.ok) {
+        throw new Error(`Không tải được tệp (${response.status})`)
+      }
+      const text = await response.text()
+      const parsed = JSON.parse(text) as BackupPreviewData
+      setDetailData(parsed)
+      setDetailRaw(text.length > 120_000 ? `${text.slice(0, 120_000)}\n\n… (đã rút gọn, tệp quá lớn)` : text)
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : "Không đọc được nội dung tệp sao lưu")
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const customers = Array.isArray(detailData?.customers) ? detailData.customers : []
+  const vehicles = Array.isArray(detailData?.vehicles) ? detailData.vehicles : []
+  const rentals = Array.isArray(detailData?.rentals) ? detailData.rentals : []
+  const backupTimestamp =
+    typeof detailData?.timestamp === "string" ? detailData.timestamp : detailFile?.created_at
+
   return (
-    <div className="flex max-h-[calc(100vh-6.5rem)] flex-col gap-3 overflow-hidden">
-      <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <div className={cn("absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r", styles.stripe)} />
+    <>
+      <div className="flex max-h-[calc(100vh-6.5rem)] flex-col gap-3 overflow-hidden">
+        <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+          <div className={cn("absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r", styles.stripe)} />
 
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", styles.icon)}>
-              <Database className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-bold text-slate-800">Sao lưu & khôi phục</h2>
-              <p className="truncate text-sm text-slate-500">{moduleName}</p>
-            </div>
-          </div>
-          <span className={cn("hidden shrink-0 rounded-full px-2 py-0.5 text-sm font-semibold sm:inline", styles.badge)}>
-            {scopeLabel}
-          </span>
-        </div>
-
-        {message && (
-          <div
-            className={cn(
-              "mx-4 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-sm",
-              message.type === "success"
-                ? "border-emerald-100 bg-emerald-50 text-emerald-800"
-                : "border-red-100 bg-blue-50 text-red-800"
-            )}
-          >
-            {message.type === "success" ? (
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            ) : (
-              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            )}
-            <p className="line-clamp-2 whitespace-pre-line font-medium leading-relaxed">{message.text}</p>
-          </div>
-        )}
-
-        <div className="grid min-h-0 grid-cols-1 gap-3 p-4 lg:grid-cols-12">
-          <div className="flex flex-col gap-2 lg:col-span-4">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => canBackup && !loading && onBackup()}
-                disabled={loading || !canBackup}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-3 text-center transition-colors",
-                  styles.ring,
-                  !canBackup && "cursor-not-allowed opacity-60"
-                )}
-              >
-                <CloudUpload className={cn("h-5 w-5", styles.icon.split(" ")[0])} />
-                <span className="text-sm font-bold text-slate-800">Sao lưu</span>
-                <span className="text-sm leading-tight text-slate-400">Lên đám mây</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => canRestore && uploadRef.current?.click()}
-                disabled={loading || !canRestore}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-3 text-center transition-colors hover:border-emerald-200",
-                  !canRestore && "cursor-not-allowed opacity-60"
-                )}
-              >
-                <Upload className="h-5 w-5 text-emerald-600" />
-                <span className="text-sm font-bold text-slate-800">
-                  {canRestore ? "Khôi phục" : "Chỉ Admin"}
-                </span>
-                <span className="text-sm leading-tight text-slate-400">Từ file JSON</span>
-              </button>
-              <input
-                ref={uploadRef}
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={onRestoreUpload}
-                disabled={loading || !canRestore}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={onBackup}
-                disabled={loading || !canBackup}
-                className={cn("h-8 flex-1 rounded-lg text-sm font-semibold", styles.backupBtn)}
-              >
-                {loading ? "Đang xử lý..." : "Thực hiện sao lưu"}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => uploadRef.current?.click()}
-                disabled={loading || !canRestore}
-                className="h-8 flex-1 rounded-lg border-emerald-200 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-              >
-                Chọn file
-              </Button>
-            </div>
-
-            <p className="rounded-lg border border-amber-100 bg-amber-50/80 px-2.5 py-2 text-sm leading-relaxed text-amber-800">
-              Khôi phục sẽ ghi đè toàn bộ dữ liệu {scopeLabel.toLowerCase()} hiện tại. Kiểm tra kỹ trước khi xác nhận.
-            </p>
-          </div>
-
-          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-100 lg:col-span-8">
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2">
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-800">Bản sao lưu trên đám mây</p>
-                <p className="truncate text-sm text-slate-400">
-                  {fileHint || "Các file JSON lưu trên Supabase Storage"}
-                </p>
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", styles.icon)}>
+                <Database className="h-4 w-4" />
               </div>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <span className="rounded-md bg-white px-1.5 py-0.5 text-sm font-semibold text-slate-500 tabular-nums">
-                  {files.length} file
-                </span>
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-bold text-slate-800">Sao lưu & khôi phục</h2>
+                <p className="truncate text-sm text-slate-500">{moduleName}</p>
+              </div>
+            </div>
+            <span className={cn("hidden shrink-0 rounded-full px-2 py-0.5 text-sm font-semibold sm:inline", styles.badge)}>
+              {scopeLabel}
+            </span>
+          </div>
+
+          {message && (
+            <div
+              className={cn(
+                "mx-4 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-sm",
+                message.type === "success"
+                  ? "border-emerald-100 bg-emerald-50 text-emerald-800"
+                  : "border-red-100 bg-blue-50 text-red-800"
+              )}
+            >
+              {message.type === "success" ? (
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              ) : (
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              )}
+              <p className="line-clamp-2 whitespace-pre-line font-medium leading-relaxed">{message.text}</p>
+            </div>
+          )}
+
+          <div className="grid min-h-0 grid-cols-1 gap-3 p-4 lg:grid-cols-12">
+            <div className="flex flex-col gap-2 lg:col-span-4">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => canBackup && !loading && onBackup()}
+                  disabled={loading || !canBackup}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-3 text-center transition-colors",
+                    styles.ring,
+                    !canBackup && "cursor-not-allowed opacity-60"
+                  )}
+                >
+                  <CloudUpload className={cn("h-5 w-5", styles.icon.split(" ")[0])} />
+                  <span className="text-sm font-bold text-slate-800">Sao lưu</span>
+                  <span className="text-sm leading-tight text-slate-400">Lên đám mây</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => canRestore && uploadRef.current?.click()}
+                  disabled={loading || !canRestore}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-3 text-center transition-colors hover:border-emerald-200",
+                    !canRestore && "cursor-not-allowed opacity-60"
+                  )}
+                >
+                  <Upload className="h-5 w-5 text-emerald-600" />
+                  <span className="text-sm font-bold text-slate-800">
+                    {canRestore ? "Khôi phục" : "Chỉ Admin"}
+                  </span>
+                  <span className="text-sm leading-tight text-slate-400">Từ file JSON</span>
+                </button>
+                <input
+                  ref={uploadRef}
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={onRestoreUpload}
+                  disabled={loading || !canRestore}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={onBackup}
+                  disabled={loading || !canBackup}
+                  className={cn("h-8 flex-1 rounded-lg text-sm font-semibold", styles.backupBtn)}
+                >
+                  {loading ? "Đang xử lý..." : "Thực hiện sao lưu"}
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={onRefresh}
-                  disabled={filesLoading}
-                  className="h-7 w-7 rounded-lg p-0"
+                  onClick={() => uploadRef.current?.click()}
+                  disabled={loading || !canRestore}
+                  className="h-8 flex-1 rounded-lg border-emerald-200 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
                 >
-                  <RefreshCw className={cn("h-3.5 w-3.5", filesLoading && "animate-spin")} />
+                  Chọn file
                 </Button>
               </div>
+
+              <p className="rounded-lg border border-amber-100 bg-amber-50/80 px-2.5 py-2 text-sm leading-relaxed text-amber-800">
+                Khôi phục sẽ ghi đè toàn bộ dữ liệu {scopeLabel.toLowerCase()} hiện tại. Kiểm tra kỹ trước khi xác nhận.
+              </p>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-hidden">
-              {filesLoading ? (
-                <div className="flex h-40 items-center justify-center text-sm text-slate-400">
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Đang tải...
+            <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-100 lg:col-span-8">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800">Bản sao lưu trên đám mây</p>
+                  <p className="truncate text-sm text-slate-400">
+                    {fileHint || "Nhấn vào tên file để xem chi tiết nội dung"}
+                  </p>
                 </div>
-              ) : files.length === 0 ? (
-                <div className="flex h-40 flex-col items-center justify-center gap-1 text-sm text-slate-400">
-                  <FileJson className="h-6 w-6 text-slate-300" />
-                  Chưa có bản sao lưu
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="rounded-md bg-white px-1.5 py-0.5 text-sm font-semibold text-slate-500 tabular-nums">
+                    {files.length} file
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onRefresh}
+                    disabled={filesLoading}
+                    className="h-7 w-7 rounded-lg p-0"
+                  >
+                    <RefreshCw className={cn("h-3.5 w-3.5", filesLoading && "animate-spin")} />
+                  </Button>
                 </div>
-              ) : (
-                <div className="max-h-[min(340px,calc(100vh-16rem))] overflow-y-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 z-10 bg-white text-sm font-semibold uppercase tracking-wide text-slate-400">
-                      <tr className="border-b border-slate-100">
-                        <th className="px-3 py-2 font-semibold">Tên file</th>
-                        <th className="hidden px-2 py-2 font-semibold sm:table-cell">Thời gian</th>
-                        <th className="px-2 py-2 text-right font-semibold">Size</th>
-                        <th className="px-3 py-2 text-right font-semibold">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {files.map((file) => (
-                        <tr
-                          key={file.name}
-                          className="border-b border-slate-50 transition-colors hover:bg-slate-50/80"
-                        >
-                          <td className="max-w-[140px] truncate px-3 py-2 font-medium text-slate-800 sm:max-w-[220px]" title={file.name}>
-                            {file.name}
-                          </td>
-                          <td className="hidden whitespace-nowrap px-2 py-2 text-slate-500 sm:table-cell">
-                            {formatFileDate(file.created_at)}
-                          </td>
-                          <td className="whitespace-nowrap px-2 py-2 text-right tabular-nums text-slate-500">
-                            {formatFileSize(file.size)}
-                          </td>
-                          <td className="px-2 py-1.5">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => downloadBackupFile(file)}
-                                disabled={loading}
-                                className="h-7 w-7 rounded-md p-0 text-slate-500 hover:text-blue-600"
-                                title="Tải về"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => onRestoreFile(file.url, file.name)}
-                                disabled={loading || !canRestore}
-                                className="h-7 rounded-md px-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700 disabled:text-slate-300"
-                              >
-                                {canRestore ? "Khôi phục" : "🔒"}
-                              </Button>
-                              {canDelete && onDeleteFile && (
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-hidden">
+                {filesLoading ? (
+                  <div className="flex h-40 items-center justify-center text-sm text-slate-400">
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Đang tải...
+                  </div>
+                ) : files.length === 0 ? (
+                  <div className="flex h-40 flex-col items-center justify-center gap-1 text-sm text-slate-400">
+                    <FileJson className="h-6 w-6 text-slate-300" />
+                    Chưa có bản sao lưu
+                  </div>
+                ) : (
+                  <div className="max-h-[min(340px,calc(100vh-16rem))] overflow-y-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="sticky top-0 z-10 bg-white text-sm font-semibold uppercase tracking-wide text-slate-400">
+                        <tr className="border-b border-slate-100">
+                          <th className="px-3 py-2 font-semibold">Tên file</th>
+                          <th className="hidden px-2 py-2 font-semibold sm:table-cell">Thời gian</th>
+                          <th className="px-2 py-2 text-right font-semibold">Size</th>
+                          <th className="px-3 py-2 text-right font-semibold">Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {files.map((file) => (
+                          <tr
+                            key={file.name}
+                            className="border-b border-slate-50 transition-colors hover:bg-blue-50/50 cursor-pointer"
+                            onClick={() => openBackupDetail(file)}
+                          >
+                            <td
+                              className="max-w-[140px] truncate px-3 py-2 font-medium text-blue-700 sm:max-w-[220px] underline-offset-2 hover:underline"
+                              title={`${file.name} — nhấn để xem chi tiết`}
+                            >
+                              {file.name}
+                            </td>
+                            <td className="hidden whitespace-nowrap px-2 py-2 text-slate-500 sm:table-cell">
+                              {formatFileDate(file.created_at)}
+                            </td>
+                            <td className="whitespace-nowrap px-2 py-2 text-right tabular-nums text-slate-500">
+                              {formatFileSize(file.size)}
+                            </td>
+                            <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1">
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => onDeleteFile(file.name)}
+                                  onClick={() => downloadBackupFile(file)}
                                   disabled={loading}
-                                  className="h-7 w-7 rounded-md p-0 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
-                                  title="Xóa file"
+                                  className="h-7 w-7 rounded-md p-0 text-slate-500 hover:text-blue-600"
+                                  title="Tải về"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Download className="h-3.5 w-3.5" />
                                 </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => onRestoreFile(file.url, file.name)}
+                                  disabled={loading || !canRestore}
+                                  className="h-7 rounded-md px-2 text-sm font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700 disabled:text-slate-300"
+                                >
+                                  {canRestore ? "Khôi phục" : "🔒"}
+                                </Button>
+                                {canDelete && onDeleteFile && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => onDeleteFile(file.name)}
+                                    disabled={loading}
+                                    className="h-7 w-7 rounded-md p-0 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                                    title="Xóa file"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={detailOpen}
+        onOpenChange={(open) => {
+          setDetailOpen(open)
+          if (!open) {
+            setDetailFile(null)
+            setDetailData(null)
+            setDetailError(null)
+            setDetailRaw("")
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-100 shrink-0">
+            <DialogTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <FileJson className="h-4 w-4 text-blue-600" />
+              Chi tiết tệp sao lưu
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-500 break-all">
+              {detailFile?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {detailLoading ? (
+              <div className="flex h-40 items-center justify-center text-sm text-slate-400">
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Đang đọc nội dung tệp...
+              </div>
+            ) : detailError ? (
+              <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {detailError}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+                    <p className="text-sm text-slate-500 flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5" /> Khách hàng
+                    </p>
+                    <p className="text-lg font-extrabold text-slate-800 tabular-nums mt-0.5">{customers.length}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+                    <p className="text-sm text-slate-500 flex items-center gap-1">
+                      <Bike className="h-3.5 w-3.5" /> Xe
+                    </p>
+                    <p className="text-lg font-extrabold text-slate-800 tabular-nums mt-0.5">{vehicles.length}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+                    <p className="text-sm text-slate-500 flex items-center gap-1">
+                      <ClipboardList className="h-3.5 w-3.5" /> Đơn thuê
+                    </p>
+                    <p className="text-lg font-extrabold text-slate-800 tabular-nums mt-0.5">{rentals.length}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+                    <p className="text-sm text-slate-500 flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" /> Thời điểm
+                    </p>
+                    <p className="text-sm font-bold text-slate-800 mt-0.5 leading-snug">
+                      {backupTimestamp ? formatFileDate(backupTimestamp) : "—"}
+                    </p>
+                  </div>
+                </div>
+
+                {detailFile && (
+                  <div className="rounded-xl border border-slate-100 px-3 py-2.5 text-sm text-slate-600 space-y-1">
+                    <p>
+                      <span className="font-semibold text-slate-500">Dung lượng:</span>{" "}
+                      {formatFileSize(detailFile.size)}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-slate-500">Tạo trên cloud:</span>{" "}
+                      {formatFileDate(detailFile.created_at)}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <PreviewList
+                    title="Khách hàng (mẫu)"
+                    empty="Không có khách hàng"
+                    items={customers.slice(0, 5).map((item, i) =>
+                      pickLabel(item, ["name", "fullName", "phone", "id"], `Khách #${i + 1}`)
+                    )}
+                    more={Math.max(0, customers.length - 5)}
+                  />
+                  <PreviewList
+                    title="Xe (mẫu)"
+                    empty="Không có xe"
+                    items={vehicles.slice(0, 5).map((item, i) => {
+                      const name = pickLabel(item, ["name", "model", "id"], `Xe #${i + 1}`)
+                      const plate = pickLabel(item, ["licensePlate", "license_plate", "bienso"], "")
+                      return plate ? `${name} · ${plate}` : name
+                    })}
+                    more={Math.max(0, vehicles.length - 5)}
+                  />
+                  <PreviewList
+                    title="Đơn thuê (mẫu)"
+                    empty="Không có đơn thuê"
+                    items={rentals.slice(0, 5).map((item, i) =>
+                      pickLabel(item, ["rentalCode", "rental_code", "id", "customerName"], `Đơn #${i + 1}`)
+                    )}
+                    more={Math.max(0, rentals.length - 5)}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-600 mb-2">Nội dung JSON</p>
+                  <pre className="max-h-56 overflow-auto rounded-xl border border-slate-100 bg-slate-950 text-slate-100 text-xs leading-relaxed p-3 font-mono whitespace-pre-wrap break-all">
+                    {detailRaw || "—"}
+                  </pre>
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="px-5 py-3 border-t border-slate-100 shrink-0 gap-2 sm:gap-2">
+            {detailFile && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg"
+                  onClick={() => downloadBackupFile(detailFile)}
+                  disabled={loading}
+                >
+                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                  Tải về
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={loading || !canRestore || detailLoading || !!detailError}
+                  onClick={() => {
+                    onRestoreFile(detailFile.url, detailFile.name)
+                    setDetailOpen(false)
+                  }}
+                >
+                  Khôi phục từ tệp này
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+function PreviewList({
+  title,
+  items,
+  empty,
+  more,
+}: {
+  title: string
+  items: string[]
+  empty: string
+  more: number
+}) {
+  return (
+    <div className="rounded-xl border border-slate-100 overflow-hidden">
+      <div className="bg-slate-50/80 px-3 py-2 border-b border-slate-100">
+        <p className="text-sm font-semibold text-slate-700">{title}</p>
+      </div>
+      <ul className="px-3 py-2 space-y-1.5 min-h-[7rem]">
+        {items.length === 0 ? (
+          <li className="text-sm text-slate-400">{empty}</li>
+        ) : (
+          items.map((label, idx) => (
+            <li key={`${label}-${idx}`} className="text-sm text-slate-700 truncate" title={label}>
+              {label}
+            </li>
+          ))
+        )}
+        {more > 0 && <li className="text-sm text-slate-400">+{more} mục khác</li>}
+      </ul>
     </div>
   )
 }
