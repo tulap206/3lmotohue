@@ -62,10 +62,10 @@ export const ACCENT_BTN_OUTLINE_CLASS: Record<ModuleAccent, string> = {
 }
 
 export const ACCENT_KPI_HOVER_CLASS: Record<ModuleAccent, string> = {
-  red: "hover:border-red-100",
-  blue: "hover:border-blue-100",
-  amber: "hover:border-amber-100",
-  emerald: "hover:border-emerald-100",
+  red: "hover:border-blue-400 hover:shadow-[0_4px_20px_rgba(37,99,235,0.15)]",
+  blue: "hover:border-blue-400 hover:shadow-[0_4px_20px_rgba(37,99,235,0.15)]",
+  amber: "hover:border-amber-300 hover:shadow-[0_4px_20px_rgba(217,119,6,0.12)]",
+  emerald: "hover:border-emerald-400 hover:shadow-[0_4px_20px_rgba(5,150,105,0.12)]",
 }
 
 export const ACCENT_BADGE_CLASS: Record<ModuleAccent, string> = {

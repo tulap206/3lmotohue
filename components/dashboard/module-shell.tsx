@@ -7,7 +7,6 @@ import {
   type ModuleAccent,
   type ModuleId,
   ACCENT_BTN_CLASS,
-  ACCENT_KPI_HOVER_CLASS,
   ACCENT_TITLE_CLASS,
   getModuleTheme,
 } from "@/lib/module-theme"
@@ -131,6 +130,9 @@ export function ModuleSubpageHeader({
   )
 }
 
+const KPI_BLUE_HOVER =
+  "hover:border-blue-400 hover:shadow-[0_4px_20px_rgba(37,99,235,0.15)] hover:-translate-y-[3px] hover:scale-[1.01]"
+
 export function ModuleKpiCard({
   accent = "red",
   label,
@@ -142,6 +144,7 @@ export function ModuleKpiCard({
   variant = "compact",
   icon,
   iconColor,
+  watermark,
   delay = 0,
 }: {
   accent?: ModuleAccent
@@ -154,6 +157,8 @@ export function ModuleKpiCard({
   variant?: "compact" | "hero"
   icon?: React.ReactNode
   iconColor?: string
+  /** Faded content icon rendered inside the card (hero). */
+  watermark?: React.ReactNode
   delay?: number
 }) {
   if (variant === "hero") {
@@ -180,25 +185,37 @@ export function ModuleKpiCard({
         )}
         <Card
           className={cn(
-            "metric-card card-animate module-card bg-white min-w-0 overflow-hidden",
-            onClick && ["cursor-pointer", ACCENT_KPI_HOVER_CLASS[accent]],
+            "metric-card card-animate module-card group relative bg-white min-w-0 overflow-hidden border border-slate-100/90",
+            "transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            KPI_BLUE_HOVER,
+            onClick && "cursor-pointer",
             isOverdue && "animate-pulse-red-glow-direct"
           )}
           style={{ animationDelay: `${delay * 60}ms` }}
           onClick={onClick}
         >
-          <CardContent className="px-3 py-2 flex flex-col justify-between h-full min-h-[3.65rem] space-y-1">
-            <div className="flex justify-between items-start w-full">
+          {watermark && (
+            <div
+              className="absolute right-[-10px] bottom-[-12px] select-none pointer-events-none text-blue-600 opacity-[0.07] transition-all duration-500 group-hover:opacity-[0.12] group-hover:scale-110"
+              aria-hidden
+            >
+              {watermark}
+            </div>
+          )}
+          <CardContent className="relative z-10 px-4 py-3 flex flex-col justify-between h-full min-h-[5.25rem] space-y-1.5">
+            <div className="flex justify-between items-start w-full gap-2">
               <div className="space-y-0.5 min-w-0 flex-1">
                 <p className="text-[11px] font-semibold text-slate-500 leading-tight">{label}</p>
-                {sublabel && <p className="text-[10px] text-slate-400 leading-none">{sublabel}</p>}
+                {sublabel && <p className="text-[10px] text-slate-400 leading-snug">{sublabel}</p>}
               </div>
-              {icon && <div className={cn(iconColor || ACCENT_TITLE_CLASS[accent], "text-sm shrink-0 ml-1")}>{icon}</div>}
+              {icon && (
+                <div className={cn(iconColor || ACCENT_TITLE_CLASS[accent], "text-sm shrink-0")}>{icon}</div>
+              )}
             </div>
             <div
               className={cn(
                 "font-extrabold text-slate-800 tracking-tight tabular-nums leading-none min-w-0 whitespace-nowrap",
-                "text-sm sm:text-base xl:text-lg",
+                "text-base sm:text-lg xl:text-xl",
                 valueClassName
               )}
               title={valueTitle}
@@ -214,12 +231,22 @@ export function ModuleKpiCard({
   return (
     <Card
       className={cn(
-        "module-card rounded-xl border-slate-100/80 shadow-sm transition-shadow duration-200",
-        onClick && ["cursor-pointer hover:shadow-md", ACCENT_KPI_HOVER_CLASS[accent]]
+        "module-card group relative rounded-xl border border-slate-100/80 shadow-sm overflow-hidden",
+        "transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        KPI_BLUE_HOVER,
+        onClick && "cursor-pointer"
       )}
       onClick={onClick}
     >
-      <CardContent className="p-4">
+      {watermark && (
+        <div
+          className="absolute right-[-10px] bottom-[-10px] select-none pointer-events-none text-blue-600 opacity-[0.07] transition-all duration-500 group-hover:opacity-[0.12] group-hover:scale-110"
+          aria-hidden
+        >
+          {watermark}
+        </div>
+      )}
+      <CardContent className="relative z-10 p-4">
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
         <p className={cn("text-xl font-extrabold text-slate-900 mt-1 tabular-nums", valueClassName)}>{value}</p>
         {sublabel && <p className="text-xs text-slate-500 mt-0.5">{sublabel}</p>}

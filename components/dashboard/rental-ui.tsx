@@ -6,9 +6,6 @@ import {
   moduleFilterInputClass,
 } from "@/components/dashboard/module-shell"
 
-import { Card } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-
 export const rentalTableHeadClass = moduleTableHeadClass
 export const rentalFilterInputClass = moduleFilterInputClass
 
@@ -26,24 +23,47 @@ import {
   CheckCircle2,
   Lock,
   PlusCircle,
-  HelpCircle
+  HelpCircle,
+  Wrench,
+  Clock,
+  Ban,
+  Gauge,
+  Bike,
+  UserX,
+  type LucideIcon,
 } from "lucide-react"
 
-function getWatermarkIcon(label: string) {
+function getWatermarkIcon(label: string): LucideIcon {
   const lowercase = label.toLowerCase()
-  if (lowercase.includes("xe")) return Car
+  if (lowercase.includes("bảo trì") || lowercase.includes("mốc")) return Wrench
+  if (lowercase.includes("cần gấp") || lowercase.includes("cảnh báo") || lowercase.includes("quá hạn")) {
+    return lowercase.includes("km") ? Gauge : AlertTriangle
+  }
+  if (lowercase.includes("km")) return Gauge
+  if (lowercase.includes("sẵn sàng")) return CheckCircle2
+  if (lowercase.includes("chờ giao")) return Clock
+  if (lowercase.includes("ngừng") || lowercase.includes("không giao dịch")) return UserX
+  if (lowercase.includes("lấp đầy") || lowercase.includes("tỷ lệ")) return Percent
+  if (lowercase.includes("đang thuê")) return Car
+  if (lowercase.includes("xe") || lowercase.includes("đội")) return Bike
   if (lowercase.includes("khách") || lowercase.includes("người")) return Users
   if (lowercase.includes("đơn") || lowercase.includes("hợp đồng")) return ClipboardList
-  if (lowercase.includes("tháng") || lowercase.includes("kỳ") || lowercase.includes("hạn")) return Calendar
-  if (lowercase.includes("doanh thu") || lowercase.includes("vốn") || lowercase.includes("két") || lowercase.includes("tiền")) return Wallet
+  if (lowercase.includes("tháng") || lowercase.includes("kỳ")) return Calendar
+  if (
+    lowercase.includes("doanh thu") ||
+    lowercase.includes("vốn") ||
+    lowercase.includes("két") ||
+    lowercase.includes("tiền")
+  ) {
+    return Wallet
+  }
   if (lowercase.includes("lợi nhuận") || lowercase.includes("lãi")) return TrendingUp
   if (lowercase.includes("góp") || lowercase.includes("nợ")) return DollarSign
-  if (lowercase.includes("quá hạn") || lowercase.includes("cảnh báo")) return AlertTriangle
   if (lowercase.includes("sao lưu") || lowercase.includes("khôi phục")) return RotateCcw
-  if (lowercase.includes("phần trăm") || lowercase.includes("lãi suất")) return Percent
   if (lowercase.includes("hoàn thành") || lowercase.includes("đã chốt")) return CheckCircle2
   if (lowercase.includes("khóa") || lowercase.includes("bảo mật")) return Lock
   if (lowercase.includes("thêm")) return PlusCircle
+  if (lowercase.includes("hủy") || lowercase.includes("inactive")) return Ban
   return HelpCircle
 }
 
@@ -52,64 +72,32 @@ export function RentalKpiCard({
   value,
   sublabel,
   valueClassName,
+  valueTitle,
   onClick,
-  variant,
+  variant = "hero",
   icon,
   iconColor,
   delay,
   accent = "blue",
 }: React.ComponentProps<typeof ModuleKpiCard>) {
   const WatermarkIcon = getWatermarkIcon(label)
-
-  if (variant === "hero") {
-    return (
-      <ModuleKpiCard
-        accent={accent}
-        label={label}
-        value={value}
-        sublabel={sublabel}
-        valueClassName={valueClassName}
-        onClick={onClick}
-        variant="hero"
-        icon={icon}
-        iconColor={iconColor}
-        delay={delay}
-      />
-    )
-  }
-
-  const hoverBorderColor = accent === "blue"
-    ? "hover:!border-blue-400 hover:!shadow-[0_4px_20px_rgba(37,99,235,0.15)]"
-    : "hover:!border-red-400 hover:!shadow-[0_4px_20px_rgba(220,38,38,0.15)]"
+  const watermark = <WatermarkIcon className="w-[4.5rem] h-[4.5rem] stroke-[1.25]" />
 
   return (
-    <Card
-      className={cn(
-        "module-card rounded-xl border border-slate-100 bg-white select-none transition-all duration-300 py-2 px-3.5 min-h-[3.3rem] flex flex-col justify-center relative overflow-hidden group",
-        onClick ? "cursor-pointer" : "",
-        "hover:translate-y-[-3px] hover:scale-[1.01]",
-        hoverBorderColor
-      )}
+    <ModuleKpiCard
+      accent={accent}
+      label={label}
+      value={value}
+      sublabel={sublabel}
+      valueClassName={valueClassName}
+      valueTitle={valueTitle}
       onClick={onClick}
-    >
-      <div className={cn(
-        "absolute right-[-10px] bottom-[-10px] select-none pointer-events-none opacity-[0.045] transition-transform duration-500 group-hover:scale-110",
-        accent === "blue" ? "text-blue-600" :
-        accent === "emerald" ? "text-emerald-600" :
-        accent === "amber" ? "text-amber-600" : "text-red-600"
-      )}>
-        <WatermarkIcon className="w-16 h-16 stroke-[1.5]" />
-      </div>
-      <div className="flex flex-col justify-between h-full relative z-10">
-        <div className="flex items-baseline justify-between gap-1.5">
-          <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">{label}</p>
-          {sublabel && <p className="text-[10px] text-slate-400 font-medium truncate max-w-[50%]">{sublabel}</p>}
-        </div>
-        <p className={cn("text-2xl font-black text-slate-900 mt-1.5 leading-none tabular-nums", valueClassName)}>
-          {value}
-        </p>
-      </div>
-    </Card>
+      variant={variant}
+      icon={icon}
+      iconColor={iconColor}
+      watermark={watermark}
+      delay={delay}
+    />
   )
 }
 
