@@ -170,20 +170,21 @@ export default function DashboardPage() {
       return
     }
 
-    const conflictingRental = orders.find((order) => {
-      if (order.vehicleId !== vehicle.id) return false
-      if (order.status === "cancelled" || order.status === "completed") return false
-      
-      const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
-      const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
-      
-      return !(endDate < orderStart || startDate > orderEnd)
-    })
-    
-    if (conflictingRental) {
-      alert(`⚠️ Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!\n\nKhách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`)
-      return
-    }
+    // TEMP: tắt kiểm tra trùng lịch để nhập đơn cũ trong quá khứ
+    // const conflictingRental = orders.find((order) => {
+    //   if (order.vehicleId !== vehicle.id) return false
+    //   if (order.status === "cancelled" || order.status === "completed") return false
+    //   
+    //   const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
+    //   const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
+    //   
+    //   return !(endDate < orderStart || startDate > orderEnd)
+    // })
+    // 
+    // if (conflictingRental) {
+    //   alert(`⚠️ Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!\n\nKhách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`)
+    //   return
+    // }
 
     let customerId = formData.customerId
     let customerName = ""
