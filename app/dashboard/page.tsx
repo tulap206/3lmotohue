@@ -426,12 +426,15 @@ export default function DashboardPage() {
       }
       
       const monthlyData: Record<string, number> = {}
+      // Chỉ đơn hoàn tất; ghi nhận theo ngày kết thúc (khi chốt doanh thu), khớp KPI tháng
       rentals.forEach((rental: any) => {
-        if (rental.startDate) {
-          const date = parseVietnamDate(rental.startDate)
-          const monthKey = `Thg ${date.getMonth() + 1}`
-          monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (rental.revenue || rental.totalPrice || 0)
-        }
+        if (rental.status !== "completed") return
+        const dateStr = rental.endDate || rental.startDate
+        if (!dateStr) return
+        const date = parseVietnamDate(dateStr)
+        if (isNaN(date.getTime())) return
+        const monthKey = `Thg ${date.getMonth() + 1}`
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (rental.revenue || rental.totalPrice || 0)
       })
 
       const computedMonthlyRevenue = [

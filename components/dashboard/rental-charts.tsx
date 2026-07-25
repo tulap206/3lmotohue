@@ -43,7 +43,7 @@ export function MonthlyRevenueChart({
   return (
     <ChartShell
       title="Doanh Thu Theo Tháng"
-      description="Doanh thu thuê xe hàng tháng"
+      description="Đơn hoàn tất theo tháng (ngày kết thúc)"
       icon={<TrendingUp className="w-4 h-4" />}
       accent="red"
       headerExtra={
