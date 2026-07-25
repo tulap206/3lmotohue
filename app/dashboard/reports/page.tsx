@@ -19,7 +19,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X } from "lucide-react"
-import { ModulePagination } from "@/components/dashboard/module-shell"
+import { ModulePagination, ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
 import {
   BarChart,
   Bar,
@@ -509,22 +509,31 @@ export default function ReportsPage() {
   ]
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full">
+    <ModulePageShell module="rental">
+      <ModuleSubpageHeader
+        module="rental"
+        title="Báo cáo"
+        subtitle="Tổng hợp doanh thu, lợi nhuận và thu/chi"
+        breadcrumbs={[
+          { label: "Cho thuê xe", href: "/dashboard" },
+          { label: "Báo cáo" },
+        ]}
+      />
       {/* Delete Transaction Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
+        <DialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)] max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-red-600 flex items-center gap-2">
+            <DialogTitle className="text-rose-600 flex items-center gap-2 text-title">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Xác nhận xoá
             </DialogTitle>
-            <DialogDescription className="text-gray-600 text-base mt-2">
-              Bạn có chắc chắn muốn xoá khoản {transactionToDelete?.type === "income" ? "THU" : "CHI"} <span className="font-semibold text-gray-800">"{transactionToDelete?.description}"</span> không?
-              <p className="text-sm text-red-600 mt-2">⚠️ Số tiền: {transactionToDelete?.amount.toLocaleString("vi-VN")} VND</p>
-              <p className="text-sm text-red-600">⚠️ Nhập bởi: {transactionToDelete?.user}</p>
-              <p className="text-sm text-red-600">⚠️ Hành động này không thể hoàn tác!</p>
+            <DialogDescription className="text-slate-600 text-body mt-2">
+              Bạn có chắc chắn muốn xoá khoản {transactionToDelete?.type === "income" ? "THU" : "CHI"} <span className="font-semibold text-slate-800">"{transactionToDelete?.description}"</span> không?
+              <p className="text-meta text-rose-600 mt-2">Số tiền: {transactionToDelete?.amount.toLocaleString("vi-VN")} VND</p>
+              <p className="text-meta text-rose-600">Nhập bởi: {transactionToDelete?.user}</p>
+              <p className="text-meta text-rose-600">Hành động này không thể hoàn tác.</p>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">
@@ -1000,6 +1009,6 @@ export default function ReportsPage() {
           </Card>
         )
       })()}
-    </div>
+    </ModulePageShell>
   )
 }

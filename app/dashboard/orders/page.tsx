@@ -976,7 +976,7 @@ export default function OrdersPage() {
               })}
             </div>
             <Button
-              className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl h-10 font-bold"
+              className="bg-blue-600 text-white hover:bg-blue-700 rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition"
               onClick={() => {
                 setFormData((prev) => ({ ...prev, rentalTerm: filterTerm }))
                 setIsDialogOpen(true)

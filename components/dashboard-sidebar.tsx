@@ -141,11 +141,11 @@ export function DashboardSidebar({ children }: SidebarProps) {
   }
 
   return (
-    <div className="flex min-h-screen gradient-bg">
+    <div className="flex min-h-screen dashboard-bg">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/25 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -153,13 +153,13 @@ export function DashboardSidebar({ children }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-20 bg-white/80 backdrop-blur-md border-r border-slate-100/50 transition-all duration-300 flex flex-col shadow-sm",
+          "fixed left-0 top-0 z-50 h-screen w-20 bg-white border-r border-slate-200/80 ui-transition flex flex-col",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-center h-24 border-b border-slate-100/50">
-          <div className="relative w-[64px] h-[64px] rounded-full overflow-hidden border border-slate-100/80 shadow-sm">
+        <div className="flex items-center justify-center h-20 border-b border-slate-100">
+          <div className="relative w-12 h-12 rounded-full overflow-hidden border border-slate-100 shadow-sm">
             <Image
               src="/logo.jpg"
               alt="3L Moto Logo"
@@ -170,7 +170,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6 px-3 space-y-3 overflow-visible">
+        <nav className="flex-1 py-5 px-3 space-y-2 overflow-visible">
           {menuItems
             .filter((item) => user?.role === "admin" || item.href !== "/dashboard/access-history")
             .map((item) => {
@@ -181,16 +181,15 @@ export function DashboardSidebar({ children }: SidebarProps) {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "group relative flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift active:scale-95",
+                  "group relative flex items-center justify-center w-14 h-14 rounded-[var(--radius-container)] ui-transition mx-auto touch-target",
                   isActive
                     ? "sidebar-active"
-                    : "text-slate-400 hover:bg-slate-50 hover:text-blue-600"
+                    : "text-slate-400 hover:bg-slate-50 hover:text-blue-600 active:scale-[0.97]"
                 )}
                 title={item.title}
               >
-                <item.icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
-                {/* Tooltip */}
-                <span className="absolute left-full ml-3 px-3 py-1.5 bg-slate-800 text-white text-sm font-semibold rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-lg z-50">
+                <item.icon className="w-5 h-5" />
+                <span className="absolute left-full ml-3 px-3 py-1.5 bg-slate-800 text-white text-label font-medium rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none ui-transition shadow-lg z-50">
                   {item.title}
                 </span>
               </Link>
@@ -199,80 +198,73 @@ export function DashboardSidebar({ children }: SidebarProps) {
         </nav>
 
         {/* Bottom section - compact spacing */}
-        <div className="p-2 space-y-2 border-t border-slate-100/50">
-          {/* User Avatar - Clickable */}
+        <div className="p-2 space-y-2 border-t border-slate-100">
           {user && (
             <button
               onClick={() => setIsProfileOpen(true)}
-              className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mx-auto cursor-pointer hover:shadow-lg hover:shadow-blue-500/20 hover:scale-105 transition-all duration-200 border border-blue-400/20"
+              className="flex items-center justify-center w-14 h-14 rounded-[var(--radius-container)] bg-blue-600 mx-auto cursor-pointer hover:bg-blue-700 ui-transition touch-target"
               title={`${user.displayName} (${user.username})`}
             >
-              <span className="text-white text-sm font-semibold uppercase">
+              <span className="text-white text-label font-semibold uppercase">
                 {user.displayName.charAt(0)}
               </span>
             </button>
           )}
           
-          {/* Settings Link - Admin only */}
           {user?.role === "admin" && (
             <Link
               href="/dashboard/settings"
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "group flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 mx-auto hover-lift",
+                "group flex items-center justify-center w-14 h-14 rounded-[var(--radius-container)] ui-transition mx-auto touch-target",
                 pathname === "/dashboard/settings"
-                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
-                  : "text-slate-400 hover:bg-amber-50/50 hover:text-amber-500"
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-400 hover:bg-slate-50 hover:text-blue-600"
               )}
               title="Cài đặt - Sao lưu & Khôi phục"
             >
-              <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
+              <Settings className="w-5 h-5" />
             </Link>
           )}
           
-          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center w-14 h-14 rounded-2xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all duration-200 mx-auto hover-lift"
+            className="flex items-center justify-center w-14 h-14 rounded-[var(--radius-container)] text-slate-400 hover:bg-rose-50 hover:text-rose-600 ui-transition mx-auto touch-target"
             title="Đăng xuất"
           >
             <LogOut className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Close button - mobile only */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+          className="lg:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-100 ui-transition touch-target"
         >
-          <X className="w-5 h-5 text-gray-500" />
+          <X className="w-5 h-5 text-slate-500" />
         </button>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 lg:ml-20">
-        {/* Mobile menu button */}
-        <div className="lg:hidden sticky top-0 z-30 flex items-center h-14 px-4 bg-transparent">
+        <div className="lg:hidden sticky top-0 z-30 flex items-center h-14 px-4 bg-slate-50/90 backdrop-blur-md border-b border-slate-100">
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-xl hover:bg-white/50"
+            className="rounded-[var(--radius-control)] hover:bg-white touch-target"
             onClick={() => setMobileOpen(true)}
           >
-            <Menu className="w-5 h-5 text-gray-600" />
+            <Menu className="w-5 h-5 text-slate-600" />
           </Button>
+          <span className="ml-2 text-label font-semibold text-slate-700">3L Moto</span>
         </div>
 
-        {/* Page content */}
         <main className="p-4 lg:p-8 lg:pt-8">{children}</main>
       </div>
 
-      {/* User Profile Modal */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="bg-white rounded-2xl max-w-md">
+        <DialogContent className="bg-white rounded-[var(--radius-container)] max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-gray-800">Thông tin cá nhân</DialogTitle>
-            <DialogDescription className="text-gray-500">Quản lý tài khoản của bạn</DialogDescription>
+            <DialogTitle className="text-title">Thông tin cá nhân</DialogTitle>
+            <DialogDescription className="text-meta">Quản lý tài khoản của bạn</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">

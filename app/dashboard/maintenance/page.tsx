@@ -156,9 +156,9 @@ export default function MaintenancePage() {
       />
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <RentalKpiCard variant="hero" label="Xe cần bảo trì" value={maintenanceStats.total} sublabel={`${maintenanceStats.filtered} đang lọc`} />
-          <RentalKpiCard variant="hero" label="Cần gấp" value={maintenanceStats.urgent} sublabel="Quá hạn ≥ 300 km" valueClassName="text-blue-700" />
+          <RentalKpiCard variant="hero" label="Cần gấp" value={maintenanceStats.urgent} sublabel="Quá hạn ≥ 300 km" valueClassName="text-rose-700" />
           <RentalKpiCard variant="hero" label="KM quá hạn TB" value={maintenanceStats.avgOverdue} sublabel="km trung bình" valueClassName="text-amber-700" />
           <RentalKpiCard variant="hero"
             label="Mốc bảo trì"

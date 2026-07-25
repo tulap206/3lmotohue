@@ -33,7 +33,7 @@ export function MonthlyRevenueChart({
         title="Doanh Thu Theo Tháng"
         description="Doanh thu thuê xe hàng tháng"
         icon={<TrendingUp className="w-4 h-4" />}
-        accent="red"
+        accent="blue"
       >
         <ChartEmpty label="Chưa có dữ liệu doanh thu" />
       </ChartShell>
@@ -45,7 +45,7 @@ export function MonthlyRevenueChart({
       title="Doanh Thu Theo Tháng"
       description="Đơn hoàn tất theo tháng (ngày kết thúc)"
       icon={<TrendingUp className="w-4 h-4" />}
-      accent="red"
+      accent="blue"
       headerExtra={
         <div className="flex flex-wrap items-center gap-x-2.5 text-sm text-slate-500">
           <span className="font-semibold text-blue-700">Tổng kỳ: {formatPrice(total)}</span>
@@ -115,7 +115,7 @@ export function RentalStatusChart({ data }: { data: StatusDatum[] }) {
         title="Trạng thái đơn thuê"
         description="Phân bổ đơn theo trạng thái"
         icon={<TrendingUp className="w-4 h-4" />}
-        accent="red"
+        accent="blue"
       >
         <ChartEmpty label="Chưa có đơn thuê" />
       </ChartShell>
@@ -127,7 +127,7 @@ export function RentalStatusChart({ data }: { data: StatusDatum[] }) {
       title="Trạng thái đơn thuê"
       description="Phân bổ đơn theo trạng thái"
       icon={<TrendingUp className="w-4 h-4" />}
-      accent="red"
+      accent="blue"
       headerExtra={
         <span className="text-sm font-semibold text-blue-700">Tổng đơn: {total}</span>
       }
@@ -213,7 +213,7 @@ export function RentalFleetChart({ data }: { data: StatusDatum[] }) {
         title="Đội xe"
         description="Xe theo trạng thái vận hành"
         icon={<TrendingUp className="w-4 h-4" />}
-        accent="red"
+        accent="blue"
       >
         <ChartEmpty label="Chưa có xe" />
       </ChartShell>
@@ -225,7 +225,7 @@ export function RentalFleetChart({ data }: { data: StatusDatum[] }) {
       title="Đội xe"
       description="Xe theo trạng thái vận hành"
       icon={<TrendingUp className="w-4 h-4" />}
-      accent="red"
+      accent="blue"
       headerExtra={
         <span className="text-sm font-semibold text-blue-700">Tổng xe: {total}</span>
       }
@@ -317,7 +317,7 @@ export function RentalIncomeExpenseChart({
         title="Thu chi theo tháng"
         description="Khoản thu/chi ngoài đơn thuê"
         icon={<TrendingUp className="w-4 h-4" />}
-        accent="red"
+        accent="blue"
       >
         <ChartEmpty label="Chưa có giao dịch thu/chi" />
       </ChartShell>
@@ -329,7 +329,7 @@ export function RentalIncomeExpenseChart({
       title="Thu chi theo tháng"
       description="Khoản thu/chi ngoài đơn thuê"
       icon={<TrendingUp className="w-4 h-4" />}
-      accent="red"
+      accent="blue"
       headerExtra={
         <div className="flex flex-wrap items-center gap-x-3 text-sm text-slate-500">
           <span>Thu: <span className="font-bold text-emerald-700">{formatPrice(totalIncome)}</span></span>

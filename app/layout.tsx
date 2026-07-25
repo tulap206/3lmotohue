@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
-// import { Inter } from 'next/font/google'
+import { Be_Vietnam_Pro } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/contexts/auth-context'
 import { Toaster } from 'sonner'
 import './globals.css'
 
-// const inter = Inter({ 
-//   subsets: ["latin", "vietnamese"],
-//   display: 'swap',
-//   variable: '--font-inter',
-//});
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-sans',
+})
 
 export const metadata: Metadata = {
   title: '3L Moto - Quản lý cho thuê xe máy',
@@ -17,8 +18,6 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon-light-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
     ],
     apple: '/apple-icon.png',
   },
@@ -30,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className="">
-      <body className="font-sans antialiased bg-background min-h-screen">
+    <html lang="vi" className={beVietnamPro.variable}>
+      <body className={`${beVietnamPro.className} font-sans antialiased bg-background min-h-screen`}>
         <AuthProvider>
           {children}
         </AuthProvider>
@@ -46,7 +45,7 @@ export default function RootLayout({
               border: '1px solid rgba(226, 232, 240, 0.8)',
               background: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(8px)',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+              boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04)',
               padding: '12px 16px',
             },
           }}

@@ -25,7 +25,7 @@ import { SkeletonMetricCards, SkeletonTable } from "@/components/ui/skeleton-loa
 import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeExpenseChart } from "@/components/dashboard/rental-charts"
 import { OverdueOrdersPanel, CommissionHomeReportPanel } from "@/components/dashboard/rental-overview-panels"
 import { RentalKpiCard, rentalTableHeadClass, getRentalTransactionTypeLabel } from "@/components/dashboard/rental-ui"
-import { ModulePageShell, ModuleBrandHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleBrandHeader, ModuleSectionCard, ModuleSectionTitle, ModuleKpiGrid, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleEmptyState, ModuleToolbar, moduleFilterInputClass } from "@/components/dashboard/module-shell"
 import { cn } from "@/lib/utils"
 import {
   EntityFormDialogContent,
@@ -780,11 +780,17 @@ export default function DashboardPage() {
     <ModulePageShell module="rental">
       <ModuleBrandHeader
         module="rental"
-        subtitle="3L Moto Moto · Tổng quan kinh doanh và vận hành cho thuê xe chuyên nghiệp"
+        title={
+          <>
+            Tổng quan{" "}
+            <span className="text-blue-600 font-semibold">Cho thuê xe · 3L Moto</span>
+          </>
+        }
+        subtitle="Vận hành đội xe và theo dõi hiệu suất kinh doanh"
         actions={
           <Button
             onClick={() => setIsDialogOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition"
           >
             <Plus className="w-4 h-4 mr-2" />
             Tạo đơn thuê mới
@@ -795,10 +801,8 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {/* Nhóm chỉ số vận hành */}
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Vận hành đội xe</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <ModuleSectionTitle title="Vận hành đội xe" />
+          <ModuleKpiGrid columns={5}>
             <RentalKpiCard
               variant="hero"
               label="Tổng xe"
@@ -836,15 +840,13 @@ export default function DashboardPage() {
               sublabel="đơn trễ hạn trả"
               onClick={() => router.push("/dashboard/orders?status=overdue")}
             />
-          </div>
+          </ModuleKpiGrid>
         </div>
 
         {/* Nhóm chỉ số tài chính */}
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">Hiệu suất tài chính</h3>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <ModuleSectionTitle title="Hiệu suất tài chính" />
+          <ModuleKpiGrid columns={5}>
             <RentalKpiCard
               variant="hero"
               label="Tổng doanh thu"
@@ -880,7 +882,7 @@ export default function DashboardPage() {
               sublabel="hiệu suất sử dụng xe"
               valueClassName={thisMonthKpis.utilizationPct >= 70 ? "text-emerald-700" : thisMonthKpis.utilizationPct >= 40 ? "text-amber-600" : "text-blue-600"}
             />
-          </div>
+          </ModuleKpiGrid>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -899,9 +901,9 @@ export default function DashboardPage() {
           title="Giao dịch gần đây"
           description="Quản lý các giao dịch thu/chi trong hệ thống"
           filters={
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[200px] max-w-xs">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <ModuleToolbar className="sm:w-auto">
+              <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   placeholder="Tìm kiếm giao dịch..."
                   value={txSearchQuery}
@@ -909,28 +911,30 @@ export default function DashboardPage() {
                     setTxSearchQuery(e.target.value)
                     setTxCurrentPage(1)
                   }}
-                  className="h-9 rounded-xl border-slate-200 bg-white pl-8 text-sm focus-visible:ring-blue-500"
+                  className={cn(moduleFilterInputClass, "pl-9 focus-visible:ring-blue-500")}
                 />
               </div>
               <Button
                 onClick={() => setIsAddTxOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white h-9 rounded-xl text-sm font-semibold shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white h-11 rounded-[var(--radius-control)] text-body font-semibold shrink-0 ui-transition"
               >
                 <Plus className="w-4 h-4 mr-1.5" />
                 Nhập Thu/Chi
               </Button>
-            </div>
+            </ModuleToolbar>
           }
         >
           <CardContent className="p-0">
             {transactions.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-slate-400 text-sm">Chưa có giao dịch nào</p>
-              </div>
+              <ModuleEmptyState
+                title="Chưa có giao dịch nào"
+                description="Thêm khoản thu hoặc chi để theo dõi dòng tiền vận hành."
+              />
             ) : filteredTransactions.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-slate-400 text-sm">Không tìm thấy giao dịch nào trùng khớp</p>
-              </div>
+              <ModuleEmptyState
+                title="Không tìm thấy giao dịch"
+                description="Thử đổi từ khóa tìm kiếm."
+              />
             ) : (
               <>
                 <ModuleResponsiveTable

@@ -78,27 +78,27 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-lg">3L Moto</h1>
-          <p className="text-white text-lg mt-2 drop-shadow-md font-medium">Hệ thống quản lý cho thuê xe máy</p>
+          <h1 className="text-display text-white drop-shadow-lg !text-white">3L Moto</h1>
+          <p className="text-white/90 text-body mt-2 drop-shadow-md font-medium">Hệ thống quản lý cho thuê xe máy</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-3xl p-8 card-shadow border border-gray-100">
+        <div className="bg-white rounded-[var(--radius-container)] p-8 shadow-[var(--shadow-card-hover)] border border-slate-100">
           <div className="text-center mb-8">
-            <h2 className="text-lg font-medium text-gray-800">Chào mừng trở lại</h2>
-            <p className="text-gray-500 text-sm mt-1">Đăng nhập để tiếp tục</p>
+            <h2 className="text-title">Chào mừng trở lại</h2>
+            <p className="text-meta mt-1">Đăng nhập để tiếp tục</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium text-gray-600">
+              <Label htmlFor="username" className="text-label">
                 Tên đăng nhập
               </Label>
               <Input
                 id="username"
                 type="text"
                 placeholder="admin"
-                className="h-12 bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all"
+                className="h-12 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 rounded-[var(--radius-control)] focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 ui-transition"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 required
@@ -107,15 +107,13 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-600">
-                Mật khẩu
-              </Label>
+              <Label className="text-label">Mật khẩu</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="h-12 pr-12 bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all"
+                  className="h-12 pr-12 bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 rounded-[var(--radius-control)] focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 ui-transition"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
@@ -132,7 +130,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 bg-red-50 p-3 rounded-xl">
+              <div className="text-body text-rose-600 bg-rose-50 p-3 rounded-[var(--radius-control)]">
                 {error}
               </div>
             )}
