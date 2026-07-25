@@ -476,7 +476,13 @@
 }
 
 .form-field-label {
-  @apply text-label;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: rgb(100 116 139);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .form-field-required::after {
