@@ -1,0 +1,54 @@
+---
+description: 3L Moto UI design system — operational admin, Linear/Notion-clean, Vietnamese rental shop
+globs: app/**/*.tsx, components/**/*.tsx, app/**/*.css, lib/module-theme.ts
+alwaysApply: false
+---
+
+# 3L Moto UI Design Rules
+
+Source guidance adapted from [PatrickJS/awesome-cursorrules](https://github.com/PatrickJS/awesome-cursorrules) (Next.js + React + Tailwind + shadcn) plus project taste constraints.
+
+## Design Read (always)
+Reading this as: redesign of an **operational rental admin** for shop staff, with a **Linear/Notion-clean** language, density medium, single cobalt accent. Not a marketing landing page.
+
+## Stack (do not invent alternatives)
+- Next.js App Router, React, TypeScript, Tailwind CSS, shadcn/ui, Supabase
+- Shared shell: `components/dashboard/module-shell.tsx`, `rental-ui.tsx`
+- Tokens: `app/globals.css` (`.text-display|title|body|label|meta`, `.money`, radius/shadow vars)
+- Font: Be Vietnam Pro via `next/font` in `app/layout.tsx`
+
+## Visual language
+- Background: cool slate (`--background`), surfaces white, one border `slate-200`
+- Accent: cobalt blue only for CTA / active nav / focus
+- Semantic: emerald = income/positive, amber = warning, rose = overdue/destructive
+- Radius: container 16px, control 12px, badge 8px — use CSS vars
+- Shadows: tinted slate, low opacity — no multi-layer glow, no purple gradients
+- No Inter/Roboto as primary; no emoji in UI chrome; no ALL-CAPS italic brand headers
+
+## Typography (mandatory scale)
+Use utilities, do not invent one-off sizes:
+- `.text-display` — page titles
+- `.text-title` — section / card titles
+- `.text-body` — content (≥15px; inputs ≥16px on mobile)
+- `.text-label` — form labels / table heads
+- `.text-meta` — captions (never below 12px)
+- `.money` — tabular figures for VND
+
+## Layout & components
+- Compose pages with `ModulePageShell`, `ModuleBrandHeader` / `ModuleSubpageHeader`, `ModuleKpiGrid`, `ModuleSectionCard`, `ModuleToolbar`, `ModuleEmptyState`, `ModuleResponsiveTable`, `ModulePagination`
+- KPI hierarchy: label → value → sublabel; same height in a row
+- Desktop table + mobile cards via `ModuleResponsiveTable`
+- Touch targets ≥44px; primary actions `h-11`
+- Prefer shell primitives over page-local card/filter styles
+
+## Code quality (from awesome-cursorrules)
+- Functional components; descriptive names (`isLoading`, `hasError`)
+- Mobile-first Tailwind; loading / empty / error states for every list
+- Keep client boundaries small; do not rewrite business logic during UI work
+- Never `@apply` custom utilities like `text-label` inside CSS (Tailwind v4 build break)
+
+## Anti-patterns
+- Mixing `gray-*` and `slate-*` arbitrarily — prefer slate
+- Hardcoded `text-xs` / `text-[15px]` / rainbow accents per page
+- DaisyUI / Biome / forcing `/src` relocation (not this project's stack)
+- Dark mode / glassmorphism / AI-purple themes

@@ -870,12 +870,12 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-gray-200 rounded"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+      <ModulePageShell module="rental">
+        <div className="space-y-6">
+          <div className="h-16 skeleton rounded-[var(--radius-container)]" />
+          <div className="h-96 skeleton rounded-[var(--radius-container)]" />
         </div>
-      </div>
+      </ModulePageShell>
     )
   }
 
@@ -883,17 +883,17 @@ export default function OrdersPage() {
     <ModulePageShell module="rental">
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
+        <DialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)] max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-blue-600 flex items-center gap-2">
+            <DialogTitle className="text-rose-600 flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Xác nhận xoá đơn thuê
             </DialogTitle>
-            <DialogDescription className="text-gray-600 text-base mt-2">
-              Bạn có chắc chắn muốn xoá đơn thuê mã <span className="font-semibold text-gray-800">"{orderToDelete?.rentalCode || orderToDelete?.id}"</span> của khách hàng <span className="font-semibold text-gray-800">"{orderToDelete?.customerName}"</span> không?
-              <p className="text-sm text-blue-600 mt-2"> Hành động này không thể hoàn tác!</p>
+            <DialogDescription className="text-slate-600 text-base mt-2">
+              Bạn có chắc chắn muốn xoá đơn thuê mã <span className="font-semibold text-slate-800">"{orderToDelete?.rentalCode || orderToDelete?.id}"</span> của khách hàng <span className="font-semibold text-slate-800">"{orderToDelete?.customerName}"</span> không?
+              <p className="text-meta text-rose-600 mt-2">Hành động này không thể hoàn tác.</p>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">
@@ -903,13 +903,13 @@ export default function OrdersPage() {
                 setDeleteConfirmOpen(false)
                 setOrderToDelete(null)
               }}
-              className="border-gray-300"
+              className="border-slate-300"
             >
               Hủy
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-rose-600 text-white hover:bg-rose-700"
             >
               Xoá
             </Button>
@@ -930,7 +930,7 @@ export default function OrdersPage() {
             <div
               role="group"
               aria-label="Lọc loại thuê"
-              className="inline-flex items-center p-1 rounded-xl bg-slate-100/90 border border-slate-200/80 shadow-inner"
+              className="inline-flex items-center p-1 rounded-[var(--radius-control)] bg-slate-100 border border-slate-200"
             >
               {([
                 { value: "short" as const, label: "Thuê ngắn hạn" },
@@ -945,18 +945,18 @@ export default function OrdersPage() {
                     aria-pressed={active}
                     onClick={() => setFilterTerm(opt.value)}
                     className={cn(
-                      "relative h-9 px-3.5 rounded-lg text-sm font-bold transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                      "relative h-10 px-3.5 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1",
                       active
-                        ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.35)] scale-[1.02]"
-                        : "text-slate-500 hover:text-slate-800 hover:bg-white/70"
+                        ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.28)]"
+                        : "text-slate-500 hover:text-slate-800 hover:bg-white/80"
                     )}
                   >
                     <span className="inline-flex items-center gap-1.5">
                       {opt.label}
                       <span
                         className={cn(
-                          "inline-flex min-w-[1.35rem] h-5 items-center justify-center rounded-md px-1 text-sm font-extrabold tabular-nums",
+                          "inline-flex min-w-[1.35rem] h-5 items-center justify-center rounded-md px-1 text-label font-bold tabular-nums",
                           active
                             ? "bg-white/20 text-white"
                             : "bg-slate-200/80 text-slate-600"
@@ -965,12 +965,6 @@ export default function OrdersPage() {
                         {count}
                       </span>
                     </span>
-                    {active && (
-                      <span
-                        className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-white/80"
-                        aria-hidden
-                      />
-                    )}
                   </button>
                 )
               })}
@@ -1009,7 +1003,7 @@ export default function OrdersPage() {
 
                   {!isNewCustomer ? (
                     <div className="space-y-2 relative">
-                      <Label htmlFor="customer" className="text-gray-600">Tìm kiếm khách hàng</Label>
+                      <Label htmlFor="customer" className="text-slate-600">Tìm kiếm khách hàng</Label>
                       <Input
                         placeholder="Nhập tên, số điện thoại hoặc ID khách..."
                         value={customerSearch}
@@ -1019,15 +1013,15 @@ export default function OrdersPage() {
                           setFormData(prev => ({ ...prev, customerId: "" }))
                         }}
                         onFocus={() => setShowCustomerDropdown(true)}
-                        className="bg-white border-gray-200 rounded-xl"
+                        className="bg-white border-slate-200 rounded-xl"
                         required={!isNewCustomer}
                       />
                       {showCustomerDropdown && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
-                          <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+                          <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
                             {filteredCustomersForSelect.length === 0 ? (
-                              <div className="p-3 text-sm text-gray-500 text-center">Không tìm thấy khách hàng nào</div>
+                              <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng nào</div>
                             ) : (
                               filteredCustomersForSelect.map((customer) => (
                                 <div
@@ -1037,9 +1031,9 @@ export default function OrdersPage() {
                                     setCustomerSearch(`${customer.name} (${customer.phone || 'Không có SĐT'})`)
                                     setShowCustomerDropdown(false)
                                   }}
-                                  className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                                  className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
                                 >
-                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-sm text-gray-400">({customer.id})</span>
+                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-sm text-slate-400">({customer.id})</span>
                                 </div>
                               ))
                             )}
@@ -1054,55 +1048,55 @@ export default function OrdersPage() {
                         ℹ <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
                       </EntityFormInfoBox>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-sm">Tên khách hàng <span className="text-blue-500">*</span></Label>
+                        <Label className="text-slate-600 text-sm">Tên khách hàng <span className="text-blue-500">*</span></Label>
                         <p className="text-sm text-slate-400">Họ và tên đầy đủ của khách</p>
                         <Input
                           placeholder="VD: Nguyễn Văn A"
                           value={newCustomerName}
                           onChange={(e) => setNewCustomerName(e.target.value)}
-                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
                           required={isNewCustomer}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-sm">Số điện thoại</Label>
+                        <Label className="text-slate-600 text-sm">Số điện thoại</Label>
                         <p className="text-sm text-slate-400">Dùng để liên lạc với khách hàng</p>
                         <Input
                           placeholder="VD: 0912345678"
                           value={newCustomerPhone}
                           onChange={(e) => setNewCustomerPhone(e.target.value)}
-                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-sm">Số CCCD khách <span className="text-blue-500">*</span></Label>
+                        <Label className="text-slate-600 text-sm">Số CCCD khách <span className="text-blue-500">*</span></Label>
                         <p className="text-sm text-slate-400">Số chứng minh thư hoặc CCCD</p>
                         <Input
                           placeholder="VD: 123456789012"
                           value={newCustomerCCCD}
                           onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
                           required={isNewCustomer}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-sm">📸 Ảnh khách (tùy chọn)</Label>
+                        <Label className="text-slate-600 text-sm">Ảnh khách (tùy chọn)</Label>
                         <p className="text-sm text-slate-400">Ảnh chân dung để xác minh danh tính</p>
                         <Input
                           type="file"
                           accept="image/*"
                           onChange={(e) => setNewCustomerPhoto(e.target.files?.[0] || null)}
-                          className="bg-white border-gray-200 rounded-xl h-9 text-sm p-1"
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm p-1"
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-gray-600 text-sm">📸 Ảnh CCCD khách (tùy chọn)</Label>
+                        <Label className="text-slate-600 text-sm">Ảnh CCCD khách (tùy chọn)</Label>
                         <p className="text-sm text-slate-400">Ảnh mặt trước chứng minh thư</p>
                         <Input
                           type="file"
                           accept="image/*"
                           onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
-                          className="bg-white border-gray-200 rounded-xl h-9 text-sm p-1"
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm p-1"
                         />
                       </div>
                     </div>
@@ -1111,7 +1105,7 @@ export default function OrdersPage() {
 
                 <EntityFormSection title="🚗 2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
                   <div className="space-y-2 relative">
-                    <Label htmlFor="vehicle" className="text-gray-600 text-sm">Chọn xe thuê <span className="text-blue-500">*</span></Label>
+                    <Label htmlFor="vehicle" className="text-slate-600 text-sm">Chọn xe thuê <span className="text-blue-500">*</span></Label>
                     <p className="text-sm text-slate-400">Tìm theo tên xe hoặc biển số</p>
                     <Input
                       placeholder="VD: Toyota Vios hoặc 75AA-12345..."
@@ -1122,15 +1116,15 @@ export default function OrdersPage() {
                         setFormData(prev => ({ ...prev, vehicleId: "" }))
                       }}
                       onFocus={() => setShowVehicleDropdown(true)}
-                      className="bg-white border-gray-200 rounded-xl"
+                      className="bg-white border-slate-200 rounded-xl"
                       required
                     />
                     {showVehicleDropdown && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
-                        <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+                        <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
                           {filteredVehiclesForSelect.length === 0 ? (
-                            <div className="p-3 text-sm text-gray-500 text-center">Không tìm thấy xe nào</div>
+                            <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy xe nào</div>
                           ) : (
                             filteredVehiclesForSelect.map((vehicle) => (
                               <div
@@ -1140,9 +1134,9 @@ export default function OrdersPage() {
                                   setVehicleSearch(`${vehicle.name} - ${vehicle.licensePlate}`)
                                   setShowVehicleDropdown(false)
                                 }}
-                                className="p-3 text-sm text-gray-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                                className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
                               >
-                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-sm bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-sm text-gray-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
+                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-sm bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-sm text-slate-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
                               </div>
                             ))
                           )}
@@ -1155,7 +1149,7 @@ export default function OrdersPage() {
 
                 <EntityFormSection title="📋 3. Chi tiết hợp đồng thuê" description="Nhập loại thuê, ngày thuê, thời hạn và tiền đặt cọc">
                   <div className="space-y-1">
-                    <Label className="text-gray-600 text-sm">Loại thuê <span className="text-blue-500">*</span></Label>
+                    <Label className="text-slate-600 text-sm">Loại thuê <span className="text-blue-500">*</span></Label>
                     <EntityFormToggle
                       value={formData.rentalTerm}
                       onChange={(val) => setFormData({ ...formData, rentalTerm: val as RentalTerm })}
@@ -1167,33 +1161,33 @@ export default function OrdersPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label htmlFor="startDate" className="text-gray-600 text-sm">Ngày bắt đầu <span className="text-blue-500">*</span></Label>
+                      <Label htmlFor="startDate" className="text-slate-600 text-sm">Ngày bắt đầu <span className="text-blue-500">*</span></Label>
                       <p className="text-sm text-slate-400">Ngày khách nhận xe</p>
                       <Input
                         id="startDate"
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                        className="bg-white border-slate-200 rounded-xl h-9 text-sm"
                         required
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="endDate" className="text-gray-600 text-sm">Ngày kết thúc <span className="text-blue-500">*</span></Label>
+                      <Label htmlFor="endDate" className="text-slate-600 text-sm">Ngày kết thúc <span className="text-blue-500">*</span></Label>
                       <p className="text-sm text-slate-400">Ngày khách trả xe</p>
                       <Input
                         id="endDate"
                         type="date"
                         value={formData.endDate}
                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                        className="bg-white border-slate-200 rounded-xl h-9 text-sm"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="deposit" className="text-gray-600 text-sm">Tiền đặt cọc <span className="text-blue-500">*</span></Label>
+                    <Label htmlFor="deposit" className="text-slate-600 text-sm">Tiền đặt cọc <span className="text-blue-500">*</span></Label>
                     <p className="text-sm text-slate-400">Tiền cọc để bảo vệ xe (thường 30-50% giá thuê)</p>
                     <Input
                       id="deposit"
@@ -1204,7 +1198,7 @@ export default function OrdersPage() {
                         setFormData({ ...formData, deposit: formatted })
                       }}
                       placeholder="VD: 500.000"
-                      className="bg-white border-gray-200 rounded-xl font-mono h-9 text-sm"
+                      className="bg-white border-slate-200 rounded-xl font-mono h-9 text-sm"
                       required
                     />
                   </div>
@@ -1215,15 +1209,15 @@ export default function OrdersPage() {
                       type="checkbox"
                       checked={hasCommission}
                       onChange={(e) => setHasCommission(e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                     />
-                    <Label htmlFor="hasCommission" className="text-gray-700 text-sm font-semibold cursor-pointer">Chia hoa hồng</Label>
+                    <Label htmlFor="hasCommission" className="text-slate-700 text-sm font-semibold cursor-pointer">Chia hoa hồng</Label>
                   </div>
 
                   {hasCommission && (
                     <div className="grid grid-cols-1 gap-3 pt-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
                       <div className="space-y-1">
-                        <Label htmlFor="homeName" className="text-gray-600 text-sm">Tên Home</Label>
+                        <Label htmlFor="homeName" className="text-slate-600 text-sm">Tên Home</Label>
                         <p className="text-sm text-slate-400">Tên đơn vị/người chia hoa hồng</p>
                         <Input
                           id="homeName"
@@ -1231,11 +1225,11 @@ export default function OrdersPage() {
                           value={formData.homeName}
                           onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
                           placeholder="VD: Home ABC"
-                          className="bg-white border-gray-200 rounded-xl h-9 text-sm"
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="commissionHome" className="text-gray-600 text-sm">Chia hoa hồng cho Home (VND/ngày)</Label>
+                        <Label htmlFor="commissionHome" className="text-slate-600 text-sm">Chia hoa hồng cho Home (VND/ngày)</Label>
                         <p className="text-sm text-slate-400">Tiền hoa hồng/ngày cho đơn vị (VD: 20.000đ/ngày)</p>
                         <Input
                           id="commissionHome"
@@ -1246,7 +1240,7 @@ export default function OrdersPage() {
                             setFormData({ ...formData, commissionHome: formatted })
                           }}
                           placeholder="VD: 20.000"
-                          className="bg-white border-gray-200 rounded-xl font-mono h-9 text-sm"
+                          className="bg-white border-slate-200 rounded-xl font-mono h-9 text-sm"
                         />
                       </div>
                     </div>
@@ -1794,7 +1788,7 @@ export default function OrdersPage() {
           <form onSubmit={handleEditSubmit}>
             <EntityFormBody>
             <div className="space-y-2">
-              <Label className="text-gray-600">Loại thuê</Label>
+              <Label className="text-slate-600">Loại thuê</Label>
               <EntityFormToggle
                 value={editFormData.rentalTerm}
                 onChange={(val) => setEditFormData({ ...editFormData, rentalTerm: val as RentalTerm })}
@@ -1806,24 +1800,24 @@ export default function OrdersPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-gray-600">Khách hàng</Label>
+              <Label className="text-slate-600">Khách hàng</Label>
               <Input
                 value={editingOrder?.customerName || ""}
                 disabled
-                className="bg-gray-100 border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+                className="bg-slate-100 border-slate-200 rounded-xl text-slate-500 cursor-not-allowed"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-vehicle" className="text-gray-600">Xe thuê</Label>
+              <Label htmlFor="edit-vehicle" className="text-slate-600">Xe thuê</Label>
               <Select
                 value={editFormData.vehicleId}
                 onValueChange={(value) => setEditFormData({ ...editFormData, vehicleId: value })}
               >
-                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
                   <SelectValue placeholder="Chọn xe" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200 rounded-xl">
+                <SelectContent className="bg-white border-slate-200 rounded-xl">
                   {vehicles.map((vehicle) => (
                     <SelectItem key={vehicle.id} value={vehicle.id}>
                       {vehicle.name} - {vehicle.licensePlate}
@@ -1835,31 +1829,31 @@ export default function OrdersPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-startDate" className="text-gray-600">Ngày bắt đầu</Label>
+                <Label htmlFor="edit-startDate" className="text-slate-600">Ngày bắt đầu</Label>
                 <Input
                   id="edit-startDate"
                   type="date"
                   value={editFormData.startDate}
                   onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
-                  className="bg-gray-50 border-gray-200 rounded-xl"
+                  className="bg-slate-50 border-slate-200 rounded-xl"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-endDate" className="text-gray-600">Ngày kết thúc</Label>
+                <Label htmlFor="edit-endDate" className="text-slate-600">Ngày kết thúc</Label>
                 <Input
                   id="edit-endDate"
                   type="date"
                   value={editFormData.endDate}
                   onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
-                  className="bg-gray-50 border-gray-200 rounded-xl"
+                  className="bg-slate-50 border-slate-200 rounded-xl"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-deposit" className="text-gray-600">Tiền đặt cọc (VND)</Label>
+              <Label htmlFor="edit-deposit" className="text-slate-600">Tiền đặt cọc (VND)</Label>
               <Input
                 id="edit-deposit"
                 type="text"
@@ -1868,13 +1862,13 @@ export default function OrdersPage() {
                   const formatted = formatMoneyInput(e.target.value)
                   setEditFormData({ ...editFormData, deposit: formatted })
                 }}
-                className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                className="bg-slate-50 border-slate-200 rounded-xl font-mono"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-extraFees" className="text-gray-600">Phí phát sinh (VND)</Label>
+              <Label htmlFor="edit-extraFees" className="text-slate-600">Phí phát sinh (VND)</Label>
               <Input
                 id="edit-extraFees"
                 type="text"
@@ -1883,25 +1877,25 @@ export default function OrdersPage() {
                   const formatted = formatMoneyInput(e.target.value)
                   setEditFormData({ ...editFormData, extraFees: formatted })
                 }}
-                className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                className="bg-slate-50 border-slate-200 rounded-xl font-mono"
                 placeholder="0"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-homeName" className="text-gray-600">Tên Home (Homestay giới thiệu)</Label>
+                <Label htmlFor="edit-homeName" className="text-slate-600">Tên Home (Homestay giới thiệu)</Label>
                 <Input
                   id="edit-homeName"
                   type="text"
                   value={editFormData.homeName}
                   onChange={(e) => setEditFormData({ ...editFormData, homeName: e.target.value })}
                   placeholder="VD: Home ABC"
-                  className="bg-gray-50 border-gray-200 rounded-xl"
+                  className="bg-slate-50 border-slate-200 rounded-xl"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-commissionHome" className="text-gray-600">Chia hoa hồng cho Home (VND/ngày)</Label>
+                <Label htmlFor="edit-commissionHome" className="text-slate-600">Chia hoa hồng cho Home (VND/ngày)</Label>
                 <Input
                   id="edit-commissionHome"
                   type="text"
@@ -1911,32 +1905,32 @@ export default function OrdersPage() {
                     setEditFormData({ ...editFormData, commissionHome: formatted })
                   }}
                   placeholder="VD: 20.000"
-                  className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                  className="bg-slate-50 border-slate-200 rounded-xl font-mono"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-notes" className="text-gray-600">Ghi chú</Label>
+              <Label htmlFor="edit-notes" className="text-slate-600">Ghi chú</Label>
               <Textarea
                 id="edit-notes"
                 value={editFormData.notes}
                 onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-                className="bg-gray-50 border-gray-200 rounded-xl min-h-20 resize-y"
+                className="bg-slate-50 border-slate-200 rounded-xl min-h-20 resize-y"
                 placeholder="Nhập ghi chú cho đơn thuê..."
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-status" className="text-gray-600">Trạng thái</Label>
+              <Label htmlFor="edit-status" className="text-slate-600">Trạng thái</Label>
               <Select
                 value={editFormData.status}
                 onValueChange={(value: RentalOrder["status"]) => setEditFormData({ ...editFormData, status: value })}
               >
-                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200 rounded-xl">
+                <SelectContent className="bg-white border-slate-200 rounded-xl">
                   <SelectItem value="pending">Chờ giao xe</SelectItem>
                   <SelectItem value="active">Đang thuê</SelectItem>
                   <SelectItem value="completed">Hoàn thành</SelectItem>
@@ -2372,7 +2366,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Financial Details */}
-                <div className="border-2 border-slate-200 rounded-2xl p-5 bg-slate-50/50 mb-6">
+                <div className="border-2 border-slate-200 rounded-[var(--radius-container)] p-5 bg-slate-50/50 mb-6">
                   <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-1.5 mb-3 uppercase text-sm">THỜI GIAN & CHI TIẾT THANH TOÁN</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-slate-700">

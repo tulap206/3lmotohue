@@ -9,8 +9,8 @@ export type EntityFormAccent = "red" | "blue" | "amber" | "emerald"
 
 const accentMap: Record<EntityFormAccent, { stripe: string; btn: string }> = {
   red: {
-    stripe: "from-red-400 to-red-600",
-    btn: "bg-blue-600 hover:bg-blue-700 text-white",
+    stripe: "from-rose-400 to-rose-600",
+    btn: "bg-rose-600 hover:bg-rose-700 text-white",
   },
   blue: {
     stripe: "from-blue-400 to-blue-600",
@@ -27,10 +27,10 @@ const accentMap: Record<EntityFormAccent, { stripe: string; btn: string }> = {
 }
 
 export const entityFormInputClass =
-  "bg-white border-gray-200 rounded-xl h-9 text-sm"
+  "bg-white border-slate-200 rounded-[var(--radius-control)] h-11 text-body"
 
 export const entityFormSelectClass =
-  "bg-white border-gray-200 rounded-xl h-9 text-sm w-full"
+  "bg-white border-slate-200 rounded-[var(--radius-control)] h-11 text-body w-full"
 
 export const EntityFormDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogContent>,
@@ -61,7 +61,7 @@ export const EntityFormDialogContent = React.forwardRef<
     <DialogContent
       ref={ref}
       className={cn(
-        "border-gray-200 rounded-2xl max-h-[90vh] overflow-y-auto bg-white p-0 gap-0",
+        "border-slate-200 rounded-[var(--radius-container)] max-h-[90vh] overflow-y-auto bg-white p-0 gap-0",
         maxW,
         className
       )}
@@ -84,8 +84,8 @@ export function EntityFormHeader({
 }) {
   return (
     <DialogHeader className="mb-5">
-      <DialogTitle className="text-gray-800 text-lg font-bold tracking-tight">{title}</DialogTitle>
-      <DialogDescription className="text-gray-500 text-sm">{description}</DialogDescription>
+      <DialogTitle className="text-title">{title}</DialogTitle>
+      <DialogDescription className="text-meta">{description}</DialogDescription>
     </DialogHeader>
   )
 }
@@ -104,10 +104,10 @@ export function EntityFormSection({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+    <div className="bg-slate-50/60 p-4 rounded-[var(--radius-container)] border border-slate-100 space-y-4">
       <div className="border-b border-slate-100 pb-2">
-        <h3 className="font-bold text-slate-800 text-base">{title}</h3>
-        {description && <p className="text-sm text-slate-500 mt-0.5">{description}</p>}
+        <h3 className="text-title">{title}</h3>
+        {description && <p className="text-meta mt-0.5">{description}</p>}
       </div>
       {children}
     </div>
@@ -124,16 +124,16 @@ export function EntityFormToggle({
   options: { value: string; label: string }[]
 }) {
   return (
-    <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+    <div className="flex gap-1.5 p-1 bg-slate-100 rounded-[var(--radius-control)]">
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all",
+            "flex-1 py-2 text-body font-semibold rounded-[calc(var(--radius-control)-2px)] ui-transition",
             value === opt.value
-              ? "bg-white shadow text-slate-800"
+              ? "bg-white shadow-sm text-slate-800"
               : "text-slate-500 hover:text-slate-700"
           )}
         >
@@ -156,12 +156,12 @@ export function EntityFormField({
   children: React.ReactNode
 }) {
   return (
-    <div className="space-y-1">
-      <label className="text-gray-600 text-sm font-medium">
+    <div className="space-y-1.5">
+      <label className="text-label">
         {label}
-        {required && <span className="text-red-500"> *</span>}
+        {required && <span className="text-rose-500"> *</span>}
       </label>
-      {hint && <p className="text-sm text-slate-400">{hint}</p>}
+      {hint && <p className="text-meta">{hint}</p>}
       {children}
     </div>
   )
@@ -230,8 +230,8 @@ export function EntityFormFooter({
   disabled?: boolean
 }) {
   return (
-    <DialogFooter className="flex justify-end gap-2 pt-4 mt-6 border-t border-gray-100 sm:justify-end">
-      <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl border-gray-200">
+    <DialogFooter className="flex justify-end gap-2 pt-4 mt-6 border-t border-slate-100 sm:justify-end">
+      <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl border-slate-200">
         {cancelLabel}
       </Button>
       <Button

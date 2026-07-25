@@ -54,7 +54,7 @@ const accentStyles: Record<
     stripe: "from-red-400 to-red-600",
     backupBtn: "bg-blue-600 hover:bg-blue-700 text-white",
     icon: "text-blue-600 bg-blue-50",
-    ring: "hover:border-red-200",
+    ring: "hover:border-rose-200",
     badge: "bg-blue-50 text-blue-700",
   },
   blue: {
@@ -127,9 +127,9 @@ async function downloadBackupFile(file: BackupFileItem) {
 
 export function BackupAccessDenied() {
   return (
-    <div className="rounded-2xl border border-red-100 bg-blue-50/40 p-6 text-center">
-      <ShieldAlert className="mx-auto mb-2 h-10 w-10 text-red-500" />
-      <h3 className="text-sm font-bold text-red-800">Truy cập bị hạn chế</h3>
+    <div className="rounded-2xl border border-rose-100 bg-blue-50/40 p-6 text-center">
+      <ShieldAlert className="mx-auto mb-2 h-10 w-10 text-rose-500" />
+      <h3 className="text-sm font-bold text-rose-800">Truy cập bị hạn chế</h3>
       <p className="mt-1 text-sm text-blue-600">Bạn không có quyền sao lưu và khôi phục dữ liệu.</p>
     </div>
   )
@@ -237,7 +237,7 @@ export function BackupRestorePanel({
                 "mx-4 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-sm",
                 message.type === "success"
                   ? "border-emerald-100 bg-emerald-50 text-emerald-800"
-                  : "border-red-100 bg-blue-50 text-red-800"
+                  : "border-rose-100 bg-rose-50 text-rose-800"
               )}
             >
               {message.type === "success" ? (
@@ -459,7 +459,7 @@ export function BackupRestorePanel({
                 Đang đọc nội dung tệp...
               </div>
             ) : detailError ? (
-              <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 {detailError}
               </div>
             ) : (

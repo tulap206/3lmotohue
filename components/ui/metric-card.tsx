@@ -23,7 +23,7 @@ export function MetricCard({
   sublabel,
   trend,
   backgroundColor = "bg-white",
-  iconColor = "text-red-500",
+  iconColor = "text-blue-500",
   delay = 0,
   onClick,
 }: MetricCardProps) {

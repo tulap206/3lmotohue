@@ -102,18 +102,18 @@ export default function UsersPage() {
     return (
       <div className="p-6">
         <div className="max-w-md mx-auto">
-          <Card className="border-red-200 bg-blue-50">
+          <Card className="border-rose-200 bg-rose-50">
             <CardHeader>
-              <CardTitle className="text-red-600 flex items-center gap-2">
+              <CardTitle className="text-rose-600 flex items-center gap-2">
                 <Lock className="w-5 h-5" />
                 Không Có Quyền Truy Cập
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-red-700 mb-4">
+              <p className="text-rose-700 mb-4">
                 Bạn không có quyền truy cập mục này. Chỉ Admin mới có thể quản lý tài khoản người dùng.
               </p>
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-rose-600">
                 Bạn sẽ được chuyển hướng về Dashboard trong 3 giây...
               </p>
             </CardContent>
@@ -248,8 +248,8 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản Lý Người Dùng</h1>
-          <p className="text-gray-600 mt-1">Quản lý tài khoản và phân quyền người dùng</p>
+          <h1 className="text-3xl font-bold text-slate-900">Quản Lý Người Dùng</h1>
+          <p className="text-slate-600 mt-1">Quản lý tài khoản và phân quyền người dùng</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -306,7 +306,7 @@ export default function UsersPage() {
                       role: e.target.value as "admin" | "staff",
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="admin">Admin (Quyền Đầy Đủ)</option>
                   <option value="staff">Staff (Quyền Hạn Chế)</option>
@@ -347,46 +347,46 @@ export default function UsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
+                <tr className="border-b bg-slate-50">
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">
                     Tên Đăng Nhập
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">
                     Tên Hiển Thị
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">
                     Vai Trò
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-600">
                     Quyền Xóa
                   </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-600">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-600">
                     Hành Động
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((userAccount) => (
-                  <tr key={userAccount.id} className="border-b hover:bg-gray-50">
+                  <tr key={userAccount.id} className="border-b hover:bg-slate-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         {userAccount.role === "admin" ? (
                           <Shield className="w-4 h-4 text-blue-600" />
                         ) : (
-                          <User className="w-4 h-4 text-gray-400" />
+                          <User className="w-4 h-4 text-slate-400" />
                         )}
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-slate-900">
                           {userAccount.username}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-700">{userAccount.displayName}</td>
+                    <td className="px-6 py-4 text-slate-700">{userAccount.displayName}</td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${
                           userAccount.role === "admin"
                             ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-slate-100 text-slate-800"
                         }`}
                       >
                         {userAccount.role === "admin" ? "Admin" : "Staff"}
@@ -397,7 +397,7 @@ export default function UsersPage() {
                         className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${
                           userAccount.permissions.canDelete
                             ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-slate-100 text-slate-800"
                         }`}
                       >
                         {userAccount.permissions.canDelete ? "Có" : "Không"}
@@ -413,7 +413,7 @@ export default function UsersPage() {
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-red-600">
+                          <Button variant="outline" size="sm" className="text-rose-600">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>

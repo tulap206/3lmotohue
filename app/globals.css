@@ -360,7 +360,10 @@
 
 /* Dashboard content area background */
 .dashboard-bg {
-  background: #f8fafc;
+  background:
+    radial-gradient(1200px 400px at 10% -10%, rgba(37, 99, 235, 0.06), transparent 55%),
+    radial-gradient(900px 320px at 90% 0%, rgba(5, 150, 105, 0.04), transparent 50%),
+    #f8fafc;
 }
 
 /* Loading skeleton shimmer */
@@ -487,7 +490,7 @@
 
 .form-field-required::after {
   content: '*';
-  @apply text-red-500 ml-0.5;
+  @apply text-rose-500 ml-0.5;
 }
 
 .form-field-description {
@@ -495,7 +498,7 @@
 }
 
 .form-field-error {
-  @apply text-xs text-red-500 font-medium mt-1 flex items-center gap-1;
+  @apply text-xs text-rose-500 font-medium mt-1 flex items-center gap-1;
 }
 
 .form-field-success {

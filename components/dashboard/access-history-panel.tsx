@@ -107,8 +107,8 @@ const accentStyles: Record<
   red: {
     stripe: "from-red-400 to-red-600",
     ring: "ring-red-500/20",
-    badge: "bg-red-50 text-red-700 border-red-100",
-    icon: "text-red-600 bg-red-50",
+    badge: "bg-rose-50 text-rose-700 border-rose-100",
+    icon: "text-rose-600 bg-rose-50",
   },
   blue: {
     stripe: "from-blue-400 to-blue-600",
@@ -141,8 +141,8 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
   "Đăng xuất": { icon: LogOut, color: "text-slate-600", bg: "bg-slate-100" },
   "Thêm mới": { icon: Plus, color: "text-blue-700", bg: "bg-blue-50" },
   "Chỉnh sửa": { icon: Pencil, color: "text-amber-700", bg: "bg-amber-50" },
-  "Xóa": { icon: Trash2, color: "text-red-700", bg: "bg-red-50" },
-  "Xoá": { icon: Trash2, color: "text-red-700", bg: "bg-red-50" },
+  "Xóa": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50" },
+  "Xoá": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50" },
   "Sao lưu": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
   "Sao lưu dữ liệu": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
   "Sao lưu tự động": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
@@ -153,7 +153,7 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
 
 const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> = {
   "Hệ thống": { icon: Settings, color: "text-slate-500" },
-  "Quản lý xe": { icon: Car, color: "text-red-600" },
+  "Quản lý xe": { icon: Car, color: "text-rose-600" },
   "Quản lý khách hàng": { icon: Users, color: "text-emerald-600" },
   "Đơn thuê": { icon: ClipboardList, color: "text-amber-600" },
   "Cho vay": { icon: Wallet, color: "text-emerald-600" },
@@ -236,10 +236,10 @@ export function AccessHistoryDenied({
 }) {
   return (
     <div className={panelShellClass(layout)}>
-      <div className="module-card flex flex-1 flex-col items-center justify-center rounded-xl border border-red-100 bg-red-50/30 px-6 py-10 text-center">
-        <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-red-500" />
-        <h3 className="text-sm font-bold text-red-800">Truy cập bị hạn chế</h3>
-        <p className="mt-1 text-sm text-red-600">{message}</p>
+      <div className="module-card flex flex-1 flex-col items-center justify-center rounded-xl border border-rose-100 bg-rose-50/30 px-6 py-10 text-center">
+        <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-rose-500" />
+        <h3 className="text-sm font-bold text-rose-800">Truy cập bị hạn chế</h3>
+        <p className="mt-1 text-sm text-rose-600">{message}</p>
       </div>
     </div>
   )
@@ -597,7 +597,7 @@ export function AccessHistoryPanel({
                           <p className="truncate text-slate-600 font-medium text-[13px]" title={log.details}>
                             {log.details || "—"}
                           </p>
-                          <p className="mt-0.5 font-mono text-sm font-semibold text-red-600" title={log.ipAddress || undefined}>
+                          <p className="mt-0.5 font-mono text-sm font-semibold text-rose-600" title={log.ipAddress || undefined}>
                             IP {log.ipAddress || "—"}
                           </p>
                         </td>

@@ -68,18 +68,18 @@ const ImageUploadButton = ({
   
   return (
     <div className="space-y-2">
-      <Label className="text-gray-600">{label}</Label>
+      <Label className="text-slate-600">{label}</Label>
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-red-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
+        className="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 hover:border-blue-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
       >
         <div className="bg-blue-50 p-3 rounded-lg">
           <Upload className="w-6 h-6 text-blue-600" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-gray-700">Thêm ảnh</p>
-          <p className="text-sm text-gray-500">JPG, PNG, GIF</p>
+          <p className="text-sm font-medium text-slate-700">Thêm ảnh</p>
+          <p className="text-sm text-slate-500">JPG, PNG, GIF</p>
         </div>
       </button>
       <input
@@ -101,7 +101,7 @@ const ImageUploadButton = ({
       />
       {preview && (
         <div className="relative w-fit">
-          <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+          <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
         </div>
       )}
     </div>
@@ -324,7 +324,7 @@ export default function CustomersPage() {
 
       // Wait for all uploads
       const uploadResults = await Promise.all(uploadPromises)
-      console.log("📸 Upload results:", uploadResults)
+      console.log("Upload results:", uploadResults)
       
       uploadResults.forEach(result => {
         if (result && result.url) {
@@ -524,12 +524,12 @@ export default function CustomersPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-gray-200 rounded"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+      <ModulePageShell module="rental">
+        <div className="space-y-6">
+          <div className="h-16 skeleton rounded-[var(--radius-container)]" />
+          <div className="h-96 skeleton rounded-[var(--radius-container)]" />
         </div>
-      </div>
+      </ModulePageShell>
     )
   }
 
@@ -537,17 +537,17 @@ export default function CustomersPage() {
     <ModulePageShell module="rental">
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="bg-white border-gray-200 rounded-2xl max-w-sm">
+        <DialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)] max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-blue-600 flex items-center gap-2">
+            <DialogTitle className="text-rose-600 flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Xác nhận xoá
             </DialogTitle>
-            <DialogDescription className="text-gray-600 text-base mt-2">
-              Bạn có chắc chắn muốn xoá khách hàng <span className="font-semibold text-gray-800">"{customerToDelete?.name}"</span> không?
-              <p className="text-sm text-blue-600 mt-2">⚠ Hành động này không thể hoàn tác!</p>
+            <DialogDescription className="text-slate-600 text-base mt-2">
+              Bạn có chắc chắn muốn xoá khách hàng <span className="font-semibold text-slate-800">"{customerToDelete?.name}"</span> không?
+              <p className="text-meta text-rose-600 mt-2">Hành động này không thể hoàn tác.</p>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">
@@ -557,13 +557,13 @@ export default function CustomersPage() {
                 setDeleteConfirmOpen(false)
                 setCustomerToDelete(null)
               }}
-              className="border-gray-300"
+              className="border-slate-300"
             >
               Hủy
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-rose-600 text-white hover:bg-rose-700"
             >
               Xoá
             </Button>
@@ -602,53 +602,53 @@ export default function CustomersPage() {
               <form onSubmit={handleSubmit}>
                 <EntityFormBody>
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-gray-600">Họ và tên</Label>
+                  <Label htmlFor="name" className="text-slate-600">Họ và tên</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="VD: Nguyễn Văn A"
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-gray-600">Số điện thoại</Label>
+                  <Label htmlFor="phone" className="text-slate-600">Số điện thoại</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="VD: 0901234567"
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="idcard" className="text-gray-600">Số CCCD/CMND</Label>
+                  <Label htmlFor="idcard" className="text-slate-600">Số CCCD/CMND</Label>
                   <Input
                     id="idcard"
                     value={formData.idcard}
                     onChange={(e) => setFormData({ ...formData, idcard: e.target.value })}
                     placeholder="VD: 079123456789"
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="text-gray-600">Địa chỉ</Label>
+                  <Label htmlFor="address" className="text-slate-600">Địa chỉ</Label>
                   <Input
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM"
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                     required
                   />
                 </div>
                 
                 {/* Image Upload Section */}
-                <div className="space-y-4 pt-4 border-t border-gray-200">
-                  <p className="font-medium text-gray-700">Thêm ảnh (tùy chọn)</p>
+                <div className="space-y-4 pt-4 border-t border-slate-200">
+                  <p className="font-medium text-slate-700">Thêm ảnh (tùy chọn)</p>
                   
                   <ImageUploadButton
                     label="Ảnh khách hàng"
@@ -844,7 +844,7 @@ export default function CustomersPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 w-7 p-0 border-red-200 rounded-lg hover:bg-blue-50 text-blue-500"
+                                className="h-7 w-7 p-0 border-rose-200 rounded-lg hover:bg-rose-50 text-rose-500"
                                 onClick={() => handleDelete(customer.id)}
                                 title="Xóa"
                               >

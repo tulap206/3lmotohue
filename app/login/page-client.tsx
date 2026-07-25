@@ -122,7 +122,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 ui-transition"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -139,18 +139,18 @@ export default function LoginPage() {
               <label className="flex items-center gap-2 cursor-pointer group">
                 <div className="relative">
                   <input type="checkbox" className="peer sr-only" />
-                  <div className="w-4 h-4 rounded border border-gray-300 bg-gray-50 peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all" />
+                  <div className="w-4 h-4 rounded border border-slate-300 bg-slate-50 peer-checked:bg-blue-600 peer-checked:border-blue-600 ui-transition" />
                   <svg className="absolute top-0.5 left-0.5 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-gray-500 group-hover:text-gray-700 transition-colors">Ghi nhớ</span>
+                <span className="text-slate-500 group-hover:text-slate-700 ui-transition">Ghi nhớ</span>
               </label>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all hover-lift group"
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-[var(--radius-control)] ui-transition group"
               disabled={isLoading}
             >
               {isLoading ? (

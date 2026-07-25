@@ -291,7 +291,7 @@ export default function VehiclesPage() {
         let documentImageUrls: string[] = []
 
         if (newVehicle.vehicleImages.length > 0) {
-          console.log("📸 Uploading vehicle images...")
+          console.log("Uploading vehicle images...")
           vehicleImageUrls = await uploadMultipleImages(
             newVehicle.vehicleImages,
             "vehicles",
@@ -405,7 +405,7 @@ export default function VehiclesPage() {
         // Upload new images if any
         let newVehicleImageUrls: string[] = []
         if (newVehicleImageFiles.length > 0) {
-          console.log("📸 Uploading new vehicle images for edit...")
+          console.log("Uploading new vehicle images for edit...")
           newVehicleImageUrls = await uploadMultipleImages(
             newVehicleImageFiles,
             "vehicles",
@@ -791,12 +791,12 @@ export default function VehiclesPage() {
               
               {/* Vehicle Images */}
               <div className="grid gap-2">
-                <Label className="text-gray-600">Ảnh xe</Label>
+                <Label className="text-slate-600">Ảnh xe</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {newVehicle.vehicleImages.map((img, index) => (
                     <div 
                       key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group"
+                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
                     >
                       <img 
                         src={img instanceof File ? URL.createObjectURL(img) : img} 
@@ -806,15 +806,15 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'vehicle')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                    <Upload className="w-6 h-6 text-slate-400" />
+                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -828,12 +828,12 @@ export default function VehiclesPage() {
 
               {/* Document Images */}
               <div className="grid gap-2">
-                <Label className="text-gray-600">Ảnh giấy tờ xe</Label>
+                <Label className="text-slate-600">Ảnh giấy tờ xe</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {newVehicle.documentImages.map((img, index) => (
                     <div 
                       key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group"
+                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
                     >
                       <img 
                         src={img instanceof File ? URL.createObjectURL(img) : img} 
@@ -843,15 +843,15 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'document')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                    <Upload className="w-6 h-6 text-slate-400" />
+                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1039,25 +1039,25 @@ export default function VehiclesPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-7 w-7 p-0 border-red-200 rounded-lg hover:bg-blue-50 text-blue-500"
+                                      className="h-7 w-7 p-0 border-rose-200 rounded-lg hover:bg-rose-50 text-rose-500"
                                       title="Xóa"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </Button>
                                   </AlertDialogTrigger>
-                                  <AlertDialogContent className="bg-white border-gray-200 rounded-2xl">
+                                  <AlertDialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)]">
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle className="text-gray-800">Xác nhận xóa xe</AlertDialogTitle>
-                                      <AlertDialogDescription className="text-gray-500">
-                                        Bạn có chắc chắn muốn xóa xe <span className="font-medium text-gray-800">{vehicle.name}</span> ({vehicle.licensePlate})?
+                                      <AlertDialogTitle className="text-slate-800">Xác nhận xóa xe</AlertDialogTitle>
+                                      <AlertDialogDescription className="text-slate-500">
+                                        Bạn có chắc chắn muốn xóa xe <span className="font-medium text-slate-800">{vehicle.name}</span> ({vehicle.licensePlate})?
                                         Hành động này không thể hoàn tác.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel className="border-gray-200 rounded-xl">Hủy</AlertDialogCancel>
+                                      <AlertDialogCancel className="border-slate-200 rounded-xl">Hủy</AlertDialogCancel>
                                       <AlertDialogAction
                                         onClick={() => handleDeleteVehicle(vehicle.id)}
-                                        className="bg-blue-500 text-white hover:bg-red-600 rounded-xl"
+                                        className="bg-rose-600 text-white hover:bg-rose-700 rounded-xl"
                                       >
                                         Xóa
                                       </AlertDialogAction>
@@ -1146,48 +1146,48 @@ export default function VehiclesPage() {
             <div className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-name" className="text-gray-600">Loại xe</Label>
+                  <Label htmlFor="edit-name" className="text-slate-600">Loại xe</Label>
                   <Input
                     id="edit-name"
                     value={editingVehicle.name}
                     onChange={(e) => setEditingVehicle({ ...editingVehicle, name: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-licensePlate" className="text-gray-600">Biển số</Label>
+                  <Label htmlFor="edit-licensePlate" className="text-slate-600">Biển số</Label>
                   <Input
                     id="edit-licensePlate"
                     value={editingVehicle.licensePlate}
                     onChange={(e) => setEditingVehicle({ ...editingVehicle, licensePlate: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-color" className="text-gray-600">Màu xe</Label>
+                  <Label htmlFor="edit-color" className="text-slate-600">Màu xe</Label>
                   <Input
                     id="edit-color"
                     value={editingVehicle.color}
                     onChange={(e) => setEditingVehicle({ ...editingVehicle, color: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-current_km" className="text-gray-600">Số KM hiện tại</Label>
+                  <Label htmlFor="edit-current_km" className="text-slate-600">Số KM hiện tại</Label>
                   <Input
                     id="edit-current_km"
                     type="number"
                     value={editingVehicle.current_km}
                     onChange={(e) => setEditingVehicle({ ...editingVehicle, current_km: parseInt(e.target.value) || 0 })}
-                    className="bg-gray-50 border-gray-200 rounded-xl"
+                    className="bg-slate-50 border-slate-200 rounded-xl"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-price" className="text-gray-600">Giá thuê (VND/ngày)</Label>
+                  <Label htmlFor="edit-price" className="text-slate-600">Giá thuê (VND/ngày)</Label>
                   <Input
                     id="edit-price"
                     type="text"
@@ -1196,11 +1196,11 @@ export default function VehiclesPage() {
                       const formatted = formatMoneyInput(e.target.value)
                       setEditingVehicle({ ...editingVehicle, pricePerDay: formatted as any })
                     }}
-                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                    className="bg-slate-50 border-slate-200 rounded-xl font-mono"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-purchasePrice" className="text-gray-600">Giá mua xe (VND)</Label>
+                  <Label htmlFor="edit-purchasePrice" className="text-slate-600">Giá mua xe (VND)</Label>
                   <Input
                     id="edit-purchasePrice"
                     type="text"
@@ -1209,46 +1209,46 @@ export default function VehiclesPage() {
                       const formatted = formatMoneyInput(e.target.value)
                       setEditingVehicle({ ...editingVehicle, purchasePrice: formatted as any })
                     }}
-                    className="bg-gray-50 border-gray-200 rounded-xl font-mono"
+                    className="bg-slate-50 border-slate-200 rounded-xl font-mono"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-notes" className="text-gray-600">Ghi chú</Label>
+                  <Label htmlFor="edit-notes" className="text-slate-600">Ghi chú</Label>
                   <textarea
                     id="edit-notes"
                     value={editingVehicle.notes}
                     onChange={(e) => setEditingVehicle({ ...editingVehicle, notes: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl p-3 border resize-none"
+                    className="bg-slate-50 border-slate-200 rounded-xl p-3 border resize-none"
                     rows={3}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-category" className="text-gray-600">Phân loại xe</Label>
+                  <Label htmlFor="edit-category" className="text-slate-600">Phân loại xe</Label>
                   <Select
                     value={editingVehicle.category || "bike"}
                     onValueChange={(value: "car" | "bike") => setEditingVehicle({ ...editingVehicle, category: value })}
                   >
-                    <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                    <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
                       <SelectValue placeholder="Phân loại" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-200 rounded-xl">
+                    <SelectContent className="bg-white border-slate-200 rounded-xl">
                       <SelectItem value="bike">Xe máy</SelectItem>
                       <SelectItem value="car">Ô tô</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-status" className="text-gray-600">Trạng thái</Label>
+                  <Label htmlFor="edit-status" className="text-slate-600">Trạng thái</Label>
                   <Select
                     value={editingVehicle.status}
                     onValueChange={(value: VehicleStatus) => setEditingVehicle({ ...editingVehicle, status: value })}
                   >
-                    <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl">
+                    <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
                       <SelectValue placeholder="Chọn trạng thái" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-200 rounded-xl">
+                    <SelectContent className="bg-white border-slate-200 rounded-xl">
                       <SelectItem value="available">Sẵn sàng</SelectItem>
                       <SelectItem value="rented">Đang thuê</SelectItem>
                       <SelectItem value="maintenance">Bảo trì</SelectItem>
@@ -1257,23 +1257,23 @@ export default function VehiclesPage() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-notes" className="text-gray-600">Ghi chú</Label>
+                <Label htmlFor="edit-notes" className="text-slate-600">Ghi chú</Label>
                 <Textarea
                   id="edit-notes"
                   value={editingVehicle.notes}
                   onChange={(e) => setEditingVehicle({ ...editingVehicle, notes: e.target.value })}
-                  className="bg-gray-50 border-gray-200 rounded-xl min-h-[80px]"
+                  className="bg-slate-50 border-slate-200 rounded-xl min-h-[80px]"
                 />
               </div>
               
               {/* Vehicle Images */}
               <div className="grid gap-2">
-                <Label className="text-gray-600">Ảnh xe</Label>
+                <Label className="text-slate-600">Ảnh xe</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {editingVehicle.vehicleImages.map((img, index) => (
                     <div 
                       key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group"
+                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
                     >
                       <img
                         src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
@@ -1284,15 +1284,15 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'vehicle', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                    <Upload className="w-6 h-6 text-slate-400" />
+                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1306,12 +1306,12 @@ export default function VehiclesPage() {
 
               {/* Document Images */}
               <div className="grid gap-2">
-                <Label className="text-gray-600">Ảnh giấy tờ xe</Label>
+                <Label className="text-slate-600">Ảnh giấy tờ xe</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {editingVehicle.documentImages.map((img, index) => (
                     <div 
                       key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group"
+                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
                     >
                       <img
                         src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
@@ -1322,15 +1322,15 @@ export default function VehiclesPage() {
                       <button
                         type="button"
                         onClick={() => removeImage(index, 'document', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-gray-400" />
-                    <span className="text-sm text-gray-400 mt-1">Thêm ảnh</span>
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                    <Upload className="w-6 h-6 text-slate-400" />
+                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1605,8 +1605,8 @@ export default function VehiclesPage() {
               </div>
             )}
           </div>
-          <div className="flex justify-end pt-4 border-t border-gray-100 mt-2">
-            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="rounded-xl border-gray-200">
+          <div className="flex justify-end pt-4 border-t border-slate-100 mt-2">
+            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="rounded-xl border-slate-200">
               Đóng
             </Button>
           </div>

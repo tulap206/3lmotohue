@@ -25,6 +25,20 @@ export const moduleBadgeClass =
 export const moduleFilterInputClass =
   "h-11 min-h-11 bg-white border-slate-200 text-body rounded-[var(--radius-control)]"
 
+export const moduleFormLabelClass = "text-label"
+
+export const moduleFormInputClass =
+  "h-11 bg-white border-slate-200 text-body rounded-[var(--radius-control)] focus-visible:ring-blue-500/20 focus-visible:border-blue-500"
+
+export const moduleDialogContentClass =
+  "bg-white border-slate-200 rounded-[var(--radius-container)]"
+
+export const moduleDestructiveBtnClass =
+  "bg-rose-600 text-white hover:bg-rose-700 rounded-[var(--radius-control)]"
+
+export const moduleSoftDeleteBtnClass =
+  "h-7 w-7 p-0 border-rose-200 rounded-lg hover:bg-rose-50 text-rose-500"
+
 /** Page wrapper — spacing only; padding comes from dashboard sidebar main. */
 export function ModulePageShell({
   module,
