@@ -398,17 +398,18 @@ export default function DashboardPage() {
       // Rental revenue (from completed rentals, includes extraFees via revenue field)
       const rentalRevenue = completedRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
 
-      
-      // Transaction totals
+      // Transaction totals (manual thu/chi from "Giao dịch gần đây")
       const totalIncome = transactions
         .filter((tx: any) => tx.type === 'income')
         .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-      
-      // Doanh thu = Rental revenue + Income from transactions
+      const totalExpense = transactions
+        .filter((tx: any) => tx.type === 'expense')
+        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+
+      // Doanh thu = doanh thu thuê + các khoản thu thủ công
       const totalRevenue = rentalRevenue + totalIncome
-      
-      // Lợi nhuận = Rental revenue ONLY (not counting transactions)
-      const totalProfit = rentalRevenue
+      // Lợi nhuận = doanh thu - các khoản chi thủ công
+      const totalProfit = totalRevenue - totalExpense
 
       setStats({
         totalVehicles: vehicles.length,
@@ -459,7 +460,7 @@ export default function DashboardPage() {
     } finally {
       if (showLoading) setLoading(false)
     }
-  }, [])
+  }, [user?.username])
 
   useEffect(() => {
     loadDashboardData(true)
@@ -561,13 +562,28 @@ export default function DashboardPage() {
     })
     const utilizationPct = totalVehicleDays > 0 ? Math.round((totalRentedDays / totalVehicleDays) * 100) : 0
 
-    // Revenue this month: from completed orders whose endDate falls in this month
+    // Revenue this month: completed rentals ending this month + manual income this month
     const completedOrdersThisMonth = orders.filter(o => {
       if (o.status !== "completed") return false
       const end = parseVN(o.endDate)
       return end.getMonth() === currentMonth && end.getFullYear() === currentYear
     })
-    const revenueThisMonth = completedOrdersThisMonth.reduce((sum: number, o: any) => sum + (o.revenue || o.totalPrice || 0), 0)
+    const rentalRevenueThisMonth = completedOrdersThisMonth.reduce((sum: number, o: any) => sum + (o.revenue || o.totalPrice || 0), 0)
+
+    const txThisMonth = transactions.filter((tx) => {
+      const date = new Date(tx.timestamp || tx.created_at || "")
+      if (isNaN(date.getTime())) return false
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+    })
+    const incomeThisMonth = txThisMonth
+      .filter((tx) => tx.type === "income")
+      .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+    const expenseThisMonth = txThisMonth
+      .filter((tx) => tx.type === "expense")
+      .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+
+    const revenueThisMonth = rentalRevenueThisMonth + incomeThisMonth
+    const profitThisMonth = revenueThisMonth - expenseThisMonth
 
     // Commission report: group active orders by homeName
     const commissionMap: Record<string, { count: number; total: number }> = {}
@@ -579,8 +595,8 @@ export default function DashboardPage() {
     })
     const commissionReport = Object.entries(commissionMap).map(([name, val]) => ({ name, ...val }))
 
-    return { utilizationPct, revenueThisMonth, profitThisMonth: revenueThisMonth, ordersCountThisMonth: completedOrdersThisMonth.length, commissionReport }
-  }, [vehicles, orders])
+    return { utilizationPct, revenueThisMonth, profitThisMonth, ordersCountThisMonth: completedOrdersThisMonth.length, commissionReport }
+  }, [vehicles, orders, transactions])
 
   const overdueOrderRows = useMemo(() => {
     const today = new Date()
@@ -848,20 +864,20 @@ export default function DashboardPage() {
               label="Tổng lợi nhuận"
               value={formatPrice(stats.totalProfit)}
               valueClassName="text-blue-700"
-              sublabel="lợi nhuận lũy kế"
+              sublabel="sau thu/chi lũy kế"
             />
             <RentalKpiCard
               variant="hero"
               label={`Doanh thu tháng ${new Date().getMonth() + 1}`}
               value={formatPrice(thisMonthKpis.revenueThisMonth)}
-              sublabel="đơn đã hoàn tất"
+              sublabel="đơn hoàn tất + thu"
               valueClassName="text-emerald-700"
             />
             <RentalKpiCard
               variant="hero"
               label={`Lợi nhuận tháng ${new Date().getMonth() + 1}`}
               value={formatPrice(thisMonthKpis.profitThisMonth)}
-              sublabel="thuần từ thuê xe"
+              sublabel="sau thu/chi tháng"
               valueClassName="text-blue-700"
             />
             <RentalKpiCard

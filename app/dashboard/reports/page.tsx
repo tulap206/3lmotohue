@@ -319,8 +319,8 @@ export default function ReportsPage() {
       // Doanh thu = Rental revenue + Income from transactions
       const totalRevenue = rentalRevenue + totalIncomeFromTransactions
       
-      // Lợi nhuận = Rental revenue only (not counting transactions)
-      const totalProfit = rentalRevenue
+      // Lợi nhuận = doanh thu - chi thủ công
+      const totalProfit = totalRevenue - totalExpenseFromTransactions
       
       // Active rentals = pending status
       const activeRentals = rentals.filter((r: any) => r.status === "pending").length
@@ -905,15 +905,12 @@ export default function ReportsPage() {
           .filter((tx) => tx.type === 'expense')
           .reduce((sum, tx) => sum + tx.amount, 0)
         
-        // NOTE: reportData.totalRevenue = Rental revenue + Income transactions
-        // reportData.totalProfit = Rental revenue only
-        // So to get rental revenue: we need to subtract income from totalRevenue
-        // Better: use totalProfit which is rental revenue only
-        const rentalRevenue = reportData.totalProfit // This is rental revenue only
+        // NOTE: reportData.totalRevenue = doanh thu thuê + thu thủ công
+        // reportData.totalProfit = totalRevenue - chi thủ công
+        const rentalRevenue = reportData.totalRevenue - totalIncome
         
-        // Calculate cash on hand
-        // = Rental revenue + Income from transactions - Expenses from transactions
-        const cashOnHand = rentalRevenue + totalIncome - totalExpense
+        // Tiền hiện có = doanh thu - chi
+        const cashOnHand = reportData.totalProfit
         
         return (
           <Card className="bg-blue-50 border-blue-200">
