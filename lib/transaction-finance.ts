@@ -1,13 +1,14 @@
 /**
  * Phân loại thu/chi để tính doanh thu & lợi nhuận vận hành.
- * Khoản vốn (góp vốn) và mua tài sản (mua xe) không tính vào P&L.
+ * Khoản vốn và mua tài sản (xe, mũ, định vị, setup...) không tính vào P&L.
  */
 
 const CAPITAL_INCOME_RE =
   /(g[oó]p\s*v[oốồ]n|v[oốồ]n\s*g[oó]p|đ[aầ]u\s*t[ưu]\s*v[oốồ]n|\[v[oốồ]n\])/i
 
+/** Mua tài sản / đầu tư một lần — không phải chi vận hành hàng ngày */
 const CAPITAL_EXPENSE_RE =
-  /(mua\s*xe|mua\s*ab\b|mua\s*vision|mua\s*janus|\[v[oốồ]n\])/i
+  /(mua\s*xe|mua\s*ab\b|mua\s*vision|mua\s*janus|m[uũ]\s*b[aả]o\s*hi[eể]m|đ[iị]nh\s*v[iị]|sever|server|t[eê]n\s*mi[eề]n|\[v[oốồ]n\])/i
 
 export type TxLike = {
   type?: string | null
@@ -40,7 +41,7 @@ export function calcOperatingRevenue(rentalRevenue: number, transactions: TxLike
   return rentalRevenue + sumTxAmount(transactions, "income", true)
 }
 
-/** Lợi nhuận vận hành = doanh thu vận hành − chi vận hành (không gồm mua xe/tài sản) */
+/** Lợi nhuận vận hành = doanh thu vận hành − chi vận hành (không gồm mua tài sản) */
 export function calcOperatingProfit(rentalRevenue: number, transactions: TxLike[]): number {
   return calcOperatingRevenue(rentalRevenue, transactions) - sumTxAmount(transactions, "expense", true)
 }
