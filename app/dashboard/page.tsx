@@ -1065,7 +1065,7 @@ export default function DashboardPage() {
                     <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-slate-500 mt-1">Ví dụ vốn: góp vốn, mua xe. Không làm lệch doanh thu/lợi nhuận.</p>
+                <p className="text-xs text-slate-500 mt-1">Ví dụ vốn: góp vốn, mua xe, mũ, định vị. Không làm lệch doanh thu/lợi nhuận.</p>
               </div>
               <div>
                 <Label className="text-gray-700 text-sm font-medium">Mô Tả</Label>
