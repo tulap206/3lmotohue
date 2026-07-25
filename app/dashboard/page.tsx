@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/select"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, toStoredDateValue } from "@/lib/format-date"
+import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag } from "@/lib/transaction-finance"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
 
@@ -351,12 +352,14 @@ export default function DashboardPage() {
     type: "income",
     description: "",
     amount: "",
+    isCapital: false,
   })
   
   const [txEditFormData, setTxEditFormData] = useState({
     type: "income",
     description: "",
     amount: "",
+    isCapital: false,
   })
   
   const loadDashboardData = useCallback(async (showLoading = true) => {
@@ -395,21 +398,12 @@ export default function DashboardPage() {
         return false
       })
       
-      // Rental revenue (from completed rentals, includes extraFees via revenue field)
+      // Doanh thu thuê (đơn hoàn tất; revenue đã trừ hoa hồng + gồm phụ phí)
       const rentalRevenue = completedRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
 
-      // Transaction totals (manual thu/chi from "Giao dịch gần đây")
-      const totalIncome = transactions
-        .filter((tx: any) => tx.type === 'income')
-        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-      const totalExpense = transactions
-        .filter((tx: any) => tx.type === 'expense')
-        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-
-      // Doanh thu = doanh thu thuê + các khoản thu thủ công
-      const totalRevenue = rentalRevenue + totalIncome
-      // Lợi nhuận = doanh thu - các khoản chi thủ công
-      const totalProfit = totalRevenue - totalExpense
+      // P&L vận hành: bỏ qua góp vốn / mua xe (khoản vốn & tài sản)
+      const totalRevenue = calcOperatingRevenue(rentalRevenue, transactions)
+      const totalProfit = calcOperatingProfit(rentalRevenue, transactions)
 
       setStats({
         totalVehicles: vehicles.length,
@@ -516,6 +510,7 @@ export default function DashboardPage() {
       monthly[key] = { name: key, income: 0, expense: 0 }
     }
     transactions.forEach((tx) => {
+      if (isCapitalTransaction(tx)) return
       const date = new Date(tx.timestamp || tx.created_at || "")
       if (isNaN(date.getTime())) return
       const key = `Thg ${date.getMonth() + 1}`
@@ -575,15 +570,8 @@ export default function DashboardPage() {
       if (isNaN(date.getTime())) return false
       return date.getMonth() === currentMonth && date.getFullYear() === currentYear
     })
-    const incomeThisMonth = txThisMonth
-      .filter((tx) => tx.type === "income")
-      .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-    const expenseThisMonth = txThisMonth
-      .filter((tx) => tx.type === "expense")
-      .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-
-    const revenueThisMonth = rentalRevenueThisMonth + incomeThisMonth
-    const profitThisMonth = revenueThisMonth - expenseThisMonth
+    const revenueThisMonth = calcOperatingRevenue(rentalRevenueThisMonth, txThisMonth)
+    const profitThisMonth = calcOperatingProfit(rentalRevenueThisMonth, txThisMonth)
 
     // Commission report: group active orders by homeName
     const commissionMap: Record<string, { count: number; total: number }> = {}
@@ -656,14 +644,14 @@ export default function DashboardPage() {
     try {
       const newTx = await insertTransaction({
         type: txFormData.type as "income" | "expense",
-        description: txFormData.description,
+        description: withCapitalTag(txFormData.description, txFormData.isCapital),
         amount: parseMoneyInput(txFormData.amount),
         user: user.username,
         timestamp: new Date().toISOString(),
       })
       
       setTransactions([newTx, ...transactions])
-      setTxFormData({ type: "income", description: "", amount: "" })
+      setTxFormData({ type: "income", description: "", amount: "", isCapital: false })
       setIsAddTxOpen(false)
       
       // Reload stats/report data
@@ -729,8 +717,9 @@ export default function DashboardPage() {
     setEditingTx(tx)
     setTxEditFormData({
       type: tx.type,
-      description: tx.description,
+      description: (tx.description || "").replace(/^\s*\[vốn\]\s*/i, ""),
       amount: tx.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+      isCapital: isCapitalTransaction(tx),
     })
     setIsEditTxOpen(true)
   }
@@ -738,14 +727,15 @@ export default function DashboardPage() {
   const handleConfirmEditTx = async () => {
     if (!editingTx || !txEditFormData.description || !txEditFormData.amount) return
     const parsedAmount = parseMoneyInput(txEditFormData.amount)
+    const nextDescription = withCapitalTag(txEditFormData.description, txEditFormData.isCapital)
     try {
       await updateTransaction(editingTx.id, {
         type: txEditFormData.type as "income" | "expense",
-        description: txEditFormData.description,
+        description: nextDescription,
         amount: parsedAmount,
       })
       
-      setTransactions(transactions.map(t => t.id === editingTx.id ? { ...t, type: txEditFormData.type, description: txEditFormData.description, amount: parsedAmount } : t))
+      setTransactions(transactions.map(t => t.id === editingTx.id ? { ...t, type: txEditFormData.type, description: nextDescription, amount: parsedAmount } : t))
       setIsEditTxOpen(false)
       setEditingTx(null)
       await loadDashboardData(false)
@@ -857,27 +847,27 @@ export default function DashboardPage() {
               label="Tổng doanh thu"
               value={formatPrice(stats.totalRevenue)}
               valueClassName="text-emerald-700"
-              sublabel="doanh thu lũy kế"
+              sublabel="thuê + thu vận hành"
             />
             <RentalKpiCard
               variant="hero"
               label="Tổng lợi nhuận"
               value={formatPrice(stats.totalProfit)}
               valueClassName="text-blue-700"
-              sublabel="sau thu/chi lũy kế"
+              sublabel="sau chi vận hành"
             />
             <RentalKpiCard
               variant="hero"
               label={`Doanh thu tháng ${new Date().getMonth() + 1}`}
               value={formatPrice(thisMonthKpis.revenueThisMonth)}
-              sublabel="đơn hoàn tất + thu"
+              sublabel="đơn + thu vận hành"
               valueClassName="text-emerald-700"
             />
             <RentalKpiCard
               variant="hero"
               label={`Lợi nhuận tháng ${new Date().getMonth() + 1}`}
               value={formatPrice(thisMonthKpis.profitThisMonth)}
-              sublabel="sau thu/chi tháng"
+              sublabel="sau chi vận hành"
               valueClassName="text-blue-700"
             />
             <RentalKpiCard
@@ -1062,6 +1052,22 @@ export default function DashboardPage() {
                 </Select>
               </div>
               <div>
+                <Label className="text-gray-700 text-sm font-medium">Phân loại khoản</Label>
+                <Select
+                  value={txFormData.isCapital ? "capital" : "operating"}
+                  onValueChange={(val) => setTxFormData({ ...txFormData, isCapital: val === "capital" })}
+                >
+                  <SelectTrigger className="border-gray-300 rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
+                    <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500 mt-1">Ví dụ vốn: góp vốn, mua xe. Không làm lệch doanh thu/lợi nhuận.</p>
+              </div>
+              <div>
                 <Label className="text-gray-700 text-sm font-medium">Mô Tả</Label>
                 <Input
                   placeholder="Nhập mô tả (ví dụ: mua định vị, sửa xe)"
@@ -1147,6 +1153,21 @@ export default function DashboardPage() {
                 <SelectContent className="bg-white">
                   <SelectItem value="income">Thu</SelectItem>
                   <SelectItem value="expense">Chi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-gray-700 text-sm font-medium">Phân loại khoản</Label>
+              <Select
+                value={txEditFormData.isCapital ? "capital" : "operating"}
+                onValueChange={(val) => setTxEditFormData({ ...txEditFormData, isCapital: val === "capital" })}
+              >
+                <SelectTrigger className="border-gray-300 rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
+                  <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchTransactions, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
+import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag } from "@/lib/transaction-finance"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -76,11 +77,13 @@ export default function ReportsPage() {
     type: "income" as "income" | "expense",
     description: "",
     amount: "",
+    isCapital: false,
   })
   const [editFormData, setEditFormData] = useState({
     type: "income" as "income" | "expense",
     description: "",
     amount: "",
+    isCapital: false,
   })
 
   const loadTransactions = async (resetPage = true) => {
@@ -164,7 +167,7 @@ export default function ReportsPage() {
     try {
       const newTransaction = await insertTransaction({
         type: formData.type,
-        description: formData.description,
+        description: withCapitalTag(formData.description, formData.isCapital),
         amount: parseMoneyInput(formData.amount),
         user: user.username,
         timestamp: new Date().toISOString(),
@@ -173,7 +176,7 @@ export default function ReportsPage() {
       console.log("✅ Transaction saved to Supabase:", newTransaction)
       
       setTransactions([newTransaction, ...transactions])
-      setFormData({ type: "income", description: "", amount: "" })
+      setFormData({ type: "income", description: "", amount: "", isCapital: false })
       setIsAddTransactionOpen(false)
       
       // Log action if user exists
@@ -225,8 +228,9 @@ export default function ReportsPage() {
     setEditingTransaction(tx)
     setEditFormData({
       type: tx.type,
-      description: tx.description,
+      description: (tx.description || "").replace(/^\s*\[vốn\]\s*/i, ""),
       amount: tx.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+      isCapital: isCapitalTransaction(tx),
     })
     setIsEditTransactionOpen(true)
   }
@@ -238,17 +242,18 @@ export default function ReportsPage() {
     }
     
     const parsedAmount = parseMoneyInput(editFormData.amount)
+    const nextDescription = withCapitalTag(editFormData.description, editFormData.isCapital)
     
     console.log("📝 Updating transaction:", editingTransaction.id, {
       type: editFormData.type,
-      description: editFormData.description,
+      description: nextDescription,
       amount: parsedAmount,
     })
     
     try {
       await updateTransaction(editingTransaction.id, {
         type: editFormData.type as "income" | "expense",
-        description: editFormData.description,
+        description: nextDescription,
         amount: parsedAmount,
       })
       
@@ -303,10 +308,15 @@ export default function ReportsPage() {
       const totalVehicles = vehicles.length || 0
       const totalRentals = rentals.length || 0
 
-      // Rental revenue (totalPrice field)
-      const rentalRevenue = rentals.reduce((sum: number, r: any) => sum + (r.totalPrice || 0), 0)
+      // Rental revenue (completed orders; prefer revenue field)
+      const rentalRevenue = rentals
+        .filter((r: any) => r.status === "completed")
+        .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
       
-      // Transaction totals
+      // P&L vận hành: bỏ qua góp vốn / mua xe
+      const totalRevenue = calcOperatingRevenue(rentalRevenue, transactions)
+      const totalProfit = calcOperatingProfit(rentalRevenue, transactions)
+      
       const totalIncomeFromTransactions = transactions
         .filter((tx: any) => tx.type === 'income')
         .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
@@ -314,13 +324,6 @@ export default function ReportsPage() {
       const totalExpenseFromTransactions = transactions
         .filter((tx: any) => tx.type === 'expense')
         .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-      
-      // NEW LOGIC:
-      // Doanh thu = Rental revenue + Income from transactions
-      const totalRevenue = rentalRevenue + totalIncomeFromTransactions
-      
-      // Lợi nhuận = doanh thu - chi thủ công
-      const totalProfit = totalRevenue - totalExpenseFromTransactions
       
       // Active rentals = pending status
       const activeRentals = rentals.filter((r: any) => r.status === "pending").length
@@ -565,6 +568,21 @@ export default function ReportsPage() {
               </Select>
             </div>
             <div>
+              <Label className="text-gray-700 text-sm font-medium">Phân loại khoản</Label>
+              <Select
+                value={editFormData.isCapital ? "capital" : "operating"}
+                onValueChange={(val) => setEditFormData({ ...editFormData, isCapital: val === "capital" })}
+              >
+                <SelectTrigger className="border-gray-300 rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
+                  <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label className="text-gray-700 text-sm font-medium">Mô Tả</Label>
               <Input
                 placeholder="Nhập mô tả"
@@ -773,6 +791,21 @@ export default function ReportsPage() {
                     </Select>
                   </div>
                   <div>
+                    <Label className="text-gray-700 text-sm font-medium">Phân loại khoản</Label>
+                    <Select
+                      value={formData.isCapital ? "capital" : "operating"}
+                      onValueChange={(val) => setFormData({ ...formData, isCapital: val === "capital" })}
+                    >
+                      <SelectTrigger className="border-gray-300 rounded-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
+                        <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label className="text-gray-700 text-sm font-medium">Mô Tả (ví dụ: mua định vị, sửa xe)</Label>
                     <Input
                       placeholder="Nhập mô tả"
@@ -905,12 +938,12 @@ export default function ReportsPage() {
           .filter((tx) => tx.type === 'expense')
           .reduce((sum, tx) => sum + tx.amount, 0)
         
-        // NOTE: reportData.totalRevenue = doanh thu thuê + thu thủ công
-        // reportData.totalProfit = totalRevenue - chi thủ công
-        const rentalRevenue = reportData.totalRevenue - totalIncome
-        
-        // Tiền hiện có = doanh thu - chi
-        const cashOnHand = reportData.totalProfit
+        // NOTE: reportData.totalRevenue/Profit = P&L vận hành (không gồm góp vốn/mua xe)
+        // Tiền hiện có vẫn tính toàn bộ sổ thu/chi (gồm vốn)
+        const rentalOnly = reportData.totalRevenue - transactions
+          .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
+          .reduce((sum, tx) => sum + tx.amount, 0)
+        const cashOnHand = rentalOnly + totalIncome - totalExpense
         
         return (
           <Card className="bg-blue-50 border-blue-200">
@@ -948,7 +981,7 @@ export default function ReportsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">📥 Tổng thu</p>
-                    <p className="font-semibold text-base md:text-lg text-green-600 break-words text-sm md:text-base">+{(rentalRevenue + totalIncome).toLocaleString("vi-VN")}</p>
+                    <p className="font-semibold text-base md:text-lg text-green-600 break-words text-sm md:text-base">+{(rentalOnly + totalIncome).toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">📤 Tổng chi</p>
