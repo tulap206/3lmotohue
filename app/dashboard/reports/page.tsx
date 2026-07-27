@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchTransactions, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag } from "@/lib/transaction-finance"
+import { buildCommissionHomeReport, sumCommissionRows, type CommissionHomeRow } from "@/lib/commission-home"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -40,6 +41,9 @@ interface ReportData {
   vehiclesInMaintenance: number
   monthlyRevenue: Array<{ month: string; revenue: number }>
   topVehicles: Array<{ name: string; rentals: number; revenue: number }>
+  /** Tổng HH Home đã trừ trong DT (đơn completed) */
+  commissionHomeTotal: number
+  commissionByHome: CommissionHomeRow[]
 }
 
 interface Vehicle {
@@ -397,7 +401,10 @@ export default function ReportsPage() {
         .sort((a: any, b: any) => b.revenue - a.revenue)
         .slice(0, 5)
 
-      console.log("📈 Report ready:", { totalCustomers, totalVehicles, totalRevenue })
+      const commissionByHome = buildCommissionHomeReport(rentals, { completedOnly: true })
+      const commissionHomeTotal = sumCommissionRows(commissionByHome)
+
+      console.log("📈 Report ready:", { totalCustomers, totalVehicles, totalRevenue, commissionHomeTotal })
 
       const finalData: ReportData = {
         totalCustomers,
@@ -409,6 +416,8 @@ export default function ReportsPage() {
         vehiclesInMaintenance,
         monthlyRevenue,
         topVehicles,
+        commissionHomeTotal,
+        commissionByHome,
       }
 
       setReportData(finalData)
@@ -433,6 +442,8 @@ export default function ReportsPage() {
           { month: "T6", revenue: 0 },
         ],
         topVehicles: [],
+        commissionHomeTotal: 0,
+        commissionByHome: [],
       })
     } finally {
       if (showLoading) setLoading(false)
@@ -998,12 +1009,32 @@ export default function ReportsPage() {
                     <p className="font-semibold text-base md:text-lg text-rose-600 text-sm md:text-base">-{totalExpense.toLocaleString("vi-VN")}</p>
                   </div>
                   <div>
+                    <p className="text-sm text-slate-500 mb-1">🏠 Chi HH Home</p>
+                    <p className="font-semibold text-base md:text-lg text-amber-700 break-words text-sm md:text-base">
+                      -{reportData.commissionHomeTotal.toLocaleString("vi-VN")}
+                    </p>
+                    <p className="text-sm text-slate-400 mt-0.5">đã trừ trong doanh thu</p>
+                  </div>
+                  <div>
                     <p className="text-sm text-slate-500 mb-1">💵 Tiền hiện có</p>
                     <p className={`font-semibold text-base md:text-lg ${cashOnHand >= 0 ? 'text-blue-600' : 'text-rose-600'} text-sm md:text-base break-words`}>
                       {cashOnHand.toLocaleString("vi-VN")}
                     </p>
                   </div>
                 </div>
+                {reportData.commissionByHome.length > 0 && (
+                  <div className="mt-3 space-y-1.5 border-t border-blue-100 pt-3">
+                    <p className="text-sm font-semibold text-slate-500">HH theo Home</p>
+                    {reportData.commissionByHome.slice(0, 5).map((row) => (
+                      <div key={row.name} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="text-slate-700 truncate">{row.name} · {row.count} đơn</span>
+                        <span className="font-semibold text-amber-700 tabular-nums shrink-0">
+                          {row.total.toLocaleString("vi-VN")} đ
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

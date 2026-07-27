@@ -203,9 +203,12 @@ export function OverdueOrdersPanel({
 export function CommissionHomeReportPanel({
   rows,
   formatPrice,
+  periodLabel,
 }: {
   rows: CommissionHomeRow[]
   formatPrice: (n: number) => string
+  /** Ví dụ: "Tháng 7/2026" — đơn hoàn thành trong kỳ */
+  periodLabel?: string
 }) {
   const [page, setPage] = useState(1)
 
@@ -218,16 +221,19 @@ export function CommissionHomeReportPanel({
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
   const slice = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const description = periodLabel
+    ? `Chi HH Home · đơn hoàn thành ${periodLabel} (đã trừ doanh thu)`
+    : "Chi HH Home · đơn hoàn thành (đã trừ doanh thu)"
 
   if (rows.length === 0) {
     return (
       <ChartShell
         title="Báo Cáo Hoa Hồng Home"
-        description="Tổng hoa hồng theo từng Home từ các đơn đang có"
+        description={description}
         icon={<Building2 className="w-4 h-4" />}
         accent="amber"
       >
-        <ChartEmpty label="Chưa có đơn chia hoa hồng Home" />
+        <ChartEmpty label={periodLabel ? `Chưa có HH Home trong ${periodLabel}` : "Chưa có đơn chia hoa hồng Home"} />
       </ChartShell>
     )
   }
@@ -235,12 +241,12 @@ export function CommissionHomeReportPanel({
   return (
     <ChartShell
       title="Báo Cáo Hoa Hồng Home"
-      description="Tổng hoa hồng theo từng Home từ các đơn đang có"
+      description={description}
       icon={<Building2 className="w-4 h-4" />}
       accent="amber"
       headerExtra={
-        <div className="text-right shrink-0 max-w-[8rem]">
-          <p className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Tổng</p>
+        <div className="text-right shrink-0 max-w-[9rem]">
+          <p className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Chi HH</p>
           <p className="text-sm font-extrabold text-amber-700 tabular-nums leading-tight truncate" title={formatPrice(grandTotal)}>
             {formatPrice(grandTotal)}
           </p>

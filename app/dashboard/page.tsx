@@ -51,6 +51,7 @@ import {
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag } from "@/lib/transaction-finance"
+import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
 
@@ -576,17 +577,22 @@ export default function DashboardPage() {
     const revenueThisMonth = calcOperatingRevenue(rentalRevenueThisMonth, txThisMonth)
     const profitThisMonth = calcOperatingProfit(rentalRevenueThisMonth, txThisMonth)
 
-    // Commission report: group active orders by homeName
-    const commissionMap: Record<string, { count: number; total: number }> = {}
-    orders.filter(o => o.commissionHome && o.homeName && o.status !== "cancelled").forEach(o => {
-      const key = o.homeName as string
-      if (!commissionMap[key]) commissionMap[key] = { count: 0, total: 0 }
-      commissionMap[key].count += 1
-      commissionMap[key].total += (o.commissionHome || 0) * (o.totalDays || 0)
+    // HH Home tháng này: đơn hoàn thành kết thúc trong tháng (khớp chốt DT; đã trừ trong revenue)
+    const commissionReport = buildCommissionHomeReport(orders, {
+      month: currentMonth,
+      year: currentYear,
+      completedOnly: true,
     })
-    const commissionReport = Object.entries(commissionMap).map(([name, val]) => ({ name, ...val }))
+    const commissionThisMonth = sumCommissionRows(commissionReport)
 
-    return { utilizationPct, revenueThisMonth, profitThisMonth, ordersCountThisMonth: completedOrdersThisMonth.length, commissionReport }
+    return {
+      utilizationPct,
+      revenueThisMonth,
+      profitThisMonth,
+      ordersCountThisMonth: completedOrdersThisMonth.length,
+      commissionReport,
+      commissionThisMonth,
+    }
   }, [vehicles, orders, transactions])
 
   const overdueOrderRows = useMemo(() => {
@@ -861,14 +867,22 @@ export default function DashboardPage() {
               variant="hero"
               label={`Doanh thu tháng ${new Date().getMonth() + 1}`}
               value={formatPrice(thisMonthKpis.revenueThisMonth)}
-              sublabel="đơn + thu vận hành"
+              sublabel={
+                thisMonthKpis.commissionThisMonth > 0
+                  ? `đã trừ HH Home ${formatPrice(thisMonthKpis.commissionThisMonth)}`
+                  : "đơn + thu vận hành"
+              }
               valueClassName="text-emerald-700"
             />
             <RentalKpiCard
               variant="hero"
               label={`Lợi nhuận tháng ${new Date().getMonth() + 1}`}
               value={formatPrice(thisMonthKpis.profitThisMonth)}
-              sublabel="sau chi vận hành"
+              sublabel={
+                thisMonthKpis.commissionThisMonth > 0
+                  ? `sau chi vận hành + HH Home`
+                  : "sau chi vận hành"
+              }
               valueClassName="text-blue-700"
             />
             <RentalKpiCard
@@ -890,7 +904,11 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           <OverdueOrdersPanel orders={overdueOrderRows} />
-          <CommissionHomeReportPanel rows={thisMonthKpis.commissionReport} formatPrice={formatPrice} />
+          <CommissionHomeReportPanel
+            rows={thisMonthKpis.commissionReport}
+            formatPrice={formatPrice}
+            periodLabel={`Tháng ${new Date().getMonth() + 1}/${new Date().getFullYear()}`}
+          />
         </div>
 
         <ModuleSectionCard
