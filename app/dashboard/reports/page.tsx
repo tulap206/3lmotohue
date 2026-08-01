@@ -1112,6 +1112,13 @@ export default function ReportsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
                       <div>
+                        <p className="font-medium text-slate-800">Cổ đông Admin</p>
+                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
+                      </div>
+                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
+                    </div>
+                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
+                      <div>
                         <p className="font-medium text-slate-800">Cổ đông Lộc A</p>
                         <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
                       </div>
@@ -1120,13 +1127,6 @@ export default function ReportsPage() {
                     <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
                       <div>
                         <p className="font-medium text-slate-800">Cổ đông Lộc B</p>
-                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
-                      </div>
-                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
-                    </div>
-                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
-                      <div>
-                        <p className="font-medium text-slate-800">Cổ đông Sang</p>
                         <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
                       </div>
                       <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
