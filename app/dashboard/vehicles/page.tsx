@@ -1093,18 +1093,33 @@ export default function VehiclesPage() {
                         {getRentalVehicleStatusLabel(vehicle.status)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-sm mt-2">
+                    <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-slate-100/50">
                       <span className="font-bold text-blue-600 tabular-nums">{formatPrice(vehicle.pricePerDay)}/ngày</span>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)}>
+                      <div className="flex gap-1 items-center">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
                           <Clock className="w-3.5 h-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)}>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)} title="Chi tiết">
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)}>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)} title="Chỉnh sửa">
                           <Settings className="w-3.5 h-3.5" />
                         </Button>
+                        {user?.permissions.canDelete && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700" 
+                            onClick={() => {
+                              if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${vehicle.name} (${vehicle.licensePlate})?`)) {
+                                handleDeleteVehicle(vehicle.id)
+                              }
+                            }}
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </ModuleMobileCard>

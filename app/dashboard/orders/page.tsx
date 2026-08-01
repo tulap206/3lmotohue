@@ -1486,6 +1486,43 @@ export default function OrdersPage() {
                         </div>
                         <span className="font-bold text-blue-600 tabular-nums text-sm">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
                       </div>
+                      
+                      {/* Mobile action bar */}
+                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
+                        <span className="text-[10px] text-slate-400">Đơn #{order.rentalCode || order.id.substring(0, 8)}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setViewingOrder(order)}
+                            className="text-slate-500 hover:text-blue-600 p-1"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setPrintingOrder(order)}
+                            className="text-slate-500 hover:text-blue-600 p-1"
+                            title="In hợp đồng"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditDialog(order)}
+                            className="text-slate-500 hover:text-blue-600 p-1"
+                            title="Chỉnh sửa"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                          {user?.permissions.canDelete && (
+                            <button
+                              onClick={() => handleDeleteClick(order)}
+                              className="text-blue-600 hover:text-blue-700 p-1"
+                              title="Xóa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </ModuleMobileCard>
                   )
                 })}

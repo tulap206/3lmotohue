@@ -893,16 +893,31 @@ export default function CustomersPage() {
                         {customer.address}
                       </div>
                     </div>
-                    <div className="flex justify-end gap-1 mt-2">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }}>
+                    <div className="flex justify-end gap-1 mt-2 pt-2 border-t border-slate-100/50 items-center">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }} title="Lịch sử thuê">
                         <Clock className="w-3.5 h-3.5" />
                       </Button>
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(customer)} title="Chi tiết">
                         <Eye className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => handleEdit(customer)}>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => handleEdit(customer)} title="Chỉnh sửa">
                         <Settings className="w-3.5 h-3.5" />
                       </Button>
+                      {user?.permissions.canDelete && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700" 
+                          onClick={() => {
+                            if (window.confirm(`Bạn có chắc chắn muốn xóa khách hàng ${customer.name}?`)) {
+                              handleDelete(customer.id)
+                            }
+                          }}
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </ModuleMobileCard>
                 ))}

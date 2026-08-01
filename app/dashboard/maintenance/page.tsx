@@ -24,7 +24,7 @@ import {
   EntityFormDialogContent,
   EntityFormHeader,
 } from "@/components/dashboard/entity-form-dialog"
-import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp, ImageIcon } from "lucide-react"
+import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp, ImageIcon, Eye } from "lucide-react"
 import { toast } from "sonner"
 import {
   ModulePageShell,
@@ -309,6 +309,29 @@ export default function MaintenancePage() {
                     <div className="flex justify-between items-center text-sm text-slate-500">
                       <span className="tabular-nums">{vehicle.current_km.toLocaleString()} km</span>
                       <span className="tabular-nums">Mốc: {mntKm.toLocaleString()} km</span>
+                    </div>
+                    
+                    {/* Mobile action bar */}
+                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-slate-500"
+                        onClick={() => openDetailDialog(vehicle)}
+                        title="Chi tiết"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          if (window.confirm(`Bạn chắc chắn ${vehicle.name} (${vehicle.licensePlate}) đã bảo trì xong ở ${vehicle.current_km.toLocaleString()} km?`)) {
+                            handleMaintained(vehicle.id, vehicle.name, vehicle.current_km)
+                          }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs h-7 px-3.5 font-semibold"
+                      >
+                        Bảo trì xong
+                      </Button>
                     </div>
                   </ModuleMobileCard>
                 )
