@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchTransactions, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag } from "@/lib/transaction-finance"
+import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows, type CommissionHomeRow } from "@/lib/commission-home"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -959,85 +959,183 @@ export default function ReportsPage() {
           .filter((tx) => tx.type === 'expense')
           .reduce((sum, tx) => sum + tx.amount, 0)
         
-        // NOTE: reportData.totalRevenue/Profit = P&L vận hành (không gồm góp vốn/mua xe)
-        // Tiền hiện có vẫn tính toàn bộ sổ thu/chi (gồm vốn)
+        // Filter out salary and dividend transactions from operational profit calculations
+        const salaryExpenses = transactions
+          .filter(isSalaryTransaction)
+          .reduce((sum, tx) => sum + tx.amount, 0)
+
+        const dividendExpenses = transactions
+          .filter(isDividendTransaction)
+          .reduce((sum, tx) => sum + tx.amount, 0)
+        
+        // NOTE: reportData.totalRevenue/Profit = P&L vận hành (không gồm góp vốn/mua xe/chia cổ tức)
         const rentalOnly = reportData.totalRevenue - transactions
           .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
           .reduce((sum, tx) => sum + tx.amount, 0)
         const cashOnHand = rentalOnly + totalIncome - totalExpense
         
+        // Operating profit before salaries (Gross Operating Profit)
+        const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses
+        
+        // Equal split estimation for shareholders (example: 3 partners)
+        const partnerShare = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 3) : 0
+        
         return (
-          <Card className="bg-blue-50 border-blue-200">
-            <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                <TrendingUp className="w-5 h-5" />
-                Tóm Tắt
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-700 space-y-3 p-3 md:p-4">
-              <div className="grid grid-cols-2 gap-2 md:gap-3">
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">🚗 Tổng xe</p>
-                  <p className="font-semibold text-base md:text-lg text-slate-800">{reportData.totalVehicles}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">👥 Tổng khách</p>
-                  <p className="font-semibold text-base md:text-lg text-slate-800">{reportData.totalCustomers}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">📋 Tổng đơn</p>
-                  <p className="font-semibold text-base md:text-lg text-slate-800">{reportData.totalRentals}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">💰 Doanh thu</p>
-                  <p className="font-semibold text-base md:text-lg text-blue-600 break-words text-sm md:text-base">{reportData.totalRevenue.toLocaleString("vi-VN")}</p>
-                </div>
-              </div>
-              
-              <div className="border-t border-blue-200 pt-3">
-                <div className="grid grid-cols-2 gap-2 md:gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="bg-blue-50 border-blue-200 lg:col-span-2">
+              <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
+                <CardTitle className="flex items-center gap-2 text-base md:text-lg text-blue-800">
+                  <TrendingUp className="w-5 h-5" />
+                  Tóm Tắt Báo Cáo Tài Chính
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-slate-700 space-y-4 p-3 md:p-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">📈 Lợi nhuận</p>
-                    <p className="font-semibold text-base md:text-lg text-emerald-600 break-words text-sm md:text-base">{reportData.totalProfit.toLocaleString("vi-VN")}</p>
+                    <p className="text-xs text-slate-500 mb-1">🚗 Tổng xe</p>
+                    <p className="font-semibold text-base text-slate-800">{reportData.totalVehicles}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">📥 Tổng thu</p>
-                    <p className="font-semibold text-base md:text-lg text-emerald-600 break-words text-sm md:text-base">+{(rentalOnly + totalIncome).toLocaleString("vi-VN")}</p>
+                    <p className="text-xs text-slate-500 mb-1">👥 Tổng khách</p>
+                    <p className="font-semibold text-base text-slate-800">{reportData.totalCustomers}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">📤 Tổng chi</p>
-                    <p className="font-semibold text-base md:text-lg text-rose-600 text-sm md:text-base">-{totalExpense.toLocaleString("vi-VN")}</p>
+                    <p className="text-xs text-slate-500 mb-1">📋 Tổng đơn</p>
+                    <p className="font-semibold text-base text-slate-800">{reportData.totalRentals}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">🏠 Chi HH Home</p>
-                    <p className="font-semibold text-base md:text-lg text-amber-700 break-words text-sm md:text-base">
-                      -{reportData.commissionHomeTotal.toLocaleString("vi-VN")}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-0.5">đã trừ trong doanh thu</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">💵 Tiền hiện có</p>
-                    <p className={`font-semibold text-base md:text-lg ${cashOnHand >= 0 ? 'text-blue-600' : 'text-rose-600'} text-sm md:text-base break-words`}>
-                      {cashOnHand.toLocaleString("vi-VN")}
-                    </p>
+                    <p className="text-xs text-slate-500 mb-1">💰 Doanh thu thuê xe</p>
+                    <p className="font-semibold text-base text-blue-600 break-words">{reportData.totalRevenue.toLocaleString("vi-VN")} đ</p>
                   </div>
                 </div>
-                {reportData.commissionByHome.length > 0 && (
-                  <div className="mt-3 space-y-1.5 border-t border-blue-100 pt-3">
-                    <p className="text-sm font-semibold text-slate-500">HH theo Home</p>
-                    {reportData.commissionByHome.slice(0, 5).map((row) => (
-                      <div key={row.name} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="text-slate-700 truncate">{row.name} · {row.count} đơn</span>
-                        <span className="font-semibold text-amber-700 tabular-nums shrink-0">
-                          {row.total.toLocaleString("vi-VN")} đ
-                        </span>
+                
+                <div className="border-t border-blue-200 pt-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">📈 LN Vận hành (trước lương)</p>
+                      <p className="font-semibold text-base text-emerald-700 break-words">
+                        {operatingProfitBeforeSalary.toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">👥 Tổng chi lương NV</p>
+                      <p className="font-semibold text-base text-rose-600 break-words">
+                        -{salaryExpenses.toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">📊 Lợi nhuận ròng vận hành</p>
+                      <p className="font-semibold text-base text-emerald-600 break-words">
+                        {reportData.totalProfit.toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">📥 Tổng thu (bao gồm vốn)</p>
+                      <p className="font-semibold text-base text-emerald-600 break-words">
+                        +{(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">📤 Tổng chi (gồm cả lương/vốn)</p>
+                      <p className="font-semibold text-base text-rose-600">
+                        -{totalExpense.toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">💸 Cổ tức đã chia</p>
+                      <p className="font-semibold text-base text-indigo-600 break-words">
+                        -{dividendExpenses.toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">🏠 Chi HH Home</p>
+                      <p className="font-semibold text-base text-amber-700 break-words">
+                        -{reportData.commissionHomeTotal.toLocaleString("vi-VN")} đ
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">đã trừ trong doanh thu</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">💵 Tiền mặt hiện có</p>
+                      <p className={`font-semibold text-base ${cashOnHand >= 0 ? 'text-blue-600' : 'text-rose-600'} break-words`}>
+                        {cashOnHand.toLocaleString("vi-VN")} đ
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {reportData.commissionByHome.length > 0 && (
+                    <div className="mt-3 space-y-1.5 border-t border-blue-100 pt-3">
+                      <p className="text-xs font-semibold text-slate-500">Hoa hồng chi tiết theo Home</p>
+                      {reportData.commissionByHome.slice(0, 3).map((row) => (
+                        <div key={row.name} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="text-slate-700 truncate">{row.name} · {row.count} đơn</span>
+                          <span className="font-semibold text-amber-700 tabular-nums shrink-0">
+                            {row.total.toLocaleString("vi-VN")} đ
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-50 border-slate-200">
+              <CardHeader className="pb-2 p-3 md:p-4">
+                <CardTitle className="flex items-center gap-2 text-base md:text-lg text-slate-800">
+                  <Users className="w-5 h-5 text-slate-500" />
+                  Phân Chia Cổ Đông
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Bảng chia đề xuất theo lợi nhuận ròng tháng trước
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-xs text-slate-700 p-3 md:p-4 space-y-4">
+                <div className="bg-white rounded-xl p-3 border border-slate-200/60 shadow-sm space-y-1.5">
+                  <div className="flex justify-between text-slate-500">
+                    <span>Lợi nhuận ròng vận hành:</span>
+                    <span className="font-bold text-slate-700">{reportData.totalProfit.toLocaleString("vi-VN")}đ</span>
+                  </div>
+                  <div className="flex justify-between text-slate-500">
+                    <span>Đã chia trong kỳ:</span>
+                    <span className="font-bold text-indigo-600">-{dividendExpenses.toLocaleString("vi-VN")}đ</span>
+                  </div>
+                  <div className="flex justify-between border-t border-slate-100 pt-1.5 font-semibold text-slate-800">
+                    <span>Còn lại cần chia:</span>
+                    <span className={reportData.totalProfit - dividendExpenses >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                      {(reportData.totalProfit - dividendExpenses).toLocaleString("vi-VN")}đ
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <p className="font-semibold text-slate-600 text-xs">Phân chia theo tỷ lệ (Đề xuất 3 bên bằng nhau):</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
+                      <div>
+                        <p className="font-medium text-slate-800">Cổ đông Lộc A</p>
+                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
                       </div>
-                    ))}
+                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
+                    </div>
+                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
+                      <div>
+                        <p className="font-medium text-slate-800">Cổ đông Lộc B</p>
+                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
+                      </div>
+                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
+                    </div>
+                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
+                      <div>
+                        <p className="font-medium text-slate-800">Cổ đông Sang</p>
+                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
+                      </div>
+                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
+                    </div>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )
       })()}
     </ModulePageShell>

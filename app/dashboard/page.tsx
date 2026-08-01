@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/select"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, toStoredDateValue } from "@/lib/format-date"
-import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag } from "@/lib/transaction-finance"
+import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
@@ -973,13 +973,27 @@ export default function DashboardPage() {
                               {(txSafePage - 1) * txItemsPerPage + index + 1}
                             </td>
                             <td className="py-3 px-4">
-                              <span className={`inline-flex text-sm font-semibold px-2 py-0.5 rounded-md border ${
-                                tx.type === "income"
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                  : "bg-rose-50 text-rose-700 border-rose-100"
-                              }`}>
-                                {getRentalTransactionTypeLabel(tx.type)}
-                              </span>
+                              {isDividendTransaction(tx) ? (
+                                <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-purple-50 text-purple-700 border-purple-100">
+                                  Cổ tức
+                                </span>
+                              ) : isSalaryTransaction(tx) ? (
+                                <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-100">
+                                  Lương NV
+                                </span>
+                              ) : isCapitalTransaction(tx) ? (
+                                <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-700 border-amber-100">
+                                  Vốn/Tài sản
+                                </span>
+                              ) : (
+                                <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                                  tx.type === "income"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                    : "bg-rose-50 text-rose-700 border-rose-100"
+                                }`}>
+                                  {getRentalTransactionTypeLabel(tx.type)}
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4 text-slate-600">{tx.description}</td>
                             <td className={`py-3 px-4 text-right font-semibold tabular-nums ${
@@ -1016,13 +1030,27 @@ export default function DashboardPage() {
                   mobile={paginatedTransactions.map((tx, index) => (
                     <ModuleMobileCard key={tx.id}>
                       <div className="flex justify-between items-start gap-2">
-                        <span className={`text-sm font-semibold px-2 py-0.5 rounded-md border ${
-                          tx.type === "income"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                            : "bg-rose-50 text-rose-700 border-rose-100"
-                        }`}>
-                          {getRentalTransactionTypeLabel(tx.type)}
-                        </span>
+                        {isDividendTransaction(tx) ? (
+                          <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-purple-50 text-purple-700 border-purple-100">
+                            Cổ tức
+                          </span>
+                        ) : isSalaryTransaction(tx) ? (
+                          <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-100">
+                            Lương NV
+                          </span>
+                        ) : isCapitalTransaction(tx) ? (
+                          <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-700 border-amber-100">
+                            Vốn/Tài sản
+                          </span>
+                        ) : (
+                          <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                            tx.type === "income"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                              : "bg-rose-50 text-rose-700 border-rose-100"
+                          }`}>
+                            {getRentalTransactionTypeLabel(tx.type)}
+                          </span>
+                        )}
                         <span className="text-sm text-slate-400">
                           #{(txSafePage - 1) * txItemsPerPage + index + 1}
                         </span>

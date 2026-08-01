@@ -6,9 +6,13 @@
 const CAPITAL_INCOME_RE =
   /(g[oó]p\s*v[oốồ]n|v[oốồ]n\s*g[oó]p|đ[aầ]u\s*t[ưu]\s*v[oốồ]n|\[v[oốồ]n\])/i
 
-/** Mua tài sản / đầu tư một lần — không phải chi vận hành hàng ngày */
+/** Mua tài sản / đầu tư một lần / chia cổ tức — không phải chi vận hành hàng ngày */
 const CAPITAL_EXPENSE_RE =
-  /(mua\s*xe|mua\s*ab\b|mua\s*vision|mua\s*janus|m[uũ]\s*b[aả]o\s*hi[eể]m|đ[iị]nh\s*v[iị]|sever|server|t[eê]n\s*mi[eề]n|\[v[oốồ]n\])/i
+  /(mua\s*xe|mua\s*ab\b|mua\s*vision|mua\s*janus|m[uũ]\s*b[aả]o\s*hi[eể]m|đ[iị]nh\s*v[iị]|sever|server|t[eê]n\s*mi[eề]n|cổ\s*tức|chia\s*lợi\s*nhuận|cô\s*tưc|\[v[oốồ]n\])/i
+
+/** Chi phí nhân sự / lương thưởng */
+const SALARY_EXPENSE_RE =
+  /(lương|trả\s*nhân\s*viên|nhân\s*viên|thưởng|luong|nhan\s*vien)/i
 
 export type TxLike = {
   type?: string | null
@@ -16,6 +20,14 @@ export type TxLike = {
   amount?: number | null
   timestamp?: string | null
   created_at?: string | null
+}
+
+export function isSalaryTransaction(tx: TxLike): boolean {
+  return tx.type === "expense" && SALARY_EXPENSE_RE.test(tx.description || "")
+}
+
+export function isDividendTransaction(tx: TxLike): boolean {
+  return tx.type === "expense" && /(cổ\s*tức|chia\s*lợi\s*nhuận|c[oố]t\s*[ưu]c)/i.test(tx.description || "")
 }
 
 export function isCapitalTransaction(tx: TxLike): boolean {
