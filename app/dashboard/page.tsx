@@ -354,6 +354,7 @@ export default function DashboardPage() {
     description: "",
     amount: "",
     isCapital: false,
+    timestamp: new Date().toLocaleDateString('en-CA'),
   })
   
   const [txEditFormData, setTxEditFormData] = useState({
@@ -361,6 +362,7 @@ export default function DashboardPage() {
     description: "",
     amount: "",
     isCapital: false,
+    timestamp: "",
   })
   
   const loadDashboardData = useCallback(async (showLoading = true) => {
@@ -656,11 +658,11 @@ export default function DashboardPage() {
         description: withCapitalTag(txFormData.description, txFormData.isCapital),
         amount: parseMoneyInput(txFormData.amount),
         user: user.username,
-        timestamp: new Date().toISOString(),
+        timestamp: txFormData.timestamp ? new Date(txFormData.timestamp + "T12:00:00").toISOString() : new Date().toISOString(),
       })
       
       setTransactions([newTx, ...transactions])
-      setTxFormData({ type: "income", description: "", amount: "", isCapital: false })
+      setTxFormData({ type: "income", description: "", amount: "", isCapital: false, timestamp: new Date().toLocaleDateString('en-CA') })
       setIsAddTxOpen(false)
       
       // Reload stats/report data
@@ -729,6 +731,7 @@ export default function DashboardPage() {
       description: (tx.description || "").replace(/^\s*\[vốn\]\s*/i, ""),
       amount: tx.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
       isCapital: isCapitalTransaction(tx),
+      timestamp: new Date(tx.timestamp || tx.created_at || new Date()).toLocaleDateString('en-CA'),
     })
     setIsEditTxOpen(true)
   }
@@ -742,9 +745,10 @@ export default function DashboardPage() {
         type: txEditFormData.type as "income" | "expense",
         description: nextDescription,
         amount: parsedAmount,
+        timestamp: txEditFormData.timestamp ? new Date(txEditFormData.timestamp + "T12:00:00").toISOString() : editingTx.timestamp,
       })
       
-      setTransactions(transactions.map(t => t.id === editingTx.id ? { ...t, type: txEditFormData.type, description: nextDescription, amount: parsedAmount } : t))
+      setTransactions(transactions.map(t => t.id === editingTx.id ? { ...t, type: txEditFormData.type, description: nextDescription, amount: parsedAmount, timestamp: txEditFormData.timestamp ? new Date(txEditFormData.timestamp + "T12:00:00").toISOString() : t.timestamp } : t))
       setIsEditTxOpen(false)
       setEditingTx(null)
       await loadDashboardData(false)
@@ -1125,20 +1129,29 @@ export default function DashboardPage() {
                   className="border-slate-300 rounded-lg"
                 />
               </div>
-              <div>
-                <Label className="text-slate-700 text-sm font-medium">Số Tiền (VND)</Label>
-                <Input
-                  type="text"
-                  placeholder="Nhập số tiền (VD: 1.000.000)"
-                  value={txFormData.amount}
-                  onChange={(e) => {
-                    const formatted = formatMoneyInput(e.target.value)
-                    setTxFormData({ ...txFormData, amount: formatted })
-                  }}
-                  className="border-slate-300 rounded-lg font-mono"
-                />
-              </div>
-            </EntityFormBody>
+               <div>
+                 <Label className="text-slate-700 text-sm font-medium">Ngày Giao Dịch</Label>
+                 <Input
+                   type="date"
+                   value={txFormData.timestamp}
+                   onChange={(e) => setTxFormData({ ...txFormData, timestamp: e.target.value })}
+                   className="border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                 />
+               </div>
+               <div>
+                 <Label className="text-slate-700 text-sm font-medium">Số Tiền (VND)</Label>
+                 <Input
+                   type="text"
+                   placeholder="Nhập số tiền (VD: 1.000.000)"
+                   value={txFormData.amount}
+                   onChange={(e) => {
+                     const formatted = formatMoneyInput(e.target.value)
+                     setTxFormData({ ...txFormData, amount: formatted })
+                   }}
+                   className="border-slate-300 rounded-lg font-mono"
+                 />
+               </div>
+             </EntityFormBody>
             <EntityFormFooter
               accent="blue"
               onCancel={() => setIsAddTxOpen(false)}
@@ -1228,6 +1241,15 @@ export default function DashboardPage() {
                 value={txEditFormData.description}
                 onChange={(e) => setTxEditFormData({...txEditFormData, description: e.target.value})}
                 className="border-slate-300 rounded-lg"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-700 text-sm font-medium">Ngày Giao Dịch</Label>
+              <Input
+                type="date"
+                value={txEditFormData.timestamp}
+                onChange={(e) => setTxEditFormData({ ...txEditFormData, timestamp: e.target.value })}
+                className="border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>

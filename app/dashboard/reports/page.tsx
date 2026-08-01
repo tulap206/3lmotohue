@@ -82,12 +82,14 @@ export default function ReportsPage() {
     description: "",
     amount: "",
     isCapital: false,
+    timestamp: new Date().toLocaleDateString('en-CA'),
   })
   const [editFormData, setEditFormData] = useState({
     type: "income" as "income" | "expense",
     description: "",
     amount: "",
     isCapital: false,
+    timestamp: "",
   })
 
   const loadTransactions = async (resetPage = true) => {
@@ -169,18 +171,18 @@ export default function ReportsPage() {
     }
 
     try {
-      const newTransaction = await insertTransaction({
+       const newTransaction = await insertTransaction({
         type: formData.type,
         description: withCapitalTag(formData.description, formData.isCapital),
         amount: parseMoneyInput(formData.amount),
         user: user.username,
-        timestamp: new Date().toISOString(),
+        timestamp: formData.timestamp ? new Date(formData.timestamp + "T12:00:00").toISOString() : new Date().toISOString(),
       })
       
       console.log("✅ Transaction saved to Supabase:", newTransaction)
       
       setTransactions([newTransaction, ...transactions])
-      setFormData({ type: "income", description: "", amount: "", isCapital: false })
+      setFormData({ type: "income", description: "", amount: "", isCapital: false, timestamp: new Date().toLocaleDateString('en-CA') })
       setIsAddTransactionOpen(false)
       
       // Log action if user exists
@@ -235,6 +237,7 @@ export default function ReportsPage() {
       description: (tx.description || "").replace(/^\s*\[vốn\]\s*/i, ""),
       amount: tx.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
       isCapital: isCapitalTransaction(tx),
+      timestamp: new Date(tx.timestamp || tx.created_at || new Date()).toLocaleDateString('en-CA'),
     })
     setIsEditTransactionOpen(true)
   }
@@ -259,6 +262,7 @@ export default function ReportsPage() {
         type: editFormData.type as "income" | "expense",
         description: nextDescription,
         amount: parsedAmount,
+        timestamp: editFormData.timestamp ? new Date(editFormData.timestamp + "T12:00:00").toISOString() : editingTransaction.timestamp,
       })
       
       // Reload transactions from Supabase
@@ -613,6 +617,15 @@ export default function ReportsPage() {
               />
             </div>
             <div>
+              <Label className="text-slate-700 text-sm font-medium">Ngày Giao Dịch</Label>
+              <Input
+                type="date"
+                value={editFormData.timestamp}
+                onChange={(e) => setEditFormData({...editFormData, timestamp: e.target.value})}
+                className="border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
               <Label className="text-slate-700 text-sm font-medium">Số Tiền (VND)</Label>
               <Input
                 type="text"
@@ -833,6 +846,15 @@ export default function ReportsPage() {
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
                       className="border-slate-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-700 text-sm font-medium">Ngày Giao Dịch</Label>
+                    <Input
+                      type="date"
+                      value={formData.timestamp}
+                      onChange={(e) => setFormData({...formData, timestamp: e.target.value})}
+                      className="border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   <div>
