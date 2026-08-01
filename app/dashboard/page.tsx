@@ -1079,17 +1079,37 @@ export default function DashboardPage() {
                             {getRentalTransactionTypeLabel(tx.type)}
                           </span>
                         )}
-                        <span className="text-sm text-slate-400">
-                          #{(txSafePage - 1) * txItemsPerPage + index + 1}
+                        <span className="text-xs text-slate-400 font-medium">
+                          {formatDisplayDate(tx.timestamp || tx.created_at)}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-700">{tx.description}</p>
+                      <p className="text-sm text-slate-700 my-1">{tx.description}</p>
                       <div className="flex justify-between items-center text-sm">
                         <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-rose-600"}`}>
                           {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
                         </span>
-                        <span className="text-slate-500">{tx.user}</span>
+                        <span className="text-slate-500 text-xs">bởi {tx.user}</span>
                       </div>
+                      {user?.role === "admin" && (
+                        <div className="flex justify-end gap-3 mt-2 pt-2 border-t border-slate-100/50">
+                          <button
+                            onClick={() => handleEditTx(tx)}
+                            className="text-slate-500 hover:text-blue-600 p-1 flex items-center gap-1 text-xs font-medium"
+                            title="Sửa"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            Sửa
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTx(tx)}
+                            className="text-rose-500 hover:text-rose-600 p-1 flex items-center gap-1 text-xs font-medium"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Xóa
+                          </button>
+                        </div>
+                      )}
                     </ModuleMobileCard>
                   ))}
                 />
