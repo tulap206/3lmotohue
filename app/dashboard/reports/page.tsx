@@ -480,6 +480,19 @@ export default function ReportsPage() {
     )
   }
 
+  const totalIncome = transactions
+    .filter((tx) => tx.type === 'income')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+  
+  const totalExpense = transactions
+    .filter((tx) => tx.type === 'expense')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+
+  const rentalOnly = reportData.totalRevenue - transactions
+    .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
+    .reduce((sum, tx) => sum + tx.amount, 0)
+  const cashOnHand = rentalOnly + totalIncome - totalExpense
+
   const stats = [
     {
       title: "Doanh Thu",
@@ -493,9 +506,17 @@ export default function ReportsPage() {
       title: "Lợi Nhuận",
       value: `${reportData.totalProfit.toLocaleString("vi-VN")} đ`,
       change: `${reportData.totalProfit > 0 ? "↑" : "↓"} LN`,
-      icon: Wallet,
+      icon: TrendingUp,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-500",
+    },
+    {
+      title: "Tiền Quỹ Còn Lại",
+      value: `${cashOnHand.toLocaleString("vi-VN")} đ`,
+      change: "số dư quỹ tích lũy",
+      icon: Wallet,
+      iconBg: "bg-indigo-50",
+      iconColor: "text-indigo-500",
     },
     {
       title: "Tổng Xe",
@@ -646,7 +667,7 @@ export default function ReportsPage() {
       </Dialog>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {stats.map((stat, idx) => (
           <Card 
             key={idx}

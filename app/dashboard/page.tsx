@@ -62,6 +62,7 @@ interface DashboardStats {
   totalRentals: number
   activeRentals: number
   overdueRentals: number
+  cashOnHand: number
 }
 
 export default function DashboardPage() {
@@ -408,6 +409,19 @@ export default function DashboardPage() {
       const totalRevenue = calcOperatingRevenue(rentalRevenue, transactions)
       const totalProfit = calcOperatingProfit(rentalRevenue, transactions)
 
+      // Tiền quỹ còn lại = Doanh thu thuê + Tổng thu khác - Tổng chi khác
+      const totalIncome = transactions
+        .filter((tx: any) => tx.type === 'income')
+        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+      const totalExpense = transactions
+        .filter((tx: any) => tx.type === 'expense')
+        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+      
+      const rentalOnly = totalRevenue - transactions
+        .filter((tx: any) => tx.type === 'income' && !isCapitalTransaction(tx))
+        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
+      const cashOnHand = rentalOnly + totalIncome - totalExpense
+
       setStats({
         totalVehicles: vehicles.length,
         totalRevenue,
@@ -415,6 +429,7 @@ export default function DashboardPage() {
         totalRentals: rentals.length,
         activeRentals: activeRentals.length,
         overdueRentals: overdueRentals.length,
+        cashOnHand,
       })
 
       setTransactions(transactions)
@@ -852,7 +867,7 @@ export default function DashboardPage() {
         {/* Nhóm chỉ số tài chính */}
         <div className="space-y-2.5">
           <ModuleSectionTitle title="Hiệu suất tài chính" />
-          <ModuleKpiGrid columns={5}>
+          <ModuleKpiGrid columns={6}>
             <RentalKpiCard
               variant="hero"
               label="Tổng doanh thu"
@@ -888,6 +903,13 @@ export default function DashboardPage() {
                   : "sau chi vận hành"
               }
               valueClassName="text-blue-700"
+            />
+            <RentalKpiCard
+              variant="hero"
+              label="Tiền quỹ còn lại"
+              value={formatPrice(stats.cashOnHand)}
+              valueClassName={stats.cashOnHand >= 0 ? "text-indigo-700" : "text-rose-700"}
+              sublabel="số dư quỹ tích lũy"
             />
             <RentalKpiCard
               variant="hero"

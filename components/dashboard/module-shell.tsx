@@ -313,17 +313,19 @@ export function ModuleKpiGrid({
   className,
 }: {
   children: React.ReactNode
-  columns?: 2 | 3 | 4 | 5
+  columns?: 2 | 3 | 4 | 5 | 6
   className?: string
 }) {
   const colClass =
-    columns === 5
-      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
-      : columns === 4
-        ? "grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
-        : columns === 3
-          ? "grid-cols-2 md:grid-cols-3"
-          : "grid-cols-2"
+    columns === 6
+      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
+      : columns === 5
+        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+        : columns === 4
+          ? "grid-cols-2 md:grid-cols-2 lg:grid-cols-4"
+          : columns === 3
+            ? "grid-cols-2 md:grid-cols-3"
+            : "grid-cols-2"
   return (
     <div
       className={cn(
