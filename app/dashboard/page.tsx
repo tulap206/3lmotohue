@@ -984,6 +984,7 @@ export default function DashboardPage() {
                         <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
                           <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
                           <th className={rentalTableHeadClass}>Loại</th>
+                          <th className={rentalTableHeadClass}>Ngày</th>
                           <th className={rentalTableHeadClass}>Mô tả</th>
                           <th className={cn(rentalTableHeadClass, "text-right")}>Số tiền</th>
                           <th className={rentalTableHeadClass}>Người thực hiện</th>
@@ -1021,6 +1022,7 @@ export default function DashboardPage() {
                                 </span>
                               )}
                             </td>
+                            <td className="py-3 px-4 text-slate-500 whitespace-nowrap font-medium">{formatDisplayDate(tx.timestamp || tx.created_at)}</td>
                             <td className="py-3 px-4 text-slate-600">{tx.description}</td>
                             <td className={`py-3 px-4 text-right font-semibold tabular-nums ${
                               tx.type === "income" ? "text-emerald-700" : "text-rose-600"
