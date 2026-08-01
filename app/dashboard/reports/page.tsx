@@ -20,6 +20,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X } from "lucide-react"
+import { formatDisplayDate } from "@/lib/format-date"
 import { ModulePagination, ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
 import {
   BarChart,
@@ -29,6 +30,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts"
 
 interface ReportData {
@@ -44,6 +49,8 @@ interface ReportData {
   /** Tổng HH Home đã trừ trong DT (đơn completed) */
   commissionHomeTotal: number
   commissionByHome: CommissionHomeRow[]
+  fleetPerformance: Array<{ name: string; licensePlate: string; activeDays: number; revenue: number; utilizationRate: number }>
+  expenseStructure: Array<{ name: string; value: number; color: string }>
 }
 
 interface Vehicle {
@@ -64,6 +71,17 @@ interface Vehicle {
 export default function ReportsPage() {
   const router = useRouter()
   const { addAccessLog, user } = useAuth()
+  
+  // Date range filters
+  const [filterPeriod, setFilterPeriod] = useState<"all" | "this-month" | "last-month" | "this-year" | "custom">("this-month")
+  const [startDate, setStartDate] = useState(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA')
+  })
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toLocaleDateString('en-CA')
+  })
+
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
@@ -133,6 +151,10 @@ export default function ReportsPage() {
       supabase.removeChannel(reportsChannel)
     }
   }, [])
+
+  useEffect(() => {
+    loadReportData(false)
+  }, [filterPeriod, startDate, endDate])
 
   // Pagination calculations with search filter
   const filteredTransactions = transactions.filter((tx) => {
@@ -311,25 +333,81 @@ export default function ReportsPage() {
         rentals: rentals.length,
       })
 
+      // Calculate date ranges
+      const getPeriodDateRange = (period: string, customStart: string, customEnd: string) => {
+        const now = new Date()
+        let start = new Date(0)
+        let end = new Date(2100, 0, 1)
+
+        if (period === "this-month") {
+          start = new Date(now.getFullYear(), now.getMonth(), 1)
+          start.setHours(0, 0, 0, 0)
+          end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+          end.setHours(23, 59, 59, 999)
+        } else if (period === "last-month") {
+          start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          start.setHours(0, 0, 0, 0)
+          end = new Date(now.getFullYear(), now.getMonth(), 0)
+          end.setHours(23, 59, 59, 999)
+        } else if (period === "this-year") {
+          start = new Date(now.getFullYear(), 0, 1)
+          start.setHours(0, 0, 0, 0)
+          end = new Date(now.getFullYear(), 11, 31)
+          end.setHours(23, 59, 59, 999)
+        } else if (period === "custom") {
+          if (customStart) {
+            start = new Date(customStart + "T00:00:00")
+          }
+          if (customEnd) {
+            end = new Date(customEnd + "T23:59:59")
+          }
+        }
+        return { start, end }
+      }
+
+      // Helper to parse DD/MM/YYYY format
+      const parseVietnamDate = (dateStr: string): Date => {
+        if (!dateStr) return new Date(0)
+        const parts = dateStr.split("/")
+        if (parts.length === 3) {
+          return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+        }
+        return new Date(dateStr)
+      }
+
+      const { start, end } = getPeriodDateRange(filterPeriod, startDate, endDate)
+      const totalDaysInPeriod = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+
+      // Filter rentals & transactions in this period
+      const filteredRentals = rentals.filter((r: any) => {
+        const rDate = parseVietnamDate(r.endDate || r.startDate)
+        return rDate >= start && rDate <= end
+      })
+
+      const filteredTx = transactions.filter((tx: any) => {
+        const txDate = new Date(tx.timestamp || tx.created_at || "")
+        return txDate >= start && txDate <= end
+      })
+
       // Calculate statistics
       const totalCustomers = customers.length || 0
       const totalVehicles = vehicles.length || 0
-      const totalRentals = rentals.length || 0
+      const totalRentals = filteredRentals.length || 0
 
       // Rental revenue (completed orders; prefer revenue field)
-      const rentalRevenue = rentals
+      const rentalRevenue = filteredRentals
         .filter((r: any) => r.status === "completed")
         .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
       
       // P&L vận hành: bỏ qua góp vốn / mua xe
-      const totalRevenue = calcOperatingRevenue(rentalRevenue, transactions)
-      const totalProfit = calcOperatingProfit(rentalRevenue, transactions)
+      const totalRevenue = calcOperatingRevenue(rentalRevenue, filteredTx)
+      const totalProfit = calcOperatingProfit(rentalRevenue, filteredTx)
       
-      const totalIncomeFromTransactions = transactions
+      const totalIncomeFromTransactions = filteredTx
         .filter((tx: any) => tx.type === 'income')
         .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
       
-      const totalExpenseFromTransactions = transactions
+      const totalExpenseFromTransactions = filteredTx
         .filter((tx: any) => tx.type === 'expense')
         .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
       
@@ -354,17 +432,7 @@ export default function ReportsPage() {
       // Monthly data
       const monthlyData: Record<string, number> = {}
       
-      // Helper to parse DD/MM/YYYY format
-      const parseVietnamDate = (dateStr: string): Date => {
-        if (!dateStr) return new Date(0)
-        const parts = dateStr.split("/")
-        if (parts.length === 3) {
-          return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-        }
-        return new Date(dateStr)
-      }
-      
-      rentals.forEach((rental: any) => {
+      filteredRentals.forEach((rental: any) => {
         if (rental.status !== "completed") return
         const dateStr = rental.endDate || rental.startDate
         if (!dateStr) return
@@ -392,10 +460,18 @@ export default function ReportsPage() {
       // Top vehicles - calculate from rentals
       const vehiclesWithStats = vehicles.map((v: any) => {
         const vehicleRentals = rentals.filter((r: any) => r.vehicleId === v.id && r.status === 'completed')
-        const revenue = vehicleRentals.reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+        const revenue = vehicleRentals
+          .filter((r: any) => {
+            const rDate = parseVietnamDate(r.endDate || r.startDate)
+            return rDate >= start && rDate <= end
+          })
+          .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
         return {
           name: v.name,
-          rentals: vehicleRentals.length,
+          rentals: vehicleRentals.filter((r: any) => {
+            const rDate = parseVietnamDate(r.endDate || r.startDate)
+            return rDate >= start && rDate <= end
+          }).length,
           revenue: revenue,
         }
       })
@@ -405,7 +481,85 @@ export default function ReportsPage() {
         .sort((a: any, b: any) => b.revenue - a.revenue)
         .slice(0, 5)
 
-      const commissionByHome = buildCommissionHomeReport(rentals, { completedOnly: true })
+      // Helper to calculate overlap days for fleet utilization
+      const getOverlapDays = (rStartStr: string, rEndStr: string, periodStart: Date, periodEnd: Date): number => {
+        const rStart = parseVietnamDate(rStartStr)
+        const rEnd = parseVietnamDate(rEndStr)
+        if (isNaN(rStart.getTime()) || isNaN(rEnd.getTime())) return 0
+        
+        const overlapStart = rStart > periodStart ? rStart : periodStart
+        const overlapEnd = rEnd < periodEnd ? rEnd : periodEnd
+        
+        if (overlapStart > overlapEnd) return 0
+        
+        const diffTime = overlapEnd.getTime() - overlapStart.getTime()
+        return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1)
+      }
+
+      // Fleet utilization and performance calculation
+      const fleetPerformance = vehicles.map((v: any) => {
+        const vehicleRentals = rentals.filter((r: any) => r.vehicleId === v.id)
+        
+        // Sum overlap days in period
+        const activeDays = vehicleRentals.reduce((sum: number, r: any) => {
+          if (r.status !== 'active' && r.status !== 'completed') return sum
+          return sum + getOverlapDays(r.startDate, r.endDate, start, end)
+        }, 0)
+
+        // Sum revenue in period
+        const revenue = vehicleRentals
+          .filter((r: any) => {
+            const rDate = parseVietnamDate(r.endDate || r.startDate)
+            return r.status === 'completed' && rDate >= start && rDate <= end
+          })
+          .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+
+        const utilizationRate = Math.min(100, Math.round((activeDays / totalDaysInPeriod) * 100))
+
+        return {
+          name: v.name,
+          licensePlate: v.licensePlate || "",
+          activeDays,
+          revenue,
+          utilizationRate,
+        }
+      }).sort((a, b) => b.revenue - a.revenue)
+
+      // Expense Structure grouping
+      let dividendExp = 0
+      let salaryExp = 0
+      let capitalExp = 0
+      let maintenanceExp = 0
+      let fuelExp = 0
+      let otherExp = 0
+
+      filteredTx.filter((tx: any) => tx.type === 'expense').forEach((tx: any) => {
+        const desc = (tx.description || "").toLowerCase()
+        if (isDividendTransaction(tx)) {
+          dividendExp += tx.amount || 0
+        } else if (isSalaryTransaction(tx)) {
+          salaryExp += tx.amount || 0
+        } else if (isCapitalTransaction(tx)) {
+          capitalExp += tx.amount || 0
+        } else if (/(sửa|nhông|xích|nhớt|vỏ|ruột|phanh|bình|acquy)/i.test(desc)) {
+          maintenanceExp += tx.amount || 0
+        } else if (/(grab|xăng|xe\s*ôm|vận\s*chuyển)/i.test(desc)) {
+          fuelExp += tx.amount || 0
+        } else {
+          otherExp += tx.amount || 0
+        }
+      })
+
+      const expenseStructure = [
+        { name: "Cổ tức", value: dividendExp, color: "#8b5cf6" },
+        { name: "Lương nhân viên", value: salaryExp, color: "#6366f1" },
+        { name: "Vốn & Tài sản", value: capitalExp, color: "#f59e0b" },
+        { name: "Sửa xe & bảo dưỡng", value: maintenanceExp, color: "#ef4444" },
+        { name: "Di chuyển & xăng", value: fuelExp, color: "#10b981" },
+        { name: "Chi phí khác", value: otherExp, color: "#64748b" },
+      ].filter(item => item.value > 0)
+
+      const commissionByHome = buildCommissionHomeReport(filteredRentals, { completedOnly: true })
       const commissionHomeTotal = sumCommissionRows(commissionByHome)
 
       console.log("📈 Report ready:", { totalCustomers, totalVehicles, totalRevenue, commissionHomeTotal })
@@ -422,10 +576,12 @@ export default function ReportsPage() {
         topVehicles,
         commissionHomeTotal,
         commissionByHome,
+        fleetPerformance,
+        expenseStructure,
       }
 
       setReportData(finalData)
-      addAccessLog("Xem", "Báo cáo", "Xem báo cáo tổng quan")
+      addAccessLog("Xem", "Báo cáo", `Xem báo cáo kỳ: ${filterPeriod}`)
     } catch (error) {
       console.error("Failed to load report data:", error)
       // Set default empty data
@@ -448,6 +604,8 @@ export default function ReportsPage() {
         topVehicles: [],
         commissionHomeTotal: 0,
         commissionByHome: [],
+        fleetPerformance: [],
+        expenseStructure: [],
       })
     } finally {
       if (showLoading) setLoading(false)
@@ -554,6 +712,40 @@ export default function ReportsPage() {
           { label: "Cho thuê xe", href: "/dashboard" },
           { label: "Báo cáo" },
         ]}
+        actions={
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
+              <SelectTrigger className="w-[170px] bg-white border-slate-300 rounded-lg">
+                <SelectValue placeholder="Chọn kỳ báo cáo" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="all">Tất cả thời gian</SelectItem>
+                <SelectItem value="this-month">Tháng này</SelectItem>
+                <SelectItem value="last-month">Tháng trước</SelectItem>
+                <SelectItem value="this-year">Năm nay</SelectItem>
+                <SelectItem value="custom">Tự chọn khoảng ngày</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {filterPeriod === "custom" && (
+              <div className="flex items-center gap-1">
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-[140px] h-10 border-slate-300 rounded-lg text-sm bg-white"
+                />
+                <span className="text-slate-400 text-xs px-1">đến</span>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-[140px] h-10 border-slate-300 rounded-lg text-sm bg-white"
+                />
+              </div>
+            )}
+          </div>
+        }
       />
       {/* Delete Transaction Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -691,32 +883,89 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {/* Monthly Revenue Chart */}
-      <Card>
-        <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
-          <CardTitle className="text-base md:text-lg">Doanh Thu Theo Tháng</CardTitle>
-          <CardDescription className="text-sm md:text-sm">Doanh thu hàng tháng</CardDescription>
-        </CardHeader>
-        <CardContent className="p-3 md:p-4">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={reportData.monthlyRevenue} margin={{ top: 10, right: 5, left: -15, bottom: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} width={35} />
-              <Tooltip
-                formatter={(value: any) => `${value.toLocaleString("vi-VN")} đ`}
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                  fontSize: "12px"
-                }}
-              />
-              <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Financial Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Monthly Revenue Chart */}
+        <Card>
+          <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
+            <CardTitle className="text-base md:text-lg">Doanh Thu Theo Tháng</CardTitle>
+            <CardDescription className="text-sm md:text-sm">Doanh thu hàng tháng</CardDescription>
+          </CardHeader>
+          <CardContent className="p-3 md:p-4">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={reportData.monthlyRevenue} margin={{ top: 10, right: 5, left: -15, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} width={35} />
+                <Tooltip
+                  formatter={(value: any) => `${value.toLocaleString("vi-VN")} đ`}
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    fontSize: "12px"
+                  }}
+                />
+                <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Expense Structure Donut Chart */}
+        <Card>
+          <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
+            <CardTitle className="text-base md:text-lg">Cơ Cấu Chi Phí</CardTitle>
+            <CardDescription className="text-xs text-slate-500">Phân bổ tỷ trọng các khoản chi</CardDescription>
+          </CardHeader>
+          <CardContent className="p-3 md:p-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            {reportData.expenseStructure.length > 0 ? (
+              <>
+                <div className="relative w-[160px] h-[160px] sm:w-[180px] sm:h-[180px] flex-shrink-0 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={reportData.expenseStructure}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={70}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {reportData.expenseStructure.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => `${value.toLocaleString("vi-VN")} đ`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 w-full space-y-1.5">
+                  {reportData.expenseStructure.map((entry, index) => {
+                    const total = reportData.expenseStructure.reduce((sum, item) => sum + item.value, 0)
+                    const percent = total > 0 ? Math.round((entry.value / total) * 100) : 0
+                    return (
+                      <div key={index} className="flex items-center justify-between text-xs border-b border-slate-100 pb-1.5 last:border-0 last:pb-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
+                          <span className="font-medium text-slate-700 truncate">{entry.name}</span>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <span className="font-bold text-slate-800">{entry.value.toLocaleString("vi-VN")}đ</span>
+                          <span className="text-slate-400 ml-1.5 font-medium">{percent}%</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400 py-10 text-center w-full">Không có dữ liệu chi phí trong kỳ</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Top Vehicles */}
       <Card>
@@ -759,6 +1008,75 @@ export default function ReportsPage() {
           ) : (
             <p className="text-slate-500 text-center py-6 text-sm">Chưa có dữ liệu xe</p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Fleet Performance Analytics */}
+      <Card>
+        <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
+          <CardTitle className="text-base md:text-lg flex items-center gap-2 text-indigo-900">
+            <Bike className="w-5 h-5 text-indigo-600" />
+            Hiệu Suất Vận Hành Đội Xe
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-500">
+            Chi tiết số ngày hoạt động, doanh thu và tỷ lệ lấp đầy trong khoảng thời gian lọc
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
+                  <th className="p-3">Xe máy</th>
+                  <th className="p-3">Biển số</th>
+                  <th className="p-3 text-center">Số ngày chạy</th>
+                  <th className="p-3 text-right">Doanh thu thuê</th>
+                  <th className="p-3 text-center">Hiệu suất lấp đầy</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {reportData.fleetPerformance.length > 0 ? (
+                  reportData.fleetPerformance.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="p-3 font-semibold text-slate-800">{item.name}</td>
+                      <td className="p-3 text-slate-500 tabular-nums">{item.licensePlate}</td>
+                      <td className="p-3 text-center text-slate-700 font-medium tabular-nums">{item.activeDays} ngày</td>
+                      <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{item.revenue.toLocaleString("vi-VN")} đ</td>
+                      <td className="p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-12 bg-slate-100 rounded-full h-1.5 hidden sm:block">
+                            <div 
+                              className={`h-1.5 rounded-full ${
+                                item.utilizationRate >= 70 
+                                  ? 'bg-emerald-500' 
+                                  : item.utilizationRate >= 40 
+                                    ? 'bg-amber-500' 
+                                    : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${item.utilizationRate}%` }}
+                            />
+                          </div>
+                          <span className={`font-semibold tabular-nums ${
+                            item.utilizationRate >= 70 
+                              ? 'text-emerald-600' 
+                              : item.utilizationRate >= 40 
+                                ? 'text-amber-600' 
+                                : 'text-blue-600'
+                          }`}>
+                            {item.utilizationRate}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-slate-400">Không có dữ liệu đội xe</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 
