@@ -317,6 +317,7 @@ export default function ReportsPage() {
       const { data: rentalsData, error: rentalsError } = await supabase
         .from("rentals")
         .select("*")
+      const reportTransactions = await fetchTransactions()
 
       // Handle errors
       if (customersError) console.error("Customers error:", customersError)
@@ -326,6 +327,7 @@ export default function ReportsPage() {
       const customers = customersData || []
       const vehicles = vehiclesData || []
       const rentals = rentalsData || []
+      setTransactions(reportTransactions)
 
       console.log("📊 Fetched data:", {
         customers: customers.length,
@@ -384,7 +386,7 @@ export default function ReportsPage() {
         return rDate >= start && rDate <= end
       })
 
-      const filteredTx = transactions.filter((tx: any) => {
+      const filteredTx = reportTransactions.filter((tx: any) => {
         const txDate = new Date(tx.timestamp || tx.created_at || "")
         return txDate >= start && txDate <= end
       })
