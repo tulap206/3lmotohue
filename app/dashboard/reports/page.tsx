@@ -42,6 +42,8 @@ interface ReportData {
   totalRentals: number
   totalRevenue: number
   totalProfit: number
+  periodRentalRevenue: number
+  allTimeRentalRevenue: number
   activeRentals: number
   vehiclesInMaintenance: number
   monthlyRevenue: Array<{ month: string; revenue: number }>
@@ -66,6 +68,62 @@ interface Vehicle {
   totalRentalDays: number
   totalRevenue: number
   profit: number
+}
+
+function getPeriodDateRange(period: "all" | "this-month" | "last-month" | "this-year" | "custom", customStart: string, customEnd: string) {
+  const now = new Date()
+  let start = new Date(0)
+  let end = new Date(2100, 0, 1)
+
+  if (period === "this-month") {
+    start = new Date(now.getFullYear(), now.getMonth(), 1)
+    start.setHours(0, 0, 0, 0)
+    end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    end.setHours(23, 59, 59, 999)
+  } else if (period === "last-month") {
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    start.setHours(0, 0, 0, 0)
+    end = new Date(now.getFullYear(), now.getMonth(), 0)
+    end.setHours(23, 59, 59, 999)
+  } else if (period === "this-year") {
+    start = new Date(now.getFullYear(), 0, 1)
+    start.setHours(0, 0, 0, 0)
+    end = new Date(now.getFullYear(), 11, 31)
+    end.setHours(23, 59, 59, 999)
+  } else if (period === "custom") {
+    if (customStart) start = new Date(customStart + "T00:00:00")
+    if (customEnd) end = new Date(customEnd + "T23:59:59")
+  }
+
+  return { start, end }
+}
+
+function parseVietnamDate(dateStr: string): Date {
+  if (!dateStr) return new Date(0)
+  const parts = dateStr.split("/")
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+  }
+  return new Date(dateStr)
+}
+
+function filterTransactionsByPeriod(
+  transactions: Transaction[],
+  period: "all" | "this-month" | "last-month" | "this-year" | "custom",
+  customStart: string,
+  customEnd: string
+) {
+  const { start, end } = getPeriodDateRange(period, customStart, customEnd)
+  return transactions.filter((tx) => {
+    const txDate = new Date(tx.timestamp || tx.created_at || "")
+    return txDate >= start && txDate <= end
+  })
+}
+
+function sumTransactions(transactions: Transaction[], type: "income" | "expense") {
+  return transactions
+    .filter((tx) => tx.type === type)
+    .reduce((sum, tx) => sum + (tx.amount || 0), 0)
 }
 
 export default function ReportsPage() {
@@ -333,48 +391,6 @@ export default function ReportsPage() {
         rentals: rentals.length,
       })
 
-      // Calculate date ranges
-      const getPeriodDateRange = (period: string, customStart: string, customEnd: string) => {
-        const now = new Date()
-        let start = new Date(0)
-        let end = new Date(2100, 0, 1)
-
-        if (period === "this-month") {
-          start = new Date(now.getFullYear(), now.getMonth(), 1)
-          start.setHours(0, 0, 0, 0)
-          end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-          end.setHours(23, 59, 59, 999)
-        } else if (period === "last-month") {
-          start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-          start.setHours(0, 0, 0, 0)
-          end = new Date(now.getFullYear(), now.getMonth(), 0)
-          end.setHours(23, 59, 59, 999)
-        } else if (period === "this-year") {
-          start = new Date(now.getFullYear(), 0, 1)
-          start.setHours(0, 0, 0, 0)
-          end = new Date(now.getFullYear(), 11, 31)
-          end.setHours(23, 59, 59, 999)
-        } else if (period === "custom") {
-          if (customStart) {
-            start = new Date(customStart + "T00:00:00")
-          }
-          if (customEnd) {
-            end = new Date(customEnd + "T23:59:59")
-          }
-        }
-        return { start, end }
-      }
-
-      // Helper to parse DD/MM/YYYY format
-      const parseVietnamDate = (dateStr: string): Date => {
-        if (!dateStr) return new Date(0)
-        const parts = dateStr.split("/")
-        if (parts.length === 3) {
-          return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-        }
-        return new Date(dateStr)
-      }
-
       const { start, end } = getPeriodDateRange(filterPeriod, startDate, endDate)
       const totalDaysInPeriod = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
 
@@ -396,6 +412,10 @@ export default function ReportsPage() {
 
       // Rental revenue (completed orders; prefer revenue field)
       const rentalRevenue = filteredRentals
+        .filter((r: any) => r.status === "completed")
+        .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+
+      const allTimeRentalRevenue = rentals
         .filter((r: any) => r.status === "completed")
         .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
       
@@ -570,6 +590,8 @@ export default function ReportsPage() {
         totalRentals,
         totalRevenue,
         totalProfit,
+        periodRentalRevenue: rentalRevenue,
+        allTimeRentalRevenue,
         activeRentals,
         vehiclesInMaintenance,
         monthlyRevenue,
@@ -591,6 +613,8 @@ export default function ReportsPage() {
         totalRentals: 0,
         totalRevenue: 0,
         totalProfit: 0,
+        periodRentalRevenue: 0,
+        allTimeRentalRevenue: 0,
         activeRentals: 0,
         vehiclesInMaintenance: 0,
         monthlyRevenue: [
@@ -638,18 +662,10 @@ export default function ReportsPage() {
     )
   }
 
-  const totalIncome = transactions
-    .filter((tx) => tx.type === 'income')
-    .reduce((sum, tx) => sum + tx.amount, 0)
-  
-  const totalExpense = transactions
-    .filter((tx) => tx.type === 'expense')
-    .reduce((sum, tx) => sum + tx.amount, 0)
-
-  const rentalOnly = reportData.totalRevenue - transactions
-    .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
-    .reduce((sum, tx) => sum + tx.amount, 0)
-  const cashOnHand = rentalOnly + totalIncome - totalExpense
+  const periodTransactions = filterTransactionsByPeriod(transactions, filterPeriod, startDate, endDate)
+  const totalIncome = sumTransactions(transactions, 'income')
+  const totalExpense = sumTransactions(transactions, 'expense')
+  const cashOnHand = reportData.allTimeRentalRevenue + totalIncome - totalExpense
 
   const stats = [
     {
@@ -1311,29 +1327,18 @@ export default function ReportsPage() {
 
       {/* Summary */}
       {(() => {
-        // Calculate totals from transactions
-        const totalIncome = transactions
-          .filter((tx) => tx.type === 'income')
-          .reduce((sum, tx) => sum + tx.amount, 0)
-        
-        const totalExpense = transactions
-          .filter((tx) => tx.type === 'expense')
-          .reduce((sum, tx) => sum + tx.amount, 0)
+        // Cash balance is cumulative; profit breakdown follows the selected report period.
+        const periodIncome = sumTransactions(periodTransactions, 'income')
+        const periodExpense = sumTransactions(periodTransactions, 'expense')
         
         // Filter out salary and dividend transactions from operational profit calculations
-        const salaryExpenses = transactions
+        const salaryExpenses = periodTransactions
           .filter(isSalaryTransaction)
-          .reduce((sum, tx) => sum + tx.amount, 0)
+          .reduce((sum, tx) => sum + (tx.amount || 0), 0)
 
-        const dividendExpenses = transactions
+        const dividendExpenses = periodTransactions
           .filter(isDividendTransaction)
-          .reduce((sum, tx) => sum + tx.amount, 0)
-        
-        // NOTE: reportData.totalRevenue/Profit = P&L vận hành (không gồm góp vốn/mua xe/chia cổ tức)
-        const rentalOnly = reportData.totalRevenue - transactions
-          .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
-          .reduce((sum, tx) => sum + tx.amount, 0)
-        const cashOnHand = rentalOnly + totalIncome - totalExpense
+          .reduce((sum, tx) => sum + (tx.amount || 0), 0)
         
         // Operating profit before salaries (Gross Operating Profit)
         const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses
@@ -1393,13 +1398,13 @@ export default function ReportsPage() {
                     <div>
                       <p className="text-xs text-slate-500 mb-1">📥 Tổng thu (bao gồm vốn)</p>
                       <p className="font-semibold text-base text-emerald-600 break-words">
-                        +{(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ
+                        +{(reportData.periodRentalRevenue + periodIncome).toLocaleString("vi-VN")} đ
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500 mb-1">📤 Tổng chi (gồm cả lương/vốn)</p>
                       <p className="font-semibold text-base text-rose-600">
-                        -{totalExpense.toLocaleString("vi-VN")} đ
+                        -{periodExpense.toLocaleString("vi-VN")} đ
                       </p>
                     </div>
                     <div>
