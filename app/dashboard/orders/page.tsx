@@ -234,7 +234,7 @@ export default function OrdersPage() {
   const [orderToDelete, setOrderToDelete] = useState<RentalOrder | null>(null)
   const [formData, setFormData] = useState({
     customerId: "",
-    vehicleId: "",
+    vehicleIds: [] as string[],
     startDate: "",
     endDate: "",
     deposit: "",
@@ -278,8 +278,9 @@ export default function OrdersPage() {
   )
 
   const filteredVehiclesForSelect = vehicles.filter(v => 
-    v.name.toLowerCase().includes(vehicleSearch.toLowerCase()) || 
-    (v.licensePlate && v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase()))
+    (v.name.toLowerCase().includes(vehicleSearch.toLowerCase()) || 
+    (v.licensePlate && v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase()))) &&
+    !formData.vehicleIds.includes(v.id)
   )
 
   useEffect(() => {
@@ -446,9 +447,14 @@ export default function OrdersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const vehicle = vehicles.find((v) => v.id === formData.vehicleId)
-    if (!vehicle) {
-      showWarning("Vui lòng chọn xe thuê!")
+    if (formData.vehicleIds.length === 0) {
+      showWarning("Vui lòng chọn ít nhất một xe thuê!")
+      return
+    }
+
+    const selectedVehicles = vehicles.filter((v) => formData.vehicleIds.includes(v.id))
+    if (selectedVehicles.length === 0) {
+      showWarning("Vui lòng chọn ít nhất một xe thuê!")
       return
     }
 
@@ -459,22 +465,6 @@ export default function OrdersPage() {
       showWarning("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
       return
     }
-
-    // TEMP: tắt kiểm tra trùng lịch để nhập đơn cũ trong quá khứ
-    // const conflictingRental = orders.find((order) => {
-    //   if (order.vehicleId !== vehicle.id) return false
-    //   if (order.status === "cancelled") return false
-    //   
-    //   const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
-    //   const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
-    //   
-    //   return !(endDate < orderStart || startDate > orderEnd)
-    // })
-    // 
-    // if (conflictingRental) {
-    //   showWarning(`Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!`, `Khách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`)
-    //   return
-    // }
 
     let customerId = formData.customerId
     let customerName = ""
@@ -535,15 +525,22 @@ export default function OrdersPage() {
       }
 
       const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
-      const totalPrice = totalDays * vehicle.pricePerDay
       const startDateVN = toStoredDateValue(formData.startDate)
       const now = new Date().toISOString()
 
-      const commissionHomeVal = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
+      // Split deposit and commission equally among all selected vehicles
+      const totalDeposit = parseMoneyInput(formData.deposit) || 0
+      const dividedDeposit = Math.round(totalDeposit / selectedVehicles.length)
+
+      const totalCommission = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
+      const dividedCommission = Math.round(totalCommission / selectedVehicles.length)
+
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
       const termPayload = buildRentalTermPayload(formData.rentalTerm, "")
 
-      const insertPayload = {
+      const insertPayloads = selectedVehicles.map((vehicle) => {
+        const totalPrice = totalDays * vehicle.pricePerDay
+        return {
           customerId,
           customerName,
           vehicleId: vehicle.id,
@@ -554,49 +551,57 @@ export default function OrdersPage() {
           totalDays,
           pricePerDay: vehicle.pricePerDay,
           totalPrice,
-          deposit: parseMoneyInput(formData.deposit),
+          deposit: dividedDeposit,
           extraFees: 0,
           notes: termPayload.notes,
           revenue: 0,
           status: "pending",
           created_at: now,
-          commissionHome: commissionHomeVal,
+          commissionHome: dividedCommission,
           homeName: homeNameVal,
           rentalTerm: termPayload.rentalTerm,
         }
+      })
 
       let { data, error } = await supabase
         .from('rentals')
-        .insert([insertPayload])
+        .insert(insertPayloads)
         .select()
 
       if (error && /rentalTerm/i.test(error.message || "")) {
-        const { rentalTerm: _omit, ...withoutCol } = insertPayload
-        ;({ data, error } = await supabase.from('rentals').insert([withoutCol]).select())
+        const withoutCols = insertPayloads.map(({ rentalTerm: _omit, ...rest }) => rest)
+        ;({ data, error } = await supabase.from('rentals').insert(withoutCols).select())
       }
 
       if (error) {
-        console.error("Error creating rental:", error)
+        console.error("Error creating rentals:", error)
         showError(`Lỗi: ${error.message}`)
         return
       }
 
       if (data && data.length > 0) {
-        const newRental = data[0]
-        const rentalCode = generateRentalCodeFromUUID(customerName, vehicle.licensePlate, startDateVN, newRental.id)
-        const orderWithCode = { ...newRental, rentalCode, rentalTerm: formData.rentalTerm }
-        setOrders([orderWithCode, ...orders])
-        if (user) logger.addRental(user.username, user.displayName, customerName, vehicle.name)
+        const ordersWithCode = data.map((newRental) => {
+          const rentalCode = generateRentalCodeFromUUID(customerName, newRental.licensePlate, startDateVN, newRental.id)
+          return { ...newRental, rentalCode, rentalTerm: formData.rentalTerm }
+        })
+        setOrders([...ordersWithCode, ...orders])
+
+        // Add action logs for each rented vehicle
+        if (user) {
+          selectedVehicles.forEach((vehicle) => {
+            logger.addRental(user.username, user.displayName, customerName, vehicle.name)
+          })
+        }
         resetForm()
       }
     } catch (error) {
-      console.error("Exception creating rental:", error)
+      console.error("Exception creating rentals:", error)
       showError(`Lỗi tạo đơn thuê`)
     }
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleId: "", startDate: "", endDate: "", deposit: "", commissionHome: "", homeName: "", rentalTerm: "short" })
+    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "", commissionHome: "", homeName: "", rentalTerm: "short" })
     setIsNewCustomer(false)
     setNewCustomerName("")
     setNewCustomerPhone("")
@@ -1104,34 +1109,67 @@ export default function OrdersPage() {
                 </EntityFormSection>
 
                 <EntityFormSection title="🚗 2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
-                  <div className="space-y-2 relative">
+                  <div className="space-y-3 relative">
                     <Label htmlFor="vehicle" className="text-slate-600 text-sm">Chọn xe thuê <span className="text-blue-500">*</span></Label>
-                    <p className="text-sm text-slate-400">Tìm theo tên xe hoặc biển số</p>
+                    
+                    {/* Selected vehicles badges */}
+                    {formData.vehicleIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-100 rounded-xl">
+                        {formData.vehicleIds.map((vId) => {
+                          const vObj = vehicles.find(v => v.id === vId)
+                          if (!vObj) return null
+                          return (
+                            <span 
+                              key={vId} 
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
+                            >
+                              <span>{vObj.name} ({vObj.licensePlate})</span>
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    vehicleIds: prev.vehicleIds.filter(id => id !== vId) 
+                                  }))
+                                }}
+                                className="hover:bg-blue-100 rounded p-0.5 text-blue-500 hover:text-blue-700 transition"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-slate-400">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
                     <Input
-                      placeholder="VD: Toyota Vios hoặc 75AA-12345..."
+                      placeholder="VD: Wave Alpha hoặc 75F1-12345..."
                       value={vehicleSearch}
                       onChange={(e) => {
                         setVehicleSearch(e.target.value)
                         setShowVehicleDropdown(true)
-                        setFormData(prev => ({ ...prev, vehicleId: "" }))
                       }}
                       onFocus={() => setShowVehicleDropdown(true)}
                       className="bg-white border-slate-200 rounded-xl"
-                      required
                     />
+                    
                     {showVehicleDropdown && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
                         <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
                           {filteredVehiclesForSelect.length === 0 ? (
-                            <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy xe nào</div>
+                            <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy xe nào khả dụng</div>
                           ) : (
                             filteredVehiclesForSelect.map((vehicle) => (
                               <div
                                 key={vehicle.id}
                                 onClick={() => {
-                                  setFormData(prev => ({ ...prev, vehicleId: vehicle.id }))
-                                  setVehicleSearch(`${vehicle.name} - ${vehicle.licensePlate}`)
+                                  setFormData(prev => ({ 
+                                    ...prev, 
+                                    vehicleIds: [...prev.vehicleIds, vehicle.id] 
+                                  }))
+                                  setVehicleSearch("")
                                   setShowVehicleDropdown(false)
                                 }}
                                 className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
@@ -1143,7 +1181,6 @@ export default function OrdersPage() {
                         </div>
                       </>
                     )}
-                    <input type="hidden" name="vehicleId" value={formData.vehicleId} required />
                   </div>
                 </EntityFormSection>
 
