@@ -44,9 +44,9 @@
   --sidebar-ring: hsl(221.2 83.2% 53.3%);
   --success: hsl(142.1 70% 36%);
   --warning: hsl(38 92% 50%);
-  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.03);
-  --shadow-card-hover: 0 8px 24px -8px rgba(15, 23, 42, 0.1);
-  --transition-ui: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-card: 0 10px 30px -10px rgba(148, 163, 184, 0.16), 0 1px 3px rgba(148, 163, 184, 0.05);
+  --shadow-card-hover: 0 30px 60px -15px rgba(148, 163, 184, 0.28), 0 4px 20px -8px rgba(148, 163, 184, 0.12);
+  --transition-ui: 250ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .dark {
@@ -1031,14 +1031,15 @@
 
 /* Premium KPI Card Hover & Layout Enhancements */
 .metric-card {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1) !important;
   border: 1px solid rgba(226, 232, 240, 0.7) !important;
+  border-radius: var(--radius-container) !important;
 }
 
 .metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 20px -8px rgba(15, 23, 42, 0.08), 0 4px 10px -4px rgba(15, 23, 42, 0.03) !important;
-  border-color: rgba(37, 99, 235, 0.3) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -12px rgba(148, 163, 184, 0.22), 0 4px 12px -6px rgba(148, 163, 184, 0.05) !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
 }
 
 /* Row highlighting on hover with smooth transition */
@@ -1048,4 +1049,24 @@
 
 .module-table-row:hover {
   background-color: rgba(241, 245, 249, 0.5) !important;
+}
+
+/* Global Card Styling Redesign Override */
+[data-slot="card"] {
+  border-radius: 1.25rem !important; /* Exaggerated concentric rounded container (20px) */
+  border: 1px solid rgba(226, 232, 240, 0.65) !important;
+  box-shadow: var(--shadow-card) !important;
+  background-color: #ffffff !important;
+  transition: all 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+[data-slot="card"]:hover {
+  box-shadow: var(--shadow-card-hover) !important;
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Dashboard main background layout */
+.dashboard-bg {
+  background-color: #F8FAFC !important;
 }
