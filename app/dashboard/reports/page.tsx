@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select"
 import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { rentalTableHeadClass } from "@/components/dashboard/rental-ui"
+import { rentalTableHeadClass, RentalKpiCard } from "@/components/dashboard/rental-ui"
 import { formatDisplayDate } from "@/lib/format-date"
 import { ModulePagination, ModulePageShell, ModuleSubpageHeader, ModuleResponsiveTable, ModuleMobileCard, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
@@ -661,6 +661,7 @@ export default function ReportsPage() {
       icon: DollarSign,
       iconBg: "bg-amber-50",
       iconColor: "text-amber-500",
+      accent: "blue" as const,
     },
     {
       title: "Lợi Nhuận",
@@ -669,6 +670,7 @@ export default function ReportsPage() {
       icon: TrendingUp,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-500",
+      accent: "blue" as const,
     },
     {
       title: "Tiền Quỹ Còn Lại",
@@ -677,6 +679,7 @@ export default function ReportsPage() {
       icon: Wallet,
       iconBg: "bg-indigo-50",
       iconColor: "text-indigo-500",
+      accent: "blue" as const,
     },
     {
       title: "Tổng Xe",
@@ -685,6 +688,7 @@ export default function ReportsPage() {
       icon: Bike,
       iconBg: "bg-blue-50",
       iconColor: "text-blue-500",
+      accent: "blue" as const,
     },
     {
       title: "Tổng Khách",
@@ -693,6 +697,7 @@ export default function ReportsPage() {
       icon: Users,
       iconBg: "bg-purple-50",
       iconColor: "text-purple-500",
+      accent: "blue" as const,
     },
     {
       title: "Tổng Đơn",
@@ -701,6 +706,7 @@ export default function ReportsPage() {
       icon: ClipboardList,
       iconBg: "bg-rose-50",
       iconColor: "text-rose-500",
+      accent: "blue" as const,
     },
   ]
 
@@ -863,25 +869,17 @@ export default function ReportsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {stats.map((stat, idx) => (
-          <Card 
+          <RentalKpiCard
             key={idx}
-            className={`${stat.title === "Tổng Xe" || stat.title === "Tổng Khách" ? "cursor-pointer hover:shadow-lg transition" : ""}`}
+            accent={stat.accent}
+            label={stat.title}
+            value={stat.value}
+            sublabel={stat.change}
             onClick={() => {
               if (stat.title === "Tổng Xe") router.push("/dashboard/vehicles")
               if (stat.title === "Tổng Khách") router.push("/dashboard/customers")
             }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`${stat.iconBg} p-2 rounded-lg`}>
-                <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
-              </div>
-            </CardHeader>
-            <CardContent className="p-3">
-              <div className="text-xl md:text-2xl font-bold break-words">{stat.value}</div>
-              <p className="text-sm text-slate-500 mt-1">{stat.change}</p>
-            </CardContent>
-          </Card>
+          />
         ))}
       </div>
 
