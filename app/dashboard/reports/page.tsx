@@ -75,7 +75,7 @@ export default function ReportsPage() {
   const { addAccessLog, user } = useAuth()
   
   // Date range filters
-  const [filterPeriod, setFilterPeriod] = useState<"all" | "this-month" | "last-month" | "this-year" | "custom">("this-month")
+  const [filterPeriod, setFilterPeriod] = useState<"all" | "this-month" | "last-month" | "this-year" | "custom">("all")
   const [startDate, setStartDate] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA')
