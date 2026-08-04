@@ -20,8 +20,10 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { rentalTableHeadClass } from "@/components/dashboard/rental-ui"
 import { formatDisplayDate } from "@/lib/format-date"
-import { ModulePagination, ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
+import { ModulePagination, ModulePageShell, ModuleSubpageHeader, ModuleResponsiveTable, ModuleMobileCard, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
   BarChart,
   Bar,
@@ -1238,59 +1240,149 @@ export default function ReportsPage() {
           </div>
         </CardHeader>
         <CardContent className="p-3 md:p-4">
-          {transactions.length > 0 ? (
+          {filteredTransactions.length === 0 ? (
+            <ModuleEmptyState
+              title="Không tìm thấy giao dịch"
+              description="Thử đổi từ khóa tìm kiếm."
+            />
+          ) : (
             <div className="space-y-3 md:space-y-4">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm md:text-sm">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="text-left p-2 md:p-3 font-semibold text-slate-700">Thời gian</th>
-                      <th className="text-left p-2 md:p-3 font-semibold text-slate-700">Thu/Chi</th>
-                      <th className="text-left p-2 md:p-3 font-semibold text-slate-700 hidden sm:table-cell">Người</th>
-                      <th className="text-right p-2 md:p-3 font-semibold text-slate-700">Tiền</th>
-                      <th className="text-center p-2 md:p-3 font-semibold text-slate-700">Tác vụ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedTransactions.map((tx) => (
-                      <tr key={tx.id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="p-2 md:p-3 text-slate-600 text-sm">{new Date(tx.timestamp).toLocaleString("vi-VN")}</td>
-                        <td className="p-2 md:p-3">
-                          <span className={tx.type === "income" ? "text-emerald-600 font-medium" : "text-rose-600 font-medium"}>
-                            {tx.type === "income" ? "✓" : "✗"} {tx.description}
-                          </span>
-                        </td>
-                        <td className="p-2 md:p-3 text-slate-600 hidden sm:table-cell text-sm">{tx.user}</td>
-                        <td className={`p-2 md:p-3 text-right font-semibold text-sm md:text-sm ${tx.type === "income" ? "text-emerald-600" : "text-rose-600"}`}>
-                          {tx.type === "income" ? "+" : "-"} {tx.amount.toLocaleString("vi-VN")}
-                        </td>
-                        <td className="p-2 md:p-3 text-center">
-                          {user?.role === 'admin' ? (
-                            <div className="flex gap-1 md:gap-2 justify-center">
-                              <button
-                                onClick={() => handleEditTransaction(tx)}
-                                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition"
-                                title="Sửa"
-                              >
-                                <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteTransaction(tx)}
-                                className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 p-1 rounded transition"
-                                title="Xoá"
-                              >
-                                <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 text-sm">Admin</span>
-                          )}
-                        </td>
+              <ModuleResponsiveTable
+                desktop={
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
+                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
+                        <th className={rentalTableHeadClass}>Loại</th>
+                        <th className={rentalTableHeadClass}>Ngày</th>
+                        <th className={rentalTableHeadClass}>Mô tả</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Số tiền</th>
+                        <th className={rentalTableHeadClass}>Người thực hiện</th>
+                        {user?.role === "admin" && (
+                          <th className={cn(rentalTableHeadClass, "text-center w-24")}>Tác vụ</th>
+                        )}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                      {paginatedTransactions.map((tx, index) => (
+                        <tr key={tx.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3 px-4 text-center text-sm text-slate-400 font-medium">
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                          </td>
+                          <td className="py-3 px-4">
+                            {isDividendTransaction(tx) ? (
+                              <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-purple-50 text-purple-700 border-purple-100">
+                                Cổ tức
+                              </span>
+                            ) : isSalaryTransaction(tx) ? (
+                              <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-100">
+                                Lương NV
+                              </span>
+                            ) : isCapitalTransaction(tx) ? (
+                              <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-700 border-amber-100">
+                                Vốn/Tài sản
+                              </span>
+                            ) : (
+                              <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                                tx.type === "income"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                  : "bg-rose-50 text-rose-700 border-rose-100"
+                              }`}>
+                                {tx.type === "income" ? "Thu" : "Chi"}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 whitespace-nowrap font-medium">{formatDisplayDate(tx.timestamp || tx.created_at)}</td>
+                          <td className="py-3 px-4 text-slate-600">{tx.description}</td>
+                          <td className={`py-3 px-4 text-right font-semibold tabular-nums ${
+                            tx.type === "income" ? "text-emerald-700" : "text-rose-600"
+                          }`}>
+                            {tx.type === "income" ? "+" : "-"}{tx.amount.toLocaleString("vi-VN")}đ
+                          </td>
+                          <td className="py-3 px-4 text-slate-500">{tx.user}</td>
+                          {user?.role === "admin" && (
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex gap-1 justify-center">
+                                <button
+                                  onClick={() => handleEditTransaction(tx)}
+                                  className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
+                                  title="Sửa"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteTransaction(tx)}
+                                  className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1 rounded-lg transition"
+                                  title="Xoá"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                }
+                mobile={paginatedTransactions.map((tx, index) => (
+                  <ModuleMobileCard key={tx.id}>
+                    <div className="flex justify-between items-start gap-2">
+                      {isDividendTransaction(tx) ? (
+                        <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-purple-50 text-purple-700 border-purple-100">
+                          Cổ tức
+                        </span>
+                      ) : isSalaryTransaction(tx) ? (
+                        <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-100">
+                          Lương NV
+                        </span>
+                      ) : isCapitalTransaction(tx) ? (
+                        <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-700 border-amber-100">
+                          Vốn/Tài sản
+                        </span>
+                      ) : (
+                        <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                          tx.type === "income"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : "bg-rose-50 text-rose-700 border-rose-100"
+                        }`}>
+                          {tx.type === "income" ? "Thu" : "Chi"}
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400 font-medium">
+                        {formatDisplayDate(tx.timestamp || tx.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-700 my-1">{tx.description}</p>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-rose-600"}`}>
+                        {tx.type === "income" ? "+" : "-"}{tx.amount.toLocaleString("vi-VN")}đ
+                      </span>
+                      <span className="text-slate-500 text-xs">bởi {tx.user}</span>
+                    </div>
+                    {user?.role === "admin" && (
+                      <div className="flex justify-end gap-3 mt-2 pt-2 border-t border-slate-100/50">
+                        <button
+                          onClick={() => handleEditTransaction(tx)}
+                          className="text-slate-500 hover:text-blue-600 p-1 flex items-center gap-1 text-xs font-medium"
+                          title="Sửa"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          Sửa
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTransaction(tx)}
+                          className="text-rose-500 hover:text-rose-600 p-1 flex items-center gap-1 text-xs font-medium"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Xóa
+                        </button>
+                      </div>
+                    )}
+                  </ModuleMobileCard>
+                ))}
+              />
 
               <ModulePagination
                 page={currentPage}
@@ -1300,10 +1392,6 @@ export default function ReportsPage() {
                 onPageChange={setCurrentPage}
                 className="border-t border-slate-200 pt-3 mt-0 px-0 bg-transparent"
               />
-            </div>
-          ) : (
-            <div className="text-center py-6 text-slate-500">
-              <p className="text-sm">Chưa có khoản thu/chi nào</p>
             </div>
           )}
         </CardContent>
