@@ -143,14 +143,14 @@ export function DashboardSidebar({ children }: SidebarProps) {
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-3 h-11 px-3 rounded-[var(--radius-control)] ui-transition touch-target text-body font-medium",
+                "flex items-center gap-3 h-11 px-3 rounded-[var(--radius-control)] ui-transition touch-target text-body font-medium group/item",
                 active
-                  ? "bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)]"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)]"
+                  : "text-slate-600 hover:bg-slate-50/80 hover:text-slate-900"
               )}
             >
-              <item.icon className={cn("w-5 h-5 shrink-0", active ? "text-white" : "text-slate-400")} />
-              <span className="truncate">{item.title}</span>
+              <item.icon className={cn("w-5 h-5 shrink-0 transition-transform duration-200 group-hover/item:scale-110", active ? "text-white" : "text-slate-400 group-hover/item:text-slate-600")} />
+              <span className="truncate transition-transform duration-200 group-hover/item:translate-x-0.5">{item.title}</span>
             </Link>
           )
         })}
@@ -162,14 +162,14 @@ export function DashboardSidebar({ children }: SidebarProps) {
             href="/dashboard/settings"
             onClick={() => setMobileOpen(false)}
             className={cn(
-              "flex items-center gap-3 h-11 px-3 rounded-[var(--radius-control)] ui-transition text-body font-medium",
+              "flex items-center gap-3 h-11 px-3 rounded-[var(--radius-control)] ui-transition text-body font-medium group/item",
               isNavActive(pathname, "/dashboard/settings")
-                ? "bg-blue-600 text-white"
-                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)]"
+                : "text-slate-600 hover:bg-slate-50/80 hover:text-slate-900"
             )}
           >
-            <Settings className="w-5 h-5 shrink-0 opacity-70" />
-            <span>Cài đặt</span>
+            <Settings className="w-5 h-5 shrink-0 opacity-70 transition-transform duration-200 group-hover/item:rotate-45" />
+            <span className="transition-transform duration-200 group-hover/item:translate-x-0.5">Cài đặt</span>
           </Link>
         )}
 
