@@ -67,7 +67,7 @@ const MODULE_CONFIG: Record<
     title: "Lịch sử truy cập",
     description: "Theo dõi hoạt động phân hệ cho thuê",
     scopeLabel: "Cho thuê xe",
-    hideModuleFilter: true,
+    hideModuleFilter: false,
   },
   sales: {
     accent: "blue",
@@ -311,7 +311,7 @@ export function AccessHistoryPanel({
   dbUsers?: any[]
 }) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterAccount, setFilterAccount] = useState("admin")
+  const [filterAccount, setFilterAccount] = useState("all")
   const [filterModule, setFilterModule] = useState("all")
   const [filterAction, setFilterAction] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
