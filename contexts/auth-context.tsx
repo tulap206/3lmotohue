@@ -82,12 +82,12 @@ export const USERS: { username: string; password: string; user: User }[] = [
     },
   },
   {
-    username: "sang",
-    password: "admin123",
+    username: "tien",
+    password: "tien@123",
     user: {
       id: "4",
-      username: "sang",
-      displayName: "Sang",
+      username: "tien",
+      displayName: "Tien",
       role: "staff",
       permissions: {
         canDelete: false,
