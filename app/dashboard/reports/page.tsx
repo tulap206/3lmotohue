@@ -320,19 +320,26 @@ export default function ReportsPage() {
         .from("rentals")
         .select("*")
 
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from("transactions")
+        .select("*")
+
       // Handle errors
       if (customersError) console.error("Customers error:", customersError)
       if (vehiclesError) console.error("Vehicles error:", vehiclesError)
       if (rentalsError) console.error("Rentals error:", rentalsError)
+      if (transactionsError) console.error("Transactions error:", transactionsError)
 
       const customers = customersData || []
       const vehicles = vehiclesData || []
       const rentals = rentalsData || []
+      const fetchedTransactions = transactionsData || []
 
       console.log("📊 Fetched data:", {
         customers: customers.length,
         vehicles: vehicles.length,
         rentals: rentals.length,
+        transactions: fetchedTransactions.length,
       })
 
       // Calculate date ranges
@@ -386,7 +393,7 @@ export default function ReportsPage() {
         return rDate >= start && rDate <= end
       })
 
-      const filteredTx = transactions.filter((tx: any) => {
+      const filteredTx = fetchedTransactions.filter((tx: any) => {
         const txDate = new Date(tx.timestamp || tx.created_at || "")
         return txDate >= start && txDate <= end
       })
