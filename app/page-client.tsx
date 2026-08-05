@@ -22,14 +22,13 @@ import {
   MessageCircle,
   Menu,
   X,
+  Compass,
+  ThumbsUp,
+  Sparkles,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { BlurFade } from "@/components/ui/blur-fade"
-import { ShimmerButton } from "@/components/ui/shimmer-button"
-import { AnimatedGradientText } from "@/components/ui/animated-gradient-text"
-import { BorderBeam } from "@/components/ui/border-beam"
-import { NumberTicker } from "@/components/ui/number-ticker"
 import { Marquee } from "@/components/ui/marquee"
 import { cn } from "@/lib/utils"
 
@@ -39,7 +38,7 @@ const FLEET = [
     image: "/airblade.jpg",
     alt: "Cho thuê xe máy Honda Airblade đời mới tại Huế - 3L Moto",
     tag: "Xe ga đời mới",
-    blurb: "Honda Airblade 125/150cc — mạnh, cốp rộng, Smartkey.",
+    blurb: "Honda Airblade 125/150cc — mạnh mẽ, cốp rộng, Smartkey tiện lợi.",
     price: 130000,
     featured: true,
   },
@@ -48,7 +47,7 @@ const FLEET = [
     image: "/vision.jpg",
     alt: "Cho thuê xe máy Honda Vision giá rẻ tại Huế - 3L Moto",
     tag: "Xe ga đô thị",
-    blurb: "Nhỏ gọn, tiết kiệm xăng — lý tưởng cho phố cổ Huế.",
+    blurb: "Nhỏ gọn, tiết kiệm nhiên liệu — lý tưởng để dạo quanh phố cổ Huế.",
     price: 120000,
     featured: false,
   },
@@ -57,7 +56,7 @@ const FLEET = [
     image: "/janus.jpg",
     alt: "Cho thuê xe máy Yamaha Janus uy tín tại Huế - 3L Moto",
     tag: "Xe ga trẻ trung",
-    blurb: "Yamaha Blue Core 125cc — nhẹ, êm, dễ điều khiển.",
+    blurb: "Yamaha Blue Core 125cc — trọng lượng nhẹ, vận hành êm ái.",
     price: 120000,
     featured: false,
   },
@@ -66,7 +65,7 @@ const FLEET = [
     image: "/scoopy.jpg",
     alt: "Cho thuê xe máy tay ga Scoopy cổ điển tại Huế - 3L Moto",
     tag: "Xe ga cổ điển",
-    blurb: "Dáng vintage bắt mắt — hợp check-in quanh cố đô.",
+    blurb: "Kiểu dáng vintage độc đáo — phù hợp check-in các địa điểm thơ mộng.",
     price: 130000,
     featured: false,
   },
@@ -74,28 +73,28 @@ const FLEET = [
 
 const MARQUEE_ITEMS = [
   "Giao xe miễn phí nội thành",
-  "2 mũ bảo hiểm + áo mưa",
-  "Hỗ trợ cứu hộ 24/7",
-  "Thủ tục nhanh 10–15 phút",
-  "Ga Huế · Sân bay · Khách sạn",
-  "Xe bảo dưỡng định kỳ",
+  "Tặng kèm 2 mũ bảo hiểm + áo mưa",
+  "Hỗ trợ cứu hộ sự cố 24/7",
+  "Thủ tục nhanh chóng 10–15 phút",
+  "Giao nhận tại Ga Huế · Sân bay · Khách sạn",
+  "Đội xe đời mới bảo dưỡng định kỳ",
 ]
 
 const PROCESS_STEPS = [
   {
     step: "01",
-    title: "Chọn ngày & đặt online",
-    body: "Điền form — hệ thống lọc xe trống đúng khoảng thời gian bạn cần.",
+    title: "Chọn ngày & đặt trực tuyến",
+    body: "Lựa chọn thời gian và điền thông tin nhanh gọn qua form đăng ký.",
   },
   {
     step: "02",
-    title: "Xác nhận & nhận xe",
-    body: "Nhân viên gọi xác nhận, giao tận nơi trong 10–15 phút.",
+    title: "Xác nhận & nhận bàn giao xe",
+    body: "Đội ngũ liên hệ xác nhận và giao xe tận nơi chỉ trong 10-15 phút.",
   },
   {
     step: "03",
-    title: "Vi vu khám phá Huế",
-    body: "Đại Nội, lăng tẩm, phá Tam Giang — tự do theo nhịp của bạn.",
+    title: "Tự do vi vu khám phá Huế",
+    body: "Trải nghiệm trọn vẹn cố đô Huế, lăng tẩm và ẩm thực theo cách riêng của bạn.",
   },
 ]
 
@@ -276,83 +275,85 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-slate-800 selection:bg-blue-600 selection:text-white">
-      {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
-          <a href="#top" className="flex items-center gap-2.5">
-            <div className="relative size-11 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm sm:size-12">
+    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
+      {/* Navigation Bar */}
+      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
+          <a href="#top" className="flex items-center gap-3">
+            <div className="relative size-12 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
               <Image
                 src="/logo.jpg"
                 alt="Logo 3L Moto Huế"
                 fill
-                className="object-contain"
+                className="object-contain p-1"
                 onError={(e) => {
                   ;(e.target as HTMLElement).style.display = "none"
                 }}
               />
             </div>
             <div className="leading-tight">
-              <span className="block text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-                3L Moto
+              <span className="block text-xl font-extrabold tracking-tight text-slate-900">
+                3L MOTO
               </span>
-              <span className="block text-[11px] font-medium text-slate-500">Thuê xe máy tại Huế</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-blue-600">
+                Huế Motorbike Rental
+              </span>
             </div>
           </a>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
-            <a href="#booking" className="transition-colors hover:text-blue-700">
-              Đặt xe
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+            <a href="#booking-section" className="transition-colors hover:text-blue-600">
+              Đặt xe ngay
             </a>
-            <a href="#why" className="transition-colors hover:text-blue-700">
-              Vì sao chọn chúng tôi
+            <a href="#why" className="transition-colors hover:text-blue-600">
+              Cam kết dịch vụ
             </a>
-            <a href="#fleet" className="transition-colors hover:text-blue-700">
-              Bảng giá
+            <a href="#fleet" className="transition-colors hover:text-blue-600">
+              Bảng giá xe
             </a>
-            <a href="#process" className="transition-colors hover:text-blue-700">
+            <a href="#process" className="transition-colors hover:text-blue-600">
               Quy trình
             </a>
-            <a href="#contact" className="transition-colors hover:text-blue-700">
+            <a href="#contact" className="transition-colors hover:text-blue-600">
               Liên hệ
             </a>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-800 sm:inline-flex"
+              className="hidden items-center gap-2 rounded-xl bg-slate-50 border border-slate-200/80 px-4 py-2.5 text-sm font-bold text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
             >
-              <User className="size-4" />
-              Đăng nhập
+              <User className="size-4 text-slate-500" />
+              Đăng nhập hệ thống
             </Link>
             <button
               type="button"
-              className="inline-flex size-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 md:hidden"
+              className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 md:hidden transition-colors hover:bg-slate-50"
               aria-label={mobileNavOpen ? "Đóng menu" : "Mở menu"}
               onClick={() => setMobileNavOpen((v) => !v)}
             >
-              {mobileNavOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+              {mobileNavOpen ? <X className="size-5.5" /> : <Menu className="size-5.5" />}
             </button>
           </div>
         </div>
 
         {mobileNavOpen && (
-          <div className="border-t border-slate-100 bg-white px-4 py-3 md:hidden">
-            <div className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+          <div className="border-t border-slate-100 bg-white px-6 py-4 md:hidden shadow-lg">
+            <div className="flex flex-col gap-2 text-sm font-semibold text-slate-700">
               {[
-                ["#booking", "Đặt xe"],
-                ["#why", "Vì sao chọn chúng tôi"],
-                ["#fleet", "Bảng giá"],
-                ["#process", "Quy trình"],
-                ["#contact", "Liên hệ"],
+                ["#booking-section", "Đặt xe trực tuyến"],
+                ["#why", "Cam kết dịch vụ"],
+                ["#fleet", "Bảng giá tham khảo"],
+                ["#process", "Quy trình 3 bước"],
+                ["#contact", "Liên hệ & Địa chỉ"],
                 ["/login", "Đăng nhập"],
               ].map(([href, label]) =>
                 href.startsWith("/") ? (
                   <Link
                     key={href}
                     href={href}
-                    className="rounded-lg px-3 py-2.5 hover:bg-slate-50"
+                    className="rounded-xl px-4 py-3 hover:bg-slate-50 transition-colors"
                     onClick={() => setMobileNavOpen(false)}
                   >
                     {label}
@@ -361,7 +362,7 @@ export default function LandingPage() {
                   <a
                     key={href}
                     href={href}
-                    className="rounded-lg px-3 py-2.5 hover:bg-slate-50"
+                    className="rounded-xl px-4 py-3 hover:bg-slate-50 transition-colors"
                     onClick={() => setMobileNavOpen(false)}
                   >
                     {label}
@@ -374,135 +375,105 @@ export default function LandingPage() {
       </header>
 
       <main id="top">
-        {/* Hero — full-bleed, brand-first, booking as interaction */}
-        <section className="relative isolate min-h-[100dvh] overflow-hidden text-white">
-          <Image
-            src="/hue-motorbike-bg-v3.jpg"
-            alt="Cho thuê xe máy Huế — 3L Moto"
-            fill
-            priority
-            className="object-cover object-[center_35%]"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(15,23,42,0.82)_0%,rgba(30,58,138,0.55)_48%,rgba(15,23,42,0.72)_100%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(37,99,235,0.25),transparent_55%)]" />
+        {/* Hero Section */}
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white py-16 sm:py-24">
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/hue-motorbike-bg-v3.jpg"
+              alt="Cho thuê xe máy Huế — 3L Moto"
+              fill
+              priority
+              className="object-cover object-[center_35%] opacity-40 filter brightness-[0.7]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-950" />
+          </div>
 
-          <div className="relative z-10 mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-12 lg:items-center lg:gap-12 lg:px-8 lg:py-20">
-            <div className="lg:col-span-6 space-y-7">
-              <BlurFade delay={0.05} direction="up" offset={12}>
-                <p className="text-sm font-semibold tracking-[0.18em] text-blue-200/90 uppercase">
-                  3L Moto Huế
-                </p>
+          <div className="relative z-10 mx-auto max-w-6xl px-6 w-full grid gap-12 lg:grid-cols-12 lg:items-center">
+            <div className="lg:col-span-6 space-y-8">
+              <BlurFade delay={0.05} direction="up" offset={10}>
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/30 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-blue-300">
+                  <Sparkles className="size-3.5" /> Dịch vụ cho thuê xe máy uy tín tại Huế
+                </div>
               </BlurFade>
 
-              <BlurFade delay={0.12} direction="up" offset={16}>
-                <h1 className="max-w-[14ch] text-4xl font-bold tracking-tight text-balance text-white sm:text-5xl lg:text-[3.4rem] lg:leading-[1.08]">
-                  Vi vu cố đô với{" "}
-                  <AnimatedGradientText
-                    colorFrom="#93c5fd"
-                    colorTo="#67e8f9"
-                    speed={0.9}
-                    className="font-bold"
-                  >
-                    xe máy sẵn sàng
-                  </AnimatedGradientText>
+              <BlurFade delay={0.1} direction="up" offset={12}>
+                <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl lg:leading-[1.1]">
+                  Khám phá Cố Đô <br />
+                  <span className="text-blue-400">Theo cách của bạn</span>
                 </h1>
               </BlurFade>
 
-              <BlurFade delay={0.2} direction="up" offset={14}>
-                <p className="max-w-[42ch] text-base leading-relaxed text-slate-200 sm:text-lg">
-                  Thuê xe đời mới, giao miễn phí nội thành — kèm 2 mũ bảo hiểm và áo mưa. Đặt online,
-                  nhận xe trong 10–15 phút.
+              <BlurFade delay={0.15} direction="up" offset={12}>
+                <p className="max-w-[48ch] text-base leading-relaxed text-slate-300 sm:text-lg">
+                  Thuê xe máy đời mới chất lượng cao, giao nhận hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay. Tặng kèm 2 mũ bảo hiểm đạt chuẩn và áo mưa tiện dụng.
                 </p>
               </BlurFade>
 
-              <BlurFade delay={0.28} direction="up" offset={12}>
-                <div className="flex flex-wrap items-center gap-3">
-                  <ShimmerButton
-                    type="button"
-                    background="rgb(29 78 216)"
-                    shimmerColor="#e0f2fe"
-                    borderRadius="14px"
-                    className="h-12 px-7 text-sm font-semibold shadow-lg shadow-blue-950/30"
-                    onClick={() => {
-                      document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })
-                    }}
+              <BlurFade delay={0.2} direction="up" offset={10}>
+                <div className="flex flex-wrap items-center gap-4">
+                  <a
+                    href="#booking-section"
+                    className="inline-flex h-14 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/30 active:scale-[0.98]"
                   >
-                    Đặt xe ngay
-                    <ArrowRight className="ml-2 size-4" />
-                  </ShimmerButton>
+                    Đặt xe trực tuyến
+                    <ArrowRight className="ml-2.5 size-4" />
+                  </a>
                   <a
                     href="tel:0363077775"
-                    className="inline-flex h-12 items-center gap-2 rounded-[14px] border border-white/25 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15"
+                    className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
                   >
-                    <PhoneCall className="size-4" />
+                    <PhoneCall className="size-4 text-blue-400" />
                     0363.077.775
                   </a>
                 </div>
               </BlurFade>
 
-              <BlurFade delay={0.36} direction="up" offset={10}>
-                <div className="flex flex-wrap gap-x-8 gap-y-4 border-t border-white/15 pt-6">
-                  <div>
-                    <div className="flex items-baseline gap-1">
-                      <NumberTicker value={120} className="text-2xl font-bold text-white" />
-                      <span className="text-sm text-slate-300">k+</span>
-                    </div>
-                    <p className="text-xs text-slate-400">đồng/ngày từ</p>
+              <BlurFade delay={0.25} direction="up" offset={10}>
+                <div className="flex flex-wrap gap-x-10 gap-y-4 border-t border-white/10 pt-8">
+                  <div className="space-y-1">
+                    <p className="text-3xl font-extrabold text-white">120k <span className="text-sm font-medium text-slate-400">đ/ngày</span></p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Giá thuê tốt nhất</p>
                   </div>
-                  <div>
-                    <div className="flex items-baseline gap-1">
-                      <NumberTicker value={15} className="text-2xl font-bold text-white" />
-                      <span className="text-sm text-slate-300">phút</span>
-                    </div>
-                    <p className="text-xs text-slate-400">giao xe trung bình</p>
+                  <div className="space-y-1">
+                    <p className="text-3xl font-extrabold text-white">10-15 <span className="text-sm font-medium text-slate-400">phút</span></p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Giao xe hỏa tốc</p>
                   </div>
-                  <div>
-                    <div className="flex items-baseline gap-1">
-                      <NumberTicker value={24} className="text-2xl font-bold text-white" />
-                      <span className="text-sm text-slate-300">/7</span>
-                    </div>
-                    <p className="text-xs text-slate-400">hỗ trợ sự cố</p>
+                  <div className="space-y-1">
+                    <p className="text-3xl font-extrabold text-white">24/7</p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Hỗ trợ khẩn cấp</p>
                   </div>
                 </div>
               </BlurFade>
             </div>
 
-            {/* Booking form — interactive surface */}
-            <BlurFade delay={0.22} direction="up" offset={20} className="lg:col-span-6">
+            {/* Redesigned Booking Form Card */}
+            <BlurFade delay={0.15} direction="up" offset={15} className="lg:col-span-6 w-full">
               <div
-                id="booking"
-                className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-white/20 bg-white p-6 text-slate-900 shadow-2xl shadow-slate-950/25 sm:p-8"
+                id="booking-section"
+                className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 text-slate-900 shadow-xl shadow-slate-950/10 sm:p-8"
               >
-                <BorderBeam
-                  size={120}
-                  duration={9}
-                  borderWidth={1.5}
-                  colorFrom="#2563eb"
-                  colorTo="#22d3ee"
-                />
-
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                    Đặt xe máy trực tuyến
+                  <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
+                    Lên lịch thuê xe máy
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    Kiểm tra xe trống theo ngày — xác nhận sau vài phút.
+                    Hệ thống tự động lọc và báo giá các loại xe sẵn sàng.
                   </p>
                 </div>
 
                 <form onSubmit={handleSearch} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-sm font-medium text-slate-700">
-                      Họ và tên *
+                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Họ và tên khách hàng *
                     </Label>
                     <div className="relative">
-                      <User className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
+                      <User className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400" />
                       <Input
                         id="name"
                         type="text"
                         required
                         placeholder="Nguyễn Văn A"
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-base focus:bg-white"
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       />
@@ -510,17 +481,17 @@ export default function LandingPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="phone" className="text-sm font-medium text-slate-700">
-                      Số điện thoại *
+                    <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Số điện thoại liên hệ *
                     </Label>
                     <div className="relative">
-                      <Phone className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
+                      <Phone className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400" />
                       <Input
                         id="phone"
                         type="tel"
                         required
-                        placeholder="0363077775"
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-base focus:bg-white"
+                        placeholder="0363xxxxxx hoặc Zalo"
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
@@ -529,32 +500,32 @@ export default function LandingPage() {
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="startDate" className="text-sm font-medium text-slate-700">
-                        Ngày nhận *
+                      <Label htmlFor="startDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Ngày nhận xe *
                       </Label>
                       <div className="relative">
-                        <Calendar className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
+                        <Calendar className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400" />
                         <Input
                           id="startDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm focus:bg-white"
+                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                           value={formData.startDate}
                           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                         />
                       </div>
                     </div>
                     <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="endDate" className="text-sm font-medium text-slate-700">
-                        Ngày trả *
+                      <Label htmlFor="endDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Ngày trả xe *
                       </Label>
                       <div className="relative">
-                        <Calendar className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
+                        <Calendar className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400" />
                         <Input
                           id="endDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm focus:bg-white"
+                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                           value={formData.endDate}
                           onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                         />
@@ -563,16 +534,17 @@ export default function LandingPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="address" className="text-sm font-medium text-slate-700">
-                      Nơi nhận xe
+                    <Label htmlFor="address" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Địa điểm giao nhận xe *
                     </Label>
                     <div className="relative">
-                      <MapPin className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
+                      <MapPin className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400" />
                       <Input
                         id="address"
                         type="text"
-                        placeholder="Ga Huế, khách sạn, sân bay…"
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-base focus:bg-white"
+                        required
+                        placeholder="Ga Huế, tên khách sạn, hoặc Sân bay Phú Bài..."
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       />
@@ -580,7 +552,7 @@ export default function LandingPage() {
                   </div>
 
                   {formError ? (
-                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700">
                       {formError}
                     </p>
                   ) : null}
@@ -588,16 +560,16 @@ export default function LandingPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-1 h-12 w-full rounded-xl bg-blue-700 text-base font-semibold text-white shadow-md shadow-blue-700/20 hover:bg-blue-800"
+                    className="mt-2 h-13 w-full rounded-xl bg-slate-900 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 active:scale-[0.99] disabled:opacity-70 cursor-pointer"
                   >
                     {isLoading ? (
                       <span className="inline-flex items-center gap-2">
-                        <Loader2 className="size-5 animate-spin" />
-                        Đang tìm xe trống…
+                        <Loader2 className="size-4 animate-spin" />
+                        Đang truy xuất dữ liệu xe...
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-2">
-                        Tìm xe trống & báo giá
+                        Tìm xe khả dụng & Báo giá
                         <ArrowRight className="size-4" />
                       </span>
                     )}
@@ -608,81 +580,69 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Trust marquee */}
-        <section className="border-y border-slate-200/80 bg-white py-3" aria-label="Cam kết dịch vụ">
-          <Marquee pauseOnHover className="[--duration:35s] [--gap:2.5rem]">
+        {/* Cam kết Trust Marquee */}
+        <section className="border-y border-slate-200 bg-white py-4" aria-label="Cam kết dịch vụ">
+          <Marquee pauseOnHover className="[--duration:40s] [--gap:3rem]">
             {MARQUEE_ITEMS.map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center gap-2 text-sm font-medium text-slate-600"
+                className="inline-flex items-center gap-2 text-sm font-bold text-slate-700 uppercase tracking-wide"
               >
-                <CheckCircle className="size-4 text-blue-600" />
+                <CheckCircle className="size-4 text-emerald-600" />
                 {item}
               </span>
             ))}
           </Marquee>
         </section>
 
-        {/* Why — asymmetric, one job */}
-        <section id="why" className="scroll-mt-24 py-20 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <BlurFade inView direction="up" offset={14}>
-              <div className="max-w-2xl">
-                <p className="text-sm font-semibold tracking-wide text-blue-700">Vì sao 3L Moto</p>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 text-balance sm:text-4xl">
-                  Thuê xe rõ ràng, nhận xe đúng giờ, đi Huế nhẹ đầu
+        {/* Why Choose Us Section */}
+        <section id="why" className="scroll-mt-24 py-24 bg-slate-50">
+          <div className="mx-auto max-w-6xl px-6">
+            <BlurFade inView direction="up" offset={10}>
+              <div className="text-center max-w-3xl mx-auto space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Độ tin cậy hàng đầu</p>
+                <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                  Dịch vụ chuẩn chỉ — Trải nghiệm trọn vẹn
                 </h2>
-                <p className="mt-3 max-w-[55ch] text-base leading-relaxed text-slate-600">
-                  Không phí ẩn. Xe được bảo dưỡng định kỳ. Giao nhận linh hoạt tại ga, sân bay và
-                  khách sạn nội thành.
+                <p className="text-base text-slate-500 max-w-2xl mx-auto">
+                  Chúng tôi xây dựng uy tín dựa trên sự rõ ràng về giá cả, chất lượng xe vượt trội và dịch vụ chăm sóc chu đáo, luôn đồng hành cùng hành trình của bạn.
                 </p>
               </div>
             </BlurFade>
 
-            <div className="mt-12 grid gap-5 lg:grid-cols-12 lg:grid-rows-2">
-              <BlurFade inView delay={0.05} direction="up" className="lg:col-span-7 lg:row-span-2">
-                <div className="relative flex h-full min-h-[280px] flex-col justify-between overflow-hidden rounded-2xl bg-slate-900 p-8 text-white sm:p-10">
-                  <div className="absolute -right-16 -bottom-20 size-64 rounded-full bg-blue-500/20 blur-3xl" />
-                  <div className="relative">
-                    <Shield className="size-8 text-blue-300" />
-                    <h3 className="mt-5 text-2xl font-bold tracking-tight">An toàn & tiện lợi sẵn</h3>
-                    <p className="mt-3 max-w-[40ch] text-sm leading-relaxed text-slate-300">
-                      Mỗi lần thuê kèm 2 mũ bảo hiểm cao cấp và 1 áo mưa. Cứu hộ sự cố dọc đường
-                      24/7.
-                    </p>
+            <div className="mt-16 grid gap-8 md:grid-cols-3">
+              <BlurFade inView delay={0.05} direction="up" offset={12}>
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
+                    <Shield className="size-6" />
                   </div>
-                  <div className="relative mt-8 flex items-center gap-4">
-                    <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-white/10">
-                      <Image
-                        src="/accessories.png"
-                        alt="Mũ bảo hiểm và áo mưa đi kèm"
-                        fill
-                        className="object-contain p-1"
-                      />
-                    </div>
-                    <p className="text-sm text-slate-300">
-                      Phụ kiện chính hãng 3L Moto — miễn phí kèm theo.
-                    </p>
-                  </div>
-                </div>
-              </BlurFade>
-
-              <BlurFade inView delay={0.1} direction="up" className="lg:col-span-5">
-                <div className="h-full rounded-2xl border border-slate-200 bg-white p-7 shadow-[var(--shadow-card)]">
-                  <Bike className="size-7 text-blue-700" />
-                  <h3 className="mt-4 text-lg font-bold text-slate-900">Đội xe đa dạng</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    Airblade, Vision, Janus, Scoopy — chọn theo phong cách và cung đường.
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Trang bị sẵn phụ kiện</h3>
+                  <p className="text-sm leading-relaxed text-slate-500">
+                    Trang bị sẵn 2 nón bảo hiểm chính hãng đạt chuẩn quốc gia kèm áo mưa cánh dơi tiện ích cho mỗi xe mà không tính thêm bất kỳ phụ phí nào.
                   </p>
                 </div>
               </BlurFade>
 
-              <BlurFade inView delay={0.15} direction="up" className="lg:col-span-5">
-                <div className="h-full rounded-2xl border border-slate-200 bg-white p-7 shadow-[var(--shadow-card)]">
-                  <MapPin className="size-7 text-blue-700" />
-                  <h3 className="mt-4 text-lg font-bold text-slate-900">Giao tận nơi miễn phí</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    Nội thành Huế: ga tàu, khách sạn, điểm đón bạn chỉ định.
+              <BlurFade inView delay={0.1} direction="up" offset={12}>
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
+                    <Compass className="size-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Hỗ trợ khẩn cấp 24/7</h3>
+                  <p className="text-sm leading-relaxed text-slate-500">
+                    Yên tâm di chuyển trên mọi nẻo đường Huế. Bất kỳ sự cố kỹ thuật nào cũng sẽ được xử lý kịp thời bằng đội ngũ cứu hộ cơ động hoạt động liên tục.
+                  </p>
+                </div>
+                  </BlurFade>
+
+              <BlurFade inView delay={0.15} direction="up" offset={12}>
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
+                    <ThumbsUp className="size-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Không chi phí ẩn</h3>
+                  <p className="text-sm leading-relaxed text-slate-500">
+                    Báo giá rõ ràng, minh bạch ngay tại thời điểm đăng ký. Cam kết không phát sinh phụ phí ngoài hợp đồng, đem lại sự an tâm tuyệt đối.
                   </p>
                 </div>
               </BlurFade>
@@ -690,77 +650,80 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Fleet */}
-        <section id="fleet" className="scroll-mt-24 bg-white py-20 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <BlurFade inView direction="up" offset={12}>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="max-w-xl">
-                  <p className="text-sm font-semibold tracking-wide text-blue-700">Bảng giá tham khảo</p>
-                  <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                    Xe sẵn sàng cho hành trình của bạn
+        {/* Fleet / Price Grid */}
+        <section id="fleet" className="scroll-mt-24 bg-white py-24">
+          <div className="mx-auto max-w-6xl px-6">
+            <BlurFade inView direction="up" offset={10}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-slate-100 pb-8">
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Đội xe chất lượng</p>
+                  <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                    Danh mục xe máy sẵn có
                   </h2>
-                  <p className="mt-3 text-base text-slate-600">
-                    Đã gồm mũ bảo hiểm, áo mưa và hỗ trợ sự cố. Thuê dài ngày có ưu đãi — gọi để tư
-                    vấn.
+                  <p className="text-sm text-slate-500 max-w-xl">
+                    Các dòng xe tay ga hiện đại, thế hệ mới nhất, tiết kiệm nhiên liệu, được rửa sạch sẽ trước khi giao tới tay khách hàng.
                   </p>
                 </div>
                 <a
-                  href="#booking"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                  href="#booking-section"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors"
                 >
-                  Kiểm tra xe trống
+                  Kiểm tra tính khả dụng của xe
                   <ArrowRight className="size-4" />
                 </a>
               </div>
             </BlurFade>
 
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {FLEET.map((bike, i) => (
-                <BlurFade key={bike.name} inView delay={0.05 * i} direction="up">
+                <BlurFade key={bike.name} inView delay={0.05 * i} direction="up" offset={10}>
                   <article
                     className={cn(
-                      "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white",
+                      "group relative flex h-full flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 duration-300",
                       bike.featured
-                        ? "border-blue-200 shadow-md shadow-blue-900/5"
-                        : "border-slate-200 shadow-[var(--shadow-card)]"
+                        ? "border-blue-200 shadow-md shadow-blue-500/5 bg-slate-50/30"
+                        : "border-slate-200 shadow-sm hover:shadow-md"
                     )}
                   >
-                    {bike.featured ? (
-                      <BorderBeam
-                        size={80}
-                        duration={8}
-                        borderWidth={1.5}
-                        colorFrom="#2563eb"
-                        colorTo="#38bdf8"
-                      />
-                    ) : null}
-
-                    <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-slate-50">
                       <Image
                         src={bike.image}
                         alt={bike.alt}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
                     </div>
 
-                    <div className="flex flex-1 flex-col p-5">
-                      <p className="text-xs font-medium tracking-wide text-blue-700">{bike.tag}</p>
-                      <h3 className="mt-1 text-lg font-bold text-slate-900">{bike.name}</h3>
-                      <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{bike.blurb}</p>
-                      <div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-4">
-                        <div>
-                          <p className="text-xs text-slate-500">Giá thuê</p>
-                          <p className="money text-lg font-bold text-slate-900">
+                    <div className="flex flex-1 flex-col p-6">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                          {bike.tag}
+                        </span>
+                        {bike.featured && (
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-blue-600">
+                            Yêu thích nhất
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mt-2 text-lg font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">
+                        {bike.name}
+                      </h3>
+                      <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
+                        {bike.blurb}
+                      </p>
+                      
+                      <div className="mt-6 flex items-end justify-between border-t border-slate-100 pt-5">
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Giá thuê chỉ từ</p>
+                          <p className="text-lg font-black text-slate-900">
                             {bike.price.toLocaleString("vi-VN")}đ
-                            <span className="text-sm font-medium text-slate-500"> / ngày</span>
+                            <span className="text-xs font-semibold text-slate-400">/ngày</span>
                           </p>
                         </div>
                         <a
-                          href="#booking"
-                          className="rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                          href="#booking-section"
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-4 text-xs font-bold text-white transition-colors hover:bg-blue-600"
                         >
                           Đặt xe
                         </a>
@@ -771,28 +734,34 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <BlurFade inView delay={0.1} direction="up">
-              <div className="mt-10 grid gap-3 rounded-2xl border border-slate-200 bg-[#f4f7fb] p-5 sm:grid-cols-3 sm:gap-6 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <Clock className="mt-0.5 size-5 shrink-0 text-blue-700" />
+            <BlurFade inView delay={0.1} direction="up" offset={10}>
+              <div className="mt-12 grid gap-6 rounded-2xl border border-slate-100 bg-slate-50 p-6 sm:grid-cols-3 sm:p-8">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
+                    <Clock className="size-5 shrink-0" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Giá từ 1 ngày</p>
-                    <p className="text-xs text-slate-500">Tuần / tháng liên hệ để giảm thêm</p>
+                    <p className="text-sm font-bold text-slate-900">Chính sách dài hạn</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Chiết khấu hấp dẫn khi thuê theo tuần hoặc tháng liên tục.</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="mt-0.5 size-5 shrink-0 text-blue-700" />
+                <div className="flex items-start gap-4">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
+                    <MapPin className="size-5 shrink-0" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Giao miễn phí nội thành</p>
-                    <p className="text-xs text-slate-500">Ga Huế, khách sạn, điểm đón</p>
+                    <p className="text-sm font-bold text-slate-900">Giao xe tận nơi miễn phí</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Bàn giao tại tất cả địa điểm trong trung tâm TP Huế.</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <Phone className="mt-0.5 size-5 shrink-0 text-blue-700" />
+                <div className="flex items-start gap-4">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
+                    <Phone className="size-5 shrink-0" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Cần tư vấn nhanh?</p>
-                    <a href="tel:0363077775" className="text-xs font-medium text-blue-700 hover:underline">
-                      Gọi 0363.077.775
+                    <p className="text-sm font-bold text-slate-900">Liên hệ trực tiếp</p>
+                    <a href="tel:0363077775" className="text-xs font-extrabold text-blue-600 hover:underline mt-0.5 block">
+                      Gọi ngay: 0363.077.775
                     </a>
                   </div>
                 </div>
@@ -801,27 +770,27 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Process */}
-        <section id="process" className="scroll-mt-24 py-20 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <BlurFade inView direction="up">
+        {/* Process Steps */}
+        <section id="process" className="scroll-mt-24 py-24 bg-slate-50 border-t border-slate-100">
+          <div className="mx-auto max-w-6xl px-6">
+            <BlurFade inView direction="up" offset={10}>
               <div className="max-w-xl">
-                <p className="text-sm font-semibold tracking-wide text-blue-700">Quy trình</p>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                  Ba bước — từ form đến tay lái
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Thủ tục đơn giản</p>
+                <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                  3 bước nhanh chóng để khởi hành
                 </h2>
               </div>
             </BlurFade>
 
-            <ol className="mt-12 grid gap-6 md:grid-cols-3">
+            <ol className="mt-16 grid gap-8 md:grid-cols-3">
               {PROCESS_STEPS.map((item, i) => (
-                <BlurFade key={item.step} inView delay={0.08 * i} direction="up">
-                  <li className="relative rounded-2xl border border-slate-200 bg-white p-6">
-                    <span className="font-mono text-3xl font-bold tracking-tighter text-blue-100">
+                <BlurFade key={item.step} inView delay={0.08 * i} direction="up" offset={10}>
+                  <li className="relative rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
+                    <span className="font-mono text-5xl font-black tracking-tighter text-blue-100 block">
                       {item.step}
                     </span>
-                    <h3 className="mt-3 text-lg font-bold text-slate-900">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.body}</p>
+                    <h3 className="mt-4 text-lg font-bold text-slate-900">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500">{item.body}</p>
                   </li>
                 </BlurFade>
               ))}
@@ -831,68 +800,76 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer id="contact" className="scroll-mt-24 border-t border-slate-800 bg-slate-950 text-slate-300">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
-          <div className="space-y-3">
-            <p className="text-xl font-bold tracking-tight text-white">3L Moto Huế</p>
+      <footer id="contact" className="scroll-mt-24 border-t border-slate-800 bg-slate-950 text-slate-400">
+        <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 md:grid-cols-3">
+          <div className="space-y-4">
+            <p className="text-2xl font-black tracking-tight text-white">3L MOTO</p>
             <p className="max-w-[36ch] text-sm leading-relaxed text-slate-400">
-              Cho thuê xe máy tự lái tại cố đô — rõ giá, giao nhanh, hỗ trợ suốt hành trình.
+              Dịch vụ cho thuê xe máy tự lái uy tín hàng đầu tại Cố đô Huế. Đồng hành tin cậy trên mọi cung đường khám phá văn hóa di sản.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold tracking-wide text-white">Liên hệ</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex gap-2.5">
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Thông tin liên hệ</h3>
+            <ul className="space-y-3.5 text-sm">
+              <li className="flex gap-3">
                 <MapPin className="mt-0.5 size-4 shrink-0 text-blue-400" />
-                <span>L25 Đường Số 8, KQH Đông Nam Thủy An, phường Thanh Thuỷ, TP Huế</span>
+                <span>L25 Đường Số 8, KQH Đông Nam Thủy An, Thanh Thủy, TP Huế</span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <PhoneCall className="size-4 shrink-0 text-blue-400" />
-                <span>0363.077.775 · 0934.924.195 (Zalo)</span>
+              <li className="flex gap-3">
+                <PhoneCall className="mt-0.5 size-4 shrink-0 text-blue-400" />
+                <span>0363.077.775 · 0934.924.195 (Hỗ trợ Zalo)</span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <Facebook className="size-4 shrink-0 text-blue-400" />
+              <li className="flex gap-3">
+                <Facebook className="mt-0.5 size-4 shrink-0 text-blue-400" />
                 <a
                   href="https://www.facebook.com/profile.php?id=61569870030659"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white hover:underline"
+                  className="hover:text-white transition-colors"
                 >
-                  Facebook 3L Moto
+                  Facebook fanpage chính thức
                 </a>
               </li>
             </ul>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold tracking-wide text-white">Khi thuê xe</h3>
-            <ul className="space-y-2 text-sm text-slate-400">
-              <li>CCCD / Hộ chiếu / GPLX</li>
-              <li>Giao miễn phí trung tâm Huế</li>
-              <li>2 mũ bảo hiểm kèm theo</li>
-              <li>Cứu hộ 24/7 khi sự cố</li>
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Quy chuẩn thủ tục</h3>
+            <ul className="space-y-2.5 text-sm">
+              <li className="flex items-center gap-2">
+                <Check className="size-3.5 text-emerald-500" /> Giấy tờ cần thiết: CCCD / GPLX
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-3.5 text-emerald-500" /> Giao nhận xe tận nơi miễn phí
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-3.5 text-emerald-500" /> Miễn phí 02 mũ bảo hiểm đạt chuẩn
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="size-3.5 text-emerald-500" /> Hỗ trợ kỹ thuật sự cố 24/7
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-slate-800/80">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
-            <p>© 2026 3L Moto Huế — Phan Lê Tự Lập</p>
-            <p className="text-slate-600">Giá công khai · Không phí ẩn</p>
+        <div className="border-t border-slate-900 py-8">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs text-slate-500 sm:flex-row">
+            <p>© 2026 3L Moto Huế. Bản quyền sở hữu thuộc về Phan Lê Tự Lập.</p>
+            <p>Báo giá niêm yết công khai · Không phát sinh phụ phí</p>
           </div>
         </div>
       </footer>
 
       {/* Available vehicles modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <div className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-slate-900 px-6 py-5 text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-xs">
+          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between bg-slate-950 px-6 py-5 text-white">
               <div>
-                <h3 className="text-lg font-bold">Xe máy trống</h3>
-                <p className="mt-1 text-xs text-slate-300">
-                  {new Date(formData.startDate).toLocaleDateString("vi-VN")} →{" "}
+                <h3 className="text-lg font-bold">Danh sách xe máy khả dụng</h3>
+                <p className="mt-1 text-xs text-slate-400">
+                  Thời gian: {new Date(formData.startDate).toLocaleDateString("vi-VN")} →{" "}
                   {new Date(formData.endDate).toLocaleDateString("vi-VN")} ({totalDays} ngày)
                 </p>
               </div>
@@ -906,38 +883,37 @@ export default function LandingPage() {
               </button>
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6">
               {bookingSuccess ? (
-                <div className="mx-auto max-w-md space-y-4 py-10 text-center">
+                <div className="mx-auto max-w-md space-y-6 py-8 text-center">
                   <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100">
                     <Check className="size-8 text-emerald-600" />
                   </div>
-                  <h4 className="text-2xl font-bold text-slate-900">Đặt xe thành công</h4>
-                  <p className="text-sm leading-relaxed text-slate-600">
-                    Chào <span className="font-semibold text-slate-900">{formData.name}</span>. Chúng
-                    tôi đã nhận yêu cầu thuê{" "}
-                    <span className="font-semibold text-slate-900">{selectedVehicle?.name}</span>.
-                  </p>
-                  <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-800">
-                    Bộ phận hỗ trợ sẽ gọi{" "}
-                    <strong>{formData.phone}</strong> trong 10–15 phút để hoàn tất và giao xe.
-                  </p>
+                  <div className="space-y-2">
+                    <h4 className="text-2xl font-extrabold text-slate-900">Đặt xe thành công!</h4>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                      Cảm ơn anh/chị <span className="font-bold text-slate-900">{formData.name}</span>. Hệ thống đã tiếp nhận yêu cầu thuê xe <span className="font-bold text-blue-600">{selectedVehicle?.name}</span>.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold leading-relaxed text-amber-800">
+                    Nhân viên điều phối sẽ liên hệ qua số điện thoại <strong>{formData.phone}</strong> trong vòng 10–15 phút tới để hoàn tất thủ tục bàn giao.
+                  </div>
                   <Button
                     onClick={closeBookingModal}
-                    className="rounded-xl bg-blue-700 px-8 text-white hover:bg-blue-800"
+                    className="w-full h-11 rounded-xl bg-slate-900 text-sm font-bold text-white hover:bg-slate-800"
                   >
-                    Đóng
+                    Đóng cửa sổ
                   </Button>
                 </div>
               ) : availableVehicles.length === 0 ? (
-                <div className="space-y-3 py-14 text-center text-slate-500">
-                  <Bike className="mx-auto size-14 opacity-30" />
-                  <p className="text-lg font-medium text-slate-700">
-                    Hiện chưa có xe trống trong khoảng này
-                  </p>
-                  <p className="mx-auto max-w-sm text-sm">
-                    Đổi ngày nhận/trả hoặc gọi hotline để được sắp xếp trực tiếp.
-                  </p>
+                <div className="space-y-4 py-16 text-center text-slate-500">
+                  <Bike className="mx-auto size-16 opacity-20 text-slate-400" />
+                  <div className="space-y-1">
+                    <p className="text-lg font-bold text-slate-800">Không tìm thấy xe máy khả dụng</p>
+                    <p className="mx-auto max-w-sm text-xs text-slate-400 leading-relaxed">
+                      Hiện tại toàn bộ xe đã được đặt kín trong khoảng thời gian này. Vui lòng chọn mốc thời gian khác hoặc liên hệ hotline để được hỗ trợ thủ công.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
@@ -946,38 +922,38 @@ export default function LandingPage() {
                     return (
                       <div
                         key={vehicle.id}
-                        className="flex flex-col justify-between gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
+                        className="flex flex-col gap-4 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="flex size-14 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-blue-700">
-                            <Bike className="size-7" />
+                          <div className="flex size-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-blue-600 shrink-0">
+                            <Bike className="size-6" />
                           </div>
                           <div>
                             <h4 className="font-bold text-slate-900">{vehicle.name}</h4>
-                            <p className="mt-0.5 text-xs text-slate-500">
-                              Màu: <strong>{vehicle.color || "Nhiều màu"}</strong>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Màu xe: <span className="font-semibold text-slate-700">{vehicle.color || "Ngẫu nhiên"}</span>
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-2 sm:items-end">
+                        <div className="flex flex-col gap-3 sm:items-end">
                           <div className="text-left sm:text-right">
-                            <span className="block text-xs text-slate-500">
-                              {vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày
+                            <span className="block text-xs text-slate-400">
+                              Đơn giá: {vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày
                             </span>
-                            <span className="money block text-base font-bold text-slate-900">
-                              Tổng {priceTotal.toLocaleString("vi-VN")}đ
+                            <span className="block text-base font-extrabold text-slate-900">
+                              Tổng cộng: {priceTotal.toLocaleString("vi-VN")}đ
                             </span>
                           </div>
                           <Button
                             onClick={() => handleConfirmBooking(vehicle)}
                             disabled={isSubmitting}
-                            className="h-9 rounded-xl bg-blue-700 px-4 text-xs font-semibold text-white hover:bg-blue-800"
+                            className="h-10 rounded-lg bg-blue-600 px-5 text-xs font-bold text-white hover:bg-blue-700 transition-colors w-full sm:w-auto"
                           >
                             {isSubmitting && selectedVehicle?.id === vehicle.id ? (
                               <Loader2 className="size-4 animate-spin" />
                             ) : (
-                              "Xác nhận đặt xe"
+                              "Xác nhận dòng xe này"
                             )}
                           </Button>
                         </div>
@@ -991,49 +967,49 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Floating contact */}
-      <div className="fixed right-5 bottom-5 z-50 flex flex-col items-end gap-3">
+      {/* Floating contact widget */}
+      <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end gap-3.5">
         {isOpenContact && (
-          <div className="mb-1 flex flex-col items-end gap-2.5">
+          <div className="flex flex-col items-end gap-2.5">
             <a
               href="https://zalo.me/0363077775"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full bg-[#0068ff] px-4 py-2.5 text-white shadow-lg transition-transform hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-semibold">Zalo: 0363.077.775</span>
+              <span className="text-xs font-bold">Zalo: 0363.077.775</span>
               <MessageCircle className="size-4" />
             </a>
             <a
               href="https://zalo.me/0934924195"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full bg-[#0068ff] px-4 py-2.5 text-white shadow-lg transition-transform hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-semibold">Zalo: 0934.924.195</span>
+              <span className="text-xs font-bold">Zalo: 0934.924.195</span>
               <MessageCircle className="size-4" />
             </a>
             <a
               href="https://www.facebook.com/profile.php?id=61569870030659"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-white shadow-lg transition-transform hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-semibold">Facebook</span>
+              <span className="text-xs font-bold">Facebook Fanpage</span>
               <Facebook className="size-4" />
             </a>
             <a
               href="tel:0363077775"
-              className="flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-white shadow-lg transition-transform hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-semibold">0363.077.775</span>
+              <span className="text-xs font-bold">Hotline 1: 0363.077.775</span>
               <PhoneCall className="size-4" />
             </a>
             <a
               href="tel:0934924195"
-              className="flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-white shadow-lg transition-transform hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-semibold">0934.924.195</span>
+              <span className="text-xs font-bold">Hotline 2: 0934.924.195</span>
               <PhoneCall className="size-4" />
             </a>
           </div>
@@ -1044,11 +1020,11 @@ export default function LandingPage() {
           onClick={() => setIsOpenContact(!isOpenContact)}
           aria-label="Liên hệ hotline và mạng xã hội"
           className={cn(
-            "flex size-14 items-center justify-center rounded-full text-white shadow-2xl transition-transform hover:scale-105 active:scale-95",
-            isOpenContact ? "bg-rose-500" : "bg-blue-700"
+            "flex size-14 items-center justify-center rounded-full text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer",
+            isOpenContact ? "bg-rose-600" : "bg-blue-600 hover:bg-blue-700"
           )}
         >
-          {isOpenContact ? <X className="size-6" /> : <PhoneCall className="size-6" />}
+          {isOpenContact ? <X className="size-6.5" /> : <PhoneCall className="size-6.5 animate-pulse" />}
         </button>
       </div>
     </div>
