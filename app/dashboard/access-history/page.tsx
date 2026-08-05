@@ -68,7 +68,7 @@ export default function AccessHistoryPage() {
         logs={accessLogs}
         loading={loading}
         onRefresh={() => loadAccessLogs(true)}
-        allowed={true}
+        allowed={user?.role === "admin" || user?.permissions?.canViewAccessHistory || false}
       />
     </ModulePageShell>
   )

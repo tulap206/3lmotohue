@@ -110,9 +110,12 @@ export function DashboardSidebar({ children }: SidebarProps) {
     }
   }
 
-  const visibleItems = menuItems.filter(
-    (item) => !("adminOnly" in item && item.adminOnly) || user?.role === "admin"
-  )
+  const visibleItems = menuItems.filter((item) => {
+    if (item.href === "/dashboard/access-history") {
+      return user?.role === "admin" || user?.permissions?.canViewAccessHistory
+    }
+    return !("adminOnly" in item && item.adminOnly) || user?.role === "admin"
+  })
 
   const nav = (
     <>

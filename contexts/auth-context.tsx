@@ -13,6 +13,8 @@ export interface User {
   role: UserRole
   permissions: {
     canDelete: boolean
+    canBackup?: boolean
+    canViewAccessHistory?: boolean
   }
 }
 
@@ -65,6 +67,7 @@ export const USERS: { username: string; password: string; user: User }[] = [
       role: "staff",
       permissions: {
         canDelete: false,
+        canViewAccessHistory: true,
       },
     },
   },
@@ -252,6 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           permissions: {
             canDelete: data.can_delete || false,
             canBackup: data.role === 'admin',
+            canViewAccessHistory: data.can_view_access_history || false,
           },
         }
         setUser(userData)
