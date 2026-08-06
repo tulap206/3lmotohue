@@ -80,7 +80,7 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     username: "",
     displayName: "",
-    role: "staff" as const,
+    role: "staff" as "admin" | "staff",
     canDelete: false,
   })
   const [showAccessDenied, setShowAccessDenied] = useState(false)

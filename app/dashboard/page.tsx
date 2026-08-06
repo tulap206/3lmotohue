@@ -20,6 +20,7 @@ import {
   Trash2,
   TrendingUp,
   Search,
+  X,
 } from "lucide-react"
 import { SkeletonMetricCards, SkeletonTable, SkeletonCharts } from "@/components/ui/skeleton-loader"
 import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeExpenseChart } from "@/components/dashboard/rental-charts"
@@ -311,6 +312,7 @@ export default function DashboardPage() {
     totalRentals: 0,
     activeRentals: 0,
     overdueRentals: 0,
+    cashOnHand: 0,
   })
   const [loading, setLoading] = useState(true)
 
