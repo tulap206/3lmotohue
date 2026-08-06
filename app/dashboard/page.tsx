@@ -53,6 +53,7 @@ import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
+import { findRentalDateConflict } from "@/lib/rental-date-conflicts"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
 
@@ -177,6 +178,24 @@ export default function DashboardPage() {
     
     if (startDate > endDate) {
       alert("⚠️ Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
+      return
+    }
+
+    const conflictingRental = findRentalDateConflict(
+      orders,
+      selectedVehicles.map((vehicle) => vehicle.id),
+      formData.startDate,
+      formData.endDate
+    )
+
+    if (conflictingRental) {
+      const vehicle = selectedVehicles.find((v) => v.id === conflictingRental.vehicleId)
+      alert(
+        `⚠️ Xe "${vehicle?.name || conflictingRental.vehicleName || "đã chọn"}" (${vehicle?.licensePlate || conflictingRental.licensePlate || "chưa biển"}) đã được thuê trong khoảng thời gian này!\n` +
+        `Khách: ${conflictingRental.customerName || "Không rõ"}\n` +
+        `Ngày: ${formatDisplayDate(conflictingRental.startDate || "")} - ${formatDisplayDate(conflictingRental.endDate || "")}\n` +
+        `Trạng thái: ${conflictingRental.status || "không rõ"}`
+      )
       return
     }
 
