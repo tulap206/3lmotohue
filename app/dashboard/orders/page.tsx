@@ -66,6 +66,7 @@ import {
   stripRentalTermFromNotes,
   buildRentalTermPayload,
 } from "@/lib/rental-term"
+import { findRentalDateConflict } from "@/lib/rental-date-conflicts"
 
 interface RentalOrder {
   id: string
@@ -466,6 +467,22 @@ export default function OrdersPage() {
       return
     }
 
+    const conflictingRental = findRentalDateConflict(
+      orders,
+      selectedVehicles.map((vehicle) => vehicle.id),
+      formData.startDate,
+      formData.endDate
+    )
+
+    if (conflictingRental) {
+      const vehicle = selectedVehicles.find((v) => v.id === conflictingRental.vehicleId)
+      showWarning(
+        `Xe "${vehicle?.name || conflictingRental.vehicleName || "đã chọn"}" (${vehicle?.licensePlate || conflictingRental.licensePlate || "chưa biển"}) đã được thuê trong khoảng thời gian này!`,
+        `Khách: ${conflictingRental.customerName || "Không rõ"}\nNgày: ${formatDisplayDate(conflictingRental.startDate || "")} - ${formatDisplayDate(conflictingRental.endDate || "")}\nTrạng thái: ${conflictingRental.status || "không rõ"}`
+      )
+      return
+    }
+
     let customerId = formData.customerId
     let customerName = ""
 
@@ -650,22 +667,21 @@ export default function OrdersPage() {
       return
     }
 
-    // TEMP: tắt kiểm tra trùng lịch để nhập đơn cũ trong quá khứ
-    // const conflictingRental = orders.find((order) => {
-    //   if (order.id === editingOrder.id) return false // Ignore current order
-    //   if (order.vehicleId !== vehicle.id) return false
-    //   if (order.status === "cancelled") return false // Ignore cancelled rentals
-    //   
-    //   const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
-    //   const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
-    //   
-    //   return !(endDate < orderStart || startDate > orderEnd)
-    // })
-    // 
-    // if (conflictingRental) {
-    //   showWarning(`Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!`, `Khách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`)
-    //   return
-    // }
+    const conflictingRental = findRentalDateConflict(
+      orders,
+      [vehicle.id],
+      editFormData.startDate,
+      editFormData.endDate,
+      editingOrder.id
+    )
+
+    if (conflictingRental) {
+      showWarning(
+        `Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!`,
+        `Khách: ${conflictingRental.customerName || "Không rõ"}\nNgày: ${formatDisplayDate(conflictingRental.startDate || "")} - ${formatDisplayDate(conflictingRental.endDate || "")}\nTrạng thái: ${conflictingRental.status || "không rõ"}`
+      )
+      return
+    }
 
     try {
       const newExtraFees = parseMoneyInput(editFormData.extraFees)
