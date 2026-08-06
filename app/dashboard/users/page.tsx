@@ -64,8 +64,8 @@ const DEFAULT_USERS: UserAccount[] = [
   },
   {
     id: "4",
-    username: "sang",
-    displayName: "Sang",
+    username: "tien",
+    displayName: "Tien",
     role: "staff",
     permissions: { canDelete: false },
   },

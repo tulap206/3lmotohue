@@ -247,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single()
 
       if (data) {
+        const defaultUser = USERS.find((entry) => entry.username === data.username)?.user
         const userData: User = {
           id: data.id,
           username: data.username,
@@ -255,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           permissions: {
             canDelete: data.can_delete || false,
             canBackup: data.role === 'admin',
-            canViewAccessHistory: data.can_view_access_history || false,
+            canViewAccessHistory: data.can_view_access_history || defaultUser?.permissions.canViewAccessHistory || false,
           },
         }
         setUser(userData)

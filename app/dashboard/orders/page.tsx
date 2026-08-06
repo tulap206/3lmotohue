@@ -545,12 +545,11 @@ export default function OrdersPage() {
       const startDateVN = toStoredDateValue(formData.startDate)
       const now = new Date().toISOString()
 
-      // Split deposit and commission equally among all selected vehicles
+      // Deposit is a one-time amount split across rental rows; Home commission is a per-day rate.
       const totalDeposit = parseMoneyInput(formData.deposit) || 0
       const dividedDeposit = Math.round(totalDeposit / selectedVehicles.length)
 
-      const totalCommission = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
-      const dividedCommission = Math.round(totalCommission / selectedVehicles.length)
+      const commissionHomeRate = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
 
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
       const termPayload = buildRentalTermPayload(formData.rentalTerm, "")
@@ -574,7 +573,7 @@ export default function OrdersPage() {
           revenue: 0,
           status: "pending",
           created_at: now,
-          commissionHome: dividedCommission,
+          commissionHome: commissionHomeRate,
           homeName: homeNameVal,
           rentalTerm: termPayload.rentalTerm,
         }
