@@ -66,7 +66,9 @@ function enrichCustomersWithStatus(customers: Customer[], rentals: Rental[]): Cu
       else if (pendingRental) status = "pending" as Customer["status"]
       else if (customer.status === "inactive") status = "inactive"
 
-      return { ...customer, status }
+      const totalrentals = rentals.filter((r) => r.customerId === customer.id).length
+
+      return { ...customer, status, totalrentals }
     })
     .sort((a, b) => {
       const dateA = new Date((a as { createdAt?: string }).createdAt || a.created_at || 0).getTime()

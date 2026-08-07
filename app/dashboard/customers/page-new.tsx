@@ -62,9 +62,11 @@ export default function CustomersPage() {
           const hasActiveRental = rentalsData.some(
             (rental: any) => rental.customerId === customer.id && rental.status === "active"
           )
+          const totalrentals = rentalsData.filter((r) => r.customerId === customer.id).length
           return {
             ...customer,
-            status: hasActiveRental ? ("active" as const) : ("inactive" as const)
+            status: hasActiveRental ? ("active" as const) : ("inactive" as const),
+            totalrentals
           }
         })
         setCustomers(updated)
@@ -126,9 +128,11 @@ export default function CustomersPage() {
         const hasActiveRental = rentalsData.some(
           (rental: any) => rental.customerId === customer.id && rental.status === "active"
         )
+        const totalrentals = rentalsData.filter((r) => r.customerId === customer.id).length
         return {
           ...customer,
-          status: hasActiveRental ? ("active" as const) : ("inactive" as const)
+          status: hasActiveRental ? ("active" as const) : ("inactive" as const),
+          totalrentals
         }
       })
       setCustomers(updated)

@@ -437,10 +437,13 @@ export default function CustomersPage() {
         } else if (customer.status === "inactive") {
           statusLabel = "inactive"
         }
+
+        const totalrentals = rentalsData.filter((r) => r.customerId === customer.id).length
         
         return {
           ...customer,
-          status: statusLabel as any
+          status: statusLabel as any,
+          totalrentals
         }
       })
       const sorted = updated.sort((a, b) => {
