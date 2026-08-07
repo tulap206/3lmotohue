@@ -302,7 +302,7 @@ export default function OrdersPage() {
 
   const filteredOrders = useMemo(() => {
     const base = serverSearchOrders !== null ? serverSearchOrders : orders
-    return base.filter((order) => {
+    const filtered = base.filter((order) => {
       const q = searchQuery.toLowerCase()
       const matchesSearch = !q || serverSearchOrders !== null ||
         (order.rentalCode || order.id || "").toLowerCase().includes(q) ||
@@ -319,6 +319,27 @@ export default function OrdersPage() {
       const matchesTerm = getRentalTerm(order) === filterTerm
 
       return matchesSearch && matchesStatus && matchesTerm
+    })
+
+    // Sort: Overdue -> Active (Renting) -> Pending -> Completed -> Cancelled
+    return [...filtered].sort((a, b) => {
+      const getPriority = (order: RentalOrder) => {
+        if (isOrderOverdue(order)) return 1
+        if (order.status === "active") return 2
+        if (order.status === "pending") return 3
+        if (order.status === "completed") return 4
+        if (order.status === "cancelled") return 5
+        return 6
+      }
+      const priorityA = getPriority(a)
+      const priorityB = getPriority(b)
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB
+      }
+      // If same priority, sort by creation date descending
+      const timeA = new Date(a.created_at || a.createdAt || 0).getTime()
+      const timeB = new Date(b.created_at || b.createdAt || 0).getTime()
+      return timeB - timeA
     })
   }, [orders, serverSearchOrders, searchQuery, filterStatus, filterTerm, todayVN])
 

@@ -97,6 +97,20 @@ export const USERS: { username: string; password: string; user: User }[] = [
       },
     },
   },
+  {
+    username: "huy",
+    password: "Huy@123",
+    user: {
+      id: "5",
+      username: "huy",
+      displayName: "Huy",
+      role: "staff",
+      permissions: {
+        canDelete: false,
+        canViewAccessHistory: true,
+      },
+    },
+  },
 ]
 
 // Get client IP via server route

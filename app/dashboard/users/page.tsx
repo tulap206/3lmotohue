@@ -69,6 +69,13 @@ const DEFAULT_USERS: UserAccount[] = [
     role: "staff",
     permissions: { canDelete: false },
   },
+  {
+    id: "5",
+    username: "huy",
+    displayName: "Huy",
+    role: "staff",
+    permissions: { canDelete: false },
+  },
 ]
 
 export default function UsersPage() {
