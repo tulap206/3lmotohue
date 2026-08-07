@@ -1621,7 +1621,7 @@ export default function OrdersPage() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
                       <p className="text-sm font-semibold text-blue-600 uppercase">Tổng tiền thuê</p>
-                      <p className="text-lg font-extrabold text-blue-700 tabular-nums">{formatPrice(o.totalPrice)}</p>
+                      <p className="text-lg font-extrabold text-blue-700 tabular-nums">{formatPrice(o.totalPrice + (o.extraFees || 0))}</p>
                     </div>
                     <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
                       <p className="text-sm font-semibold text-amber-600 uppercase">Tiền cọc</p>
@@ -1782,12 +1782,12 @@ export default function OrdersPage() {
                     </div>
                     <div className="w-36 h-36 bg-white p-1.5 rounded-lg overflow-hidden shadow-md">
                       <img
-                        src={`https://img.vietqr.io/image/SHB-${QUY79_BUSINESS.bank.accountNumber}-qr_only.png?amount=${o.totalPrice}&addInfo=${encodeURIComponent(`TT 3L MOTO ${o.rentalCode || o.id}`)}&accountName=${encodeURIComponent(QUY79_BUSINESS.bank.accountHolderLatin)}`}
+                        src={`https://img.vietqr.io/image/SHB-${QUY79_BUSINESS.bank.accountNumber}-qr_only.png?amount=${o.totalPrice + (o.extraFees || 0)}&addInfo=${encodeURIComponent(`TT 3L MOTO ${o.rentalCode || o.id}`)}&accountName=${encodeURIComponent(QUY79_BUSINESS.bank.accountHolderLatin)}`}
                         alt="VietQR"
                         className="w-full h-full object-contain"
                       />
                     </div>
-                    <p className="font-bold text-blue-400 text-sm tabular-nums">{formatPrice(o.totalPrice)}</p>
+                    <p className="font-bold text-blue-400 text-sm tabular-nums">{formatPrice(o.totalPrice + (o.extraFees || 0))}</p>
                     <p className="text-sm text-slate-400 text-center">Quét QR để thanh toán cọc / tất toán</p>
                   </div>
 
@@ -2466,8 +2466,8 @@ export default function OrdersPage() {
                       </div>
                     )}
                     <div className="flex justify-between border-t border-slate-200 pt-2 font-bold text-base text-slate-900">
-                      <span>Tổng chi phí dự kiến:</span>
-                      <span className="text-lg text-blue-600">{(printingOrder.totalPrice).toLocaleString('vi-VN')} đ</span>
+                      <span>{printingOrder.extraFees > 0 ? "Tổng chi phí thanh toán:" : "Tổng chi phí dự kiến:"}</span>
+                      <span className="text-lg text-blue-600">{(printingOrder.totalPrice + (printingOrder.extraFees || 0)).toLocaleString('vi-VN')} đ</span>
                     </div>
                   </div>
                 </div>
