@@ -174,43 +174,6 @@ export default function VehiclesPage() {
     documentImages: [] as File[],
   })
 
-  const filteredVehicles = useMemo(() => {
-    return vehicles.filter((vehicle) => {
-      const matchesSearch =
-        vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
-      return matchesSearch && matchesStatus
-    })
-  }, [vehicles, searchTerm, statusFilter])
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, statusFilter])
-
-  const totalPages = useMemo(() => {
-    return Math.ceil(filteredVehicles.length / itemsPerPage)
-  }, [filteredVehicles])
-
-  const startIndex = (currentPage - 1) * itemsPerPage
-  
-  const paginatedVehicles = useMemo(() => {
-    return filteredVehicles.slice(
-      startIndex,
-      currentPage * itemsPerPage
-    )
-  }, [filteredVehicles, startIndex])
-
-  const vehicleStats = useMemo(() => {
-    return {
-      total: vehicles.length,
-      available: vehicles.filter((v) => v.status === "available").length,
-      rented: vehicles.filter((v) => v.status === "rented").length,
-      maintenance: vehicles.filter((v) => v.status === "maintenance").length,
-    }
-  }, [vehicles])
-
   const vehiclePerformanceMap = useMemo(() => {
     const today = new Date()
     today.setHours(0,0,0,0)
@@ -260,6 +223,61 @@ export default function VehiclesPage() {
 
     return map
   }, [vehicles, orders])
+
+  const filteredVehicles = useMemo(() => {
+    const filtered = vehicles.filter((vehicle) => {
+      const matchesSearch =
+        vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
+
+    // Sort by performance (utilizationRate) descending
+    return [...filtered].sort((a, b) => {
+      const utilizationA = vehiclePerformanceMap[a.id]?.utilizationRate || 0
+      const utilizationB = vehiclePerformanceMap[b.id]?.utilizationRate || 0
+      
+      if (utilizationB !== utilizationA) {
+        return utilizationB - utilizationA
+      }
+      // Secondary sort: revenue30d descending
+      const revA = vehiclePerformanceMap[a.id]?.revenue30d || 0
+      const revB = vehiclePerformanceMap[b.id]?.revenue30d || 0
+      if (revB !== revA) {
+        return revB - revA
+      }
+      // Tertiary sort: by name
+      return a.name.localeCompare(b.name)
+    })
+  }, [vehicles, searchTerm, statusFilter, vehiclePerformanceMap])
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredVehicles.length / itemsPerPage)
+  }, [filteredVehicles])
+
+  const startIndex = (currentPage - 1) * itemsPerPage
+  
+  const paginatedVehicles = useMemo(() => {
+    return filteredVehicles.slice(
+      startIndex,
+      currentPage * itemsPerPage
+    )
+  }, [filteredVehicles, startIndex])
+
+  const vehicleStats = useMemo(() => {
+    return {
+      total: vehicles.length,
+      available: vehicles.filter((v) => v.status === "available").length,
+      rented: vehicles.filter((v) => v.status === "rented").length,
+      maintenance: vehicles.filter((v) => v.status === "maintenance").length,
+    }
+  }, [vehicles])
 
   const handleAddVehicle = async () => {
     if (!newVehicle.name || !newVehicle.name.trim()) {
