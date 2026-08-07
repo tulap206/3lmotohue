@@ -138,7 +138,7 @@ export default function CustomersPage() {
   const [filterStatus, setFilterStatus] = useState("all")
 
   const filteredCustomers = useMemo(() => {
-    return customers.filter(
+    const filtered = customers.filter(
       (customer) => {
         const matchesSearch =
           customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,6 +149,26 @@ export default function CustomersPage() {
         return matchesSearch && matchesStatus
       }
     )
+
+    // Sort: renting -> pending -> active -> inactive
+    return [...filtered].sort((a, b) => {
+      const getPriority = (status: string) => {
+        if (status === "renting") return 1
+        if (status === "pending") return 2
+        if (status === "active") return 3
+        if (status === "inactive") return 4
+        return 5
+      }
+      const priorityA = getPriority(a.status)
+      const priorityB = getPriority(b.status)
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB
+      }
+      // Secondary sort: created_at / createdAt descending
+      const timeA = new Date(a.created_at || a.createdAt || 0).getTime()
+      const timeB = new Date(b.created_at || b.createdAt || 0).getTime()
+      return timeB - timeA
+    })
   }, [customers, searchQuery, filterStatus])
 
   // Reset page when search query or status filter changes
