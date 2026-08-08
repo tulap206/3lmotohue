@@ -517,6 +517,10 @@ export default function CustomersPage() {
   }
 
   const handleDelete = async (id: string) => {
+    if (!user?.permissions.canDelete) {
+      showWarning("Bạn không có quyền xóa khách hàng")
+      return
+    }
     const customer = customers.find((c) => c.id === id)
     if (customer) {
       setCustomerToDelete(customer)
@@ -526,6 +530,12 @@ export default function CustomersPage() {
 
   const handleConfirmDelete = async () => {
     if (!customerToDelete) return
+    if (!user?.permissions.canDelete) {
+      showWarning("Bạn không có quyền xóa khách hàng")
+      setDeleteConfirmOpen(false)
+      setCustomerToDelete(null)
+      return
+    }
     
     try {
       const { error } = await supabase
@@ -864,15 +874,17 @@ export default function CustomersPage() {
                               >
                                 <Settings className="w-3.5 h-3.5" />
                               </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-rose-200 rounded-lg hover:bg-rose-50 text-rose-500"
-                                onClick={() => handleDelete(customer.id)}
-                                title="Xóa"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                              {user?.permissions.canDelete && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 border-rose-200 rounded-lg hover:bg-rose-50 text-rose-500"
+                                  onClick={() => handleDelete(customer.id)}
+                                  title="Xóa"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </td>
                         </tr>

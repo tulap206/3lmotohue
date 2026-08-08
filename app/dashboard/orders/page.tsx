@@ -196,7 +196,7 @@ export default function OrdersPage() {
   const itemsPerPage = 15
 
   const isOrderOverdue = (order: RentalOrder) => {
-    if (order.status === 'completed' || order.status === 'cancelled') return false
+    if (order.status !== 'active') return false
     if (!order.endDate) return false
     try {
       const parts = order.endDate.split('/')
@@ -799,23 +799,24 @@ export default function OrdersPage() {
     const extra = parseMoneyInput(lateFeeExtra) || 0
     const order = orders.find(o => o.id === lateFeeOrderId)
     if (!order) return
+    const nextExtraFees = (order.extraFees || 0) + extra
     // update extraFees first then complete
     if (extra > 0) {
-      await supabase.from("rentals").update({ extraFees: (order.extraFees || 0) + extra }).eq("id", lateFeeOrderId)
-      setOrders(prev => prev.map(o => o.id === lateFeeOrderId ? { ...o, extraFees: (o.extraFees || 0) + extra } : o))
+      await supabase.from("rentals").update({ extraFees: nextExtraFees }).eq("id", lateFeeOrderId)
+      setOrders(prev => prev.map(o => o.id === lateFeeOrderId ? { ...o, extraFees: nextExtraFees } : o))
     }
     setIsLateFeeOpen(false)
-    await updateOrderStatus(lateFeeOrderId, "completed")
+    await updateOrderStatus(lateFeeOrderId, "completed", { extraFees: nextExtraFees })
   }
 
-  const updateOrderStatus = async (orderId: string, newStatus: RentalOrder["status"]) => {
+  const updateOrderStatus = async (orderId: string, newStatus: RentalOrder["status"], overrides: Partial<RentalOrder> = {}) => {
     const order = orders.find((o) => o.id === orderId)
     if (!order) return
 
     try {
       // Tính doanh thu dựa trên trạng thái + chi phí phát sinh - hoa hồng home
       let revenue = 0
-      const extraFees = order.extraFees || 0
+      const extraFees = overrides.extraFees ?? order.extraFees ?? 0
       const commissionHome = order.commissionHome || 0
       const commissionTotal = commissionHome * order.totalDays
       
@@ -829,7 +830,11 @@ export default function OrdersPage() {
       // pending và active chưa có doanh thu
       
       // DB doesn't have received_at or completed_at columns, so we only update status and revenue
-      const updateData = { status: newStatus, revenue }
+      const updateData = {
+        status: newStatus,
+        revenue,
+        ...(overrides.extraFees !== undefined ? { extraFees } : {}),
+      }
 
       // Update to Supabase
       const { error } = await supabase
