@@ -799,37 +799,39 @@ export default function OrdersPage() {
     const extra = parseMoneyInput(lateFeeExtra) || 0
     const order = orders.find(o => o.id === lateFeeOrderId)
     if (!order) return
-    // update extraFees first then complete
-    if (extra > 0) {
-      await supabase.from("rentals").update({ extraFees: (order.extraFees || 0) + extra }).eq("id", lateFeeOrderId)
-      setOrders(prev => prev.map(o => o.id === lateFeeOrderId ? { ...o, extraFees: (o.extraFees || 0) + extra } : o))
-    }
+
+    const nextExtraFees = (order.extraFees || 0) + extra
     setIsLateFeeOpen(false)
-    await updateOrderStatus(lateFeeOrderId, "completed")
+    await updateOrderStatus(lateFeeOrderId, "completed", { extraFees: nextExtraFees })
   }
 
-  const updateOrderStatus = async (orderId: string, newStatus: RentalOrder["status"]) => {
+  const updateOrderStatus = async (
+    orderId: string,
+    newStatus: RentalOrder["status"],
+    overrides: Partial<Pick<RentalOrder, "extraFees">> = {},
+  ) => {
     const order = orders.find((o) => o.id === orderId)
     if (!order) return
 
     try {
+      const orderForRevenue = { ...order, ...overrides }
       // Tính doanh thu dựa trên trạng thái + chi phí phát sinh - hoa hồng home
       let revenue = 0
-      const extraFees = order.extraFees || 0
-      const commissionHome = order.commissionHome || 0
-      const commissionTotal = commissionHome * order.totalDays
+      const extraFees = orderForRevenue.extraFees || 0
+      const commissionHome = orderForRevenue.commissionHome || 0
+      const commissionTotal = commissionHome * orderForRevenue.totalDays
       
       if (newStatus === "cancelled") {
         // Hủy đơn: khách mất cọc + chi phí phát sinh -> doanh thu = tiền cọc + extraFees
-        revenue = order.deposit + extraFees
+        revenue = orderForRevenue.deposit + extraFees
       } else if (newStatus === "completed") {
         // Hoàn thành: trả cọc, thu tiền thuê + chi phí phát sinh - hoa hồng -> doanh thu = tiền thuê + extraFees - commissionTotal
-        revenue = order.totalPrice + extraFees - commissionTotal
+        revenue = orderForRevenue.totalPrice + extraFees - commissionTotal
       }
       // pending và active chưa có doanh thu
       
       // DB doesn't have received_at or completed_at columns, so we only update status and revenue
-      const updateData = { status: newStatus, revenue }
+      const updateData = { ...overrides, status: newStatus, revenue }
 
       // Update to Supabase
       const { error } = await supabase
@@ -843,7 +845,7 @@ export default function OrdersPage() {
         return
       }
 
-      setOrders(orders.map((o) => (o.id === orderId ? { ...o, ...updateData, status: newStatus, revenue } : o)))
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...updateData, status: newStatus, revenue } : o)))
       const statusLabels: Record<string, string> = { pending: "Chờ giao xe", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }
       if (user) logger.log(user.username, user.displayName, 'Chỉnh sửa', 'Đơn thuê', `Cập nhật đơn ${orderId}: ${statusLabels[newStatus]}`)
     } catch (error) {
