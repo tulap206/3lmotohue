@@ -280,7 +280,8 @@ export default function OrdersPage() {
   const filteredVehiclesForSelect = vehicles.filter(v => 
     (v.name.toLowerCase().includes(vehicleSearch.toLowerCase()) || 
     (v.licensePlate && v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase()))) &&
-    !formData.vehicleIds.includes(v.id)
+    !formData.vehicleIds.includes(v.id) &&
+    v.status !== "rented"
   )
 
   useEffect(() => {
@@ -1913,11 +1914,13 @@ export default function OrdersPage() {
                   <SelectValue placeholder="Chọn xe" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 rounded-xl">
-                  {vehicles.map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.name} - {vehicle.licensePlate}
-                    </SelectItem>
-                  ))}
+                  {vehicles
+                    .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
+                    .map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.name} - {vehicle.licensePlate}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
