@@ -237,7 +237,7 @@ export default function OrdersPage() {
     vehicleIds: [] as string[],
     startDate: "",
     endDate: "",
-    deposit: "",
+    deposit: "0",
     commissionHome: "",
     homeName: "",
     rentalTerm: "short" as RentalTerm,
@@ -497,11 +497,6 @@ export default function OrdersPage() {
           showWarning("Vui lòng nhập tên khách hàng!")
           return
         }
-        if (!newCustomerCCCD.trim()) {
-          showWarning("Vui lòng nhập số CCCD khách hàng!")
-          return
-        }
-
         let customerphoto: string[] = []
         let cccdfront: string[] = []
 
@@ -519,7 +514,7 @@ export default function OrdersPage() {
           phone: newCustomerPhone.trim(),
           facebook: "",
           address: "",
-          idcard: newCustomerCCCD.trim(),
+          idcard: newCustomerCCCD.trim() || newCustomerPhone.trim() || `CCCD_${Date.now()}`,
           totalrentals: 0,
           status: "active",
           customerphoto,
@@ -623,7 +618,7 @@ export default function OrdersPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "", commissionHome: "", homeName: "", rentalTerm: "short" })
+    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", commissionHome: "", homeName: "", rentalTerm: "short" })
     setIsNewCustomer(false)
     setNewCustomerName("")
     setNewCustomerPhone("")
@@ -1096,29 +1091,8 @@ export default function OrdersPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số CCCD khách <span className="text-blue-500">*</span></Label>
-                        <p className="text-sm text-slate-400">Số chứng minh thư hoặc CCCD</p>
-                        <Input
-                          placeholder="VD: 123456789012"
-                          value={newCustomerCCCD}
-                          onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
-                          required={isNewCustomer}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh khách (tùy chọn)</Label>
-                        <p className="text-sm text-slate-400">Ảnh chân dung để xác minh danh tính</p>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setNewCustomerPhoto(e.target.files?.[0] || null)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm p-1"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh CCCD khách (tùy chọn)</Label>
-                        <p className="text-sm text-slate-400">Ảnh mặt trước chứng minh thư</p>
+                        <Label className="text-slate-600 text-sm">Ảnh CCCD</Label>
+                        <p className="text-sm text-slate-400">Ảnh mặt trước chứng minh thư hoặc CCCD</p>
                         <Input
                           type="file"
                           accept="image/*"
