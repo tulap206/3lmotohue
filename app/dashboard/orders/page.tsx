@@ -179,9 +179,10 @@ function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () =>
 
 export default function OrdersPage() {
   const router = useRouter()
-  const [isNewCustomer, setIsNewCustomer] = useState(false)
+  const [isNewCustomer, setIsNewCustomer] = useState(true)
   const [newCustomerName, setNewCustomerName] = useState("")
   const [newCustomerPhone, setNewCustomerPhone] = useState("")
+  const [newCustomerAddress, setNewCustomerAddress] = useState("")
   const [newCustomerCCCD, setNewCustomerCCCD] = useState("")
   const [newCustomerPhoto, setNewCustomerPhoto] = useState<File | null>(null)
   const [newCustomerCCCDFront, setNewCustomerCCCDFront] = useState<File | null>(null)
@@ -497,6 +498,14 @@ export default function OrdersPage() {
           showWarning("Vui lòng nhập tên khách hàng!")
           return
         }
+        if (!newCustomerPhone.trim()) {
+          showWarning("Vui lòng nhập số điện thoại khách hàng!")
+          return
+        }
+        if (!newCustomerAddress.trim()) {
+          showWarning("Vui lòng nhập địa chỉ khách hàng!")
+          return
+        }
         let customerphoto: string[] = []
         let cccdfront: string[] = []
 
@@ -513,8 +522,8 @@ export default function OrdersPage() {
           name: newCustomerName.trim(),
           phone: newCustomerPhone.trim(),
           facebook: "",
-          address: "",
-          idcard: newCustomerCCCD.trim() || newCustomerPhone.trim() || `CCCD_${Date.now()}`,
+          address: newCustomerAddress.trim(),
+          idcard: newCustomerCCCD.trim() || `CCCD_${Date.now()}`,
           totalrentals: 0,
           status: "active",
           customerphoto,
@@ -619,9 +628,10 @@ export default function OrdersPage() {
 
   const resetForm = () => {
     setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", commissionHome: "", homeName: "", rentalTerm: "short" })
-    setIsNewCustomer(false)
+    setIsNewCustomer(true)
     setNewCustomerName("")
     setNewCustomerPhone("")
+    setNewCustomerAddress("")
     setNewCustomerCCCD("")
     setNewCustomerPhoto(null)
     setNewCustomerCCCDFront(null)
@@ -1067,7 +1077,7 @@ export default function OrdersPage() {
                   ) : (
                     <div className="space-y-3">
                       <EntityFormInfoBox>
-                        ℹ <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
+                        ℹ️ <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
                       </EntityFormInfoBox>
                       <div className="space-y-1">
                         <Label className="text-slate-600 text-sm">Tên khách hàng <span className="text-blue-500">*</span></Label>
@@ -1081,17 +1091,39 @@ export default function OrdersPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số điện thoại</Label>
+                        <Label className="text-slate-600 text-sm">Số điện thoại <span className="text-blue-500">*</span></Label>
                         <p className="text-sm text-slate-400">Dùng để liên lạc với khách hàng</p>
                         <Input
                           placeholder="VD: 0912345678"
                           value={newCustomerPhone}
                           onChange={(e) => setNewCustomerPhone(e.target.value)}
                           className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          required={isNewCustomer}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh CCCD</Label>
+                        <Label className="text-slate-600 text-sm">Địa chỉ khách <span className="text-blue-500">*</span></Label>
+                        <p className="text-sm text-slate-400">Địa chỉ cư trú của khách</p>
+                        <Input
+                          placeholder="VD: 123 Nguyễn Huệ, Huế"
+                          value={newCustomerAddress}
+                          onChange={(e) => setNewCustomerAddress(e.target.value)}
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          required={isNewCustomer}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-slate-600 text-sm">Số CCCD khách (tùy chọn)</Label>
+                        <p className="text-sm text-slate-400">Số chứng minh thư hoặc CCCD</p>
+                        <Input
+                          placeholder="VD: 046200012345"
+                          value={newCustomerCCCD}
+                          onChange={(e) => setNewCustomerCCCD(e.target.value)}
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-slate-600 text-sm">Ảnh CCCD (tùy chọn)</Label>
                         <p className="text-sm text-slate-400">Ảnh mặt trước chứng minh thư hoặc CCCD</p>
                         <Input
                           type="file"

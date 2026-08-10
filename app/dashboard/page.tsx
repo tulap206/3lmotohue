@@ -104,9 +104,10 @@ export default function DashboardPage() {
   const [vehicleSearch, setVehicleSearch] = useState("")
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
-  const [isNewCustomer, setIsNewCustomer] = useState(false)
+  const [isNewCustomer, setIsNewCustomer] = useState(true)
   const [newCustomerName, setNewCustomerName] = useState("")
   const [newCustomerPhone, setNewCustomerPhone] = useState("")
+  const [newCustomerAddress, setNewCustomerAddress] = useState("")
   const [newCustomerCCCD, setNewCustomerCCCD] = useState("")
   const [newCustomerPhoto, setNewCustomerPhoto] = useState<File | null>(null)
   const [newCustomerCCCDFront, setNewCustomerCCCDFront] = useState<File | null>(null)
@@ -146,9 +147,10 @@ export default function DashboardPage() {
 
   const resetForm = () => {
     setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", commissionHome: "", homeName: "" })
-    setIsNewCustomer(false)
+    setIsNewCustomer(true)
     setNewCustomerName("")
     setNewCustomerPhone("")
+    setNewCustomerAddress("")
     setNewCustomerCCCD("")
     setNewCustomerPhoto(null)
     setNewCustomerCCCDFront(null)
@@ -189,6 +191,14 @@ export default function DashboardPage() {
           alert("⚠️ Vui lòng nhập tên khách hàng!")
           return
         }
+        if (!newCustomerPhone.trim()) {
+          alert("⚠️ Vui lòng nhập số điện thoại khách hàng!")
+          return
+        }
+        if (!newCustomerAddress.trim()) {
+          alert("⚠️ Vui lòng nhập địa chỉ khách hàng!")
+          return
+        }
 
         let customerphoto: string[] = []
         let cccdfront: string[] = []
@@ -206,8 +216,8 @@ export default function DashboardPage() {
           name: newCustomerName.trim(),
           phone: newCustomerPhone.trim(),
           facebook: "",
-          address: "",
-          idcard: newCustomerCCCD.trim() || newCustomerPhone.trim() || `CCCD_${Date.now()}`,
+          address: newCustomerAddress.trim(),
+          idcard: newCustomerCCCD.trim() || `CCCD_${Date.now()}`,
           totalrentals: 0,
           status: "active",
           customerphoto,
@@ -1369,16 +1379,36 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số điện thoại</Label>
+                        <Label className="text-slate-600 text-sm">Số điện thoại <span className="text-rose-500">*</span></Label>
                         <Input
                           placeholder="Nhập số điện thoại..."
                           value={newCustomerPhone}
                           onChange={(e) => setNewCustomerPhone(e.target.value)}
                           className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          required={isNewCustomer}
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh CCCD</Label>
+                        <Label className="text-slate-600 text-sm">Địa chỉ khách <span className="text-rose-500">*</span></Label>
+                        <Input
+                          placeholder="Nhập địa chỉ..."
+                          value={newCustomerAddress}
+                          onChange={(e) => setNewCustomerAddress(e.target.value)}
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          required={isNewCustomer}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-slate-600 text-sm">Số CCCD khách (tùy chọn)</Label>
+                        <Input
+                          placeholder="Nhập số CCCD..."
+                          value={newCustomerCCCD}
+                          onChange={(e) => setNewCustomerCCCD(e.target.value)}
+                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-slate-600 text-sm">Ảnh CCCD (tùy chọn)</Label>
                         <Input
                           type="file"
                           accept="image/*"
