@@ -96,7 +96,7 @@ export default function DashboardPage() {
     vehicleIds: [] as string[],
     startDate: "",
     endDate: "",
-    deposit: "",
+    deposit: "0",
     commissionHome: "",
     homeName: "",
   })
@@ -145,7 +145,7 @@ export default function DashboardPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "", commissionHome: "", homeName: "" })
+    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", commissionHome: "", homeName: "" })
     setIsNewCustomer(false)
     setNewCustomerName("")
     setNewCustomerPhone("")
@@ -189,10 +189,6 @@ export default function DashboardPage() {
           alert("⚠️ Vui lòng nhập tên khách hàng!")
           return
         }
-        if (!newCustomerCCCD.trim()) {
-          alert("⚠️ Vui lòng nhập số CCCD khách hàng!")
-          return
-        }
 
         let customerphoto: string[] = []
         let cccdfront: string[] = []
@@ -211,7 +207,7 @@ export default function DashboardPage() {
           phone: newCustomerPhone.trim(),
           facebook: "",
           address: "",
-          idcard: newCustomerCCCD.trim(),
+          idcard: newCustomerCCCD.trim() || newCustomerPhone.trim() || `CCCD_${Date.now()}`,
           totalrentals: 0,
           status: "active",
           customerphoto,
@@ -1382,26 +1378,7 @@ export default function DashboardPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số CCCD khách *</Label>
-                        <Input
-                          placeholder="Nhập số CCCD..."
-                          value={newCustomerCCCD}
-                          onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
-                          required={isNewCustomer}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh khách</Label>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setNewCustomerPhoto(e.target.files?.[0] || null)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm p-1"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh CCCD khách</Label>
+                        <Label className="text-slate-600 text-sm">Ảnh CCCD</Label>
                         <Input
                           type="file"
                           accept="image/*"
