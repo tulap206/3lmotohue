@@ -279,7 +279,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white font-sans antialiased overflow-x-hidden">
       {/* Navigation Bar */}
       <header className="sticky top-0 z-40 border-b border-slate-900/50 bg-slate-950/80 backdrop-blur-xl transition-all duration-300">
-        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
           <a href="#top" className="flex items-center gap-3 group">
             <div className="relative size-12 overflow-hidden rounded-xl border border-white/10 bg-white shadow-sm transition-transform group-hover:scale-105 duration-300">
               <Image
@@ -302,13 +302,13 @@ export default function LandingPage() {
             </div>
           </a>
 
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-300 md:flex">
+          <nav className="hidden items-center gap-6 lg:gap-10 text-sm font-bold text-slate-300 md:flex">
             {[
-              ["#booking-section", "Đặt xe trực tuyến"],
-              ["#why", "Cam kết dịch vụ"],
-              ["#fleet", "Bảng giá tham khảo"],
+              ["#booking-section", "Đặt xe"],
+              ["#why", "Cam kết"],
+              ["#fleet", "Bảng giá xe"],
               ["#process", "Quy trình"],
-              ["#contact", "Liên hệ & Địa chỉ"],
+              ["#contact", "Liên hệ"],
             ].map(([href, label]) => (
               <a
                 key={href}
@@ -323,10 +323,10 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4.5 py-2.5 text-sm font-bold text-slate-200 transition-all hover:bg-blue-600 hover:text-white hover:border-blue-600 sm:inline-flex active:scale-95"
+              className="hidden items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-5 py-2.5 text-sm font-bold text-slate-200 transition-all hover:bg-blue-600 hover:text-white hover:border-blue-600 sm:inline-flex active:scale-95"
             >
               <User className="size-4" />
-              Đăng nhập hệ thống
+              Đăng nhập
             </Link>
             <button
               type="button"
