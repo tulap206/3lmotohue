@@ -65,7 +65,7 @@ export default function LandingPage() {
     "image": "https://3lmotohue.com/hue-motorbike-bg-v3.jpg",
     "@id": "https://3lmotohue.com/#rental",
     "url": "https://3lmotohue.com",
-    "telephone": "+84363077775",
+    "telephone": "+84934924195",
     "priceRange": "120.000đ - 130.000đ",
     "address": {
       "@type": "PostalAddress",
@@ -95,7 +95,7 @@ export default function LandingPage() {
       "closes": "23:59"
     },
     "sameAs": [
-      "https://www.facebook.com/profile.php?id=61569870030659"
+      "https://www.facebook.com/3l.moto.hue"
     ]
   }
 

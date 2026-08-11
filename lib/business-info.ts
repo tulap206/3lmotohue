@@ -7,8 +7,8 @@ export const QUY79_BUSINESS = {
   branches: [
     "L25 Đường Số 8, KQH Đông Nam Thủy An, TP Huế",
   ] as const,
-  hotline: "0363.077.775 - 0934.924.195",
-  hotlineTel: "0363077775",
+  hotline: "0934.924.195 - 0332.917.265",
+  hotlineTel: "0934924195",
   owner: "Dương Phú Lộc",
   representative: "Dương Phú Lộc",
   operators: "Dương Phú Lộc",
@@ -18,8 +18,8 @@ export const QUY79_BUSINESS = {
     accountHolder: "PHAN LE TU LAP",
     accountHolderLatin: "PHAN LE TU LAP",
   },
-  facebookUrl: "https://www.facebook.com/profile.php?id=100057429789995",
-  website: "3lmotohue.vercel.app",
+  facebookUrl: "https://www.facebook.com/3l.moto.hue",
+  website: "3lmotohue.com",
 } as const;
 
 export function formatQuy79BankLine(): string {

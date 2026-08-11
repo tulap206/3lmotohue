@@ -419,11 +419,11 @@ export default function LandingPage() {
                     <ArrowRight className="ml-2.5 size-4" />
                   </a>
                   <a
-                    href="tel:0363077775"
+                    href="tel:0934924195"
                     className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
                   >
                     <PhoneCall className="size-4 text-blue-400" />
-                    0363.077.775
+                    0934.924.195
                   </a>
                 </div>
               </BlurFade>
@@ -490,7 +490,7 @@ export default function LandingPage() {
                         id="phone"
                         type="tel"
                         required
-                        placeholder="0363xxxxxx hoặc Zalo"
+                        placeholder="0934.924.195 hoặc 0332.917.265"
                         className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -760,8 +760,8 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900">Liên hệ trực tiếp</p>
-                    <a href="tel:0363077775" className="text-xs font-extrabold text-blue-600 hover:underline mt-0.5 block">
-                      Gọi ngay: 0363.077.775
+                    <a href="tel:0934924195" className="text-xs font-extrabold text-blue-600 hover:underline mt-0.5 block">
+                      Gọi ngay: 0934.924.195
                     </a>
                   </div>
                 </div>
@@ -818,12 +818,12 @@ export default function LandingPage() {
               </li>
               <li className="flex gap-3">
                 <PhoneCall className="mt-0.5 size-4 shrink-0 text-blue-400" />
-                <span>0363.077.775 · 0934.924.195 (Hỗ trợ Zalo)</span>
+                <span>0934.924.195 · 0332.917.265 (Hỗ trợ Zalo)</span>
               </li>
               <li className="flex gap-3">
                 <Facebook className="mt-0.5 size-4 shrink-0 text-blue-400" />
                 <a
-                  href="https://www.facebook.com/profile.php?id=61569870030659"
+                  href="https://www.facebook.com/3l.moto.hue"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"
@@ -972,15 +972,6 @@ export default function LandingPage() {
         {isOpenContact && (
           <div className="flex flex-col items-end gap-2.5">
             <a
-              href="https://zalo.me/0363077775"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
-            >
-              <span className="text-xs font-bold">Zalo: 0363.077.775</span>
-              <MessageCircle className="size-4" />
-            </a>
-            <a
               href="https://zalo.me/0934924195"
               target="_blank"
               rel="noopener noreferrer"
@@ -990,7 +981,16 @@ export default function LandingPage() {
               <MessageCircle className="size-4" />
             </a>
             <a
-              href="https://www.facebook.com/profile.php?id=61569870030659"
+              href="https://zalo.me/0332917265"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
+            >
+              <span className="text-xs font-bold">Zalo: 0332.917.265</span>
+              <MessageCircle className="size-4" />
+            </a>
+            <a
+              href="https://www.facebook.com/3l.moto.hue"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
@@ -999,17 +999,17 @@ export default function LandingPage() {
               <Facebook className="size-4" />
             </a>
             <a
-              href="tel:0363077775"
-              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
-            >
-              <span className="text-xs font-bold">Hotline 1: 0363.077.775</span>
-              <PhoneCall className="size-4" />
-            </a>
-            <a
               href="tel:0934924195"
               className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-bold">Hotline 2: 0934.924.195</span>
+              <span className="text-xs font-bold">Hotline 1: 0934.924.195</span>
+              <PhoneCall className="size-4" />
+            </a>
+            <a
+              href="tel:0332917265"
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
+            >
+              <span className="text-xs font-bold">Hotline 2: 0332.917.265</span>
               <PhoneCall className="size-4" />
             </a>
           </div>
