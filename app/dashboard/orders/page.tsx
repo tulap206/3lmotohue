@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
 import { logger } from "@/lib/logger"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { formatDisplayDate, formatDisplayDateTime, toDateInputValue, toStoredDateValue } from "@/lib/format-date"
+import { formatDisplayDate, formatDisplayDateTime, parseDisplayDate, toDateInputValue, toStoredDateValue } from "@/lib/format-date"
 import { supabase, fetchVehicles, fetchCustomers, fetchRentals, insertCustomer } from "@/lib/supabase"
 import { uploadImage } from "@/lib/storage"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -282,7 +282,8 @@ export default function OrdersPage() {
     (v.name.toLowerCase().includes(vehicleSearch.toLowerCase()) || 
     (v.licensePlate && v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase()))) &&
     !formData.vehicleIds.includes(v.id) &&
-    v.status !== "rented"
+    v.status !== "rented" &&
+    v.status !== "maintenance"
   )
 
   useEffect(() => {
@@ -401,6 +402,13 @@ export default function OrdersPage() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
+  const orderOverlapsDateRange = (order: RentalOrder, startDate: Date, endDate: Date) => {
+    const orderStart = parseDisplayDate(order.startDate)
+    const orderEnd = parseDisplayDate(order.endDate)
+    if (!orderStart || !orderEnd) return false
+    return !(endDate < orderStart || startDate > orderEnd)
+  }
+
   const generateRentalCodeFromUUID = (customerName: string, licensePlate: string, startDate: string, uuid: string) => {
     // Remove Vietnamese diacritics and get last name
     const removeVietnameseDiacritics = (str: string) => {
@@ -486,6 +494,27 @@ export default function OrdersPage() {
     
     if (startDate > endDate) {
       showWarning("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
+      return
+    }
+
+    const unavailableVehicle = selectedVehicles.find((vehicle) => vehicle.status === "rented" || vehicle.status === "maintenance")
+    if (unavailableVehicle) {
+      showWarning(`Xe "${unavailableVehicle.name}" (${unavailableVehicle.licensePlate}) hiện không sẵn sàng để tạo đơn thuê mới.`)
+      return
+    }
+
+    const selectedVehicleIds = new Set(selectedVehicles.map((vehicle) => vehicle.id))
+    const conflictingRental = orders.find((order) => {
+      if (!selectedVehicleIds.has(order.vehicleId)) return false
+      if (order.status !== "pending" && order.status !== "active") return false
+      return orderOverlapsDateRange(order, startDate, endDate)
+    })
+
+    if (conflictingRental) {
+      showWarning(
+        `Xe "${conflictingRental.vehicleName}" (${conflictingRental.licensePlate}) đã có đơn thuê trong khoảng thời gian này!`,
+        `Khách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`
+      )
       return
     }
 
@@ -677,22 +706,27 @@ export default function OrdersPage() {
       return
     }
 
-    // TEMP: tắt kiểm tra trùng lịch để nhập đơn cũ trong quá khứ
-    // const conflictingRental = orders.find((order) => {
-    //   if (order.id === editingOrder.id) return false // Ignore current order
-    //   if (order.vehicleId !== vehicle.id) return false
-    //   if (order.status === "cancelled") return false // Ignore cancelled rentals
-    //   
-    //   const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
-    //   const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
-    //   
-    //   return !(endDate < orderStart || startDate > orderEnd)
-    // })
-    // 
-    // if (conflictingRental) {
-    //   showWarning(`Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!`, `Khách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`)
-    //   return
-    // }
+    if (vehicle.id !== editingOrder.vehicleId && (vehicle.status === "rented" || vehicle.status === "maintenance")) {
+      showWarning(`Xe "${vehicle.name}" (${vehicle.licensePlate}) hiện không sẵn sàng để đổi sang đơn thuê này.`)
+      return
+    }
+
+    if (editFormData.status === "pending" || editFormData.status === "active") {
+      const conflictingRental = orders.find((order) => {
+        if (order.id === editingOrder.id) return false
+        if (order.vehicleId !== vehicle.id) return false
+        if (order.status !== "pending" && order.status !== "active") return false
+        return orderOverlapsDateRange(order, startDate, endDate)
+      })
+
+      if (conflictingRental) {
+        showWarning(
+          `Xe "${vehicle.name}" (${vehicle.licensePlate}) đã có đơn thuê trong khoảng thời gian này!`,
+          `Khách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`
+        )
+        return
+      }
+    }
 
     try {
       const newExtraFees = parseMoneyInput(editFormData.extraFees)
@@ -1921,7 +1955,7 @@ export default function OrdersPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 rounded-xl">
                   {vehicles
-                    .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
+                    .filter((vehicle) => (vehicle.status !== "rented" && vehicle.status !== "maintenance") || vehicle.id === editFormData.vehicleId)
                     .map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id}>
                         {vehicle.name} - {vehicle.licensePlate}

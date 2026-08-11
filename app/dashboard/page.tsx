@@ -50,7 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { formatDisplayDate, toStoredDateValue } from "@/lib/format-date"
+import { formatDisplayDate, parseDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { useAuth } from "@/contexts/auth-context"
@@ -122,7 +122,9 @@ export default function DashboardPage() {
   const filteredVehiclesForSelect = vehicles.filter(v => 
     (v.name.toLowerCase().includes(vehicleSearch.toLowerCase()) || 
     (v.licensePlate && v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase()))) &&
-    !formData.vehicleIds.includes(v.id)
+    !formData.vehicleIds.includes(v.id) &&
+    v.status !== "rented" &&
+    v.status !== "maintenance"
   )
 
   const calculateTotalDays = (start: string, end: string) => {
@@ -130,6 +132,13 @@ export default function DashboardPage() {
     const endDate = new Date(end)
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime())
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  }
+
+  const orderOverlapsDateRange = (order: any, startDate: Date, endDate: Date) => {
+    const orderStart = parseDisplayDate(order.startDate)
+    const orderEnd = parseDisplayDate(order.endDate)
+    if (!orderStart || !orderEnd) return false
+    return !(endDate < orderStart || startDate > orderEnd)
   }
 
   const generateRentalCodeFromUUID = (customerName: string, licensePlate: string, startDate: string, uuid: string) => {
@@ -179,6 +188,29 @@ export default function DashboardPage() {
     
     if (startDate > endDate) {
       alert("⚠️ Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
+      return
+    }
+
+    const unavailableVehicle = selectedVehicles.find((vehicle) => vehicle.status === "rented" || vehicle.status === "maintenance")
+    if (unavailableVehicle) {
+      alert(`⚠️ Xe "${unavailableVehicle.name}" (${unavailableVehicle.licensePlate}) hiện không sẵn sàng để tạo đơn thuê mới.`)
+      return
+    }
+
+    const selectedVehicleIds = new Set(selectedVehicles.map((vehicle) => vehicle.id))
+    const conflictingRental = orders.find((order) => {
+      if (!selectedVehicleIds.has(order.vehicleId)) return false
+      if (order.status !== "pending" && order.status !== "active") return false
+      return orderOverlapsDateRange(order, startDate, endDate)
+    })
+
+    if (conflictingRental) {
+      alert(
+        `⚠️ Xe "${conflictingRental.vehicleName}" (${conflictingRental.licensePlate}) đã có đơn thuê trong khoảng thời gian này!\n\n` +
+        `Khách: ${conflictingRental.customerName}\n` +
+        `Ngày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\n` +
+        `Trạng thái: ${conflictingRental.status}`
+      )
       return
     }
 
