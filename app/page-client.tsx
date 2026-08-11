@@ -31,6 +31,7 @@ import Link from "next/link"
 import { BlurFade } from "@/components/ui/blur-fade"
 import { Marquee } from "@/components/ui/marquee"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 
 const FLEET = [
   {
@@ -97,6 +98,29 @@ const PROCESS_STEPS = [
     body: "Trải nghiệm trọn vẹn cố đô Huế, lăng tẩm và ẩm thực theo cách riêng của bạn.",
   },
 ]
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 80,
+      damping: 15,
+    },
+  },
+}
 
 export default function LandingPage() {
   const [formData, setFormData] = useState({
@@ -386,75 +410,71 @@ export default function LandingPage() {
               className="object-cover object-[center_35%] opacity-35 filter brightness-[0.6] scale-102 transition-transform duration-[10000ms]"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/90 to-slate-950" />
-            {/* Soft background glow objects for Liquid Glass style */}
-            <div className="absolute top-[10%] left-[5%] size-80 rounded-full bg-blue-600/15 blur-[100px] animate-pulse" />
-            <div className="absolute bottom-[10%] right-[5%] size-96 rounded-full bg-cyan-500/15 blur-[120px] animate-pulse" />
-            <div className="absolute top-1/2 left-1/3 size-64 rounded-full bg-emerald-500/10 blur-[80px]" />
           </div>
-
-          <div className="relative z-10 mx-auto max-w-6xl px-6 w-full grid gap-12 lg:grid-cols-12 lg:items-center">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="relative z-10 mx-auto max-w-6xl px-6 w-full grid gap-12 lg:grid-cols-12 lg:items-center"
+          >
             <div className="lg:col-span-6 space-y-8">
-              <BlurFade delay={0.05} direction="up" offset={10}>
+              <motion.div variants={itemVariants}>
                 <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-xs font-bold uppercase tracking-wider text-cyan-300">
                   <Sparkles className="size-3.5 text-cyan-400" /> Dịch vụ thuê xe máy cao cấp tại Huế
                 </div>
-              </BlurFade>
+              </motion.div>
 
-              <BlurFade delay={0.1} direction="up" offset={12}>
+              <motion.div variants={itemVariants}>
                 <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl lg:leading-[1.15]">
                   Khám phá Cố Đô <br />
                   <span className="text-gradient">Theo cách của bạn</span>
                 </h1>
-              </BlurFade>
+              </motion.div>
 
-              <BlurFade delay={0.15} direction="up" offset={12}>
+              <motion.div variants={itemVariants}>
                 <p className="max-w-[48ch] text-base leading-relaxed text-slate-300 sm:text-lg">
                   Trải nghiệm thuê xe máy đời mới chất lượng vượt trội. Giao nhận xe hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay Huế. Tặng kèm 2 mũ bảo hiểm đạt chuẩn và áo mưa tiện dụng.
                 </p>
-              </BlurFade>
+              </motion.div>
 
-              <BlurFade delay={0.2} direction="up" offset={10}>
-                <div className="flex flex-wrap items-center gap-4">
-                  <a
-                    href="#booking-section"
-                    className="inline-flex h-14 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 via-cyan-500 to-cyan-600 px-8 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-cyan-500/35 hover:brightness-105 active:scale-[0.98]"
-                  >
-                    Đặt xe trực tuyến
-                    <ArrowRight className="ml-2.5 size-4" />
-                  </a>
-                  <a
-                    href="tel:0363077775"
-                    className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
-                  >
-                    <PhoneCall className="size-4 text-cyan-400" />
-                    0363.077.775
-                  </a>
-                </div>
-              </BlurFade>
+              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4">
+                <a
+                  href="#booking-section"
+                  className="inline-flex h-14 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 px-8 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/35 hover:brightness-105 active:scale-[0.98]"
+                >
+                  Đặt xe trực tuyến
+                  <ArrowRight className="ml-2.5 size-4" />
+                </a>
+                <a
+                  href="tel:0363077775"
+                  className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
+                >
+                  <PhoneCall className="size-4 text-cyan-400" />
+                  0363.077.775
+                </a>
+              </motion.div>
 
-              <BlurFade delay={0.25} direction="up" offset={10}>
-                <div className="flex flex-wrap gap-x-10 gap-y-4 border-t border-white/10 pt-8">
-                  <div className="space-y-1">
-                    <p className="text-3xl font-extrabold text-white">120k <span className="text-sm font-medium text-slate-400">đ/ngày</span></p>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giá thuê rẻ nhất</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-extrabold text-white">10-15 <span className="text-sm font-medium text-slate-400">phút</span></p>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giao xe tận nơi</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-extrabold text-white">24/7</p>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Hỗ trợ khẩn cấp</p>
-                  </div>
+              <motion.div variants={itemVariants} className="flex flex-wrap gap-x-10 gap-y-4 border-t border-white/10 pt-8">
+                <div className="space-y-1">
+                  <p className="text-3xl font-extrabold text-white">120k <span className="text-sm font-medium text-slate-400">đ/ngày</span></p>
+                  <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giá thuê rẻ nhất</p>
                 </div>
-              </BlurFade>
+                <div className="space-y-1">
+                  <p className="text-3xl font-extrabold text-white">10-15 <span className="text-sm font-medium text-slate-400">phút</span></p>
+                  <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giao xe tận nơi</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-3xl font-extrabold text-white">24/7</p>
+                  <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Hỗ trợ khẩn cấp</p>
+                </div>
+              </motion.div>
             </div>
 
-            {/* Redesigned Booking Form Card with Glassmorphism */}
-            <BlurFade delay={0.15} direction="up" offset={15} className="lg:col-span-6 w-full">
+            {/* Redesigned Booking Form Card with Glassmorphism and Hover Tilt style */}
+            <motion.div variants={itemVariants} className="lg:col-span-6 w-full">
               <div
                 id="booking-section"
-                className="relative scroll-mt-24 overflow-hidden rounded-3xl glass-panel p-6 text-slate-900 shadow-2xl sm:p-8 glow-cyan border border-white/20"
+                className="relative scroll-mt-24 overflow-hidden rounded-3xl glass-panel p-6 text-slate-900 shadow-2xl sm:p-8 glow-cyan border border-white/20 transition-all duration-500 hover:shadow-cyan-500/10"
               >
                 <div className="mb-6">
                   <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
@@ -580,8 +600,8 @@ export default function LandingPage() {
                   </Button>
                 </form>
               </div>
-            </BlurFade>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* Cam kết Trust Marquee */}
@@ -681,12 +701,24 @@ export default function LandingPage() {
             <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {FLEET.map((bike, i) => (
                 <BlurFade key={bike.name} inView delay={0.05 * i} direction="up" offset={10}>
-                  <article
+                  <motion.article
+                    whileHover={{
+                      y: -12,
+                      scale: 1.025,
+                      boxShadow: bike.featured 
+                        ? "0 25px 50px -12px rgba(8, 145, 178, 0.25)" 
+                        : "0 25px 50px -12px rgba(148, 163, 184, 0.25)",
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                    }}
                     className={cn(
-                      "group relative flex h-full flex-col overflow-hidden rounded-2xl border transition-all duration-300",
+                      "group relative flex h-full flex-col overflow-hidden rounded-3xl border transition-colors duration-300",
                       bike.featured
-                        ? "border-cyan-200 bg-cyan-50/20 shadow-md shadow-cyan-500/5 hover:border-cyan-300 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-1.5"
-                        : "border-slate-200 bg-white shadow-sm hover:border-cyan-200 hover:shadow-lg hover:shadow-slate-200/50 hover:-translate-y-1.5"
+                        ? "border-cyan-200 bg-cyan-50/20"
+                        : "border-slate-200 bg-white"
                     )}
                   >
                     <div className="relative aspect-[4/3] overflow-hidden bg-slate-50">
@@ -694,10 +726,10 @@ export default function LandingPage() {
                         src={bike.image}
                         alt={bike.alt}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="object-cover transition-transform duration-700 group-hover:scale-108"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
 
                     <div className="flex flex-1 flex-col p-6">
@@ -734,7 +766,7 @@ export default function LandingPage() {
                         </a>
                       </div>
                     </div>
-                  </article>
+                  </motion.article>
                 </BlurFade>
               ))}
             </div>
@@ -972,66 +1004,79 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Floating contact widget */}
+      {/* Floating contact widget with Spring physics bubble menu */}
       <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end gap-3.5">
-        {isOpenContact && (
-          <div className="flex flex-col items-end gap-2.5">
-            <a
-              href="https://zalo.me/0363077775"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
+        <AnimatePresence>
+          {isOpenContact && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.6, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.6, y: 40 }}
+              transition={{ type: "spring", stiffness: 350, damping: 22 }}
+              className="flex flex-col items-end gap-2.5 origin-bottom-right"
             >
-              <span className="text-xs font-bold">Zalo: 0363.077.775</span>
-              <MessageCircle className="size-4" />
-            </a>
-            <a
-              href="https://zalo.me/0934924195"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
-            >
-              <span className="text-xs font-bold">Zalo: 0934.924.195</span>
-              <MessageCircle className="size-4" />
-            </a>
-            <a
-              href="https://www.facebook.com/profile.php?id=61569870030659"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
-            >
-              <span className="text-xs font-bold">Facebook Fanpage</span>
-              <Facebook className="size-4" />
-            </a>
-            <a
-              href="tel:0363077775"
-              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
-            >
-              <span className="text-xs font-bold">Hotline 1: 0363.077.775</span>
-              <PhoneCall className="size-4" />
-            </a>
-            <a
-              href="tel:0934924195"
-              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
-            >
-              <span className="text-xs font-bold">Hotline 2: 0934.924.195</span>
-              <PhoneCall className="size-4" />
-            </a>
-          </div>
-        )}
+              <a
+                href="https://zalo.me/0363077775"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+              >
+                <span className="text-xs font-bold">Zalo: 0363.077.775</span>
+                <MessageCircle className="size-4" />
+              </a>
+              <a
+                href="https://zalo.me/0934924195"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+              >
+                <span className="text-xs font-bold">Zalo: 0934.924.195</span>
+                <MessageCircle className="size-4" />
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61569870030659"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+              >
+                <span className="text-xs font-bold">Facebook Fanpage</span>
+                <Facebook className="size-4" />
+              </a>
+              <a
+                href="tel:0363077775"
+                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+              >
+                <span className="text-xs font-bold">Hotline 1: 0363.077.775</span>
+                <PhoneCall className="size-4" />
+              </a>
+              <a
+                href="tel:0934924195"
+                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+              >
+                <span className="text-xs font-bold">Hotline 2: 0934.924.195</span>
+                <PhoneCall className="size-4" />
+              </a>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <button
+        <motion.button
           type="button"
           onClick={() => setIsOpenContact(!isOpenContact)}
           aria-label="Liên hệ hotline và mạng xã hội"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          animate={{ rotate: isOpenContact ? 90 : 0 }}
+          transition={{ type: "spring", stiffness: 450, damping: 20 }}
           className={cn(
-            "flex size-14 items-center justify-center rounded-full text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer",
+            "flex size-14 items-center justify-center rounded-full text-white shadow-xl cursor-pointer",
             isOpenContact ? "bg-rose-600" : "bg-cyan-600 hover:bg-cyan-700"
           )}
         >
           {isOpenContact ? <X className="size-6.5" /> : <PhoneCall className="size-6.5 animate-pulse" />}
-        </button>
+        </motion.button>
       </div>
     </div>
   )
 }
+

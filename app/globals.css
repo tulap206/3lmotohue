@@ -1106,3 +1106,13 @@
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
 }
+
+.text-gradient-orange {
+  background: linear-gradient(135deg, #f97316 0%, #facc15 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.bg-orange-gradient {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+}
