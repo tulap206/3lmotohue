@@ -519,7 +519,7 @@ export default function LandingPage() {
                         id="phone"
                         type="tel"
                         required
-                        placeholder="0934.924.195 hoặc 0332.917.265"
+                        placeholder="Nhập số điện thoại của bạn..."
                         className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 placeholder-slate-400 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
