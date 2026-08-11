@@ -275,7 +275,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-cyan-600 selection:text-white">
       {/* Navigation Bar */}
       <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
@@ -295,26 +295,26 @@ export default function LandingPage() {
               <span className="block text-xl font-extrabold tracking-tight text-slate-900">
                 3L MOTO
               </span>
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-blue-600">
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-cyan-600">
                 Huế Motorbike Rental
               </span>
             </div>
           </a>
 
           <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
-            <a href="#booking-section" className="transition-colors hover:text-blue-600">
+            <a href="#booking-section" className="transition-colors hover:text-cyan-600">
               Đặt xe ngay
             </a>
-            <a href="#why" className="transition-colors hover:text-blue-600">
+            <a href="#why" className="transition-colors hover:text-cyan-600">
               Cam kết dịch vụ
             </a>
-            <a href="#fleet" className="transition-colors hover:text-blue-600">
+            <a href="#fleet" className="transition-colors hover:text-cyan-600">
               Bảng giá xe
             </a>
-            <a href="#process" className="transition-colors hover:text-blue-600">
+            <a href="#process" className="transition-colors hover:text-cyan-600">
               Quy trình
             </a>
-            <a href="#contact" className="transition-colors hover:text-blue-600">
+            <a href="#contact" className="transition-colors hover:text-cyan-600">
               Liên hệ
             </a>
           </nav>
@@ -376,36 +376,40 @@ export default function LandingPage() {
 
       <main id="top">
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white py-16 sm:py-24">
+        <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white py-16 sm:py-24">
           <div className="absolute inset-0 z-0">
             <Image
               src="/hue-motorbike-bg-v3.jpg"
               alt="Cho thuê xe máy Huế — 3L Moto"
               fill
               priority
-              className="object-cover object-[center_35%] opacity-40 filter brightness-[0.7]"
+              className="object-cover object-[center_35%] opacity-35 filter brightness-[0.6] scale-102 transition-transform duration-[10000ms]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-950" />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/90 to-slate-950" />
+            {/* Soft background glow objects for Liquid Glass style */}
+            <div className="absolute top-[10%] left-[5%] size-80 rounded-full bg-blue-600/15 blur-[100px] animate-pulse" />
+            <div className="absolute bottom-[10%] right-[5%] size-96 rounded-full bg-cyan-500/15 blur-[120px] animate-pulse" />
+            <div className="absolute top-1/2 left-1/3 size-64 rounded-full bg-emerald-500/10 blur-[80px]" />
           </div>
 
           <div className="relative z-10 mx-auto max-w-6xl px-6 w-full grid gap-12 lg:grid-cols-12 lg:items-center">
             <div className="lg:col-span-6 space-y-8">
               <BlurFade delay={0.05} direction="up" offset={10}>
-                <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/30 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-blue-300">
-                  <Sparkles className="size-3.5" /> Dịch vụ cho thuê xe máy uy tín tại Huế
+                <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-xs font-bold uppercase tracking-wider text-cyan-300">
+                  <Sparkles className="size-3.5 text-cyan-400" /> Dịch vụ thuê xe máy cao cấp tại Huế
                 </div>
               </BlurFade>
 
               <BlurFade delay={0.1} direction="up" offset={12}>
-                <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl lg:leading-[1.1]">
+                <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl lg:leading-[1.15]">
                   Khám phá Cố Đô <br />
-                  <span className="text-blue-400">Theo cách của bạn</span>
+                  <span className="text-gradient">Theo cách của bạn</span>
                 </h1>
               </BlurFade>
 
               <BlurFade delay={0.15} direction="up" offset={12}>
                 <p className="max-w-[48ch] text-base leading-relaxed text-slate-300 sm:text-lg">
-                  Thuê xe máy đời mới chất lượng cao, giao nhận hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay. Tặng kèm 2 mũ bảo hiểm đạt chuẩn và áo mưa tiện dụng.
+                  Trải nghiệm thuê xe máy đời mới chất lượng vượt trội. Giao nhận xe hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay Huế. Tặng kèm 2 mũ bảo hiểm đạt chuẩn và áo mưa tiện dụng.
                 </p>
               </BlurFade>
 
@@ -413,16 +417,16 @@ export default function LandingPage() {
                 <div className="flex flex-wrap items-center gap-4">
                   <a
                     href="#booking-section"
-                    className="inline-flex h-14 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/30 active:scale-[0.98]"
+                    className="inline-flex h-14 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 via-cyan-500 to-cyan-600 px-8 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-cyan-500/35 hover:brightness-105 active:scale-[0.98]"
                   >
                     Đặt xe trực tuyến
                     <ArrowRight className="ml-2.5 size-4" />
                   </a>
                   <a
                     href="tel:0363077775"
-                    className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
+                    className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
                   >
-                    <PhoneCall className="size-4 text-blue-400" />
+                    <PhoneCall className="size-4 text-cyan-400" />
                     0363.077.775
                   </a>
                 </div>
@@ -432,32 +436,32 @@ export default function LandingPage() {
                 <div className="flex flex-wrap gap-x-10 gap-y-4 border-t border-white/10 pt-8">
                   <div className="space-y-1">
                     <p className="text-3xl font-extrabold text-white">120k <span className="text-sm font-medium text-slate-400">đ/ngày</span></p>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Giá thuê tốt nhất</p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giá thuê rẻ nhất</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-3xl font-extrabold text-white">10-15 <span className="text-sm font-medium text-slate-400">phút</span></p>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Giao xe hỏa tốc</p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giao xe tận nơi</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-3xl font-extrabold text-white">24/7</p>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Hỗ trợ khẩn cấp</p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Hỗ trợ khẩn cấp</p>
                   </div>
                 </div>
               </BlurFade>
             </div>
 
-            {/* Redesigned Booking Form Card */}
+            {/* Redesigned Booking Form Card with Glassmorphism */}
             <BlurFade delay={0.15} direction="up" offset={15} className="lg:col-span-6 w-full">
               <div
                 id="booking-section"
-                className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 text-slate-900 shadow-xl shadow-slate-950/10 sm:p-8"
+                className="relative scroll-mt-24 overflow-hidden rounded-3xl glass-panel p-6 text-slate-900 shadow-2xl sm:p-8 glow-cyan border border-white/20"
               >
                 <div className="mb-6">
                   <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
                     Lên lịch thuê xe máy
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    Hệ thống tự động lọc và báo giá các loại xe sẵn sàng.
+                    Hệ thống sẽ lọc tự động và báo giá những xe máy còn trống.
                   </p>
                 </div>
 
@@ -473,7 +477,7 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Nguyễn Văn A"
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
+                        className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       />
@@ -491,7 +495,7 @@ export default function LandingPage() {
                         type="tel"
                         required
                         placeholder="0363xxxxxx hoặc Zalo"
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
+                        className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
@@ -509,7 +513,7 @@ export default function LandingPage() {
                           id="startDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
+                          className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
                           value={formData.startDate}
                           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                         />
@@ -525,7 +529,7 @@ export default function LandingPage() {
                           id="endDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
+                          className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
                           value={formData.endDate}
                           onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                         />
@@ -544,7 +548,7 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Ga Huế, tên khách sạn, hoặc Sân bay Phú Bài..."
-                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
+                        className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       />
@@ -564,13 +568,13 @@ export default function LandingPage() {
                   >
                     {isLoading ? (
                       <span className="inline-flex items-center gap-2">
-                        <Loader2 className="size-4 animate-spin" />
+                        <Loader2 className="size-4 animate-spin text-cyan-400" />
                         Đang truy xuất dữ liệu xe...
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-2">
                         Tìm xe khả dụng & Báo giá
-                        <ArrowRight className="size-4" />
+                        <ArrowRight className="size-4 text-cyan-400" />
                       </span>
                     )}
                   </Button>
@@ -600,7 +604,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-6">
             <BlurFade inView direction="up" offset={10}>
               <div className="text-center max-w-3xl mx-auto space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Độ tin cậy hàng đầu</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-cyan-600">Đo lường sự hài lòng</p>
                 <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                   Dịch vụ chuẩn chỉ — Trải nghiệm trọn vẹn
                 </h2>
@@ -612,8 +616,8 @@ export default function LandingPage() {
 
             <div className="mt-16 grid gap-8 md:grid-cols-3">
               <BlurFade inView delay={0.05} direction="up" offset={12}>
-                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-cyan-200 hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 mb-6">
                     <Shield className="size-6" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">Trang bị sẵn phụ kiện</h3>
@@ -624,8 +628,8 @@ export default function LandingPage() {
               </BlurFade>
 
               <BlurFade inView delay={0.1} direction="up" offset={12}>
-                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-cyan-200 hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 mb-6">
                     <Compass className="size-6" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">Hỗ trợ khẩn cấp 24/7</h3>
@@ -633,11 +637,11 @@ export default function LandingPage() {
                     Yên tâm di chuyển trên mọi nẻo đường Huế. Bất kỳ sự cố kỹ thuật nào cũng sẽ được xử lý kịp thời bằng đội ngũ cứu hộ cơ động hoạt động liên tục.
                   </p>
                 </div>
-                  </BlurFade>
+              </BlurFade>
 
               <BlurFade inView delay={0.15} direction="up" offset={12}>
-                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-cyan-200 hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 mb-6">
                     <ThumbsUp className="size-6" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">Không chi phí ẩn</h3>
@@ -656,7 +660,7 @@ export default function LandingPage() {
             <BlurFade inView direction="up" offset={10}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-slate-100 pb-8">
                 <div className="space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Đội xe chất lượng</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-600">Đội xe chất lượng</p>
                   <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                     Danh mục xe máy sẵn có
                   </h2>
@@ -666,7 +670,7 @@ export default function LandingPage() {
                 </div>
                 <a
                   href="#booking-section"
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-cyan-600 hover:text-cyan-700 transition-colors"
                 >
                   Kiểm tra tính khả dụng của xe
                   <ArrowRight className="size-4" />
@@ -679,10 +683,10 @@ export default function LandingPage() {
                 <BlurFade key={bike.name} inView delay={0.05 * i} direction="up" offset={10}>
                   <article
                     className={cn(
-                      "group relative flex h-full flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 duration-300",
+                      "group relative flex h-full flex-col overflow-hidden rounded-2xl border transition-all duration-300",
                       bike.featured
-                        ? "border-blue-200 shadow-md shadow-blue-500/5 bg-slate-50/30"
-                        : "border-slate-200 shadow-sm hover:shadow-md"
+                        ? "border-cyan-200 bg-cyan-50/20 shadow-md shadow-cyan-500/5 hover:border-cyan-300 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-1.5"
+                        : "border-slate-200 bg-white shadow-sm hover:border-cyan-200 hover:shadow-lg hover:shadow-slate-200/50 hover:-translate-y-1.5"
                     )}
                   >
                     <div className="relative aspect-[4/3] overflow-hidden bg-slate-50">
@@ -693,20 +697,21 @@ export default function LandingPage() {
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
 
                     <div className="flex flex-1 flex-col p-6">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                        <span className="inline-block text-[11px] font-extrabold uppercase tracking-wider text-cyan-600">
                           {bike.tag}
                         </span>
                         {bike.featured && (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-blue-600">
-                            Yêu thích nhất
+                          <span className="rounded-full bg-cyan-100 border border-cyan-200 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-700">
+                            Khuyên dùng
                           </span>
                         )}
                       </div>
-                      <h3 className="mt-2 text-lg font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">
+                      <h3 className="mt-2.5 text-lg font-extrabold text-slate-900 group-hover:text-cyan-600 transition-colors">
                         {bike.name}
                       </h3>
                       <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
@@ -715,15 +720,15 @@ export default function LandingPage() {
                       
                       <div className="mt-6 flex items-end justify-between border-t border-slate-100 pt-5">
                         <div className="space-y-0.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Giá thuê chỉ từ</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Giá chỉ từ</p>
                           <p className="text-lg font-black text-slate-900">
                             {bike.price.toLocaleString("vi-VN")}đ
-                            <span className="text-xs font-semibold text-slate-400">/ngày</span>
+                            <span className="text-xs font-bold text-slate-400">/ngày</span>
                           </p>
                         </div>
                         <a
                           href="#booking-section"
-                          className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-4 text-xs font-bold text-white transition-colors hover:bg-blue-600"
+                          className="inline-flex h-9 items-center justify-center rounded-xl bg-slate-900 px-4 text-xs font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-md hover:shadow-cyan-500/20 active:scale-95"
                         >
                           Đặt xe
                         </a>
@@ -737,7 +742,7 @@ export default function LandingPage() {
             <BlurFade inView delay={0.1} direction="up" offset={10}>
               <div className="mt-12 grid gap-6 rounded-2xl border border-slate-100 bg-slate-50 p-6 sm:grid-cols-3 sm:p-8">
                 <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-cyan-600">
                     <Clock className="size-5 shrink-0" />
                   </div>
                   <div>
@@ -746,7 +751,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-cyan-600">
                     <MapPin className="size-5 shrink-0" />
                   </div>
                   <div>
@@ -755,12 +760,12 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-cyan-600">
                     <Phone className="size-5 shrink-0" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900">Liên hệ trực tiếp</p>
-                    <a href="tel:0363077775" className="text-xs font-extrabold text-blue-600 hover:underline mt-0.5 block">
+                    <a href="tel:0363077775" className="text-xs font-extrabold text-cyan-600 hover:underline mt-0.5 block">
                       Gọi ngay: 0363.077.775
                     </a>
                   </div>
@@ -775,7 +780,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-6">
             <BlurFade inView direction="up" offset={10}>
               <div className="max-w-xl">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Thủ tục đơn giản</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-cyan-600">Thủ tục đơn giản</p>
                 <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                   3 bước nhanh chóng để khởi hành
                 </h2>
@@ -892,7 +897,7 @@ export default function LandingPage() {
                   <div className="space-y-2">
                     <h4 className="text-2xl font-extrabold text-slate-900">Đặt xe thành công!</h4>
                     <p className="text-sm text-slate-500 leading-relaxed">
-                      Cảm ơn anh/chị <span className="font-bold text-slate-900">{formData.name}</span>. Hệ thống đã tiếp nhận yêu cầu thuê xe <span className="font-bold text-blue-600">{selectedVehicle?.name}</span>.
+                      Cảm ơn anh/chị <span className="font-bold text-slate-900">{formData.name}</span>. Hệ thống đã tiếp nhận yêu cầu thuê xe <span className="font-bold text-cyan-600">{selectedVehicle?.name}</span>.
                     </p>
                   </div>
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold leading-relaxed text-amber-800">
@@ -925,7 +930,7 @@ export default function LandingPage() {
                         className="flex flex-col gap-4 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="flex size-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-blue-600 shrink-0">
+                          <div className="flex size-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-cyan-600 shrink-0">
                             <Bike className="size-6" />
                           </div>
                           <div>
@@ -948,7 +953,7 @@ export default function LandingPage() {
                           <Button
                             onClick={() => handleConfirmBooking(vehicle)}
                             disabled={isSubmitting}
-                            className="h-10 rounded-lg bg-blue-600 px-5 text-xs font-bold text-white hover:bg-blue-700 transition-colors w-full sm:w-auto"
+                            className="h-10 rounded-lg bg-cyan-600 px-5 text-xs font-bold text-white hover:bg-cyan-700 transition-colors w-full sm:w-auto"
                           >
                             {isSubmitting && selectedVehicle?.id === vehicle.id ? (
                               <Loader2 className="size-4 animate-spin" />
@@ -1021,7 +1026,7 @@ export default function LandingPage() {
           aria-label="Liên hệ hotline và mạng xã hội"
           className={cn(
             "flex size-14 items-center justify-center rounded-full text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer",
-            isOpenContact ? "bg-rose-600" : "bg-blue-600 hover:bg-blue-700"
+            isOpenContact ? "bg-rose-600" : "bg-cyan-600 hover:bg-cyan-700"
           )}
         >
           {isOpenContact ? <X className="size-6.5" /> : <PhoneCall className="size-6.5 animate-pulse" />}
