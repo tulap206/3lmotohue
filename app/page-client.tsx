@@ -278,10 +278,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white font-sans antialiased overflow-x-hidden">
       {/* Navigation Bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-100/80 bg-white/75 backdrop-blur-xl transition-all duration-300">
+      <header className="sticky top-0 z-40 border-b border-slate-900/50 bg-slate-950/80 backdrop-blur-xl transition-all duration-300">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
           <a href="#top" className="flex items-center gap-3 group">
-            <div className="relative size-12 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition-transform group-hover:scale-105 duration-300">
+            <div className="relative size-12 overflow-hidden rounded-xl border border-white/10 bg-white shadow-sm transition-transform group-hover:scale-105 duration-300">
               <Image
                 src="/logo.jpg"
                 alt="Logo 3L Moto Huế"
@@ -293,16 +293,16 @@ export default function LandingPage() {
               />
             </div>
             <div className="leading-tight">
-              <span className="block text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+              <span className="block text-xl font-extrabold tracking-tight text-white group-hover:text-blue-400 transition-colors">
                 3L MOTO
               </span>
-              <span className="block text-[10px] font-semibold uppercase tracking-wider text-blue-600">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-blue-400">
                 Cho thuê xe máy tại Huế
               </span>
             </div>
           </a>
 
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-300 md:flex">
             {[
               ["#booking-section", "Đặt xe trực tuyến"],
               ["#why", "Cam kết dịch vụ"],
@@ -313,7 +313,7 @@ export default function LandingPage() {
               <a
                 key={href}
                 href={href}
-                className="relative py-2 transition-colors hover:text-blue-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-blue-600 after:transition-all hover:after:w-full"
+                className="relative py-2 transition-colors hover:text-white after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-blue-500 after:transition-all hover:after:w-full"
               >
                 {label}
               </a>
@@ -323,14 +323,14 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden items-center gap-2 rounded-xl bg-slate-100 border border-slate-200/85 px-4.5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:bg-blue-600 hover:text-white hover:border-blue-600 sm:inline-flex active:scale-95"
+              className="hidden items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4.5 py-2.5 text-sm font-bold text-slate-200 transition-all hover:bg-blue-600 hover:text-white hover:border-blue-600 sm:inline-flex active:scale-95"
             >
               <User className="size-4" />
               Đăng nhập hệ thống
             </Link>
             <button
               type="button"
-              className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 md:hidden transition-all hover:bg-slate-50 active:scale-95"
+              className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-300 md:hidden transition-all hover:bg-slate-800 active:scale-95"
               aria-label={mobileNavOpen ? "Đóng menu" : "Mở menu"}
               onClick={() => setMobileNavOpen((v) => !v)}
             >
@@ -347,14 +347,14 @@ export default function LandingPage() {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="border-t border-slate-100 bg-white px-6 py-4 md:hidden shadow-lg overflow-hidden"
+              className="border-t border-slate-900 bg-slate-950 px-6 py-4 md:hidden shadow-lg overflow-hidden"
             >
-              <div className="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+              <div className="flex flex-col gap-2 text-sm font-semibold text-slate-300">
                 {[
                   ["#booking-section", "Đặt xe trực tuyến"],
                   ["#why", "Cam kết dịch vụ"],
                   ["#fleet", "Bảng giá tham khảo"],
-                  ["#process", "Quy trình 3 bước"],
+                  ["#process", "Quy trình"],
                   ["#contact", "Liên hệ & Địa chỉ"],
                   ["/login", "Đăng nhập"],
                 ].map(([href, label]) =>
@@ -362,7 +362,7 @@ export default function LandingPage() {
                     <Link
                       key={href}
                       href={href}
-                      className="rounded-xl px-4 py-3 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      className="rounded-xl px-4 py-3 hover:bg-slate-900 hover:text-blue-400 transition-colors"
                       onClick={() => setMobileNavOpen(false)}
                     >
                       {label}
@@ -371,7 +371,7 @@ export default function LandingPage() {
                     <a
                       key={href}
                       href={href}
-                      className="rounded-xl px-4 py-3 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      className="rounded-xl px-4 py-3 hover:bg-slate-900 hover:text-blue-400 transition-colors"
                       onClick={() => setMobileNavOpen(false)}
                     >
                       {label}
