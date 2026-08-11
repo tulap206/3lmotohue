@@ -295,8 +295,8 @@ export default function LandingPage() {
               <span className="block text-xl font-extrabold tracking-tight text-slate-900">
                 3L MOTO
               </span>
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-blue-600">
-                Huế Motorbike Rental
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-blue-600">
+                Cho thuê xe máy tại Huế
               </span>
             </div>
           </a>
