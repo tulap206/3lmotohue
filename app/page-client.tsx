@@ -31,7 +31,6 @@ import Link from "next/link"
 import { BlurFade } from "@/components/ui/blur-fade"
 import { Marquee } from "@/components/ui/marquee"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
 
 const FLEET = [
   {
@@ -98,29 +97,6 @@ const PROCESS_STEPS = [
     body: "Trải nghiệm trọn vẹn cố đô Huế, lăng tẩm và ẩm thực theo cách riêng của bạn.",
   },
 ]
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring" as const,
-      stiffness: 80,
-      damping: 15,
-    },
-  },
-}
 
 export default function LandingPage() {
   const [formData, setFormData] = useState({
@@ -299,65 +275,65 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-cyan-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-blue-600 selection:text-white">
       {/* Navigation Bar */}
-      <header className="sticky top-4 z-40 mx-auto max-w-5xl rounded-full apple-glass apple-shadow border border-zinc-200/40 px-2 mt-4 transition-all duration-300">
-        <div className="flex h-14 items-center justify-between px-4">
-          <a href="#top" className="flex items-center gap-2.5">
-            <div className="relative size-9 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xs">
+      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
+          <a href="#top" className="flex items-center gap-3">
+            <div className="relative size-12 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
               <Image
                 src="/logo.jpg"
                 alt="Logo 3L Moto Huế"
                 fill
-                className="object-contain p-0.5"
+                className="object-contain p-1"
                 onError={(e) => {
                   ;(e.target as HTMLElement).style.display = "none"
                 }}
               />
             </div>
             <div className="leading-tight">
-              <span className="block text-base font-black tracking-tight text-slate-900">
+              <span className="block text-xl font-extrabold tracking-tight text-slate-900">
                 3L MOTO
               </span>
-              <span className="block text-[9px] font-bold uppercase tracking-wider text-cyan-600">
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-blue-600">
                 Huế Motorbike Rental
               </span>
             </div>
           </a>
 
-          <nav className="hidden items-center gap-7 text-xs font-bold text-slate-600 md:flex">
-            <a href="#booking-section" className="transition-colors hover:text-cyan-600">
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+            <a href="#booking-section" className="transition-colors hover:text-blue-600">
               Đặt xe ngay
             </a>
-            <a href="#why" className="transition-colors hover:text-cyan-600">
-              Cam kết
+            <a href="#why" className="transition-colors hover:text-blue-600">
+              Cam kết dịch vụ
             </a>
-            <a href="#fleet" className="transition-colors hover:text-cyan-600">
+            <a href="#fleet" className="transition-colors hover:text-blue-600">
               Bảng giá xe
             </a>
-            <a href="#process" className="transition-colors hover:text-cyan-600">
+            <a href="#process" className="transition-colors hover:text-blue-600">
               Quy trình
             </a>
-            <a href="#contact" className="transition-colors hover:text-cyan-600">
+            <a href="#contact" className="transition-colors hover:text-blue-600">
               Liên hệ
             </a>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-slate-800 sm:inline-flex"
+              className="hidden items-center gap-2 rounded-xl bg-slate-50 border border-slate-200/80 px-4 py-2.5 text-sm font-bold text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
             >
-              <User className="size-3.5" />
-              Đăng nhập
+              <User className="size-4 text-slate-500" />
+              Đăng nhập hệ thống
             </Link>
             <button
               type="button"
-              className="inline-flex size-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-slate-700 md:hidden transition-colors hover:bg-slate-50"
+              className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 md:hidden transition-colors hover:bg-slate-50"
               aria-label={mobileNavOpen ? "Đóng menu" : "Mở menu"}
               onClick={() => setMobileNavOpen((v) => !v)}
             >
-              {mobileNavOpen ? <X className="size-4.5" /> : <Menu className="size-4.5" />}
+              {mobileNavOpen ? <X className="size-5.5" /> : <Menu className="size-5.5" />}
             </button>
           </div>
         </div>
@@ -400,94 +376,94 @@ export default function LandingPage() {
 
       <main id="top">
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-black text-white py-16 sm:py-24">
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white py-16 sm:py-24">
           <div className="absolute inset-0 z-0">
             <Image
               src="/hue-motorbike-bg-v3.jpg"
               alt="Cho thuê xe máy Huế — 3L Moto"
               fill
               priority
-              className="object-cover object-[center_35%] opacity-20 filter brightness-[0.5] scale-101 transition-transform duration-[12000ms]"
+              className="object-cover object-[center_35%] opacity-40 filter brightness-[0.7]"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/85 to-black" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-950" />
           </div>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="relative z-10 mx-auto max-w-6xl px-6 w-full grid gap-12 lg:grid-cols-12 lg:items-center"
-          >
+
+          <div className="relative z-10 mx-auto max-w-6xl px-6 w-full grid gap-12 lg:grid-cols-12 lg:items-center">
             <div className="lg:col-span-6 space-y-8">
-              <motion.div variants={itemVariants}>
-                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 border border-zinc-800/80 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-300 backdrop-blur-xs">
-                  <Sparkles className="size-3 text-cyan-400" /> Dịch vụ thuê xe máy cao cấp tại Huế
+              <BlurFade delay={0.05} direction="up" offset={10}>
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/30 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-blue-300">
+                  <Sparkles className="size-3.5" /> Dịch vụ cho thuê xe máy uy tín tại Huế
                 </div>
-              </motion.div>
+              </BlurFade>
 
-              <motion.div variants={itemVariants}>
-                <h1 className="text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl lg:leading-[1.1] font-sans">
-                  Khám phá Cố Đô.
-                  <span className="block text-zinc-400 font-bold mt-2 text-3xl sm:text-4xl lg:text-5xl">Theo cách của bạn.</span>
+              <BlurFade delay={0.1} direction="up" offset={12}>
+                <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl lg:leading-[1.1]">
+                  Khám phá Cố Đô <br />
+                  <span className="text-blue-400">Theo cách của bạn</span>
                 </h1>
-              </motion.div>
+              </BlurFade>
 
-              <motion.div variants={itemVariants}>
-                <p className="max-w-[46ch] text-sm leading-relaxed text-zinc-400 font-medium sm:text-base">
-                  Trải nghiệm thuê xe đời mới với dịch vụ chuẩn mực nhất. Giao nhận xe hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay Huế. Trang bị sẵn 02 nón bảo hiểm chuẩn quốc gia.
+              <BlurFade delay={0.15} direction="up" offset={12}>
+                <p className="max-w-[48ch] text-base leading-relaxed text-slate-300 sm:text-lg">
+                  Thuê xe máy đời mới chất lượng cao, giao nhận hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay. Tặng kèm 2 mũ bảo hiểm đạt chuẩn và áo mưa tiện dụng.
                 </p>
-              </motion.div>
+              </BlurFade>
 
-              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3">
-                <a
-                  href="#booking-section"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-xs font-bold text-black shadow-md hover:bg-zinc-100 transition-all active:scale-95 cursor-pointer"
-                >
-                  Đặt xe trực tuyến
-                  <ArrowRight className="ml-2 size-3.5" />
-                </a>
-                <a
-                  href="tel:0363077775"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-zinc-800 bg-zinc-950/40 px-5 text-xs font-bold text-white backdrop-blur-md transition-all hover:bg-zinc-900 active:scale-95 cursor-pointer"
-                >
-                  <PhoneCall className="size-3.5 text-cyan-400" />
-                  0363.077.775
-                </a>
-              </motion.div>
+              <BlurFade delay={0.2} direction="up" offset={10}>
+                <div className="flex flex-wrap items-center gap-4">
+                  <a
+                    href="#booking-section"
+                    className="inline-flex h-14 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/30 active:scale-[0.98]"
+                  >
+                    Đặt xe trực tuyến
+                    <ArrowRight className="ml-2.5 size-4" />
+                  </a>
+                  <a
+                    href="tel:0363077775"
+                    className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/20 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
+                  >
+                    <PhoneCall className="size-4 text-blue-400" />
+                    0363.077.775
+                  </a>
+                </div>
+              </BlurFade>
 
-              <motion.div variants={itemVariants} className="flex flex-wrap gap-x-12 gap-y-4 border-t border-zinc-900 pt-8">
-                <div className="space-y-0.5">
-                  <p className="text-3xl font-black text-white">120k <span className="text-xs font-bold text-zinc-500">đ/ngày</span></p>
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Giá tốt nhất</p>
+              <BlurFade delay={0.25} direction="up" offset={10}>
+                <div className="flex flex-wrap gap-x-10 gap-y-4 border-t border-white/10 pt-8">
+                  <div className="space-y-1">
+                    <p className="text-3xl font-extrabold text-white">120k <span className="text-sm font-medium text-slate-400">đ/ngày</span></p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Giá thuê tốt nhất</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-3xl font-extrabold text-white">10-15 <span className="text-sm font-medium text-slate-400">phút</span></p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Giao xe hỏa tốc</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-3xl font-extrabold text-white">24/7</p>
+                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Hỗ trợ khẩn cấp</p>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <p className="text-3xl font-black text-white">10-15 <span className="text-xs font-bold text-zinc-500">phút</span></p>
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Giao xe tận nơi</p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-3xl font-black text-white">24/7</p>
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Hỗ trợ khẩn cấp</p>
-                </div>
-              </motion.div>
+              </BlurFade>
             </div>
 
-            {/* Redesigned Booking Form Card with macOS/iOS Sheet style */}
-            <motion.div variants={itemVariants} className="lg:col-span-6 w-full">
+            {/* Redesigned Booking Form Card */}
+            <BlurFade delay={0.15} direction="up" offset={15} className="lg:col-span-6 w-full">
               <div
                 id="booking-section"
-                className="relative scroll-mt-24 overflow-hidden rounded-[2rem] apple-glass p-6 text-slate-900 apple-shadow-lg border border-white/10 sm:p-8"
+                className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 text-slate-900 shadow-xl shadow-slate-950/10 sm:p-8"
               >
                 <div className="mb-6">
-                  <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                  <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
                     Lên lịch thuê xe máy
                   </h2>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Hệ thống sẽ lọc tự động và báo giá những xe máy còn trống.
+                  <p className="mt-1 text-sm text-slate-500">
+                    Hệ thống tự động lọc và báo giá các loại xe sẵn sàng.
                   </p>
                 </div>
 
                 <form onSubmit={handleSearch} className="space-y-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                       Họ và tên khách hàng *
                     </Label>
                     <div className="relative">
@@ -497,15 +473,15 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Nguyễn Văn A"
-                        className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                       Số điện thoại liên hệ *
                     </Label>
                     <div className="relative">
@@ -515,7 +491,7 @@ export default function LandingPage() {
                         type="tel"
                         required
                         placeholder="0363xxxxxx hoặc Zalo"
-                        className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
@@ -523,8 +499,8 @@ export default function LandingPage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="min-w-0 space-y-1">
-                      <Label htmlFor="startDate" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="min-w-0 space-y-1.5">
+                      <Label htmlFor="startDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                         Ngày nhận xe *
                       </Label>
                       <div className="relative">
@@ -533,14 +509,14 @@ export default function LandingPage() {
                           id="startDate"
                           type="date"
                           required
-                          className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
+                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                           value={formData.startDate}
                           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div className="min-w-0 space-y-1">
-                      <Label htmlFor="endDate" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="min-w-0 space-y-1.5">
+                      <Label htmlFor="endDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                         Ngày trả xe *
                       </Label>
                       <div className="relative">
@@ -549,7 +525,7 @@ export default function LandingPage() {
                           id="endDate"
                           type="date"
                           required
-                          className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
+                          className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                           value={formData.endDate}
                           onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                         />
@@ -557,8 +533,8 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <Label htmlFor="address" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="address" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                       Địa điểm giao nhận xe *
                     </Label>
                     <div className="relative">
@@ -568,7 +544,7 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Ga Huế, tên khách sạn, hoặc Sân bay Phú Bài..."
-                        className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
+                        className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm font-medium focus:border-blue-500 focus:bg-white focus:ring-0 transition-all"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       />
@@ -576,7 +552,7 @@ export default function LandingPage() {
                   </div>
 
                   {formError ? (
-                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700">
+                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700">
                       {formError}
                     </p>
                   ) : null}
@@ -584,24 +560,24 @@ export default function LandingPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 h-12 w-full rounded-full bg-slate-950 text-xs font-bold text-white shadow-md hover:bg-slate-900 active:scale-98 disabled:opacity-70 cursor-pointer transition-all"
+                    className="mt-2 h-13 w-full rounded-xl bg-slate-900 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 active:scale-[0.99] disabled:opacity-70 cursor-pointer"
                   >
                     {isLoading ? (
                       <span className="inline-flex items-center gap-2">
-                        <Loader2 className="size-3.5 animate-spin text-cyan-400" />
-                        Đang tìm kiếm...
+                        <Loader2 className="size-4 animate-spin" />
+                        Đang truy xuất dữ liệu xe...
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-2">
                         Tìm xe khả dụng & Báo giá
-                        <ArrowRight className="size-3.5 text-cyan-400" />
+                        <ArrowRight className="size-4" />
                       </span>
                     )}
                   </Button>
                 </form>
               </div>
-            </motion.div>
-          </motion.div>
+            </BlurFade>
+          </div>
         </section>
 
         {/* Cam kết Trust Marquee */}
@@ -624,7 +600,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-6">
             <BlurFade inView direction="up" offset={10}>
               <div className="text-center max-w-3xl mx-auto space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-cyan-600">Đo lường sự hài lòng</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Độ tin cậy hàng đầu</p>
                 <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                   Dịch vụ chuẩn chỉ — Trải nghiệm trọn vẹn
                 </h2>
@@ -636,8 +612,8 @@ export default function LandingPage() {
 
             <div className="mt-16 grid gap-8 md:grid-cols-3">
               <BlurFade inView delay={0.05} direction="up" offset={12}>
-                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-cyan-200 hover:shadow-md">
-                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 mb-6">
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
                     <Shield className="size-6" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">Trang bị sẵn phụ kiện</h3>
@@ -648,8 +624,8 @@ export default function LandingPage() {
               </BlurFade>
 
               <BlurFade inView delay={0.1} direction="up" offset={12}>
-                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-cyan-200 hover:shadow-md">
-                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 mb-6">
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
                     <Compass className="size-6" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">Hỗ trợ khẩn cấp 24/7</h3>
@@ -657,11 +633,11 @@ export default function LandingPage() {
                     Yên tâm di chuyển trên mọi nẻo đường Huế. Bất kỳ sự cố kỹ thuật nào cũng sẽ được xử lý kịp thời bằng đội ngũ cứu hộ cơ động hoạt động liên tục.
                   </p>
                 </div>
-              </BlurFade>
+                  </BlurFade>
 
               <BlurFade inView delay={0.15} direction="up" offset={12}>
-                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all duration-300 hover:border-cyan-200 hover:shadow-md">
-                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 mb-6">
+                <div className="h-full rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+                  <div className="inline-flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-6">
                     <ThumbsUp className="size-6" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">Không chi phí ẩn</h3>
@@ -680,7 +656,7 @@ export default function LandingPage() {
             <BlurFade inView direction="up" offset={10}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-slate-100 pb-8">
                 <div className="space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-600">Đội xe chất lượng</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Đội xe chất lượng</p>
                   <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                     Danh mục xe máy sẵn có
                   </h2>
@@ -690,7 +666,7 @@ export default function LandingPage() {
                 </div>
                 <a
                   href="#booking-section"
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-cyan-600 hover:text-cyan-700 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   Kiểm tra tính khả dụng của xe
                   <ArrowRight className="size-4" />
@@ -701,22 +677,12 @@ export default function LandingPage() {
             <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {FLEET.map((bike, i) => (
                 <BlurFade key={bike.name} inView delay={0.05 * i} direction="up" offset={10}>
-                  <motion.article
-                    whileHover={{
-                      y: -8,
-                      scale: 1.01,
-                      boxShadow: "0 30px 60px rgba(0, 0, 0, 0.08)",
-                    }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 260,
-                      damping: 24,
-                    }}
+                  <article
                     className={cn(
-                      "group relative flex h-full flex-col overflow-hidden rounded-[2rem] border transition-colors duration-300 apple-shadow",
+                      "group relative flex h-full flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 duration-300",
                       bike.featured
-                        ? "border-zinc-200 bg-zinc-50/50"
-                        : "border-zinc-100 bg-white"
+                        ? "border-blue-200 shadow-md shadow-blue-500/5 bg-slate-50/30"
+                        : "border-slate-200 shadow-sm hover:shadow-md"
                     )}
                   >
                     <div className="relative aspect-[4/3] overflow-hidden bg-slate-50">
@@ -724,47 +690,46 @@ export default function LandingPage() {
                         src={bike.image}
                         alt={bike.alt}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-103"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
 
                     <div className="flex flex-1 flex-col p-6">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-cyan-600">
+                        <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-blue-600">
                           {bike.tag}
                         </span>
                         {bike.featured && (
-                          <span className="rounded-full bg-zinc-100 border border-zinc-200/60 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-zinc-600">
-                            Khuyên dùng
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-blue-600">
+                            Yêu thích nhất
                           </span>
                         )}
                       </div>
-                      <h3 className="mt-2 text-base font-extrabold text-zinc-900 group-hover:text-cyan-600 transition-colors">
+                      <h3 className="mt-2 text-lg font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">
                         {bike.name}
                       </h3>
-                      <p className="mt-2 flex-1 text-xs leading-relaxed text-zinc-500">
+                      <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
                         {bike.blurb}
                       </p>
                       
-                      <div className="mt-6 flex items-end justify-between border-t border-zinc-100 pt-5">
+                      <div className="mt-6 flex items-end justify-between border-t border-slate-100 pt-5">
                         <div className="space-y-0.5">
-                          <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Giá chỉ từ</p>
-                          <p className="text-base font-black text-zinc-900">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Giá thuê chỉ từ</p>
+                          <p className="text-lg font-black text-slate-900">
                             {bike.price.toLocaleString("vi-VN")}đ
-                            <span className="text-xs font-bold text-zinc-400">/ngày</span>
+                            <span className="text-xs font-semibold text-slate-400">/ngày</span>
                           </p>
                         </div>
                         <a
                           href="#booking-section"
-                          className="inline-flex h-8 items-center justify-center rounded-full bg-slate-900 px-4 text-xs font-bold text-white transition-all hover:bg-[#0071e3] active:scale-95 shadow-sm"
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-4 text-xs font-bold text-white transition-colors hover:bg-blue-600"
                         >
                           Đặt xe
                         </a>
                       </div>
                     </div>
-                  </motion.article>
+                  </article>
                 </BlurFade>
               ))}
             </div>
@@ -772,7 +737,7 @@ export default function LandingPage() {
             <BlurFade inView delay={0.1} direction="up" offset={10}>
               <div className="mt-12 grid gap-6 rounded-2xl border border-slate-100 bg-slate-50 p-6 sm:grid-cols-3 sm:p-8">
                 <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-cyan-600">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
                     <Clock className="size-5 shrink-0" />
                   </div>
                   <div>
@@ -781,7 +746,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-cyan-600">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
                     <MapPin className="size-5 shrink-0" />
                   </div>
                   <div>
@@ -790,12 +755,12 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-cyan-600">
+                  <div className="rounded-lg bg-white p-2 border border-slate-200/60 shadow-xs text-blue-600">
                     <Phone className="size-5 shrink-0" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900">Liên hệ trực tiếp</p>
-                    <a href="tel:0363077775" className="text-xs font-extrabold text-cyan-600 hover:underline mt-0.5 block">
+                    <a href="tel:0363077775" className="text-xs font-extrabold text-blue-600 hover:underline mt-0.5 block">
                       Gọi ngay: 0363.077.775
                     </a>
                   </div>
@@ -810,7 +775,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-6">
             <BlurFade inView direction="up" offset={10}>
               <div className="max-w-xl">
-                <p className="text-xs font-bold uppercase tracking-wider text-cyan-600">Thủ tục đơn giản</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Thủ tục đơn giản</p>
                 <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                   3 bước nhanh chóng để khởi hành
                 </h2>
@@ -927,7 +892,7 @@ export default function LandingPage() {
                   <div className="space-y-2">
                     <h4 className="text-2xl font-extrabold text-slate-900">Đặt xe thành công!</h4>
                     <p className="text-sm text-slate-500 leading-relaxed">
-                      Cảm ơn anh/chị <span className="font-bold text-slate-900">{formData.name}</span>. Hệ thống đã tiếp nhận yêu cầu thuê xe <span className="font-bold text-cyan-600">{selectedVehicle?.name}</span>.
+                      Cảm ơn anh/chị <span className="font-bold text-slate-900">{formData.name}</span>. Hệ thống đã tiếp nhận yêu cầu thuê xe <span className="font-bold text-blue-600">{selectedVehicle?.name}</span>.
                     </p>
                   </div>
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold leading-relaxed text-amber-800">
@@ -960,7 +925,7 @@ export default function LandingPage() {
                         className="flex flex-col gap-4 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="flex size-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-cyan-600 shrink-0">
+                          <div className="flex size-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-blue-600 shrink-0">
                             <Bike className="size-6" />
                           </div>
                           <div>
@@ -983,7 +948,7 @@ export default function LandingPage() {
                           <Button
                             onClick={() => handleConfirmBooking(vehicle)}
                             disabled={isSubmitting}
-                            className="h-10 rounded-lg bg-cyan-600 px-5 text-xs font-bold text-white hover:bg-cyan-700 transition-colors w-full sm:w-auto"
+                            className="h-10 rounded-lg bg-blue-600 px-5 text-xs font-bold text-white hover:bg-blue-700 transition-colors w-full sm:w-auto"
                           >
                             {isSubmitting && selectedVehicle?.id === vehicle.id ? (
                               <Loader2 className="size-4 animate-spin" />
@@ -1002,83 +967,66 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Floating contact widget with iOS Dynamic Island style */}
+      {/* Floating contact widget */}
       <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end gap-3.5">
-        <AnimatePresence>
-          {isOpenContact && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 40 }}
-              transition={{ type: "spring", stiffness: 380, damping: 24 }}
-              className="flex flex-col items-stretch gap-2.5 bg-black/95 backdrop-blur-md p-4 rounded-[2rem] border border-zinc-800/80 shadow-2xl origin-bottom-right w-[270px] text-white"
+        {isOpenContact && (
+          <div className="flex flex-col items-end gap-2.5">
+            <a
+              href="https://zalo.me/0363077775"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest px-2 pb-1.5 border-b border-zinc-900 flex justify-between items-center">
-                <span>Hỗ trợ 24/7</span>
-                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              </div>
-              <a
-                href="https://zalo.me/0363077775"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
-              >
-                <span className="text-xs font-bold">Zalo: 0363.077.775</span>
-                <MessageCircle className="size-4 text-cyan-400" />
-              </a>
-              <a
-                href="https://zalo.me/0934924195"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
-              >
-                <span className="text-xs font-bold">Zalo: 0934.924.195</span>
-                <MessageCircle className="size-4 text-cyan-400" />
-              </a>
-              <a
-                href="https://www.facebook.com/profile.php?id=61569870030659"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
-              >
-                <span className="text-xs font-bold">Facebook Fanpage</span>
-                <Facebook className="size-4 text-cyan-400" />
-              </a>
-              <a
-                href="tel:0363077775"
-                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
-              >
-                <span className="text-xs font-bold">Hotline 1: 0363.077.775</span>
-                <PhoneCall className="size-4 text-emerald-400" />
-              </a>
-              <a
-                href="tel:0934924195"
-                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
-              >
-                <span className="text-xs font-bold">Hotline 2: 0934.924.195</span>
-                <PhoneCall className="size-4 text-emerald-400" />
-              </a>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <span className="text-xs font-bold">Zalo: 0363.077.775</span>
+              <MessageCircle className="size-4" />
+            </a>
+            <a
+              href="https://zalo.me/0934924195"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
+            >
+              <span className="text-xs font-bold">Zalo: 0934.924.195</span>
+              <MessageCircle className="size-4" />
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61569870030659"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
+            >
+              <span className="text-xs font-bold">Facebook Fanpage</span>
+              <Facebook className="size-4" />
+            </a>
+            <a
+              href="tel:0363077775"
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
+            >
+              <span className="text-xs font-bold">Hotline 1: 0363.077.775</span>
+              <PhoneCall className="size-4" />
+            </a>
+            <a
+              href="tel:0934924195"
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
+            >
+              <span className="text-xs font-bold">Hotline 2: 0934.924.195</span>
+              <PhoneCall className="size-4" />
+            </a>
+          </div>
+        )}
 
-        <motion.button
+        <button
           type="button"
           onClick={() => setIsOpenContact(!isOpenContact)}
           aria-label="Liên hệ hotline và mạng xã hội"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          animate={{ rotate: isOpenContact ? 90 : 0 }}
-          transition={{ type: "spring", stiffness: 450, damping: 20 }}
           className={cn(
-            "flex size-14 items-center justify-center rounded-full text-white shadow-xl cursor-pointer transition-colors duration-300",
-            isOpenContact ? "bg-zinc-900 border border-zinc-800" : "bg-black hover:bg-zinc-900"
+            "flex size-14 items-center justify-center rounded-full text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer",
+            isOpenContact ? "bg-rose-600" : "bg-blue-600 hover:bg-blue-700"
           )}
         >
-          {isOpenContact ? <X className="size-6 text-zinc-400" /> : <PhoneCall className="size-5.5 text-white animate-pulse" />}
-        </motion.button>
+          {isOpenContact ? <X className="size-6.5" /> : <PhoneCall className="size-6.5 animate-pulse" />}
+        </button>
       </div>
     </div>
   )
 }
-
