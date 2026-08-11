@@ -855,7 +855,7 @@ export default function LandingPage() {
 
         <div className="border-t border-slate-900 py-8">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs text-slate-500 sm:flex-row">
-            <p>© 2026 3L Moto Huế. Bản quyền sở hữu thuộc về Phan Lê Tự Lập.</p>
+            <p>© 2026 3L Moto Huế. Bản quyền sở hữu thuộc về 3L Moto Huế.</p>
             <p>Báo giá niêm yết công khai · Không phát sinh phụ phí</p>
           </div>
         </div>
