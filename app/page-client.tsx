@@ -479,11 +479,11 @@ export default function LandingPage() {
             >
               <div
                 id="booking-section"
-                className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/75 p-6 text-slate-800 shadow-2xl backdrop-blur-xl sm:p-8 travel-glow"
+                className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-white/40 bg-white/90 p-6 text-slate-800 shadow-2xl backdrop-blur-2xl sm:p-8 travel-glow"
               >
                 <div className="mb-6">
-                  <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 flex items-center gap-2">
-                    Lên lịch thuê xe máy <Sparkles className="size-5 text-blue-500 animate-pulse" />
+                  <h2 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                    Lên lịch thuê xe máy <Sparkles className="size-5 text-blue-600 animate-pulse" />
                   </h2>
                   <p className="mt-1 text-sm text-slate-500 font-medium">
                     Hệ thống tự động lọc và báo giá các loại xe sẵn sàng.
@@ -492,7 +492,7 @@ export default function LandingPage() {
 
                 <form onSubmit={handleSearch} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-600">
                       Họ và tên khách hàng *
                     </Label>
                     <div className="relative">
@@ -502,7 +502,7 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Nguyễn Văn A"
-                        className="h-12 rounded-xl border-slate-200 bg-white/50 pl-11 text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-0 transition-all duration-200"
+                        className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 placeholder-slate-400 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       />
@@ -510,7 +510,7 @@ export default function LandingPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-slate-600">
                       Số điện thoại liên hệ *
                     </Label>
                     <div className="relative">
@@ -520,7 +520,7 @@ export default function LandingPage() {
                         type="tel"
                         required
                         placeholder="0934.924.195 hoặc 0332.917.265"
-                        className="h-12 rounded-xl border-slate-200 bg-white/50 pl-11 text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-0 transition-all duration-200"
+                        className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 placeholder-slate-400 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
@@ -529,7 +529,7 @@ export default function LandingPage() {
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="startDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      <Label htmlFor="startDate" className="text-xs font-bold uppercase tracking-wider text-slate-600">
                         Ngày nhận xe *
                       </Label>
                       <div className="relative">
@@ -538,14 +538,14 @@ export default function LandingPage() {
                           id="startDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200 bg-white/50 pl-11 text-sm font-medium text-slate-800 focus:border-blue-500 focus:bg-white focus:ring-0 transition-all duration-200"
+                          className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
                           value={formData.startDate}
                           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                         />
                       </div>
                     </div>
                     <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="endDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      <Label htmlFor="endDate" className="text-xs font-bold uppercase tracking-wider text-slate-600">
                         Ngày trả xe *
                       </Label>
                       <div className="relative">
@@ -554,7 +554,7 @@ export default function LandingPage() {
                           id="endDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200 bg-white/50 pl-11 text-sm font-medium text-slate-800 focus:border-blue-500 focus:bg-white focus:ring-0 transition-all duration-200"
+                          className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
                           value={formData.endDate}
                           onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                         />
@@ -563,7 +563,7 @@ export default function LandingPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="address" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <Label htmlFor="address" className="text-xs font-bold uppercase tracking-wider text-slate-600">
                       Địa điểm giao nhận xe *
                     </Label>
                     <div className="relative">
@@ -573,7 +573,7 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Ga Huế, tên khách sạn, hoặc Sân bay..."
-                        className="h-12 rounded-xl border-slate-200 bg-white/50 pl-11 text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-0 transition-all duration-200"
+                        className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 placeholder-slate-400 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       />
@@ -593,7 +593,7 @@ export default function LandingPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 h-13 w-full rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-[0.99] disabled:opacity-70 transition-all duration-200 cursor-pointer"
+                    className="mt-2 h-13 w-full rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 active:scale-[0.99] disabled:opacity-70 transition-all duration-200 cursor-pointer"
                   >
                     {isLoading ? (
                       <span className="inline-flex items-center gap-2">
