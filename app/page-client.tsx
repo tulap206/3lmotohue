@@ -301,36 +301,36 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-cyan-600 selection:text-white">
       {/* Navigation Bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
-          <a href="#top" className="flex items-center gap-3">
-            <div className="relative size-12 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
+      <header className="sticky top-4 z-40 mx-auto max-w-5xl rounded-full apple-glass apple-shadow border border-zinc-200/40 px-2 mt-4 transition-all duration-300">
+        <div className="flex h-14 items-center justify-between px-4">
+          <a href="#top" className="flex items-center gap-2.5">
+            <div className="relative size-9 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xs">
               <Image
                 src="/logo.jpg"
                 alt="Logo 3L Moto Huế"
                 fill
-                className="object-contain p-1"
+                className="object-contain p-0.5"
                 onError={(e) => {
                   ;(e.target as HTMLElement).style.display = "none"
                 }}
               />
             </div>
             <div className="leading-tight">
-              <span className="block text-xl font-extrabold tracking-tight text-slate-900">
+              <span className="block text-base font-black tracking-tight text-slate-900">
                 3L MOTO
               </span>
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-cyan-600">
+              <span className="block text-[9px] font-bold uppercase tracking-wider text-cyan-600">
                 Huế Motorbike Rental
               </span>
             </div>
           </a>
 
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+          <nav className="hidden items-center gap-7 text-xs font-bold text-slate-600 md:flex">
             <a href="#booking-section" className="transition-colors hover:text-cyan-600">
               Đặt xe ngay
             </a>
             <a href="#why" className="transition-colors hover:text-cyan-600">
-              Cam kết dịch vụ
+              Cam kết
             </a>
             <a href="#fleet" className="transition-colors hover:text-cyan-600">
               Bảng giá xe
@@ -343,21 +343,21 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/login"
-              className="hidden items-center gap-2 rounded-xl bg-slate-50 border border-slate-200/80 px-4 py-2.5 text-sm font-bold text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-slate-800 sm:inline-flex"
             >
-              <User className="size-4 text-slate-500" />
-              Đăng nhập hệ thống
+              <User className="size-3.5" />
+              Đăng nhập
             </Link>
             <button
               type="button"
-              className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 md:hidden transition-colors hover:bg-slate-50"
+              className="inline-flex size-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-slate-700 md:hidden transition-colors hover:bg-slate-50"
               aria-label={mobileNavOpen ? "Đóng menu" : "Mở menu"}
               onClick={() => setMobileNavOpen((v) => !v)}
             >
-              {mobileNavOpen ? <X className="size-5.5" /> : <Menu className="size-5.5" />}
+              {mobileNavOpen ? <X className="size-4.5" /> : <Menu className="size-4.5" />}
             </button>
           </div>
         </div>
@@ -400,16 +400,16 @@ export default function LandingPage() {
 
       <main id="top">
         {/* Hero Section */}
-        <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden bg-slate-950 text-white py-16 sm:py-24">
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-black text-white py-16 sm:py-24">
           <div className="absolute inset-0 z-0">
             <Image
               src="/hue-motorbike-bg-v3.jpg"
               alt="Cho thuê xe máy Huế — 3L Moto"
               fill
               priority
-              className="object-cover object-[center_35%] opacity-35 filter brightness-[0.6] scale-102 transition-transform duration-[10000ms]"
+              className="object-cover object-[center_35%] opacity-20 filter brightness-[0.5] scale-101 transition-transform duration-[12000ms]"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/90 to-slate-950" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/85 to-black" />
           </div>
           <motion.div
             variants={containerVariants}
@@ -419,75 +419,75 @@ export default function LandingPage() {
           >
             <div className="lg:col-span-6 space-y-8">
               <motion.div variants={itemVariants}>
-                <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-4 py-2 text-xs font-bold uppercase tracking-wider text-cyan-300">
-                  <Sparkles className="size-3.5 text-cyan-400" /> Dịch vụ thuê xe máy cao cấp tại Huế
+                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 border border-zinc-800/80 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-300 backdrop-blur-xs">
+                  <Sparkles className="size-3 text-cyan-400" /> Dịch vụ thuê xe máy cao cấp tại Huế
                 </div>
               </motion.div>
 
               <motion.div variants={itemVariants}>
-                <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl lg:leading-[1.15]">
-                  Khám phá Cố Đô <br />
-                  <span className="text-gradient">Theo cách của bạn</span>
+                <h1 className="text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl lg:leading-[1.1] font-sans">
+                  Khám phá Cố Đô.
+                  <span className="block text-zinc-400 font-bold mt-2 text-3xl sm:text-4xl lg:text-5xl">Theo cách của bạn.</span>
                 </h1>
               </motion.div>
 
               <motion.div variants={itemVariants}>
-                <p className="max-w-[48ch] text-base leading-relaxed text-slate-300 sm:text-lg">
-                  Trải nghiệm thuê xe máy đời mới chất lượng vượt trội. Giao nhận xe hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay Huế. Tặng kèm 2 mũ bảo hiểm đạt chuẩn và áo mưa tiện dụng.
+                <p className="max-w-[46ch] text-sm leading-relaxed text-zinc-400 font-medium sm:text-base">
+                  Trải nghiệm thuê xe đời mới với dịch vụ chuẩn mực nhất. Giao nhận xe hoàn toàn miễn phí tại Ga tàu, Khách sạn nội thành hoặc Sân bay Huế. Trang bị sẵn 02 nón bảo hiểm chuẩn quốc gia.
                 </p>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4">
+              <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3">
                 <a
                   href="#booking-section"
-                  className="inline-flex h-14 items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 px-8 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/35 hover:brightness-105 active:scale-[0.98]"
+                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-xs font-bold text-black shadow-md hover:bg-zinc-100 transition-all active:scale-95 cursor-pointer"
                 >
                   Đặt xe trực tuyến
-                  <ArrowRight className="ml-2.5 size-4" />
+                  <ArrowRight className="ml-2 size-3.5" />
                 </a>
                 <a
                   href="tel:0363077775"
-                  className="inline-flex h-14 items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-6 text-sm font-bold text-white backdrop-blur-md transition-all hover:bg-white/10"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-zinc-800 bg-zinc-950/40 px-5 text-xs font-bold text-white backdrop-blur-md transition-all hover:bg-zinc-900 active:scale-95 cursor-pointer"
                 >
-                  <PhoneCall className="size-4 text-cyan-400" />
+                  <PhoneCall className="size-3.5 text-cyan-400" />
                   0363.077.775
                 </a>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="flex flex-wrap gap-x-10 gap-y-4 border-t border-white/10 pt-8">
-                <div className="space-y-1">
-                  <p className="text-3xl font-extrabold text-white">120k <span className="text-sm font-medium text-slate-400">đ/ngày</span></p>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giá thuê rẻ nhất</p>
+              <motion.div variants={itemVariants} className="flex flex-wrap gap-x-12 gap-y-4 border-t border-zinc-900 pt-8">
+                <div className="space-y-0.5">
+                  <p className="text-3xl font-black text-white">120k <span className="text-xs font-bold text-zinc-500">đ/ngày</span></p>
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Giá tốt nhất</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-extrabold text-white">10-15 <span className="text-sm font-medium text-slate-400">phút</span></p>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Giao xe tận nơi</p>
+                <div className="space-y-0.5">
+                  <p className="text-3xl font-black text-white">10-15 <span className="text-xs font-bold text-zinc-500">phút</span></p>
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Giao xe tận nơi</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-extrabold text-white">24/7</p>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 font-bold">Hỗ trợ khẩn cấp</p>
+                <div className="space-y-0.5">
+                  <p className="text-3xl font-black text-white">24/7</p>
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">Hỗ trợ khẩn cấp</p>
                 </div>
               </motion.div>
             </div>
 
-            {/* Redesigned Booking Form Card with Glassmorphism and Hover Tilt style */}
+            {/* Redesigned Booking Form Card with macOS/iOS Sheet style */}
             <motion.div variants={itemVariants} className="lg:col-span-6 w-full">
               <div
                 id="booking-section"
-                className="relative scroll-mt-24 overflow-hidden rounded-3xl glass-panel p-6 text-slate-900 shadow-2xl sm:p-8 glow-cyan border border-white/20 transition-all duration-500 hover:shadow-cyan-500/10"
+                className="relative scroll-mt-24 overflow-hidden rounded-[2rem] apple-glass p-6 text-slate-900 apple-shadow-lg border border-white/10 sm:p-8"
               >
                 <div className="mb-6">
-                  <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
+                  <h2 className="text-2xl font-black tracking-tight text-slate-900">
                     Lên lịch thuê xe máy
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-xs text-slate-500">
                     Hệ thống sẽ lọc tự động và báo giá những xe máy còn trống.
                   </p>
                 </div>
 
                 <form onSubmit={handleSearch} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <div className="space-y-1">
+                    <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Họ và tên khách hàng *
                     </Label>
                     <div className="relative">
@@ -497,15 +497,15 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Nguyễn Văn A"
-                        className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                        className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <div className="space-y-1">
+                    <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Số điện thoại liên hệ *
                     </Label>
                     <div className="relative">
@@ -515,7 +515,7 @@ export default function LandingPage() {
                         type="tel"
                         required
                         placeholder="0363xxxxxx hoặc Zalo"
-                        className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                        className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
@@ -523,8 +523,8 @@ export default function LandingPage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="startDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="min-w-0 space-y-1">
+                      <Label htmlFor="startDate" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         Ngày nhận xe *
                       </Label>
                       <div className="relative">
@@ -533,14 +533,14 @@ export default function LandingPage() {
                           id="startDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                          className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
                           value={formData.startDate}
                           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="endDate" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="min-w-0 space-y-1">
+                      <Label htmlFor="endDate" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         Ngày trả xe *
                       </Label>
                       <div className="relative">
@@ -549,7 +549,7 @@ export default function LandingPage() {
                           id="endDate"
                           type="date"
                           required
-                          className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                          className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
                           value={formData.endDate}
                           onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                         />
@@ -557,8 +557,8 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="address" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <div className="space-y-1">
+                    <Label htmlFor="address" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Địa điểm giao nhận xe *
                     </Label>
                     <div className="relative">
@@ -568,7 +568,7 @@ export default function LandingPage() {
                         type="text"
                         required
                         placeholder="Ga Huế, tên khách sạn, hoặc Sân bay Phú Bài..."
-                        className="h-12 rounded-xl border-slate-200/80 bg-white/70 pl-11 text-sm font-medium focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                        className="h-11 rounded-xl border border-zinc-200 bg-white/50 pl-11 text-xs font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-cyan-500 transition-all outline-none"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       />
@@ -576,7 +576,7 @@ export default function LandingPage() {
                   </div>
 
                   {formError ? (
-                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700">
+                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-700">
                       {formError}
                     </p>
                   ) : null}
@@ -584,17 +584,17 @@ export default function LandingPage() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="mt-2 h-13 w-full rounded-xl bg-slate-900 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 active:scale-[0.99] disabled:opacity-70 cursor-pointer"
+                    className="mt-2 h-12 w-full rounded-full bg-slate-950 text-xs font-bold text-white shadow-md hover:bg-slate-900 active:scale-98 disabled:opacity-70 cursor-pointer transition-all"
                   >
                     {isLoading ? (
                       <span className="inline-flex items-center gap-2">
-                        <Loader2 className="size-4 animate-spin text-cyan-400" />
-                        Đang truy xuất dữ liệu xe...
+                        <Loader2 className="size-3.5 animate-spin text-cyan-400" />
+                        Đang tìm kiếm...
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5">
                         Tìm xe khả dụng & Báo giá
-                        <ArrowRight className="size-4 text-cyan-400" />
+                        <ArrowRight className="size-3.5 text-cyan-400" />
                       </span>
                     )}
                   </Button>
@@ -703,22 +703,20 @@ export default function LandingPage() {
                 <BlurFade key={bike.name} inView delay={0.05 * i} direction="up" offset={10}>
                   <motion.article
                     whileHover={{
-                      y: -12,
-                      scale: 1.025,
-                      boxShadow: bike.featured 
-                        ? "0 25px 50px -12px rgba(8, 145, 178, 0.25)" 
-                        : "0 25px 50px -12px rgba(148, 163, 184, 0.25)",
+                      y: -8,
+                      scale: 1.01,
+                      boxShadow: "0 30px 60px rgba(0, 0, 0, 0.08)",
                     }}
                     transition={{
                       type: "spring",
                       stiffness: 260,
-                      damping: 20,
+                      damping: 24,
                     }}
                     className={cn(
-                      "group relative flex h-full flex-col overflow-hidden rounded-3xl border transition-colors duration-300",
+                      "group relative flex h-full flex-col overflow-hidden rounded-[2rem] border transition-colors duration-300 apple-shadow",
                       bike.featured
-                        ? "border-cyan-200 bg-cyan-50/20"
-                        : "border-slate-200 bg-white"
+                        ? "border-zinc-200 bg-zinc-50/50"
+                        : "border-zinc-100 bg-white"
                     )}
                   >
                     <div className="relative aspect-[4/3] overflow-hidden bg-slate-50">
@@ -726,41 +724,41 @@ export default function LandingPage() {
                         src={bike.image}
                         alt={bike.alt}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-108"
+                        className="object-cover transition-transform duration-700 group-hover:scale-103"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
 
                     <div className="flex flex-1 flex-col p-6">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="inline-block text-[11px] font-extrabold uppercase tracking-wider text-cyan-600">
+                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-cyan-600">
                           {bike.tag}
                         </span>
                         {bike.featured && (
-                          <span className="rounded-full bg-cyan-100 border border-cyan-200 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-700">
+                          <span className="rounded-full bg-zinc-100 border border-zinc-200/60 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-zinc-600">
                             Khuyên dùng
                           </span>
                         )}
                       </div>
-                      <h3 className="mt-2.5 text-lg font-extrabold text-slate-900 group-hover:text-cyan-600 transition-colors">
+                      <h3 className="mt-2 text-base font-extrabold text-zinc-900 group-hover:text-cyan-600 transition-colors">
                         {bike.name}
                       </h3>
-                      <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
+                      <p className="mt-2 flex-1 text-xs leading-relaxed text-zinc-500">
                         {bike.blurb}
                       </p>
                       
-                      <div className="mt-6 flex items-end justify-between border-t border-slate-100 pt-5">
+                      <div className="mt-6 flex items-end justify-between border-t border-zinc-100 pt-5">
                         <div className="space-y-0.5">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Giá chỉ từ</p>
-                          <p className="text-lg font-black text-slate-900">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">Giá chỉ từ</p>
+                          <p className="text-base font-black text-zinc-900">
                             {bike.price.toLocaleString("vi-VN")}đ
-                            <span className="text-xs font-bold text-slate-400">/ngày</span>
+                            <span className="text-xs font-bold text-zinc-400">/ngày</span>
                           </p>
                         </div>
                         <a
                           href="#booking-section"
-                          className="inline-flex h-9 items-center justify-center rounded-xl bg-slate-900 px-4 text-xs font-bold text-white transition-all hover:bg-cyan-600 hover:shadow-md hover:shadow-cyan-500/20 active:scale-95"
+                          className="inline-flex h-8 items-center justify-center rounded-full bg-slate-900 px-4 text-xs font-bold text-white transition-all hover:bg-[#0071e3] active:scale-95 shadow-sm"
                         >
                           Đặt xe
                         </a>
@@ -1004,57 +1002,61 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Floating contact widget with Spring physics bubble menu */}
+      {/* Floating contact widget with iOS Dynamic Island style */}
       <div className="fixed right-6 bottom-6 z-50 flex flex-col items-end gap-3.5">
         <AnimatePresence>
           {isOpenContact && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.6, y: 40 }}
+              initial={{ opacity: 0, scale: 0.8, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.6, y: 40 }}
-              transition={{ type: "spring", stiffness: 350, damping: 22 }}
-              className="flex flex-col items-end gap-2.5 origin-bottom-right"
+              exit={{ opacity: 0, scale: 0.8, y: 40 }}
+              transition={{ type: "spring", stiffness: 380, damping: 24 }}
+              className="flex flex-col items-stretch gap-2.5 bg-black/95 backdrop-blur-md p-4 rounded-[2rem] border border-zinc-800/80 shadow-2xl origin-bottom-right w-[270px] text-white"
             >
+              <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest px-2 pb-1.5 border-b border-zinc-900 flex justify-between items-center">
+                <span>Hỗ trợ 24/7</span>
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
               <a
                 href="https://zalo.me/0363077775"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
               >
                 <span className="text-xs font-bold">Zalo: 0363.077.775</span>
-                <MessageCircle className="size-4" />
+                <MessageCircle className="size-4 text-cyan-400" />
               </a>
               <a
                 href="https://zalo.me/0934924195"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
               >
                 <span className="text-xs font-bold">Zalo: 0934.924.195</span>
-                <MessageCircle className="size-4" />
+                <MessageCircle className="size-4 text-cyan-400" />
               </a>
               <a
                 href="https://www.facebook.com/profile.php?id=61569870030659"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
               >
                 <span className="text-xs font-bold">Facebook Fanpage</span>
-                <Facebook className="size-4" />
+                <Facebook className="size-4 text-cyan-400" />
               </a>
               <a
                 href="tel:0363077775"
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
               >
                 <span className="text-xs font-bold">Hotline 1: 0363.077.775</span>
-                <PhoneCall className="size-4" />
+                <PhoneCall className="size-4 text-emerald-400" />
               </a>
               <a
                 href="tel:0934924195"
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-105"
+                className="flex items-center justify-between rounded-2xl bg-zinc-900/80 px-3.5 py-2.5 text-zinc-100 hover:bg-zinc-800 transition-colors border border-zinc-800/20"
               >
                 <span className="text-xs font-bold">Hotline 2: 0934.924.195</span>
-                <PhoneCall className="size-4" />
+                <PhoneCall className="size-4 text-emerald-400" />
               </a>
             </motion.div>
           )}
@@ -1064,16 +1066,16 @@ export default function LandingPage() {
           type="button"
           onClick={() => setIsOpenContact(!isOpenContact)}
           aria-label="Liên hệ hotline và mạng xã hội"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           animate={{ rotate: isOpenContact ? 90 : 0 }}
           transition={{ type: "spring", stiffness: 450, damping: 20 }}
           className={cn(
-            "flex size-14 items-center justify-center rounded-full text-white shadow-xl cursor-pointer",
-            isOpenContact ? "bg-rose-600" : "bg-cyan-600 hover:bg-cyan-700"
+            "flex size-14 items-center justify-center rounded-full text-white shadow-xl cursor-pointer transition-colors duration-300",
+            isOpenContact ? "bg-zinc-900 border border-zinc-800" : "bg-black hover:bg-zinc-900"
           )}
         >
-          {isOpenContact ? <X className="size-6.5" /> : <PhoneCall className="size-6.5 animate-pulse" />}
+          {isOpenContact ? <X className="size-6 text-zinc-400" /> : <PhoneCall className="size-5.5 text-white animate-pulse" />}
         </motion.button>
       </div>
     </div>

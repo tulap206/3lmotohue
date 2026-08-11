@@ -1116,3 +1116,32 @@
 .bg-orange-gradient {
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
 }
+
+/* Apple & iOS Design System Custom Styles */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.dark .apple-glass {
+  background: rgba(29, 29, 31, 0.72) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.apple-text-gradient {
+  background: linear-gradient(180deg, #ffffff 0%, #a1a1a6 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.apple-shadow {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+.apple-shadow-lg {
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12), 0 10px 20px rgba(0, 0, 0, 0.04) !important;
+}
