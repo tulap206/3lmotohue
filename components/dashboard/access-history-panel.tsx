@@ -545,7 +545,7 @@ export function AccessHistoryPanel({
                 <SelectValue placeholder="Hành động" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
-                <SelectItem value="all">Tất cả hành động</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
                 {actions.map((action) => (
                   <SelectItem key={action} value={action}>
                     {action}

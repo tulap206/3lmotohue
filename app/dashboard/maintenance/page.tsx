@@ -59,10 +59,6 @@ export default function MaintenancePage() {
   const itemsPerPage = 15
   const maintenanceBadgeClass =
     "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
-  const maintenanceActionBtnClass =
-    "h-9 w-9 p-0 border-slate-200 rounded-[var(--radius-control)] hover:bg-slate-50 text-slate-500"
-  const maintenancePlateClass =
-    "inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase"
 
   // Derive maintenance vehicles list from shared context
   const vehicles: MaintenanceVehicle[] = useMemo(() => {
