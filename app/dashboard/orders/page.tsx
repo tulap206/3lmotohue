@@ -2135,7 +2135,7 @@ export default function OrdersPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
                       <p className="text-meta text-slate-500 mb-0.5">Số CCCD / CMND</p>
-                      <p className="text-sm font-bold text-slate-800 font-mono">{cust.idcard || "—"}</p>
+                      <p className="text-sm font-bold text-slate-800 font-mono">{(cust.idcard || "").replace(/^CCCD_/i, "") || "—"}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
                       <p className="text-meta text-slate-500 mb-0.5">Tổng lần thuê</p>
