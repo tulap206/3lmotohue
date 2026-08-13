@@ -167,7 +167,6 @@ export default function VehiclesPage() {
   const { vehicles, setVehicles, orders, setOrders, isLoading } = useRentalData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -242,15 +241,26 @@ export default function VehiclesPage() {
     return map
   }, [vehicles, orders])
 
+  const pendingDeliveryVehicleIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const order of orders || []) {
+      if (order.status === "pending" && order.vehicleId) ids.add(order.vehicleId)
+    }
+    return ids
+  }, [orders])
+
   const filteredVehicles = useMemo(() => {
     const filtered = vehicles.filter((vehicle) => {
       const matchesSearch =
         vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
-      const matchesCategory =
-        categoryFilter === "all" || (vehicle.category || "bike") === categoryFilter
-      return matchesSearch && matchesStatus && matchesCategory
+      const matchesStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "pending"
+            ? pendingDeliveryVehicleIds.has(vehicle.id)
+            : vehicle.status === statusFilter
+      return matchesSearch && matchesStatus
     })
 
     // Sort by performance (utilizationRate) descending
@@ -270,12 +280,12 @@ export default function VehiclesPage() {
       // Tertiary sort: by name
       return a.name.localeCompare(b.name)
     })
-  }, [vehicles, searchTerm, statusFilter, categoryFilter, vehiclePerformanceMap])
+  }, [vehicles, searchTerm, statusFilter, pendingDeliveryVehicleIds, vehiclePerformanceMap])
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, categoryFilter])
+  }, [searchTerm, statusFilter])
 
   const totalPages = useMemo(() => {
     return Math.ceil(filteredVehicles.length / itemsPerPage)
@@ -294,10 +304,11 @@ export default function VehiclesPage() {
     return {
       total: vehicles.length,
       available: vehicles.filter((v) => v.status === "available").length,
+      pendingDelivery: pendingDeliveryVehicleIds.size,
       rented: vehicles.filter((v) => v.status === "rented").length,
       maintenance: vehicles.filter((v) => v.status === "maintenance").length,
     }
-  }, [vehicles])
+  }, [vehicles, pendingDeliveryVehicleIds])
 
   const handleAddVehicle = async () => {
     if (!newVehicle.name || !newVehicle.name.trim()) {
@@ -895,7 +906,7 @@ export default function VehiclesPage() {
       </Dialog>
 
       <div className="space-y-4">
-        <ModuleKpiGrid columns={4}>
+        <ModuleKpiGrid columns={5}>
           <RentalKpiCard variant="hero" label="Tổng số xe" value={vehicleStats.total} sublabel={`${filteredVehicles.length} đang lọc`} />
           <RentalKpiCard
             variant="hero"
@@ -904,6 +915,14 @@ export default function VehiclesPage() {
             sublabel="Có thể cho thuê"
             valueClassName="text-emerald-700"
             onClick={() => setStatusFilter("available")}
+          />
+          <RentalKpiCard
+            variant="hero"
+            label="Chờ giao"
+            value={vehicleStats.pendingDelivery}
+            sublabel="Chờ giao xe"
+            valueClassName="text-amber-700"
+            onClick={() => setStatusFilter("pending")}
           />
           <RentalKpiCard
             variant="hero"
@@ -937,23 +956,14 @@ export default function VehiclesPage() {
                 className={cn(rentalFilterInputClass, "pl-9 h-10")}
               />
             </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full lg:w-40 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
-                <SelectValue placeholder="Phân loại" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
-                <SelectItem value="all">Tất cả loại xe</SelectItem>
-                <SelectItem value="bike">Xe máy</SelectItem>
-                <SelectItem value="car">Ô tô</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-40 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
+              <SelectTrigger className="w-full lg:w-36 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
                 <SelectItem value="available">Sẵn sàng</SelectItem>
+                <SelectItem value="pending">Chờ giao</SelectItem>
                 <SelectItem value="rented">Đang thuê</SelectItem>
                 <SelectItem value="maintenance">Bảo trì</SelectItem>
               </SelectContent>
