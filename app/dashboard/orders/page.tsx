@@ -132,7 +132,7 @@ const orderActionBtnClass =
 const orderStatusBadgeClass =
   "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
 const orderQuickActionClass =
-  "h-9 px-2.5 text-sm rounded-[var(--radius-control)] gap-1"
+  "h-11 px-3 text-body rounded-[var(--radius-control)] gap-1.5"
 
 // Lightbox component
 function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () => void }) {

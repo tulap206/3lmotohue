@@ -61,14 +61,14 @@ export const EntityFormDialogContent = React.forwardRef<
     <DialogContent
       ref={ref}
       className={cn(
-        "block border-slate-200 rounded-[var(--radius-container)] max-h-[90vh] overflow-y-auto bg-white p-0 gap-0",
+        "block border-slate-200 rounded-[var(--radius-container)] max-h-[min(90dvh,calc(100dvh-1rem))] overflow-y-auto overscroll-contain bg-white p-0 gap-0",
         maxW,
         className
       )}
     >
       <div className="relative">
         <div className={cn("absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r", accentMap[accent].stripe)} />
-        <div className="p-6 pt-7">{children}</div>
+        <div className="p-4 pt-6 sm:p-6 sm:pt-7">{children}</div>
       </div>
     </DialogContent>
   )
@@ -131,7 +131,7 @@ export function EntityFormToggle({
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            "flex-1 py-2 text-body font-semibold rounded-[calc(var(--radius-control)-2px)] ui-transition",
+            "flex-1 min-h-11 py-2 text-body font-semibold rounded-[calc(var(--radius-control)-2px)] ui-transition",
             value === opt.value
               ? "bg-white shadow-sm text-slate-800"
               : "text-slate-500 hover:text-slate-700"

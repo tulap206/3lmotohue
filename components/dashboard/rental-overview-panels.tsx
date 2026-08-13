@@ -61,7 +61,7 @@ function PanelPagination({
           size="sm"
           disabled={page === 1}
           onClick={() => onPageChange(page - 1)}
-          className="h-8 rounded-lg px-2.5 text-sm font-semibold border-slate-200"
+          className="h-10 rounded-[var(--radius-control)] px-3 text-label font-semibold border-slate-200"
         >
           <ChevronLeft className="w-3.5 h-3.5 mr-0.5" />
           Trước
@@ -79,7 +79,7 @@ function PanelPagination({
               size="sm"
               onClick={() => onPageChange(p)}
               className={cn(
-                "h-8 w-8 rounded-lg p-0 text-sm font-bold",
+                "h-10 w-10 rounded-[var(--radius-control)] p-0 text-label font-bold",
                 page === p ? accentClass : "border-slate-200"
               )}
             >
@@ -93,7 +93,7 @@ function PanelPagination({
           size="sm"
           disabled={page === totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="h-8 rounded-lg px-2.5 text-sm font-semibold border-slate-200"
+          className="h-10 rounded-[var(--radius-control)] px-3 text-label font-semibold border-slate-200"
         >
           Sau
           <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
@@ -149,7 +149,7 @@ export function OverdueOrdersPanel({
     >
       <div className="flex flex-col -mx-4 -mb-4 flex-1">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm min-w-[320px]">
+          <table className="w-full text-left border-collapse text-body">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
                 <th className="py-2.5 px-4 text-label text-slate-500 w-10">#</th>
@@ -255,7 +255,7 @@ export function CommissionHomeReportPanel({
     >
       <div className="flex flex-col -mx-4 -mb-4 flex-1">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm min-w-[280px]">
+          <table className="w-full text-left border-collapse text-body">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
                 <th className="py-2.5 px-4 text-label text-slate-500 w-10">#</th>

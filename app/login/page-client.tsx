@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-slate-950">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     )
@@ -56,7 +56,7 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-6 relative bg-slate-950 overflow-hidden font-sans"
+      className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 relative bg-slate-950 overflow-hidden font-sans"
     >
       {/* Unified Background from Landing Page */}
       <div className="absolute inset-0 z-0">

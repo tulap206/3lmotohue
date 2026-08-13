@@ -839,7 +839,7 @@ export default function VehiclesPage() {
                         <button
                           type="button"
                           onClick={() => removeImage(index, "vehicle")}
-                          className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 w-11 h-11 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 ui-transition"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -875,7 +875,7 @@ export default function VehiclesPage() {
                         <button
                           type="button"
                           onClick={() => removeImage(index, "document")}
-                          className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 w-11 h-11 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 ui-transition"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1325,7 +1325,7 @@ export default function VehiclesPage() {
                           <button
                             type="button"
                             onClick={() => removeImage(index, "vehicle", true)}
-                            className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-2 right-2 w-11 h-11 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 ui-transition"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -1362,7 +1362,7 @@ export default function VehiclesPage() {
                           <button
                             type="button"
                             onClick={() => removeImage(index, "document", true)}
-                            className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-2 right-2 w-11 h-11 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-100 md:opacity-0 md:group-hover:opacity-100 ui-transition"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>

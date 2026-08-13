@@ -173,6 +173,7 @@
   html {
     font-size: 16px;
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
   * {
     @apply border-border outline-ring/50;
@@ -182,6 +183,8 @@
     font-feature-settings: "tnum" 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+    min-height: 100dvh;
   }
   input,
   textarea,
@@ -200,7 +203,7 @@
 /* ── Typography scale (use these instead of ad-hoc text-* sizes) ── */
 @layer utilities {
   .text-display {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     line-height: 1.2;
     font-weight: 600;
     letter-spacing: -0.02em;

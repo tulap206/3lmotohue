@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Be_Vietnam_Pro } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/contexts/auth-context'
@@ -11,6 +11,12 @@ const beVietnamPro = Be_Vietnam_Pro({
   display: 'swap',
   variable: '--font-sans',
 })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
 
 export const metadata: Metadata = {
   title: '3L Moto - Quản lý cho thuê xe máy',
@@ -36,7 +42,7 @@ export default function RootLayout({
         </AuthProvider>
         <Toaster 
           richColors 
-          position="top-right" 
+          position="top-center" 
           closeButton 
           theme="light" 
           toastOptions={{

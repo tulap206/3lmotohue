@@ -51,7 +51,7 @@ export function ModulePageShell({
 }) {
   const theme = getModuleTheme(module)
   return (
-    <div className={cn(theme.adminClass, "space-y-6 w-full max-w-[1400px]", className)}>{children}</div>
+    <div className={cn(theme.adminClass, "space-y-4 md:space-y-6 w-full max-w-[1400px] min-w-0", className)}>{children}</div>
   )
 }
 
@@ -94,7 +94,7 @@ export function ModuleBrandHeader({
         <p className="text-meta mt-1.5">{subtitle}</p>
       </div>
       {(actions || badge) && (
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto [&>*]:w-full sm:[&>*]:w-auto">
           {badge}
           {actions}
         </div>
@@ -151,7 +151,11 @@ export function ModuleSubpageHeader({
         <h1 className="text-title">{title}</h1>
         {subtitle && <p className="text-meta mt-1">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2 shrink-0 w-full sm:w-auto">{actions}</div>}
+      {actions && (
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 shrink-0 w-full sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">
+          {actions}
+        </div>
+      )}
     </div>
   )
 }
@@ -335,10 +339,7 @@ export function ModuleKpiGrid({
   return (
     <div
       className={cn(
-        "gap-3 sm:gap-4",
-        "flex overflow-x-auto snap-x snap-mandatory pb-1 -mx-1 px-1",
-        "md:grid md:overflow-visible md:mx-0 md:px-0 md:pb-0",
-        "[&>*]:min-w-[9.5rem] [&>*]:snap-start md:[&>*]:min-w-0",
+        "grid gap-3 sm:gap-4",
         colClass,
         className
       )}
@@ -415,7 +416,7 @@ export function ModuleSectionCard({
             </div>
             {badge}
           </div>
-          {filters}
+          {filters && <div className="w-full min-w-0 lg:w-auto">{filters}</div>}
         </div>
       </CardHeader>
       {children}
@@ -497,7 +498,7 @@ export function ModuleMobileCard({
   className?: string
 }) {
   return (
-    <div className={cn("module-table-row px-4 py-3.5 space-y-2", className)}>{children}</div>
+    <div className={cn("module-table-row px-4 py-4 space-y-2.5", className)}>{children}</div>
   )
 }
 
@@ -561,7 +562,7 @@ export function ModulePagination({
           disabled={safePage === 1}
           variant="outline"
           size="sm"
-          className="h-10 min-w-10 text-label border-slate-200 rounded-[var(--radius-control)] px-3 font-semibold hover:bg-slate-50 text-slate-600"
+          className="h-11 min-w-11 text-label border-slate-200 rounded-[var(--radius-control)] px-3 font-semibold hover:bg-slate-50 text-slate-600"
         >
           Trước
         </Button>
@@ -579,7 +580,7 @@ export function ModulePagination({
                 variant={safePage === p ? "default" : "outline"}
                 size="sm"
                 className={cn(
-                  "h-10 w-10 text-label rounded-[var(--radius-control)] font-semibold ui-transition",
+                  "h-11 w-11 text-label rounded-[var(--radius-control)] font-semibold ui-transition",
                   safePage === p
                     ? "bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white border-transparent"
                     : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -596,7 +597,7 @@ export function ModulePagination({
           disabled={safePage === totalPages}
           variant="outline"
           size="sm"
-          className="h-10 min-w-10 text-label border-slate-200 rounded-[var(--radius-control)] px-3 font-semibold hover:bg-slate-50 text-slate-600"
+          className="h-11 min-w-11 text-label border-slate-200 rounded-[var(--radius-control)] px-3 font-semibold hover:bg-slate-50 text-slate-600"
         >
           Tiếp
         </Button>

@@ -884,75 +884,118 @@ export default function ReportsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-meta border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
-                  <th className="p-3 w-12 text-center">STT</th>
-                  <th className="p-3">Xe máy</th>
-                  <th className="p-3">Biển số</th>
-                  <th className="p-3 text-center">Số ngày chạy</th>
-                  <th className="p-3 text-right">Doanh thu thuê</th>
-                  <th className="p-3 text-center">Hiệu suất lấp đầy</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {reportData.fleetPerformance.length > 0 ? (
-                  reportData.fleetPerformance
-                    .slice((fleetPage - 1) * fleetItemsPerPage, fleetPage * fleetItemsPerPage)
-                    .map((item, idx) => (
-                    <tr key={`${item.licensePlate}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-3 text-center text-slate-400 font-medium tabular-nums">
-                        {(fleetPage - 1) * fleetItemsPerPage + idx + 1}
-                      </td>
-                      <td className="p-3 font-semibold text-slate-800">{item.name}</td>
-                      <td className="p-3 text-slate-500 tabular-nums">{item.licensePlate}</td>
-                      <td className="p-3 text-center text-slate-700 font-medium tabular-nums">{item.activeDays} ngày</td>
-                      <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{item.revenue.toLocaleString("vi-VN")} đ</td>
-                      <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-12 bg-slate-100 rounded-[var(--radius-badge)] h-1.5 hidden sm:block overflow-hidden">
-                            <div 
-                              className={`h-1.5 rounded-[var(--radius-badge)] ${
-                                item.utilizationRate >= 70 
-                                  ? 'bg-emerald-500' 
-                                  : item.utilizationRate >= 40 
-                                    ? 'bg-amber-500' 
-                                    : 'bg-blue-500'
-                              }`}
-                              style={{ width: `${Math.min(100, Math.max(0, item.utilizationRate))}%` }}
-                            />
+          {reportData.fleetPerformance.length === 0 ? (
+            <ModuleEmptyState title="Không có dữ liệu đội xe" description="Chưa có xe hoặc chưa có đơn thuê trong kỳ lọc." />
+          ) : (
+            <>
+              <ModuleResponsiveTable
+                desktop={
+                  <table className="w-full text-left text-meta border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
+                        <th className="p-3 w-12 text-center">STT</th>
+                        <th className="p-3">Xe máy</th>
+                        <th className="p-3">Biển số</th>
+                        <th className="p-3 text-center">Số ngày chạy</th>
+                        <th className="p-3 text-right">Doanh thu thuê</th>
+                        <th className="p-3 text-center">Hiệu suất lấp đầy</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {reportData.fleetPerformance
+                        .slice((fleetPage - 1) * fleetItemsPerPage, fleetPage * fleetItemsPerPage)
+                        .map((item, idx) => (
+                        <tr key={`${item.licensePlate}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="p-3 text-center text-slate-400 font-medium tabular-nums">
+                            {(fleetPage - 1) * fleetItemsPerPage + idx + 1}
+                          </td>
+                          <td className="p-3 font-semibold text-slate-800">{item.name}</td>
+                          <td className="p-3 text-slate-500 tabular-nums">{item.licensePlate}</td>
+                          <td className="p-3 text-center text-slate-700 font-medium tabular-nums">{item.activeDays} ngày</td>
+                          <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{item.revenue.toLocaleString("vi-VN")} đ</td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="w-12 bg-slate-100 rounded-[var(--radius-badge)] h-1.5 overflow-hidden">
+                                <div
+                                  className={`h-1.5 rounded-[var(--radius-badge)] ${
+                                    item.utilizationRate >= 70
+                                      ? "bg-emerald-500"
+                                      : item.utilizationRate >= 40
+                                        ? "bg-amber-500"
+                                        : "bg-blue-500"
+                                  }`}
+                                  style={{ width: `${Math.min(100, Math.max(0, item.utilizationRate))}%` }}
+                                />
+                              </div>
+                              <span className={`font-semibold tabular-nums ${
+                                item.utilizationRate >= 70
+                                  ? "text-emerald-600"
+                                  : item.utilizationRate >= 40
+                                    ? "text-amber-600"
+                                    : "text-slate-900"
+                              }`}>
+                                {item.utilizationRate}%
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                }
+                mobile={
+                  <>
+                    {reportData.fleetPerformance
+                      .slice((fleetPage - 1) * fleetItemsPerPage, fleetPage * fleetItemsPerPage)
+                      .map((item, idx) => (
+                      <ModuleMobileCard key={`${item.licensePlate}-${idx}`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-meta tabular-nums mb-0.5">#{(fleetPage - 1) * fleetItemsPerPage + idx + 1}</p>
+                            <p className="text-body font-semibold text-slate-800">{item.name}</p>
+                            <p className="text-meta tabular-nums mt-0.5">{item.licensePlate}</p>
                           </div>
-                          <span className={`font-semibold tabular-nums ${
-                            item.utilizationRate >= 70 
-                              ? 'text-emerald-600' 
-                              : item.utilizationRate >= 40 
-                                ? 'text-amber-600' 
-                                : 'text-slate-900'
+                          <p className="text-body font-semibold text-emerald-600 money tabular-nums shrink-0">
+                            {item.revenue.toLocaleString("vi-VN")} đ
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-body text-slate-600">{item.activeDays} ngày chạy</span>
+                          <span className={`text-body font-semibold tabular-nums ${
+                            item.utilizationRate >= 70
+                              ? "text-emerald-600"
+                              : item.utilizationRate >= 40
+                                ? "text-amber-600"
+                                : "text-slate-800"
                           }`}>
-                            {item.utilizationRate}%
+                            Lấp đầy {item.utilizationRate}%
                           </span>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="p-4 text-center text-slate-400">Không có dữ liệu đội xe</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {reportData.fleetPerformance.length > 0 && (
-            <ModulePagination
-              page={fleetPage}
-              totalPages={Math.max(1, Math.ceil(reportData.fleetPerformance.length / fleetItemsPerPage))}
-              totalItems={reportData.fleetPerformance.length}
-              itemLabel="xe"
-              onPageChange={setFleetPage}
-              className="rounded-b-2xl"
-            />
+                        <div className="h-1.5 rounded-[var(--radius-badge)] bg-slate-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-[var(--radius-badge)] ${
+                              item.utilizationRate >= 70
+                                ? "bg-emerald-500"
+                                : item.utilizationRate >= 40
+                                  ? "bg-amber-500"
+                                  : "bg-blue-500"
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(0, item.utilizationRate))}%` }}
+                          />
+                        </div>
+                      </ModuleMobileCard>
+                    ))}
+                  </>
+                }
+              />
+              <ModulePagination
+                page={fleetPage}
+                totalPages={Math.max(1, Math.ceil(reportData.fleetPerformance.length / fleetItemsPerPage))}
+                totalItems={reportData.fleetPerformance.length}
+                itemLabel="xe"
+                onPageChange={setFleetPage}
+              />
+            </>
           )}
         </CardContent>
       </Card>
@@ -1045,7 +1088,7 @@ export default function ReportsPage() {
               placeholder="Tìm kiếm: mô tả, user, tiền, loại..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10 pr-10 border-slate-200 rounded-[var(--radius-control)] text-sm h-10"
+              className="pl-10 pr-10 border-slate-200 rounded-[var(--radius-control)] text-body h-11"
             />
             {searchQuery && (
               <button
@@ -1182,7 +1225,7 @@ export default function ReportsPage() {
                       <div className="flex justify-end gap-3 mt-2 pt-2 border-t border-slate-100/50">
                         <button
                           onClick={() => handleEditTransaction(tx)}
-                          className="h-9 px-2.5 inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-meta font-medium rounded-[var(--radius-control)]"
+                          className="h-11 px-3 inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-body font-medium rounded-[var(--radius-control)]"
                           title="Sửa"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -1190,7 +1233,7 @@ export default function ReportsPage() {
                         </button>
                         <button
                           onClick={() => handleDeleteTransaction(tx)}
-                          className="h-9 px-2.5 inline-flex items-center gap-1.5 text-rose-500 hover:text-rose-600 text-meta font-medium rounded-[var(--radius-control)]"
+                          className="h-11 px-3 inline-flex items-center gap-1.5 text-rose-500 hover:text-rose-600 text-body font-medium rounded-[var(--radius-control)]"
                           title="Xóa"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

@@ -364,9 +364,7 @@ export default function SettingsPage() {
       setLoading(false)
     }
   }
-  }
 
-  // Delete backup file
   const handleDeleteBackup = async (fileName: string) => {
     try {
       const { error } = await supabase.storage

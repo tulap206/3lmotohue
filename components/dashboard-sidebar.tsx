@@ -125,7 +125,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
         </div>
         <div className="min-w-0">
           <p className="text-body font-semibold text-slate-100 truncate leading-tight">3L Moto</p>
-          <p className="text-xs text-slate-400 truncate">Cho thuê xe</p>
+          <p className="text-meta text-slate-400 truncate">Cho thuê xe</p>
         </div>
         <button
           type="button"
@@ -187,7 +187,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-body font-semibold text-slate-200 truncate">{user.displayName}</span>
-              <span className="block text-xs text-slate-400 truncate">{user.role === "admin" ? "Admin" : "Nhân viên"}</span>
+              <span className="block text-meta text-slate-400 truncate">{user.role === "admin" ? "Admin" : "Nhân viên"}</span>
             </span>
           </button>
         )}
@@ -205,7 +205,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
   )
 
   return (
-    <div className="flex min-h-screen dashboard-bg bg-slate-50/50">
+    <div className="flex min-h-[100dvh] dashboard-bg bg-slate-50/50 overflow-x-clip">
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-40 lg:hidden"
@@ -215,7 +215,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen w-[16.5rem] bg-[#0A0D14] border-r border-slate-800/60 flex flex-col ui-transition",
+          "fixed left-0 top-0 z-50 h-[100dvh] w-[min(16.5rem,100%)] bg-[#0A0D14] border-r border-slate-800/60 flex flex-col ui-transition pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -223,24 +223,26 @@ export function DashboardSidebar({ children }: SidebarProps) {
       </aside>
 
       <div className="flex-1 min-w-0 lg:ml-[16.5rem]">
-        <div className="lg:hidden sticky top-0 z-30 flex items-center gap-2 h-14 px-4 bg-white/90 backdrop-blur-md border-b border-slate-100">
+        <div className="lg:hidden sticky top-0 z-30 flex items-center gap-2 min-h-14 px-4 bg-white/90 backdrop-blur-md border-b border-slate-100 pt-[env(safe-area-inset-top)]">
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-[var(--radius-control)] hover:bg-slate-50 touch-target"
+            className="rounded-[var(--radius-control)] hover:bg-slate-50 touch-target shrink-0"
             onClick={() => setMobileOpen(true)}
+            aria-label="Mở menu"
           >
             <Menu className="w-5 h-5 text-slate-600" />
           </Button>
           <div className="min-w-0">
             <p className="text-body font-semibold text-slate-800 leading-tight">3L Moto</p>
             <p className="text-meta leading-tight truncate">
-              {visibleItems.find((i) => isNavActive(pathname, i.href))?.title || "Quản trị"}
+              {visibleItems.find((i) => isNavActive(pathname, i.href))?.title
+                || (isNavActive(pathname, "/dashboard/settings") ? "Cài đặt" : "Quản trị")}
             </p>
           </div>
         </div>
 
-        <main className="p-4 sm:p-5 lg:p-8">{children}</main>
+        <main className="p-4 sm:p-5 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] min-w-0 overflow-x-clip">{children}</main>
       </div>
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>

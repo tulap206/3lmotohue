@@ -23,11 +23,10 @@ import {
   Database,
   Wallet,
   ShieldAlert,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDisplayDateTime } from "@/lib/format-date"
+import { ModuleMobileCard, ModulePagination, ModuleResponsiveTable } from "@/components/dashboard/module-shell"
 
 export interface AccessLogRecord {
   id: string
@@ -96,7 +95,7 @@ const MODULE_CONFIG: Record<
 }
 
 const layoutHeight: Record<AccessHistoryLayout, string> = {
-  page: "h-[calc(100dvh-7rem)] max-h-[calc(100dvh-7rem)]",
+  page: "md:h-[calc(100dvh-8.5rem)] md:max-h-[calc(100dvh-8.5rem)]",
   embedded: "",
 }
 
@@ -456,30 +455,30 @@ export function AccessHistoryPanel({
         <div className={cn("absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r", styles.stripe)} />
 
         {/* Toolbar */}
-        <div className="shrink-0 border-b border-slate-100 bg-slate-50/60 px-3 py-2.5 md:px-4">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="shrink-0 border-b border-slate-100 bg-slate-50/60 px-3 py-3 md:px-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
             <div className="mr-1 flex min-w-0 items-center gap-2">
-              <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", styles.icon)}>
+              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-control)]", styles.icon)}>
                 <History className="h-4 w-4" />
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-sm font-bold text-slate-800">{title}</h2>
+                  <h2 className="truncate text-title">{title}</h2>
                   {scopeLabel && (
-                    <span className={cn("hidden rounded-[var(--radius-badge)] border px-2 py-0.5 text-sm font-semibold sm:inline", styles.badge)}>
+                    <span className={cn("hidden rounded-[var(--radius-badge)] border px-2 py-0.5 text-label font-semibold sm:inline", styles.badge)}>
                       {scopeLabel}
                     </span>
                   )}
-                  <span className="rounded-[var(--radius-badge)] border border-slate-200 bg-white px-1.5 py-0.5 text-sm font-semibold tabular-nums text-slate-600">
+                  <span className="rounded-[var(--radius-badge)] border border-slate-200 bg-white px-1.5 py-0.5 text-label font-semibold tabular-nums text-slate-600">
                     {filteredLogs.length}
                   </span>
                 </div>
-                <p className="hidden truncate text-sm text-slate-500 sm:block">{description}</p>
+                <p className="hidden truncate text-meta sm:block">{description}</p>
               </div>
             </div>
 
-            <div className="relative min-w-[140px] flex-1 sm:max-w-xs">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <div className="relative w-full sm:min-w-[140px] sm:flex-1 sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 placeholder="Tìm kiếm..."
                 value={searchQuery}
@@ -487,7 +486,7 @@ export function AccessHistoryPanel({
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="h-9 rounded-[var(--radius-control)] border-slate-200 bg-white pl-8 text-sm"
+                className="h-11 rounded-[var(--radius-control)] border-slate-200 bg-white pl-9 text-body"
               />
             </div>
 
@@ -498,7 +497,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-9 w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-sm text-slate-800 font-medium">
+              <SelectTrigger className="h-11 w-full sm:w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
                 <SelectValue placeholder="Tài khoản" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -516,11 +515,11 @@ export function AccessHistoryPanel({
                 value={filterModule}
                 onValueChange={(value) => {
                   setFilterModule(value)
-                  setFilterAction("all") // Reset action filter when module changes
+                  setFilterAction("all")
                   setCurrentPage(1)
                 }}
               >
-                <SelectTrigger className="h-9 w-[11rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-sm text-slate-800 font-medium">
+                <SelectTrigger className="h-11 w-full sm:w-[11rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
                   <SelectValue placeholder="Phân hệ" />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
@@ -541,7 +540,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-9 w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-sm text-slate-800 font-medium">
+              <SelectTrigger className="h-11 w-full sm:w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
                 <SelectValue placeholder="Hành động" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -559,10 +558,10 @@ export function AccessHistoryPanel({
               variant="outline"
               size="icon"
               disabled={loading}
-              className="h-8 w-8 shrink-0 rounded-lg border-slate-200"
+              className="h-11 w-11 shrink-0 rounded-[var(--radius-control)] border-slate-200 self-end sm:self-auto"
               title="Làm mới"
             >
-              <RefreshCw className={cn("h-3.5 w-3.5 text-slate-500", loading && "animate-spin")} />
+              <RefreshCw className={cn("h-4 w-4 text-slate-500", loading && "animate-spin")} />
             </Button>
           </div>
         </div>
@@ -575,143 +574,136 @@ export function AccessHistoryPanel({
               <p className="text-meta mt-2 max-w-sm">Thử đổi từ khóa hoặc bộ lọc tài khoản / phân hệ / hành động.</p>
             </div>
           ) : (
-            <div className={layout === "page" ? "h-full overflow-x-auto" : "overflow-x-auto"}>
-              <table className="access-history-table w-full min-w-[720px] border-collapse text-left">
-                <thead className="sticky top-0 z-10 bg-white">
-                  <tr className="border-b border-slate-100 text-sm font-bold uppercase tracking-wider text-slate-500">
-                    <th className="w-10 px-3 py-2 text-center">STT</th>
-                    <th className="w-[7.5rem] px-2 py-2">Thời gian</th>
-                    <th className="w-[8.5rem] px-2 py-2">Người dùng</th>
-                    <th className="w-[10.5rem] px-2 py-2">Hành động</th>
-                    <th className="px-3 py-2">Chi tiết</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
-                  {paginatedLogs.map((log, index) => {
-                    const actionConfig = actionIconMap[log.action] || {
-                      icon: Activity,
-                      color: "text-slate-600",
-                      bg: "bg-slate-100",
-                    }
-                    const moduleConfig = moduleIconMap[log.module] || {
-                      icon: Settings,
-                      color: "text-slate-500",
-                    }
-                    const ActionIcon = actionConfig.icon
-                    const ModuleIcon = moduleConfig.icon
+            <div className={layout === "page" ? "md:h-full md:overflow-y-auto" : ""}>
+              <ModuleResponsiveTable
+                desktop={
+                  <table className="access-history-table w-full border-collapse text-left">
+                    <thead className="sticky top-0 z-10 bg-white">
+                      <tr className="border-b border-slate-100 text-label font-semibold text-slate-500">
+                        <th className="w-10 px-3 py-2 text-center">STT</th>
+                        <th className="w-[7.5rem] px-2 py-2">Thời gian</th>
+                        <th className="w-[8.5rem] px-2 py-2">Người dùng</th>
+                        <th className="w-[10.5rem] px-2 py-2">Hành động</th>
+                        <th className="px-3 py-2">Chi tiết</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 text-body text-slate-700">
+                      {paginatedLogs.map((log, index) => {
+                        const actionConfig = actionIconMap[log.action] || {
+                          icon: Activity,
+                          color: "text-slate-600",
+                          bg: "bg-slate-100",
+                        }
+                        const moduleConfig = moduleIconMap[log.module] || {
+                          icon: Settings,
+                          color: "text-slate-500",
+                        }
+                        const ActionIcon = actionConfig.icon
+                        const ModuleIcon = moduleConfig.icon
 
-                    return (
-                      <tr key={log.id} className="access-history-row hover:bg-slate-50/70">
-                        <td className="px-3 py-0 text-center text-sm font-semibold text-slate-400">
-                          {(safePage - 1) * itemsPerPage + index + 1}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-0 font-mono text-sm text-slate-500 font-medium">
-                          {formatCompactDate(log.timestamp)}
-                        </td>
-                        <td className="px-2 py-0">
-                          <div className="truncate font-bold text-slate-800 text-[13px]" title={log.displayName}>
-                            {log.displayName}
+                        return (
+                          <tr key={log.id} className="access-history-row hover:bg-slate-50/70">
+                            <td className="px-3 py-3 text-center text-meta font-semibold text-slate-400">
+                              {(safePage - 1) * itemsPerPage + index + 1}
+                            </td>
+                            <td className="whitespace-nowrap px-2 py-3 font-mono text-meta text-slate-500 font-medium">
+                              {formatCompactDate(log.timestamp)}
+                            </td>
+                            <td className="px-2 py-3">
+                              <div className="truncate font-semibold text-slate-800 text-body" title={log.displayName}>
+                                {log.displayName}
+                              </div>
+                              <div className="truncate font-mono text-meta text-slate-400 mt-0.5">@{log.username}</div>
+                            </td>
+                            <td className="px-2 py-3">
+                              <div className="flex items-center gap-1">
+                                <span
+                                  className={cn(
+                                    "inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-label font-semibold",
+                                    actionConfig.bg,
+                                    actionConfig.color
+                                  )}
+                                >
+                                  <ActionIcon className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">{log.action}</span>
+                                </span>
+                              </div>
+                              <div className="mt-1 flex items-center gap-1 truncate text-meta text-slate-500 font-medium">
+                                <ModuleIcon className={cn("h-3 w-3 shrink-0", moduleConfig.color)} />
+                                <span className="truncate">{log.module}</span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3">
+                              <p className="truncate text-slate-600 font-medium text-meta" title={log.details}>
+                                {log.details || "—"}
+                              </p>
+                              <p className="mt-0.5 font-mono text-meta font-semibold text-rose-600" title={log.ipAddress || undefined}>
+                                IP {log.ipAddress || "—"}
+                              </p>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                }
+                mobile={
+                  <>
+                    {paginatedLogs.map((log, index) => {
+                      const actionConfig = actionIconMap[log.action] || {
+                        icon: Activity,
+                        color: "text-slate-600",
+                        bg: "bg-slate-100",
+                      }
+                      const moduleConfig = moduleIconMap[log.module] || {
+                        icon: Settings,
+                        color: "text-slate-500",
+                      }
+                      const ActionIcon = actionConfig.icon
+                      const ModuleIcon = moduleConfig.icon
+                      return (
+                        <ModuleMobileCard key={log.id}>
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-meta tabular-nums">#{(safePage - 1) * itemsPerPage + index + 1}</p>
+                            <p className="text-meta font-mono text-slate-500">{formatCompactDate(log.timestamp)}</p>
                           </div>
-                          <div className="truncate font-mono text-sm text-slate-400 mt-0.5">@{log.username}</div>
-                        </td>
-                        <td className="px-2 py-0">
-                          <div className="flex items-center gap-1">
+                          <p className="text-body font-semibold text-slate-800">{log.displayName}</p>
+                          <p className="text-meta font-mono">@{log.username}</p>
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <span
                               className={cn(
-                                "inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-sm font-bold",
+                                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-label font-semibold",
                                 actionConfig.bg,
                                 actionConfig.color
                               )}
                             >
-                              <ActionIcon className="h-2.5 w-2.5 shrink-0" />
-                              <span className="truncate">{log.action}</span>
+                              <ActionIcon className="h-3 w-3" />
+                              {log.action}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-meta text-slate-500">
+                              <ModuleIcon className={cn("h-3 w-3", moduleConfig.color)} />
+                              {log.module}
                             </span>
                           </div>
-                          <div className="mt-1 flex items-center gap-1 truncate text-sm text-slate-500 font-medium">
-                            <ModuleIcon className={cn("h-2.5 w-2.5 shrink-0", moduleConfig.color)} />
-                            <span className="truncate">{log.module}</span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-0">
-                          <p className="truncate text-slate-600 font-medium text-meta" title={log.details}>
-                            {log.details || "—"}
-                          </p>
-                          <p className="mt-0.5 font-mono text-sm font-semibold text-rose-600" title={log.ipAddress || undefined}>
-                            IP {log.ipAddress || "—"}
-                          </p>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          <p className="text-body text-slate-600 break-words">{log.details || "—"}</p>
+                          <p className="font-mono text-meta font-semibold text-rose-600">IP {log.ipAddress || "—"}</p>
+                        </ModuleMobileCard>
+                      )
+                    })}
+                  </>
+                }
+              />
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50/50 px-3 py-2.5 md:px-4">
-          <p className="text-sm text-slate-500">
-            <span className="font-medium text-slate-700">{paginatedLogs.length}</span>
-            <span className="text-slate-400"> / {filteredLogs.length} kết quả</span>
-            <span className="mx-1.5 text-slate-300">·</span>
-            Trang {safePage}/{totalPages}
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={safePage === 1}
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-[var(--radius-control)] border-slate-200"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
-                if (totalPages <= 7) return true
-                if (p === 1 || p === totalPages) return true
-                if (Math.abs(p - safePage) <= 2) return true
-                return false
-              })
-              .reduce<(number | "...")[]>((acc, p, idx, arr) => {
-                if (idx > 0 && typeof arr[idx - 1] === "number" && (p as number) - (arr[idx - 1] as number) > 1) {
-                  acc.push("...")
-                }
-                acc.push(p)
-                return acc
-              }, [])
-              .map((p, idx) =>
-                p === "..." ? (
-                  <span key={`ellipsis-${idx}`} className="px-1 text-sm text-slate-400">…</span>
-                ) : (
-                  <Button
-                    key={p}
-                    onClick={() => setCurrentPage(p as number)}
-                    variant={safePage === p ? "default" : "outline"}
-                    size="icon"
-                    className={cn(
-                      "h-9 w-9 rounded-[var(--radius-control)] text-sm font-semibold",
-                      safePage === p
-                        ? "bg-slate-800 text-white border-slate-800 hover:bg-slate-700"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                    )}
-                  >
-                    {p}
-                  </Button>
-                )
-              )}
-            <Button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={safePage === totalPages}
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-[var(--radius-control)] border-slate-200"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
+        <ModulePagination
+          page={safePage}
+          totalPages={Math.max(1, totalPages)}
+          totalItems={filteredLogs.length}
+          itemLabel="kết quả"
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   )
