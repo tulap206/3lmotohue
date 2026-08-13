@@ -116,6 +116,13 @@ const customerActionBtnClass =
 const customerStatusBadgeClass =
   "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
 
+/** Hiển thị số CCCD — bỏ tiền tố placeholder `CCCD_` nếu có. */
+function formatCustomerIdCard(idcard?: string | null): string {
+  const raw = (idcard || "").trim()
+  if (!raw) return "—"
+  return raw.replace(/^CCCD_/i, "")
+}
+
 function CustomerAvatar({ src, name }: { src?: string; name: string }) {
   return src ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -859,7 +866,7 @@ export default function CustomersPage() {
                             </div>
                           </td>
                           <td className="py-3.5 px-4 text-center text-sm font-semibold font-mono text-slate-600">
-                            {customer.idcard || "—"}
+                            {formatCustomerIdCard(customer.idcard)}
                           </td>
                           <td className="py-3.5 px-4 text-sm text-slate-500 max-w-[200px] truncate">
                             {customer.address || "—"}
@@ -1115,7 +1122,7 @@ export default function CustomersPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
                       <p className="text-meta text-slate-500 mb-0.5">Số CCCD / CMND</p>
-                      <p className="text-sm font-bold text-slate-800 font-mono">{cust.idcard || "—"}</p>
+                      <p className="text-sm font-bold text-slate-800 font-mono">{formatCustomerIdCard(cust.idcard)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
                       <p className="text-meta text-slate-500 mb-0.5">Tổng lần thuê</p>
