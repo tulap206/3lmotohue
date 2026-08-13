@@ -853,7 +853,7 @@ export default function LandingPage() {
               </li>
               <li className="flex gap-3">
                 <PhoneCall className="mt-0.5 size-4 shrink-0 text-blue-400" />
-                <span>0934.924.195 · 0332.917.265 (Hỗ trợ Zalo)</span>
+                <span>0934.924.195 · 0901.995.476 (Hỗ trợ Zalo)</span>
               </li>
               <li className="flex gap-3">
                 <Facebook className="mt-0.5 size-4 shrink-0 text-blue-400" />
@@ -1028,12 +1028,12 @@ export default function LandingPage() {
               <MessageCircle className="size-4" />
             </a>
             <a
-              href="https://zalo.me/0332917265"
+              href="https://zalo.me/0901995476"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-xl bg-[#0068ff] px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-bold">Zalo: 0332.917.265</span>
+              <span className="text-xs font-bold">Zalo: 0901.995.476</span>
               <MessageCircle className="size-4" />
             </a>
             <a
@@ -1053,10 +1053,10 @@ export default function LandingPage() {
               <PhoneCall className="size-4" />
             </a>
             <a
-              href="tel:0332917265"
+              href="tel:0901995476"
               className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-white shadow-lg transition-transform hover:scale-102"
             >
-              <span className="text-xs font-bold">Hotline 2: 0332.917.265</span>
+              <span className="text-xs font-bold">Hotline 2: 0901.995.476</span>
               <PhoneCall className="size-4" />
             </a>
           </div>

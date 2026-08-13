@@ -7,7 +7,7 @@ export const QUY79_BUSINESS = {
   branches: [
     "L25 Đường Số 8, KQH Đông Nam Thủy An, TP Huế",
   ] as const,
-  hotline: "0934.924.195 - 0332.917.265",
+  hotline: "0934.924.195 - 0901.995.476",
   hotlineTel: "0934924195",
   owner: "Dương Phú Lộc",
   representative: "Dương Phú Lộc",
