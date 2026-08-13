@@ -1015,7 +1015,7 @@ export default function VehiclesPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 text-right font-semibold text-blue-700 tabular-nums money">
+                          <td className="py-3.5 px-4 text-right font-semibold text-slate-900 tabular-nums money">
                             {formatPrice(vehicle.pricePerDay)}
                           </td>
                           <td className="py-3.5 px-4 text-center">
@@ -1027,7 +1027,7 @@ export default function VehiclesPage() {
                                     Lấp đầy: {utilizationRate}%
                                   </span>
                                   {revenue30d > 0 && (
-                                    <span className="text-meta font-semibold text-slate-500 tabular-nums money">
+                                    <span className="text-meta font-semibold text-rose-600 tabular-nums money">
                                       {formatPrice(revenue30d)}
                                     </span>
                                   )}
@@ -1129,7 +1129,7 @@ export default function VehiclesPage() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-slate-100/50">
-                      <span className="font-semibold text-blue-700 tabular-nums money">{formatPrice(vehicle.pricePerDay)}/ngày</span>
+                      <span className="font-semibold text-slate-900 tabular-nums money">{formatPrice(vehicle.pricePerDay)}/ngày</span>
                       <div className="flex gap-1 items-center">
                         <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
                           <Clock className="w-4 h-4" />
