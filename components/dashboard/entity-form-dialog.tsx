@@ -18,7 +18,7 @@ const accentMap: Record<EntityFormAccent, { stripe: string; btn: string }> = {
   },
   amber: {
     stripe: "from-amber-400 to-amber-600",
-    btn: "bg-amber-500 hover:bg-amber-600 text-slate-950",
+    btn: "bg-amber-600 hover:bg-amber-700 text-white",
   },
   emerald: {
     stripe: "from-emerald-400 to-emerald-600",

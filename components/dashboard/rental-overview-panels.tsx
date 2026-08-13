@@ -300,7 +300,7 @@ export function CommissionHomeReportPanel({
             page={safePage}
             totalItems={sorted.length}
             onPageChange={setPage}
-            accentClass="bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+            accentClass="bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
           />
         )}
       </div>

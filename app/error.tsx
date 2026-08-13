@@ -20,7 +20,7 @@ export default function Error({
         <h1 className="text-3xl font-bold text-gray-900">Oops!</h1>
         <p className="text-gray-600">{error.message}</p>
         <div className="space-x-4">
-          <Button onClick={() => reset()} className="bg-blue-500">
+          <Button onClick={() => reset()} className="bg-blue-600 hover:bg-blue-700 text-white">
             Thử lại
           </Button>
           <Button onClick={() => window.location.href = '/'} variant="outline">

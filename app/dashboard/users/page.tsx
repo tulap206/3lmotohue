@@ -339,7 +339,7 @@ export default function UsersPage() {
                 >
                   Hủy
                 </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
                   {editingUser ? "Cập Nhật" : "Tạo Tài Khoản"}
                 </Button>
               </DialogFooter>
@@ -436,7 +436,7 @@ export default function UsersPage() {
                             <AlertDialogCancel>Hủy</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDelete(userAccount.id)}
-                              className="bg-blue-600"
+                              className="bg-rose-600 hover:bg-rose-700 text-white"
                             >
                               Xóa
                             </AlertDialogAction>
