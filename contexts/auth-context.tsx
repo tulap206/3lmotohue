@@ -41,77 +41,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Predefined users
-export const USERS: { username: string; password: string; user: User }[] = [
-  {
-    username: "admin",
-    password: "admin",
-    user: {
-      id: "1",
-      username: "admin",
-      displayName: "Admin",
-      role: "admin",
-      permissions: {
-        canDelete: true,
-        canBackup: true,
-      },
-    },
-  },
-  {
-    username: "loca",
-    password: "admin",
-    user: {
-      id: "2",
-      username: "loca",
-      displayName: "Lộc A",
-      role: "staff",
-      permissions: {
-        canDelete: false,
-        canViewAccessHistory: true,
-      },
-    },
-  },
-  {
-    username: "locb",
-    password: "admin",
-    user: {
-      id: "3",
-      username: "locb",
-      displayName: "Lộc B",
-      role: "staff",
-      permissions: {
-        canDelete: false,
-      },
-    },
-  },
-  {
-    username: "tien",
-    password: "tien@123",
-    user: {
-      id: "4",
-      username: "tien",
-      displayName: "Tien",
-      role: "staff",
-      permissions: {
-        canDelete: false,
-      },
-    },
-  },
-  {
-    username: "huy",
-    password: "Huy@123",
-    user: {
-      id: "5",
-      username: "huy",
-      displayName: "Huy",
-      role: "staff",
-      permissions: {
-        canDelete: false,
-        canViewAccessHistory: true,
-      },
-    },
-  },
-]
+// Predefined users have been removed for security. All users are now managed via Database and verified on the server-side.
 
 // Get client IP via server route
 const getClientIP = async () => {
@@ -165,18 +95,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const init = async () => {
       try {
-        // Check for saved session
-        const savedUser = localStorage.getItem("3l_moto_user")
-        const savedLogs = localStorage.getItem("3l_moto_access_logs")
-        
-        if (savedUser) {
-          try {
-            setUser(JSON.parse(savedUser))
-          } catch {
+        const res = await fetch("/api/auth/me")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.authenticated) {
+            setUser(data.user)
+            localStorage.setItem("3l_moto_user", JSON.stringify(data.user))
+          } else {
+            setUser(null)
             localStorage.removeItem("3l_moto_user")
           }
+        } else {
+          setUser(null)
+          localStorage.removeItem("3l_moto_user")
         }
         
+        const savedLogs = localStorage.getItem("3l_moto_access_logs")
         if (savedLogs) {
           try {
             const parsedLogs = JSON.parse(savedLogs)
@@ -190,6 +124,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error("❌ Error in init:", error)
+        setUser(null)
+        localStorage.removeItem("3l_moto_user")
       } finally {
         setIsLoading(false)
       }
@@ -249,67 +185,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      })
       
-      // Try Supabase first
-      const { supabase } = await import("@/lib/supabase")
-      const { data, error } = await supabase
-        .from("auth_users")
-        .select("*")
-        .eq("username", username)
-        .eq("password", password)
-        .single()
-
-      if (data) {
-        const userData: User = {
-          id: data.id,
-          username: data.username,
-          displayName: data.displayname,
-          role: data.role as UserRole,
-          permissions: {
-            canDelete: data.can_delete || false,
-            canBackup: data.role === 'admin',
-            canViewAccessHistory: data.can_view_access_history || false,
-          },
-        }
-        setUser(userData)
-        localStorage.setItem("3l_moto_user", JSON.stringify(userData))
-        logger.login(userData.username, userData.displayName)
-        console.log("✅ Logged in from Supabase")
-        return { success: true }
-      }
-
-      // Fallback to hardcoded users if not found in Supabase
-      console.log("⚠️ User not found in Supabase, trying hardcoded users...")
-      const foundUser = USERS.find(u => u.username === username && u.password === password)
+      const data = await res.json()
       
-      if (foundUser) {
-        setUser(foundUser.user)
-        localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
-        logger.login(foundUser.user.username, foundUser.user.displayName)
-        console.log("✅ Logged in from hardcoded users")
+      if (res.ok && data.success) {
+        setUser(data.user)
+        localStorage.setItem("3l_moto_user", JSON.stringify(data.user))
         return { success: true }
+      } else {
+        return { success: false, error: data.error || "Đăng nhập thất bại" }
       }
-
-      return { success: false, error: "Tên đăng nhập hoặc mật khẩu không đúng" }
     } catch (error) {
       console.error("Login error:", error)
-      // Fallback to hardcoded users on error
-      const foundUser = USERS.find(u => u.username === username && u.password === password)
-      if (foundUser) {
-        setUser(foundUser.user)
-        localStorage.setItem("3l_moto_user", JSON.stringify(foundUser.user))
-        logger.login(foundUser.user.username, foundUser.user.displayName)
-        return { success: true }
-      }
-      return { success: false, error: "Lỗi đăng nhập" }
+      return { success: false, error: "Lỗi kết nối máy chủ" }
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
     if (user) {
-      // Log to Supabase
-      logger.logout(user.username, user.displayName)
+      try {
+        await logger.logout(user.username, user.displayName)
+        await fetch("/api/auth/logout", { method: "POST" })
+      } catch (err) {
+        console.error("Logout API error:", err)
+      }
     }
     setUser(null)
     localStorage.removeItem("3l_moto_user")

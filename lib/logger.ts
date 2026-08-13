@@ -92,7 +92,10 @@ export const logger = {
       if (typeof window !== 'undefined') {
         fetch('/api/telegram', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || ''
+          },
           body: JSON.stringify({
             event: `${action} - Phân hệ: ${module}`,
             details: `Người thực hiện: *${displayName}* (${username})\nNội dung: ${details}\nThiết bị: ${deviceStr}`,

@@ -8,11 +8,9 @@ export async function GET(request: Request) {
   const secretParam = url.searchParams.get("secret")
   
   const isAuthorized = 
-    authHeader === `Bearer ${process.env.CRON_SECRET}` || 
+    (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) || 
     (process.env.CRON_SECRET && secretParam === process.env.CRON_SECRET) ||
-    request.headers.get("x-vercel-cron") === "true" || // Vercel standard cron header
-    url.hostname === "localhost" || // Allow local testing
-    url.hostname === "127.0.0.1"
+    (process.env.NODE_ENV === "development" && (url.hostname === "localhost" || url.hostname === "127.0.0.1"))
 
   if (!isAuthorized) {
     return new NextResponse("Unauthorized", { status: 401 })

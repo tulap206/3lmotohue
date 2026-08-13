@@ -5,7 +5,6 @@ import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
-import { USERS } from "@/contexts/auth-context"
 import {
   Bike,
   ClipboardList,
@@ -80,19 +79,18 @@ export function DashboardSidebar({ children }: SidebarProps) {
         return
       }
 
-      const foundUser = USERS.find((u) => u.username === user?.username && u.password === oldPassword)
-      if (!foundUser) {
-        setPasswordMessage({ type: "error", text: "Mật khẩu cũ không đúng" })
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldPassword, newPassword })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setPasswordMessage({ type: "error", text: data.error || "Đổi mật khẩu thất bại" })
         return
       }
-
-      const { supabase } = await import("@/lib/supabase")
-      const { error } = await supabase
-        .from("auth_users")
-        .update({ password: newPassword })
-        .eq("username", user?.username)
-
-      if (error) throw error
 
       setPasswordMessage({ type: "success", text: "Đổi mật khẩu thành công" })
       setTimeout(() => {

@@ -3,6 +3,12 @@ import { NextResponse } from "next/server"
 // API route handler for Telegram notifications
 export async function POST(req: Request) {
   try {
+    const internalSecret = req.headers.get("x-internal-secret")
+    const expectedSecret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      return NextResponse.json({ error: "Unauthorized access" }, { status: 401 })
+    }
+
     const { event, details } = await req.json()
     const token = process.env.TELEGRAM_BOT_TOKEN?.trim()
     const chatId = process.env.TELEGRAM_CHAT_ID?.trim()

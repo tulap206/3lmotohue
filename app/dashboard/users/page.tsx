@@ -82,7 +82,7 @@ const DEFAULT_USERS: UserAccount[] = [
 export default function UsersPage() {
   const router = useRouter()
   const { user, addAccessLog } = useAuth()
-  const [users, setUsers] = useState<UserAccount[]>(DEFAULT_USERS)
+  const [users, setUsers] = useState<UserAccount[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null)
   const [formData, setFormData] = useState({
@@ -90,8 +90,37 @@ export default function UsersPage() {
     displayName: "",
     role: "staff" as "admin" | "staff",
     canDelete: false,
+    password: "",
   })
   const [showAccessDenied, setShowAccessDenied] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch("/api/auth/users")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success) {
+          const mappedUsers: UserAccount[] = data.users.map((u: any) => ({
+            id: u.id,
+            username: u.username,
+            displayName: u.displayname,
+            role: u.role,
+            permissions: {
+              canDelete: u.can_delete || false,
+            },
+            createdAt: u.created_at,
+          }))
+          setUsers(mappedUsers)
+        }
+      }
+    } catch (err) {
+      console.error("Error loading users:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     // Check if user is admin
@@ -102,6 +131,8 @@ export default function UsersPage() {
       }, 3000)
       return () => clearTimeout(timer)
     }
+
+    loadUsers()
   }, [user, router])
 
   if (!user) return null
@@ -139,6 +170,11 @@ export default function UsersPage() {
       return
     }
 
+    if (!editingUser && !formData.password) {
+      alert("Mật khẩu không được để trống khi tạo tài khoản mới")
+      return
+    }
+
     try {
       if (editingUser) {
         // Check if trying to remove admin role from last admin
@@ -150,38 +186,41 @@ export default function UsersPage() {
           }
         }
 
-        const updatedUsers = users.map((u) =>
-          u.id === editingUser.id
-            ? {
-                ...u,
-                displayName: formData.displayName,
-                role: formData.role,
-                permissions: { canDelete: formData.canDelete },
-              }
-            : u
-        )
-        setUsers(updatedUsers)
+        const res = await fetch(`/api/auth/users/${editingUser.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            displayName: formData.displayName,
+            role: formData.role,
+            canDelete: formData.canDelete,
+            password: formData.password || undefined,
+          }),
+        })
+
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Lỗi khi cập nhật tài khoản")
+
         addAccessLog(
           "Chỉnh sửa",
           "Quản lý người dùng",
           `Sửa tài khoản: ${formData.username} - Role: ${formData.role}`
         )
       } else {
-        // Check if username already exists
-        if (users.some((u) => u.username === formData.username)) {
-          alert("Tên đăng nhập đã tồn tại!")
-          return
-        }
+        const res = await fetch("/api/auth/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: formData.username,
+            displayName: formData.displayName,
+            role: formData.role,
+            canDelete: formData.canDelete,
+            password: formData.password,
+          }),
+        })
 
-        const newUser: UserAccount = {
-          id: Date.now().toString(),
-          username: formData.username,
-          displayName: formData.displayName,
-          role: formData.role,
-          permissions: { canDelete: formData.canDelete },
-          createdAt: new Date().toISOString(),
-        }
-        setUsers([...users, newUser])
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Lỗi khi tạo tài khoản")
+
         addAccessLog(
           "Thêm mới",
           "Quản lý người dùng",
@@ -189,9 +228,10 @@ export default function UsersPage() {
         )
       }
       resetForm()
-    } catch (error) {
+      await loadUsers()
+    } catch (error: any) {
       console.error("Error saving user:", error)
-      alert("Lỗi khi lưu tài khoản")
+      alert(error.message || "Lỗi khi lưu tài khoản")
     }
   }
 
@@ -216,16 +256,22 @@ export default function UsersPage() {
         return
       }
 
-      const updatedUsers = users.filter((u) => u.id !== id)
-      setUsers(updatedUsers)
+      const res = await fetch(`/api/auth/users/${id}`, {
+        method: "DELETE",
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Lỗi khi xóa tài khoản")
+
       addAccessLog(
         "Xóa",
         "Quản lý người dùng",
         `Xóa tài khoản: ${userToDelete.username}`
       )
-    } catch (error) {
+      await loadUsers()
+    } catch (error: any) {
       console.error("Error deleting user:", error)
-      alert("Lỗi khi xóa tài khoản")
+      alert(error.message || "Lỗi khi xóa tài khoản")
     }
   }
 
@@ -235,6 +281,7 @@ export default function UsersPage() {
       displayName: "",
       role: "staff",
       canDelete: false,
+      password: "",
     })
     setEditingUser(null)
     setIsDialogOpen(false)
@@ -247,6 +294,7 @@ export default function UsersPage() {
       displayName: userAccount.displayName,
       role: userAccount.role,
       canDelete: userAccount.permissions.canDelete,
+      password: "",
     })
     setIsDialogOpen(true)
   }
@@ -303,6 +351,18 @@ export default function UsersPage() {
                   onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                   placeholder="Admin, Lộc A, Lộc B..."
                   required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password">{editingUser ? "Mật Khẩu Mới (Để trống nếu không đổi)" : "Mật Khẩu"}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                  required={!editingUser}
                 />
               </div>
 
