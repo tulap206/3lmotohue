@@ -10,19 +10,19 @@ export type EntityFormAccent = "red" | "blue" | "amber" | "emerald"
 const accentMap: Record<EntityFormAccent, { stripe: string; btn: string }> = {
   red: {
     stripe: "from-rose-400 to-rose-600",
-    btn: "bg-rose-600 hover:bg-rose-700 text-white",
+    btn: "bg-rose-600 hover:bg-rose-700 !text-white hover:!text-white [&_svg]:!text-white",
   },
   blue: {
     stripe: "from-blue-400 to-blue-600",
-    btn: "bg-blue-600 hover:bg-blue-700 text-white",
+    btn: "bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white [&_svg]:!text-white",
   },
   amber: {
     stripe: "from-amber-400 to-amber-600",
-    btn: "bg-amber-600 hover:bg-amber-700 text-white",
+    btn: "bg-amber-600 hover:bg-amber-700 !text-white hover:!text-white [&_svg]:!text-white",
   },
   emerald: {
     stripe: "from-emerald-400 to-emerald-600",
-    btn: "bg-emerald-600 hover:bg-emerald-700 text-white",
+    btn: "bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white [&_svg]:!text-white",
   },
 }
 

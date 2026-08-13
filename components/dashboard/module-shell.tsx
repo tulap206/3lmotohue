@@ -426,7 +426,7 @@ export function ModulePrimaryButton({
     <button
       type="button"
       className={cn(
-        "inline-flex items-center justify-center rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition",
+        "inline-flex items-center justify-center rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white",
         ACCENT_BTN_CLASS[accent],
         className
       )}
@@ -575,7 +575,7 @@ export function ModulePagination({
                 className={cn(
                   "h-10 w-10 text-label rounded-[var(--radius-control)] font-semibold ui-transition",
                   safePage === p
-                    ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
+                    ? "bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white border-transparent"
                     : "border-slate-200 text-slate-600 hover:bg-slate-50"
                 )}
               >

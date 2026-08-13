@@ -981,7 +981,7 @@ export default function OrdersPage() {
                       "relative h-10 px-3.5 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1",
                       active
-                        ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.28)]"
+                        ? "bg-blue-600 !text-white shadow-[0_2px_8px_rgba(37,99,235,0.28)]"
                         : "text-slate-500 hover:text-slate-800 hover:bg-white/80"
                     )}
                   >
@@ -1003,7 +1003,7 @@ export default function OrdersPage() {
               })}
             </div>
             <Button
-              className="bg-blue-600 text-white hover:bg-blue-700 rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition"
+              className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
               onClick={() => {
                 setFormData((prev) => ({ ...prev, rentalTerm: filterTerm }))
                 setIsDialogOpen(true)

@@ -49,10 +49,10 @@ export const ACCENT_TITLE_CLASS: Record<ModuleAccent, string> = {
 }
 
 export const ACCENT_BTN_CLASS: Record<ModuleAccent, string> = {
-  red: "bg-rose-600 hover:bg-rose-700 text-white",
-  blue: "bg-blue-600 hover:bg-blue-700 text-white",
-  amber: "bg-amber-600 hover:bg-amber-700 text-white",
-  emerald: "bg-emerald-600 hover:bg-emerald-700 text-white",
+  red: "bg-rose-600 hover:bg-rose-700 !text-white hover:!text-white",
+  blue: "bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white",
+  amber: "bg-amber-600 hover:bg-amber-700 !text-white hover:!text-white",
+  emerald: "bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white",
 }
 
 export const ACCENT_BTN_OUTLINE_CLASS: Record<ModuleAccent, string> = {

@@ -798,7 +798,7 @@ export default function DashboardPage() {
         actions={
           <Button
             onClick={() => setIsDialogOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition"
+              className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Tạo đơn thuê mới
@@ -951,7 +951,7 @@ export default function DashboardPage() {
               </div>
               <Button
                 onClick={() => setIsAddTxOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white h-11 rounded-[var(--radius-control)] text-body font-semibold shrink-0 ui-transition"
+                className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white h-11 rounded-[var(--radius-control)] text-body font-semibold shrink-0 ui-transition [&_svg]:!text-white"
               >
                 <Plus className="w-4 h-4 mr-1.5" />
                 Nhập Thu/Chi
