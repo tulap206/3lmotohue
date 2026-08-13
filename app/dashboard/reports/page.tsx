@@ -32,19 +32,7 @@ import { cn } from "@/lib/utils"
 import { rentalTableHeadClass, RentalKpiCard } from "@/components/dashboard/rental-ui"
 import { formatDisplayDate } from "@/lib/format-date"
 import { ModulePagination, ModulePageShell, ModuleSubpageHeader, ModuleResponsiveTable, ModuleMobileCard, ModuleEmptyState, ModuleKpiGrid, ModuleSectionCard } from "@/components/dashboard/module-shell"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts"
+import { MonthlyRevenueChart, ExpenseStructureChart } from "@/components/dashboard/rental-charts"
 
 interface ReportData {
   totalCustomers: number
@@ -59,7 +47,7 @@ interface ReportData {
   commissionHomeTotal: number
   commissionByHome: CommissionHomeRow[]
   fleetPerformance: Array<{ name: string; licensePlate: string; activeDays: number; revenue: number; utilizationRate: number }>
-  expenseStructure: Array<{ name: string; value: number; color: string }>
+  expenseStructure: Array<{ name: string; value: number }>
 }
 
 export default function ReportsPage() {
@@ -554,12 +542,12 @@ export default function ReportsPage() {
       })
 
       const expenseStructure = [
-        { name: "Cổ tức", value: dividendExp, color: "#8b5cf6" },
-        { name: "Lương nhân viên", value: salaryExp, color: "#6366f1" },
-        { name: "Vốn & Tài sản", value: capitalExp, color: "#f59e0b" },
-        { name: "Sửa xe & bảo dưỡng", value: maintenanceExp, color: "#ef4444" },
-        { name: "Di chuyển & xăng", value: fuelExp, color: "#10b981" },
-        { name: "Chi phí khác", value: otherExp, color: "#64748b" },
+        { name: "Cổ tức", value: dividendExp },
+        { name: "Lương nhân viên", value: salaryExp },
+        { name: "Vốn & Tài sản", value: capitalExp },
+        { name: "Sửa xe & bảo dưỡng", value: maintenanceExp },
+        { name: "Di chuyển & xăng", value: fuelExp },
+        { name: "Chi phí khác", value: otherExp },
       ].filter(item => item.value > 0)
 
       const commissionByHome = buildCommissionHomeReport(filteredRentals, { completedOnly: true })
@@ -651,6 +639,7 @@ export default function ReportsPage() {
     .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
     .reduce((sum, tx) => sum + tx.amount, 0)
   const cashOnHand = rentalOnly + totalIncome - totalExpense
+  const formatPrice = (value: number) => `${value.toLocaleString("vi-VN")} đ`
 
   const stats = [
     {
@@ -878,88 +867,9 @@ export default function ReportsPage() {
         ))}
       </ModuleKpiGrid>
 
-      {/* Financial Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Monthly Revenue Chart */}
-        <Card>
-          <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
-            <CardTitle className="text-title">Doanh thu theo tháng</CardTitle>
-            <CardDescription className="text-sm md:text-sm">Doanh thu hàng tháng</CardDescription>
-          </CardHeader>
-          <CardContent className="p-3 md:p-4">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={reportData.monthlyRevenue} margin={{ top: 10, right: 5, left: -15, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} width={35} />
-                <Tooltip
-                  formatter={(value: any) => `${value.toLocaleString("vi-VN")} đ`}
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    fontSize: "12px"
-                  }}
-                />
-                <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Expense Structure Donut Chart */}
-        <Card>
-          <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
-            <CardTitle className="text-title">Cơ cấu chi phí</CardTitle>
-            <CardDescription className="text-meta text-slate-500">Phân bổ tỷ trọng các khoản chi</CardDescription>
-          </CardHeader>
-          <CardContent className="p-3 md:p-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            {reportData.expenseStructure.length > 0 ? (
-              <>
-                <div className="relative w-[160px] h-[160px] sm:w-[180px] sm:h-[180px] flex-shrink-0 flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={reportData.expenseStructure}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {reportData.expenseStructure.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: any) => `${value.toLocaleString("vi-VN")} đ`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex-1 w-full space-y-1.5">
-                  {reportData.expenseStructure.map((entry, index) => {
-                    const total = reportData.expenseStructure.reduce((sum, item) => sum + item.value, 0)
-                    const percent = total > 0 ? Math.round((entry.value / total) * 100) : 0
-                    return (
-                      <div key={index} className="flex items-center justify-between text-meta border-b border-slate-100 pb-1.5 last:border-0 last:pb-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
-                          <span className="font-medium text-slate-700 truncate">{entry.name}</span>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <span className="font-bold text-slate-800">{entry.value.toLocaleString("vi-VN")}đ</span>
-                          <span className="text-slate-400 ml-1.5 font-medium">{percent}%</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-slate-400 py-10 text-center w-full">Không có dữ liệu chi phí trong kỳ</p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        <MonthlyRevenueChart data={reportData.monthlyRevenue} formatPrice={formatPrice} />
+        <ExpenseStructureChart data={reportData.expenseStructure} formatPrice={formatPrice} />
       </div>
 
       {/* Fleet Performance Analytics */}

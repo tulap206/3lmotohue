@@ -12,8 +12,21 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts"
-import { TrendingUp } from "lucide-react"
+import { TrendingUp, Wallet } from "lucide-react"
 import { ChartEmpty, ChartShell, ChartTooltipBox, formatChartAxisValue, RENTAL_CHART_PALETTE } from "./chart-primitives"
+
+const EXPENSE_TONE: Record<string, string> = {
+  "Cổ tức": "#64748B",
+  "Lương nhân viên": "#2563EB",
+  "Vốn & Tài sản": "#D97706",
+  "Sửa xe & bảo dưỡng": "#E11D48",
+  "Di chuyển & xăng": "#059669",
+  "Chi phí khác": "#94A3B8",
+}
+
+function expenseTone(name: string, index: number) {
+  return EXPENSE_TONE[name] || RENTAL_CHART_PALETTE[index % RENTAL_CHART_PALETTE.length]
+}
 
 type MonthlyRevenueDatum = { month: string; revenue: number }
 
@@ -47,11 +60,11 @@ export function MonthlyRevenueChart({
       icon={<TrendingUp className="w-4 h-4" />}
       accent="blue"
       headerExtra={
-        <div className="flex flex-wrap items-center gap-x-2.5 text-sm text-slate-500">
+        <div className="flex flex-wrap items-center gap-x-2.5 text-meta text-slate-500">
           <span className="font-semibold text-slate-900 money">Tổng kỳ: {formatPrice(total)}</span>
           {peak.revenue > 0 && (
-            <span className="text-sm">
-              (Cao nhất: <span className="font-semibold text-slate-700">{peak.month}</span>)
+            <span>
+              Cao nhất <span className="font-semibold text-slate-700">{peak.month}</span>
             </span>
           )}
         </div>
@@ -59,44 +72,139 @@ export function MonthlyRevenueChart({
     >
       <div className="h-[260px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-            <defs>
-              <linearGradient id="rentalRevenueGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3B82F6" />
-                <stop offset="100%" stopColor="#2563EB" />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+          <BarChart data={data} margin={{ top: 12, right: 8, left: 4, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="0" stroke="#f1f5f9" vertical={false} />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 12, fill: "#64748b" }}
+              tick={{ fontSize: 12, fill: "#64748b", fontWeight: 500 }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 11, fill: "#94a3b8" }}
               tickFormatter={formatChartAxisValue}
               axisLine={false}
               tickLine={false}
-              width={44}
+              width={48}
             />
             <Tooltip
-              cursor={{ fill: "rgba(248, 250, 252, 0.8)" }}
+              cursor={{ fill: "rgba(37, 99, 235, 0.04)" }}
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null
                 return (
                   <ChartTooltipBox>
-                    <p className="text-sm font-semibold text-slate-500 mb-1">{label}</p>
-                    <p className="text-sm font-bold text-slate-900 money tabular-nums">
+                    <p className="text-meta font-medium text-slate-500 mb-1">{label}</p>
+                    <p className="text-body font-semibold text-slate-900 money tabular-nums">
                       {formatPrice(payload[0].value as number)}
                     </p>
                   </ChartTooltipBox>
                 )
               }}
             />
-            <Bar dataKey="revenue" fill="url(#rentalRevenueGrad)" radius={[6, 6, 0, 0]} maxBarSize={40} />
+            <Bar dataKey="revenue" radius={[6, 6, 2, 2]} maxBarSize={36}>
+              {data.map((d) => (
+                <Cell
+                  key={d.month}
+                  fill={d.month === peak.month && peak.revenue > 0 ? "#2563EB" : "#93C5FD"}
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
+      </div>
+    </ChartShell>
+  )
+}
+
+type ExpenseDatum = { name: string; value: number; color?: string }
+
+export function ExpenseStructureChart({
+  data,
+  formatPrice,
+}: {
+  data: ExpenseDatum[]
+  formatPrice: (n: number) => string
+}) {
+  const rows = [...data]
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .map((d, index) => ({ ...d, color: expenseTone(d.name, index) }))
+  const total = rows.reduce((sum, d) => sum + d.value, 0)
+
+  if (rows.length === 0 || total === 0) {
+    return (
+      <ChartShell
+        title="Cơ cấu chi phí"
+        description="Tỷ trọng các khoản chi trong kỳ lọc"
+        icon={<Wallet className="w-4 h-4" />}
+        accent="blue"
+      >
+        <ChartEmpty label="Không có dữ liệu chi phí trong kỳ" />
+      </ChartShell>
+    )
+  }
+
+  return (
+    <ChartShell
+      title="Cơ cấu chi phí"
+      description="Tỷ trọng các khoản chi trong kỳ lọc"
+      icon={<Wallet className="w-4 h-4" />}
+      accent="blue"
+      headerExtra={
+        <span className="text-meta font-semibold text-slate-900 money">Tổng chi: {formatPrice(total)}</span>
+      }
+    >
+      <div className="flex flex-col gap-5 flex-1">
+        <div
+          className="flex h-2.5 w-full overflow-hidden rounded-[var(--radius-badge)] bg-slate-100"
+          role="img"
+          aria-label="Tỷ trọng chi phí"
+        >
+          {rows.map((entry) => {
+            const pct = (entry.value / total) * 100
+            return (
+              <div
+                key={entry.name}
+                className="h-full min-w-[3px] first:rounded-l-[var(--radius-badge)] last:rounded-r-[var(--radius-badge)]"
+                style={{ width: `${pct}%`, backgroundColor: entry.color }}
+                title={`${entry.name}: ${pct.toFixed(0)}%`}
+              />
+            )
+          })}
+        </div>
+
+        <ul className="flex flex-col gap-3.5">
+          {rows.map((entry) => {
+            const pct = (entry.value / total) * 100
+            return (
+              <li key={entry.name}>
+                <div className="flex items-baseline justify-between gap-3 mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-[3px]"
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-body font-medium text-slate-700 truncate">{entry.name}</span>
+                  </div>
+                  <div className="flex items-baseline gap-2 shrink-0">
+                    <span className="text-body font-semibold text-slate-900 money tabular-nums">
+                      {formatPrice(entry.value)}
+                    </span>
+                    <span className="text-meta text-slate-400 tabular-nums w-8 text-right">
+                      {Math.round(pct)}%
+                    </span>
+                  </div>
+                </div>
+                <div className="h-1 rounded-[var(--radius-badge)] bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-[var(--radius-badge)]"
+                    style={{ width: `${pct}%`, backgroundColor: entry.color }}
+                  />
+                </div>
+              </li>
+            )
+          })}
+        </ul>
       </div>
     </ChartShell>
   )
