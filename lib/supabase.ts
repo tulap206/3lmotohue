@@ -31,6 +31,7 @@ export interface Vehicle {
   notes: string
   vehicleImages: string[]
   documentImages: string[]
+  category?: "car" | "bike"
   totalRentalDays?: number
   totalRevenue?: number
   profit?: number

@@ -8,7 +8,7 @@ import { useRentalData } from "@/contexts/rental-data-context"
 import { supabase } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -23,13 +23,15 @@ import {
   EntityFormBody,
   EntityFormSection,
   EntityFormFooter,
+  EntityFormField,
+  entityFormInputClass,
+  entityFormSelectClass,
 } from "@/components/dashboard/entity-form-dialog"
 import { formatDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
 import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Dialog } from "@/components/ui/dialog"
 import {
   Select,
@@ -49,7 +51,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, ImageIcon, Settings, History } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
 type VehicleStatus = "available" | "rented" | "maintenance"
@@ -132,24 +134,40 @@ interface Vehicle {
   created_at?: string
 }
 
-const statusConfig: Record<VehicleStatus, { label: string; className: string }> = {
-  available: { label: "Sẵn sàng", className: "bg-emerald-50 text-emerald-600" },
-  rented: { label: "Đang thuê", className: "bg-blue-50 text-blue-600" },
-  maintenance: { label: "Bảo trì", className: "bg-amber-50 text-amber-600" },
-}
-
 const historyTypeConfig: Record<HistoryType, { label: string; className: string }> = {
   rent: { label: "Cho thuê", className: "bg-blue-50 text-blue-600" },
   return: { label: "Nhận lại xe", className: "bg-emerald-50 text-emerald-600" },
   maintenance: { label: "Bảo trì", className: "bg-amber-50 text-amber-600" },
 }
 
+const vehicleActionBtnClass =
+  "h-9 w-9 p-0 border-slate-200 rounded-[var(--radius-control)] hover:bg-slate-50 text-slate-500"
+const vehiclePlateClass =
+  "inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase"
+const vehicleStatusBadgeClass =
+  "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
+
+function VehicleThumb({ src, name }: { src?: string; name: string }) {
+  return (
+    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[var(--radius-badge)] border border-slate-200 bg-slate-50">
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <Car className="h-5 w-5 text-slate-300" />
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function VehiclesPage() {
   const { user, addAccessLog } = useAuth()
   const { vehicles, setVehicles, orders, setOrders, isLoading } = useRentalData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -230,7 +248,9 @@ export default function VehiclesPage() {
         vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
-      return matchesSearch && matchesStatus
+      const matchesCategory =
+        categoryFilter === "all" || (vehicle.category || "bike") === categoryFilter
+      return matchesSearch && matchesStatus && matchesCategory
     })
 
     // Sort by performance (utilizationRate) descending
@@ -250,12 +270,12 @@ export default function VehiclesPage() {
       // Tertiary sort: by name
       return a.name.localeCompare(b.name)
     })
-  }, [vehicles, searchTerm, statusFilter, vehiclePerformanceMap])
+  }, [vehicles, searchTerm, statusFilter, categoryFilter, vehiclePerformanceMap])
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter])
+  }, [searchTerm, statusFilter, categoryFilter])
 
   const totalPages = useMemo(() => {
     return Math.ceil(filteredVehicles.length / itemsPerPage)
@@ -688,199 +708,181 @@ export default function VehiclesPage() {
           >
             <EntityFormBody>
               <EntityFormSection title="Thông tin xe" description="Thông tin cơ bản và giá thuê">
-            <div className="form-group">
-              <div className="form-row">
-                <div className="form-field">
-                  <Label htmlFor="name" className="form-field-label">Loại xe</Label>
-                  <Input
-                    id="name"
-                    placeholder="VD: Toyota Vios"
-                    value={newVehicle.name}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
-                  />
-                  <p className="form-field-description">Tên hoặc model của xe</p>
-                </div>
-                <div className="form-field">
-                  <Label htmlFor="licensePlate" className="form-field-label">Biển số</Label>
-                  <Input
-                    id="licensePlate"
-                    placeholder="VD: 75AA-12345"
-                    value={newVehicle.licensePlate}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, licensePlate: e.target.value })}
-                  />
-                  <p className="form-field-description">Biển số xe định danh</p>
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-field">
-                  <Label htmlFor="color" className="form-field-label">Màu xe</Label>
-                  <Input
-                    id="color"
-                    placeholder="VD: Đen, Trắng, Đỏ"
-                    value={newVehicle.color}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
-                  />
-                </div>
-                <div className="form-field">
-                  <Label htmlFor="current_km" className="form-field-label">Số KM hiện tại</Label>
-                  <Input
-                    id="current_km"
-                    type="number"
-                    placeholder="VD: 15000"
-                    value={newVehicle.current_km}
-                    onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-field">
-                  <Label htmlFor="price" className="form-field-label">Giá thuê (VND/ngày)</Label>
-                  <Input
-                    id="price"
-                    type="text"
-                    placeholder="VD: 300.000"
-                    value={newVehicle.pricePerDay}
-                    onChange={(e) => {
-                      const formatted = formatMoneyInput(e.target.value)
-                      setNewVehicle({ ...newVehicle, pricePerDay: formatted })
-                    }}
-                    className="font-mono"
-                  />
-                </div>
-                <div className="form-field">
-                  <Label htmlFor="purchasePrice" className="form-field-label">Giá mua xe (VND)</Label>
-                  <Input
-                    id="purchasePrice"
-                    type="text"
-                    placeholder="VD: 50.000.000"
-                    value={newVehicle.purchasePrice}
-                    onChange={(e) => {
-                      const formatted = formatMoneyInput(e.target.value)
-                      setNewVehicle({ ...newVehicle, purchasePrice: formatted })
-                    }}
-                    className="font-mono"
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-field">
-                  <Label htmlFor="category" className="form-field-label">Phân loại xe</Label>
-                  <Select
-                    value={newVehicle.category}
-                    onValueChange={(value: "car" | "bike") => setNewVehicle({ ...newVehicle, category: value })}
-                  >
-                    <SelectTrigger className="rounded-lg border-slate-100 bg-slate-50">
-                      <SelectValue placeholder="Phân loại" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-100 rounded-lg">
-                      <SelectItem value="bike">Xe máy</SelectItem>
-                      <SelectItem value="car">Ô tô</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="form-field">
-                  <Label htmlFor="status" className="form-field-label">Trạng thái</Label>
-                  <Select
-                    value={newVehicle.status}
-                    onValueChange={(value: VehicleStatus) => setNewVehicle({ ...newVehicle, status: value })}
-                  >
-                    <SelectTrigger className="rounded-lg border-slate-100 bg-slate-50">
-                      <SelectValue placeholder="Chọn trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-100 rounded-lg">
-                      <SelectItem value="available">Sẵn sàng</SelectItem>
-                      <SelectItem value="rented">Đang thuê</SelectItem>
-                      <SelectItem value="maintenance">Bảo trì</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="form-field">
-                <Label htmlFor="notes" className="form-field-label">Ghi chú</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Nhập ghi chú về xe..."
-                  value={newVehicle.notes}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, notes: e.target.value })}
-                  className="min-h-[80px] rounded-lg bg-slate-50 border-slate-100"
-                />
-                <p className="form-field-description">Thêm bất kỳ thông tin bổ sung nào về xe</p>
-              </div>
-              
-              {/* Vehicle Images */}
-              <div className="grid gap-2">
-                <Label className="text-slate-600">Ảnh xe</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  {newVehicle.vehicleImages.map((img, index) => (
-                    <div 
-                      key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
-                    >
-                      <img 
-                        src={img instanceof File ? URL.createObjectURL(img) : img} 
-                        alt={`Xe ${index + 1}`} 
-                        className="w-full h-full object-cover cursor-pointer hover:opacity-90" 
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index, 'vehicle')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-slate-400" />
-                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, 'vehicle')}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <EntityFormField label="Loại xe" hint="Tên hoặc model của xe" required>
+                    <Input
+                      id="name"
+                      placeholder="VD: Honda Vision"
+                      value={newVehicle.name}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
+                      className={entityFormInputClass}
                     />
-                  </label>
+                  </EntityFormField>
+                  <EntityFormField label="Biển số" hint="Biển số xe định danh" required>
+                    <Input
+                      id="licensePlate"
+                      placeholder="VD: 75AA-12345"
+                      value={newVehicle.licensePlate}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, licensePlate: e.target.value })}
+                      className={entityFormInputClass}
+                    />
+                  </EntityFormField>
+                  <EntityFormField label="Màu xe">
+                    <Input
+                      id="color"
+                      placeholder="VD: Đen, Trắng, Đỏ"
+                      value={newVehicle.color}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
+                      className={entityFormInputClass}
+                    />
+                  </EntityFormField>
+                  <EntityFormField label="Số KM hiện tại">
+                    <Input
+                      id="current_km"
+                      type="number"
+                      placeholder="VD: 15000"
+                      value={newVehicle.current_km}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
+                      className={entityFormInputClass}
+                    />
+                  </EntityFormField>
+                  <EntityFormField label="Giá thuê (VND/ngày)" required>
+                    <Input
+                      id="price"
+                      type="text"
+                      placeholder="VD: 300.000"
+                      value={newVehicle.pricePerDay}
+                      onChange={(e) => {
+                        const formatted = formatMoneyInput(e.target.value)
+                        setNewVehicle({ ...newVehicle, pricePerDay: formatted })
+                      }}
+                      className={cn(entityFormInputClass, "font-mono")}
+                    />
+                  </EntityFormField>
+                  <EntityFormField label="Giá mua xe (VND)">
+                    <Input
+                      id="purchasePrice"
+                      type="text"
+                      placeholder="VD: 50.000.000"
+                      value={newVehicle.purchasePrice}
+                      onChange={(e) => {
+                        const formatted = formatMoneyInput(e.target.value)
+                        setNewVehicle({ ...newVehicle, purchasePrice: formatted })
+                      }}
+                      className={cn(entityFormInputClass, "font-mono")}
+                    />
+                  </EntityFormField>
+                  <EntityFormField label="Phân loại xe">
+                    <Select
+                      value={newVehicle.category}
+                      onValueChange={(value: "car" | "bike") => setNewVehicle({ ...newVehicle, category: value })}
+                    >
+                      <SelectTrigger className={entityFormSelectClass}>
+                        <SelectValue placeholder="Phân loại" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
+                        <SelectItem value="bike">Xe máy</SelectItem>
+                        <SelectItem value="car">Ô tô</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </EntityFormField>
+                  <EntityFormField label="Trạng thái">
+                    <Select
+                      value={newVehicle.status}
+                      onValueChange={(value: VehicleStatus) => setNewVehicle({ ...newVehicle, status: value })}
+                    >
+                      <SelectTrigger className={entityFormSelectClass}>
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
+                        <SelectItem value="available">Sẵn sàng</SelectItem>
+                        <SelectItem value="rented">Đang thuê</SelectItem>
+                        <SelectItem value="maintenance">Bảo trì</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </EntityFormField>
                 </div>
-              </div>
+                <EntityFormField label="Ghi chú" hint="Thông tin bổ sung về xe">
+                  <Textarea
+                    id="notes"
+                    placeholder="Nhập ghi chú về xe..."
+                    value={newVehicle.notes}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, notes: e.target.value })}
+                    className={cn(entityFormInputClass, "min-h-[80px] h-auto py-2.5")}
+                  />
+                </EntityFormField>
 
-              {/* Document Images */}
-              <div className="grid gap-2">
-                <Label className="text-slate-600">Ảnh giấy tờ xe</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  {newVehicle.documentImages.map((img, index) => (
-                    <div 
-                      key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
-                    >
-                      <img 
-                        src={img instanceof File ? URL.createObjectURL(img) : img} 
-                        alt={`Giấy tờ ${index + 1}`} 
-                        className="w-full h-full object-cover cursor-pointer hover:opacity-90"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index, 'document')}
-                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                <EntityFormField label="Ảnh xe">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {newVehicle.vehicleImages.map((img, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
                       >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-slate-400" />
-                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, 'document')}
-                    />
-                  </label>
-                </div>
-              </div>
-              </div>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img instanceof File ? URL.createObjectURL(img) : img}
+                          alt={`Xe ${index + 1}`}
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index, "vehicle")}
+                          className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                      <Upload className="w-6 h-6 text-slate-400" />
+                      <span className="text-meta mt-1">Thêm ảnh</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, "vehicle")}
+                      />
+                    </label>
+                  </div>
+                </EntityFormField>
+
+                <EntityFormField label="Ảnh giấy tờ xe">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {newVehicle.documentImages.map((img, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img instanceof File ? URL.createObjectURL(img) : img}
+                          alt={`Giấy tờ ${index + 1}`}
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index, "document")}
+                          className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                      <Upload className="w-6 h-6 text-slate-400" />
+                      <span className="text-meta mt-1">Thêm ảnh</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, "document")}
+                      />
+                    </label>
+                  </div>
+                </EntityFormField>
               </EntityFormSection>
             </EntityFormBody>
             <EntityFormFooter
@@ -893,30 +895,33 @@ export default function VehiclesPage() {
       </Dialog>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        <ModuleKpiGrid columns={4}>
           <RentalKpiCard variant="hero" label="Tổng số xe" value={vehicleStats.total} sublabel={`${filteredVehicles.length} đang lọc`} />
-          <RentalKpiCard variant="hero"
+          <RentalKpiCard
+            variant="hero"
             label="Sẵn sàng"
             value={vehicleStats.available}
             sublabel="Có thể cho thuê"
             valueClassName="text-emerald-700"
             onClick={() => setStatusFilter("available")}
           />
-          <RentalKpiCard variant="hero"
+          <RentalKpiCard
+            variant="hero"
             label="Đang thuê"
             value={vehicleStats.rented}
             sublabel="Xe đang cho khách"
-            valueClassName="text-sky-700"
+            valueClassName="text-blue-700"
             onClick={() => setStatusFilter("rented")}
           />
-          <RentalKpiCard variant="hero"
+          <RentalKpiCard
+            variant="hero"
             label="Bảo trì"
             value={vehicleStats.maintenance}
             sublabel="Tạm ngừng cho thuê"
             valueClassName="text-amber-700"
             onClick={() => setStatusFilter("maintenance")}
           />
-        </div>
+        </ModuleKpiGrid>
 
       <ModuleSectionCard
         title="Danh sách xe cho thuê"
@@ -932,11 +937,21 @@ export default function VehiclesPage() {
                 className={cn(rentalFilterInputClass, "pl-9 h-10")}
               />
             </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full lg:w-40 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
+                <SelectValue placeholder="Phân loại" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
+                <SelectItem value="all">Tất cả loại xe</SelectItem>
+                <SelectItem value="bike">Xe máy</SelectItem>
+                <SelectItem value="car">Ô tô</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-40 h-10 rounded-xl border-slate-200 text-sm bg-white">
+              <SelectTrigger className="w-full lg:w-40 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-slate-100 rounded-xl">
+              <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="available">Sẵn sàng</SelectItem>
                 <SelectItem value="rented">Đang thuê</SelectItem>
@@ -948,53 +963,49 @@ export default function VehiclesPage() {
       >
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-12">
-              <Car className="w-12 h-12 text-slate-200 mx-auto mb-2 animate-pulse" />
-              <p className="text-slate-400 text-sm">Đang tải dữ liệu xe...</p>
-            </div>
+            <ModuleEmptyState title="Đang tải dữ liệu xe..." description="Vui lòng chờ trong giây lát." />
           ) : filteredVehicles.length === 0 ? (
-            <div className="text-center py-12">
-              <Car className="w-12 h-12 text-slate-200 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm">Không tìm thấy xe nào</p>
-            </div>
+            <ModuleEmptyState
+              title="Không tìm thấy xe nào"
+              description="Thử đổi từ khóa hoặc bộ lọc, hoặc thêm xe mới vào hệ thống."
+            />
           ) : (
             <>
               <ModuleResponsiveTable
                 desktop={
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className={cn(rentalTableHeadClass, "w-12 text-center text-slate-600")}>STT</th>
-                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Loại xe</th>
-                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Giá thuê/ngày</th>
-                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Hiệu suất (30 ngày)</th>
-                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
-                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thao tác</th>
+                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
+                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
+                        <th className={rentalTableHeadClass}>Loại xe</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Giá thuê/ngày</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Hiệu suất (30 ngày)</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Trạng thái</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                    <tbody className="divide-y divide-slate-50 text-body text-slate-700">
                       {paginatedVehicles.map((vehicle, index) => (
                         <tr key={vehicle.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
                           <td className="py-3.5 px-4 text-center text-sm text-slate-400 font-medium">
                             {startIndex + index + 1}
                           </td>
                           <td className="py-3.5 px-4 font-medium text-slate-900">
-                            <div className="flex flex-col gap-1.5">
-                              <button
-                                type="button"
-                                className="font-bold text-slate-800 text-[15px] hover:text-slate-700 hover:underline text-left block"
-                                onClick={() => openDetailDialog(vehicle)}
-                              >
-                                {vehicle.name}
-                              </button>
-                              <div>
-                                <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-sm shadow-sm tracking-wider uppercase">
-                                  {vehicle.licensePlate}
-                                </span>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <VehicleThumb src={vehicle.vehicleImages?.[0]} name={vehicle.name} />
+                              <div className="flex flex-col gap-1.5 min-w-0">
+                                <button
+                                  type="button"
+                                  className="font-semibold text-slate-800 text-body hover:text-blue-700 hover:underline text-left truncate"
+                                  onClick={() => openDetailDialog(vehicle)}
+                                >
+                                  {vehicle.name}
+                                </button>
+                                <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 text-right font-bold text-blue-600 tabular-nums">
+                          <td className="py-3.5 px-4 text-right font-semibold text-blue-700 tabular-nums money">
                             {formatPrice(vehicle.pricePerDay)}
                           </td>
                           <td className="py-3.5 px-4 text-center">
@@ -1002,11 +1013,11 @@ export default function VehiclesPage() {
                               const { utilizationRate, revenue30d } = vehiclePerformanceMap[vehicle.id] || { utilizationRate: 0, revenue30d: 0 }
                               return (
                                 <div className="flex flex-col items-center gap-1">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-100">
                                     Lấp đầy: {utilizationRate}%
                                   </span>
                                   {revenue30d > 0 && (
-                                    <span className="text-sm font-bold text-slate-500 tabular-nums">
+                                    <span className="text-meta font-semibold text-slate-500 tabular-nums money">
                                       {formatPrice(revenue30d)}
                                     </span>
                                   )}
@@ -1015,10 +1026,7 @@ export default function VehiclesPage() {
                             })()}
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <span className={cn(
-                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-bold border",
-                              rentalVehicleStatusBadgeClass(vehicle.status)
-                            )}>
+                            <span className={cn(vehicleStatusBadgeClass, rentalVehicleStatusBadgeClass(vehicle.status))}>
                               {getRentalVehicleStatusLabel(vehicle.status)}
                             </span>
                           </td>
@@ -1026,41 +1034,41 @@ export default function VehiclesPage() {
                             <div className="flex justify-end gap-1">
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
+                                size="icon-sm"
+                                className={vehicleActionBtnClass}
                                 onClick={() => openHistoryDialog(vehicle)}
                                 title="Xem lịch sử"
                               >
-                                <Clock className="w-3.5 h-3.5" />
+                                <Clock className="w-4 h-4" />
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
+                                size="icon-sm"
+                                className={vehicleActionBtnClass}
                                 onClick={() => openDetailDialog(vehicle)}
                                 title="Chi tiết"
                               >
-                                <Eye className="w-3.5 h-3.5" />
+                                <Eye className="w-4 h-4" />
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
+                                size="icon-sm"
+                                className={vehicleActionBtnClass}
                                 onClick={() => openEditDialog(vehicle)}
                                 title="Chỉnh sửa"
                               >
-                                <Pencil className="w-3.5 h-3.5" />
+                                <Pencil className="w-4 h-4" />
                               </Button>
                               {user?.role === "admin" && (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
                                       variant="outline"
-                                      size="sm"
-                                      className="h-7 w-7 p-0 border-rose-200 rounded-lg hover:bg-rose-50 text-rose-500"
+                                      size="icon-sm"
+                                      className="h-9 w-9 p-0 border-rose-200 rounded-[var(--radius-control)] hover:bg-rose-50 text-rose-600"
                                       title="Xóa"
                                     >
-                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <Trash2 className="w-4 h-4" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)]">
@@ -1072,10 +1080,10 @@ export default function VehiclesPage() {
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel className="border-slate-200 rounded-xl">Hủy</AlertDialogCancel>
+                                      <AlertDialogCancel className="border-slate-200 rounded-[var(--radius-control)]">Hủy</AlertDialogCancel>
                                       <AlertDialogAction
                                         onClick={() => handleDeleteVehicle(vehicle.id)}
-                                        className="bg-rose-600 text-white hover:bg-rose-700 rounded-xl"
+                                        className="bg-rose-600 !text-white hover:bg-rose-700 rounded-[var(--radius-control)]"
                                       >
                                         Xóa
                                       </AlertDialogAction>
@@ -1092,42 +1100,41 @@ export default function VehiclesPage() {
                 }
                 mobile={paginatedVehicles.map((vehicle) => (
                   <ModuleMobileCard key={vehicle.id}>
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex flex-col gap-1">
-                        <button
-                          type="button"
-                          className="font-bold text-slate-800 text-[15px] hover:text-slate-700 hover:underline text-left"
-                          onClick={() => openDetailDialog(vehicle)}
-                        >
-                          {vehicle.name}
-                        </button>
-                        <div>
-                          <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2 py-0.5 rounded text-sm shadow-sm tracking-wider uppercase">
-                            {vehicle.licensePlate}
-                          </span>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <VehicleThumb src={vehicle.vehicleImages?.[0]} name={vehicle.name} />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <button
+                            type="button"
+                            className="font-semibold text-slate-800 text-body hover:text-blue-700 hover:underline text-left truncate"
+                            onClick={() => openDetailDialog(vehicle)}
+                          >
+                            {vehicle.name}
+                          </button>
+                          <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
                         </div>
                       </div>
-                      <span className={`text-sm font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalVehicleStatusBadgeClass(vehicle.status)}`}>
+                      <span className={cn(vehicleStatusBadgeClass, "shrink-0", rentalVehicleStatusBadgeClass(vehicle.status))}>
                         {getRentalVehicleStatusLabel(vehicle.status)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-slate-100/50">
-                      <span className="font-bold text-blue-600 tabular-nums">{formatPrice(vehicle.pricePerDay)}/ngày</span>
+                      <span className="font-semibold text-blue-700 tabular-nums money">{formatPrice(vehicle.pricePerDay)}/ngày</span>
                       <div className="flex gap-1 items-center">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
-                          <Clock className="w-3.5 h-3.5" />
+                        <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
+                          <Clock className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)} title="Chi tiết">
-                          <Eye className="w-3.5 h-3.5" />
+                        <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)} title="Chi tiết">
+                          <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)} title="Chỉnh sửa">
-                          <Settings className="w-3.5 h-3.5" />
+                        <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)} title="Chỉnh sửa">
+                          <Pencil className="w-4 h-4" />
                         </Button>
                         {user?.permissions.canDelete && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700" 
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                             onClick={() => {
                               if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${vehicle.name} (${vehicle.licensePlate})?`)) {
                                 handleDeleteVehicle(vehicle.id)
@@ -1135,7 +1142,7 @@ export default function VehiclesPage() {
                             }}
                             title="Xóa"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         )}
                       </div>
@@ -1176,205 +1183,178 @@ export default function VehiclesPage() {
               }}
             >
               <EntityFormBody>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-name" className="text-slate-600">Loại xe</Label>
-                  <Input
-                    id="edit-name"
-                    value={editingVehicle.name}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, name: e.target.value })}
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-licensePlate" className="text-slate-600">Biển số</Label>
-                  <Input
-                    id="edit-licensePlate"
-                    value={editingVehicle.licensePlate}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, licensePlate: e.target.value })}
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-color" className="text-slate-600">Màu xe</Label>
-                  <Input
-                    id="edit-color"
-                    value={editingVehicle.color}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, color: e.target.value })}
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-current_km" className="text-slate-600">Số KM hiện tại</Label>
-                  <Input
-                    id="edit-current_km"
-                    type="number"
-                    value={editingVehicle.current_km}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, current_km: parseInt(e.target.value) || 0 })}
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-price" className="text-slate-600">Giá thuê (VND/ngày)</Label>
-                  <Input
-                    id="edit-price"
-                    type="text"
-                    value={editingVehicle.pricePerDay}
-                    onChange={(e) => {
-                      const formatted = formatMoneyInput(e.target.value)
-                      setEditingVehicle({ ...editingVehicle, pricePerDay: formatted as any })
-                    }}
-                    className="bg-slate-50 border-slate-200 rounded-xl font-mono"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-purchasePrice" className="text-slate-600">Giá mua xe (VND)</Label>
-                  <Input
-                    id="edit-purchasePrice"
-                    type="text"
-                    value={editingVehicle.purchasePrice}
-                    onChange={(e) => {
-                      const formatted = formatMoneyInput(e.target.value)
-                      setEditingVehicle({ ...editingVehicle, purchasePrice: formatted as any })
-                    }}
-                    className="bg-slate-50 border-slate-200 rounded-xl font-mono"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-notes" className="text-slate-600">Ghi chú</Label>
-                  <textarea
-                    id="edit-notes"
-                    value={editingVehicle.notes}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, notes: e.target.value })}
-                    className="bg-slate-50 border-slate-200 rounded-xl p-3 border resize-none"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-category" className="text-slate-600">Phân loại xe</Label>
-                  <Select
-                    value={editingVehicle.category || "bike"}
-                    onValueChange={(value: "car" | "bike") => setEditingVehicle({ ...editingVehicle, category: value })}
-                  >
-                    <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
-                      <SelectValue placeholder="Phân loại" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-200 rounded-xl">
-                      <SelectItem value="bike">Xe máy</SelectItem>
-                      <SelectItem value="car">Ô tô</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-status" className="text-slate-600">Trạng thái</Label>
-                  <Select
-                    value={editingVehicle.status}
-                    onValueChange={(value: VehicleStatus) => setEditingVehicle({ ...editingVehicle, status: value })}
-                  >
-                    <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
-                      <SelectValue placeholder="Chọn trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-200 rounded-xl">
-                      <SelectItem value="available">Sẵn sàng</SelectItem>
-                      <SelectItem value="rented">Đang thuê</SelectItem>
-                      <SelectItem value="maintenance">Bảo trì</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-notes" className="text-slate-600">Ghi chú</Label>
-                <Textarea
-                  id="edit-notes"
-                  value={editingVehicle.notes}
-                  onChange={(e) => setEditingVehicle({ ...editingVehicle, notes: e.target.value })}
-                  className="bg-slate-50 border-slate-200 rounded-xl min-h-[80px]"
-                />
-              </div>
-              
-              {/* Vehicle Images */}
-              <div className="grid gap-2">
-                <Label className="text-slate-600">Ảnh xe</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  {editingVehicle.vehicleImages.map((img, index) => (
-                    <div 
-                      key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
-                    >
-                      <img
-                        src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
-                        alt={`Xe ${index + 1}`}
-                        className="w-full h-full object-cover cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
+                <EntityFormSection title="Thông tin xe" description="Cập nhật thông tin cơ bản và giá thuê">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <EntityFormField label="Loại xe" required>
+                      <Input
+                        id="edit-name"
+                        value={editingVehicle.name}
+                        onChange={(e) => setEditingVehicle({ ...editingVehicle, name: e.target.value })}
+                        className={entityFormInputClass}
                       />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index, 'vehicle', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    </EntityFormField>
+                    <EntityFormField label="Biển số" required>
+                      <Input
+                        id="edit-licensePlate"
+                        value={editingVehicle.licensePlate}
+                        onChange={(e) => setEditingVehicle({ ...editingVehicle, licensePlate: e.target.value })}
+                        className={entityFormInputClass}
+                      />
+                    </EntityFormField>
+                    <EntityFormField label="Màu xe">
+                      <Input
+                        id="edit-color"
+                        value={editingVehicle.color}
+                        onChange={(e) => setEditingVehicle({ ...editingVehicle, color: e.target.value })}
+                        className={entityFormInputClass}
+                      />
+                    </EntityFormField>
+                    <EntityFormField label="Số KM hiện tại">
+                      <Input
+                        id="edit-current_km"
+                        type="number"
+                        value={editingVehicle.current_km}
+                        onChange={(e) => setEditingVehicle({ ...editingVehicle, current_km: parseInt(e.target.value) || 0 })}
+                        className={entityFormInputClass}
+                      />
+                    </EntityFormField>
+                    <EntityFormField label="Giá thuê (VND/ngày)" required>
+                      <Input
+                        id="edit-price"
+                        type="text"
+                        value={editingVehicle.pricePerDay}
+                        onChange={(e) => {
+                          const formatted = formatMoneyInput(e.target.value)
+                          setEditingVehicle({ ...editingVehicle, pricePerDay: formatted as any })
+                        }}
+                        className={cn(entityFormInputClass, "font-mono")}
+                      />
+                    </EntityFormField>
+                    <EntityFormField label="Giá mua xe (VND)">
+                      <Input
+                        id="edit-purchasePrice"
+                        type="text"
+                        value={editingVehicle.purchasePrice}
+                        onChange={(e) => {
+                          const formatted = formatMoneyInput(e.target.value)
+                          setEditingVehicle({ ...editingVehicle, purchasePrice: formatted as any })
+                        }}
+                        className={cn(entityFormInputClass, "font-mono")}
+                      />
+                    </EntityFormField>
+                    <EntityFormField label="Phân loại xe">
+                      <Select
+                        value={editingVehicle.category || "bike"}
+                        onValueChange={(value: "car" | "bike") => setEditingVehicle({ ...editingVehicle, category: value })}
                       >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-slate-400" />
-                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, 'vehicle', true)}
+                        <SelectTrigger className={entityFormSelectClass}>
+                          <SelectValue placeholder="Phân loại" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
+                          <SelectItem value="bike">Xe máy</SelectItem>
+                          <SelectItem value="car">Ô tô</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </EntityFormField>
+                    <EntityFormField label="Trạng thái">
+                      <Select
+                        value={editingVehicle.status}
+                        onValueChange={(value: VehicleStatus) => setEditingVehicle({ ...editingVehicle, status: value })}
+                      >
+                        <SelectTrigger className={entityFormSelectClass}>
+                          <SelectValue placeholder="Chọn trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
+                          <SelectItem value="available">Sẵn sàng</SelectItem>
+                          <SelectItem value="rented">Đang thuê</SelectItem>
+                          <SelectItem value="maintenance">Bảo trì</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </EntityFormField>
+                  </div>
+                  <EntityFormField label="Ghi chú">
+                    <Textarea
+                      id="edit-notes"
+                      value={editingVehicle.notes}
+                      onChange={(e) => setEditingVehicle({ ...editingVehicle, notes: e.target.value })}
+                      className={cn(entityFormInputClass, "min-h-[80px] h-auto py-2.5")}
                     />
-                  </label>
-                </div>
-              </div>
+                  </EntityFormField>
 
-              {/* Document Images */}
-              <div className="grid gap-2">
-                <Label className="text-slate-600">Ảnh giấy tờ xe</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  {editingVehicle.documentImages.map((img, index) => (
-                    <div 
-                      key={index} 
-                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group"
-                    >
-                      <img
-                        src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
-                        alt={`Giấy tờ ${index + 1}`}
-                        className="w-full h-full object-cover cursor-pointer hover:opacity-90"
-                        onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index, 'document', true)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                  <EntityFormField label="Ảnh xe">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {editingVehicle.vehicleImages.map((img, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
+                            alt={`Xe ${index + 1}`}
+                            className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                            onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index, "vehicle", true)}
+                            className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                        <Upload className="w-6 h-6 text-slate-400" />
+                        <span className="text-meta mt-1">Thêm ảnh</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(e, "vehicle", true)}
+                        />
+                      </label>
                     </div>
-                  ))}
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                    <Upload className="w-6 h-6 text-slate-400" />
-                    <span className="text-sm text-slate-400 mt-1">Thêm ảnh</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, 'document', true)}
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
+                  </EntityFormField>
+
+                  <EntityFormField label="Ảnh giấy tờ xe">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {editingVehicle.documentImages.map((img, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
+                            alt={`Giấy tờ ${index + 1}`}
+                            className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                            onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index, "document", true)}
+                            className="absolute top-2 right-2 w-8 h-8 bg-rose-600 !text-white rounded-[var(--radius-badge)] flex items-center justify-center hover:bg-rose-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
+                        <Upload className="w-6 h-6 text-slate-400" />
+                        <span className="text-meta mt-1">Thêm ảnh</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(e, "document", true)}
+                        />
+                      </label>
+                    </div>
+                  </EntityFormField>
+                </EntityFormSection>
               </EntityFormBody>
               <EntityFormFooter
                 accent="blue"
@@ -1435,7 +1415,7 @@ export default function VehiclesPage() {
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "inline-flex items-center text-sm font-bold px-2 py-1 rounded-full border",
+                      vehicleStatusBadgeClass,
                       rentalVehicleStatusBadgeClass(v.status)
                     )}>
                       {getRentalVehicleStatusLabel(v.status)}
@@ -1569,23 +1549,23 @@ export default function VehiclesPage() {
                   <div className="flex gap-2 pt-1">
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 text-sm"
+                      className="flex-1 h-11 text-body"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         openHistoryDialog(v)
                       }}
                     >
-                      <History className="w-3.5 h-3.5 mr-1.5" />
+                      <History className="w-4 h-4 mr-1.5" />
                       Xem lịch sử
                     </Button>
                     <Button
-                      className="flex-1 h-9 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                      className="flex-1 h-11 text-body bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white [&_svg]:!text-white"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         openEditDialog(v)
                       }}
                     >
-                      <Settings className="w-3.5 h-3.5 mr-1.5" />
+                      <Pencil className="w-4 h-4 mr-1.5" />
                       Chỉnh sửa
                     </Button>
                   </div>
