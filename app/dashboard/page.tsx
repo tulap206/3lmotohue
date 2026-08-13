@@ -61,6 +61,7 @@ interface DashboardStats {
   totalRevenue: number
   totalProfit: number
   totalRentals: number
+  pendingRentals: number
   activeRentals: number
   overdueRentals: number
   cashOnHand: number
@@ -316,6 +317,7 @@ export default function DashboardPage() {
     totalRevenue: 0,
     totalProfit: 0,
     totalRentals: 0,
+    pendingRentals: 0,
     activeRentals: 0,
     overdueRentals: 0,
     cashOnHand: 0,
@@ -365,6 +367,7 @@ export default function DashboardPage() {
 
       // Calculate stats
       const completedRentals = rentals.filter((r: any) => r.status === 'completed')
+      const pendingRentals = rentals.filter((r: any) => r.status === 'pending')
       const activeRentals = rentals.filter((r: any) => r.status === 'active')
       
       const now = new Date()
@@ -410,6 +413,7 @@ export default function DashboardPage() {
         totalRevenue,
         totalProfit,
         totalRentals: rentals.length,
+        pendingRentals: pendingRentals.length,
         activeRentals: activeRentals.length,
         overdueRentals: overdueRentals.length,
         cashOnHand,
@@ -806,13 +810,21 @@ export default function DashboardPage() {
         {/* Nhóm chỉ số vận hành */}
         <div className="space-y-2.5">
           <ModuleSectionTitle title="Vận hành đội xe" />
-          <ModuleKpiGrid columns={5}>
+          <ModuleKpiGrid columns={6}>
             <RentalKpiCard
               variant="hero"
               label="Tổng xe"
               value={stats.totalVehicles}
               sublabel="trong hệ thống"
               onClick={() => router.push("/dashboard/vehicles")}
+            />
+            <RentalKpiCard
+              variant="hero"
+              label="Chờ giao xe"
+              value={stats.pendingRentals}
+              valueClassName="text-amber-700"
+              sublabel="chưa giao xe"
+              onClick={() => router.push("/dashboard/orders?status=pending")}
             />
             <RentalKpiCard
               variant="hero"
@@ -891,7 +903,7 @@ export default function DashboardPage() {
               variant="hero"
               label="Tiền quỹ còn lại"
               value={formatPrice(stats.cashOnHand)}
-              valueClassName={stats.cashOnHand >= 0 ? "text-indigo-700" : "text-rose-700"}
+              valueClassName={stats.cashOnHand >= 0 ? "text-blue-700" : "text-rose-700"}
               sublabel="số dư quỹ tích lũy"
             />
             <RentalKpiCard
@@ -904,7 +916,7 @@ export default function DashboardPage() {
           </ModuleKpiGrid>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <RentalStatusChart data={rentalStatusChartData} />
           <RentalFleetChart data={rentalFleetChartData} />
           <MonthlyRevenueChart data={monthlyRevenue} formatPrice={formatPrice} />

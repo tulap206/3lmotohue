@@ -30,7 +30,7 @@ export function MonthlyRevenueChart({
   if (data.length === 0) {
     return (
       <ChartShell
-        title="Doanh Thu Theo Tháng"
+        title="Doanh thu theo tháng"
         description="Doanh thu thuê xe hàng tháng"
         icon={<TrendingUp className="w-4 h-4" />}
         accent="blue"
@@ -42,7 +42,7 @@ export function MonthlyRevenueChart({
 
   return (
     <ChartShell
-      title="Doanh Thu Theo Tháng"
+      title="Doanh thu theo tháng"
       description="Đơn hoàn tất theo tháng (ngày kết thúc)"
       icon={<TrendingUp className="w-4 h-4" />}
       accent="blue"
@@ -62,8 +62,8 @@ export function MonthlyRevenueChart({
           <BarChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
             <defs>
               <linearGradient id="rentalRevenueGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#EF4444" />
-                <stop offset="100%" stopColor="#DC2626" />
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="100%" stopColor="#2563EB" />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />

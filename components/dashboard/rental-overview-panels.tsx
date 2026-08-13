@@ -123,7 +123,7 @@ export function OverdueOrdersPanel({
   if (orders.length === 0) {
     return (
       <ChartShell
-        title="Đơn Quá Hạn"
+        title="Đơn quá hạn"
         description="Hợp đồng thuê đã quá ngày trả xe — cần liên hệ khách"
         icon={<AlertTriangle className="w-4 h-4" />}
         accent="rose"
@@ -135,7 +135,7 @@ export function OverdueOrdersPanel({
 
   return (
     <ChartShell
-      title="Đơn Quá Hạn"
+      title="Đơn quá hạn"
       description="Hợp đồng thuê đã quá ngày trả xe — cần liên hệ khách"
       icon={<AlertTriangle className="w-4 h-4" />}
       accent="rose"
@@ -228,7 +228,7 @@ export function CommissionHomeReportPanel({
   if (rows.length === 0) {
     return (
       <ChartShell
-        title="Báo Cáo Hoa Hồng Home"
+        title="Báo cáo hoa hồng Home"
         description={description}
         icon={<Building2 className="w-4 h-4" />}
         accent="amber"
@@ -240,7 +240,7 @@ export function CommissionHomeReportPanel({
 
   return (
     <ChartShell
-      title="Báo Cáo Hoa Hồng Home"
+      title="Báo cáo hoa hồng Home"
       description={description}
       icon={<Building2 className="w-4 h-4" />}
       accent="amber"
