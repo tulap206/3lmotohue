@@ -33,6 +33,8 @@ import {
   ModuleResponsiveTable,
   ModuleMobileCard,
   ModulePagination,
+  ModuleKpiGrid,
+  ModuleEmptyState,
 } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
@@ -52,8 +54,15 @@ export default function MaintenancePage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortOrder, setSortOrder] = useState("desc")
+  const [urgencyFilter, setUrgencyFilter] = useState<"all" | "urgent">("all")
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const itemsPerPage = 15
+  const maintenanceBadgeClass =
+    "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
+  const maintenanceActionBtnClass =
+    "h-9 w-9 p-0 border-slate-200 rounded-[var(--radius-control)] hover:bg-slate-50 text-slate-500"
+  const maintenancePlateClass =
+    "inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase"
 
   // Derive maintenance vehicles list from shared context
   const vehicles: MaintenanceVehicle[] = useMemo(() => {
@@ -72,7 +81,7 @@ export default function MaintenancePage() {
     try {
       setMaintaining(vehicleId)
       await markVehicleAsMaintained(vehicleId, currentKm)
-      toast.success(`✓ ${vehicleName} đã bảo trì xong`)
+      toast.success(`${vehicleName} đã bảo trì xong`)
       await refresh()
     } catch (error) {
       toast.error("Lỗi cập nhật bảo trì")
@@ -85,7 +94,7 @@ export default function MaintenancePage() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, sortOrder, vehicles])
+  }, [searchQuery, sortOrder, urgencyFilter, vehicles])
 
   const filteredVehicles = useMemo(() => {
     return vehicles
@@ -93,7 +102,9 @@ export default function MaintenancePage() {
         const matchQuery = 
           vehicle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase())
-        return matchQuery
+        const over = vehicle.current_km - Math.floor(vehicle.current_km / 1000) * 1000
+        const matchUrgency = urgencyFilter === "all" || over >= 300
+        return matchQuery && matchUrgency
       })
       .sort((a, b) => {
         const aMnt = Math.floor(a.current_km / 1000) * 1000
@@ -102,7 +113,7 @@ export default function MaintenancePage() {
         const bOver = b.current_km - bMnt
         return sortOrder === "desc" ? bOver - aOver : aOver - bOver
       })
-  }, [vehicles, searchQuery, sortOrder])
+  }, [vehicles, searchQuery, sortOrder, urgencyFilter])
 
   const totalPages = useMemo(() => {
     return Math.ceil(filteredVehicles.length / itemsPerPage)
@@ -156,17 +167,33 @@ export default function MaintenancePage() {
       />
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <RentalKpiCard variant="hero" label="Xe cần bảo trì" value={maintenanceStats.total} sublabel={`${maintenanceStats.filtered} đang lọc`} />
-          <RentalKpiCard variant="hero" label="Cần gấp" value={maintenanceStats.urgent} sublabel="Quá hạn ≥ 300 km" valueClassName="text-rose-700" />
+        <ModuleKpiGrid columns={4}>
+          <RentalKpiCard
+            variant="hero"
+            label="Xe cần bảo trì"
+            value={maintenanceStats.total}
+            sublabel={`${maintenanceStats.filtered} đang lọc`}
+            onClick={() => setUrgencyFilter("all")}
+            selected={urgencyFilter === "all"}
+          />
+          <RentalKpiCard
+            variant="hero"
+            label="Cần gấp"
+            value={maintenanceStats.urgent}
+            sublabel="Quá hạn ≥ 300 km"
+            valueClassName="text-rose-700"
+            onClick={() => setUrgencyFilter("urgent")}
+            selected={urgencyFilter === "urgent"}
+          />
           <RentalKpiCard variant="hero" label="KM quá hạn TB" value={maintenanceStats.avgOverdue} sublabel="km trung bình" valueClassName="text-amber-700" />
-          <RentalKpiCard variant="hero"
+          <RentalKpiCard
+            variant="hero"
             label="Mốc bảo trì"
             value="1.000"
             sublabel="km / lần bảo trì"
             valueClassName="text-slate-700"
           />
-        </div>
+        </ModuleKpiGrid>
 
       <ModuleSectionCard
         title="Danh sách xe cần bảo trì"
@@ -183,10 +210,10 @@ export default function MaintenancePage() {
               />
             </div>
             <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger className="w-full lg:w-56 h-10 rounded-xl border-slate-200 text-sm bg-white">
+              <SelectTrigger className="w-full lg:w-56 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
                 <SelectValue placeholder="Sắp xếp" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-slate-100 rounded-xl">
+              <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
                 <SelectItem value="desc">KM quá hạn: Cao → thấp</SelectItem>
                 <SelectItem value="asc">KM quá hạn: Thấp → cao</SelectItem>
               </SelectContent>
@@ -196,10 +223,10 @@ export default function MaintenancePage() {
       >
         <CardContent className="p-0">
           {filteredVehicles.length === 0 ? (
-            <div className="text-center py-12">
-              <Check className="w-12 h-12 text-emerald-200 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm">Không có xe nào cần bảo trì phù hợp bộ lọc</p>
-            </div>
+            <ModuleEmptyState
+              title="Không có xe cần bảo trì"
+              description={urgencyFilter === "urgent" ? "Không có xe quá hạn ≥ 300 km theo bộ lọc hiện tại." : "Không có xe phù hợp bộ lọc, hoặc tất cả xe đã được bảo trì đúng hạn."}
+            />
           ) : (
             <ModuleResponsiveTable
               desktop={
@@ -227,21 +254,24 @@ export default function MaintenancePage() {
                           <td className="py-3.5 px-4">
                             <button
                               type="button"
-                              className="font-bold text-slate-800 text-[15px] hover:text-slate-700 hover:underline text-left"
+                              className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left"
                               onClick={() => openDetailDialog(vehicle)}
                             >
                               {vehicle.name}
                             </button>
                           </td>
                           <td className="py-3.5 px-4">
-                            <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-sm shadow-sm tracking-wider uppercase">
+                            <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase">
                               {vehicle.licensePlate}
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right font-mono text-sm font-medium text-slate-800 tabular-nums">{vehicle.current_km.toLocaleString()} km</td>
                           <td className="py-3.5 px-4 text-right font-mono text-sm font-semibold text-slate-800 tabular-nums">{mntKm.toLocaleString()} km</td>
                           <td className="py-3.5 px-4 text-right">
-                            <span className="inline-flex items-center gap-1 font-mono text-sm text-orange-600 font-bold">
+                            <span className={cn(
+                              "inline-flex items-center gap-1 font-mono text-sm font-bold",
+                              overKm >= 300 ? "text-rose-600" : "text-amber-700"
+                            )}>
                               <AlertTriangle className="w-3.5 h-3.5" />
                               +{overKm.toLocaleString()} km
                             </span>
@@ -251,13 +281,13 @@ export default function MaintenancePage() {
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    className="h-9 w-9 p-0 border-emerald-200 rounded-[var(--radius-control)] text-emerald-700 hover:bg-emerald-50"
                                     disabled={maintaining === vehicle.id}
                                     title="Đã bảo trì"
                                   >
-                                    <Check className="w-3.5 h-3.5" />
+                                    <Check className="w-4 h-4" />
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent className="bg-white rounded-2xl border-0 card-shadow">
@@ -302,7 +332,13 @@ export default function MaintenancePage() {
                         </button>
                         <p className="text-sm text-slate-500 font-mono">{vehicle.licensePlate}</p>
                       </div>
-                      <span className="text-sm font-bold px-2 py-0.5 rounded-full border bg-orange-50 text-orange-700 border-orange-100 shrink-0">
+                      <span className={cn(
+                        maintenanceBadgeClass,
+                        "shrink-0",
+                        overKm >= 300
+                          ? "bg-rose-50 text-rose-700 border-rose-100"
+                          : "bg-amber-50 text-amber-700 border-amber-100"
+                      )}>
                         +{overKm.toLocaleString()} km
                       </span>
                     </div>
@@ -315,8 +351,8 @@ export default function MaintenancePage() {
                     <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-slate-500"
+                        size="icon-sm"
+                        className="h-9 w-9 p-0 text-slate-500"
                         onClick={() => openDetailDialog(vehicle)}
                         title="Chi tiết"
                       >
@@ -328,7 +364,7 @@ export default function MaintenancePage() {
                             handleMaintained(vehicle.id, vehicle.name, vehicle.current_km)
                           }
                         }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs h-7 px-3.5 font-semibold"
+                        className="bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)] text-meta h-9 px-3.5 font-semibold"
                       >
                         Bảo trì xong
                       </Button>
@@ -339,13 +375,16 @@ export default function MaintenancePage() {
             />
           )}
         </CardContent>
+        {filteredVehicles.length > 0 && (
         <ModulePagination
           page={currentPage}
           totalPages={totalPages}
           totalItems={filteredVehicles.length}
           itemLabel="xe"
           onPageChange={setCurrentPage}
+          className="rounded-b-2xl"
         />
+        )}
       </ModuleSectionCard>
       </div>
 
@@ -369,44 +408,47 @@ export default function MaintenancePage() {
                 />
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center justify-between">
-                    <span className={cn(
-                      "inline-flex items-center text-sm font-bold px-2 py-1 rounded-full border",
-                      rentalVehicleStatusBadgeClass(v.status)
-                    )}>
+                    <span className={cn(maintenanceBadgeClass, rentalVehicleStatusBadgeClass(v.status))}>
                       {getRentalVehicleStatusLabel(v.status)}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-full border bg-orange-50 text-orange-700 border-orange-100">
-                      <AlertTriangle className="w-3 h-3" />
+                    <span className={cn(
+                      maintenanceBadgeClass,
+                      "gap-1",
+                      overKm >= 300
+                        ? "bg-rose-50 text-rose-700 border-rose-100"
+                        : "bg-amber-50 text-amber-700 border-amber-100"
+                    )}>
+                      <AlertTriangle className="w-3.5 h-3.5" />
                       Quá hạn +{overKm.toLocaleString("vi-VN")} km
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-orange-600 uppercase">KM hiện tại</p>
-                      <p className="text-sm font-extrabold text-orange-700 tabular-nums">{v.current_km.toLocaleString("vi-VN")} km</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">KM hiện tại</p>
+                      <p className="text-sm font-extrabold text-slate-900 tabular-nums">{v.current_km.toLocaleString("vi-VN")} km</p>
                     </div>
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-amber-600 uppercase">Mốc bảo trì</p>
-                      <p className="text-sm font-extrabold text-amber-700 tabular-nums">{mntKm.toLocaleString("vi-VN")} km</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Mốc bảo trì</p>
+                      <p className="text-sm font-extrabold text-slate-900 tabular-nums">{mntKm.toLocaleString("vi-VN")} km</p>
                     </div>
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
-                      <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Giá thuê/ngày</p>
+                      <p className="text-sm font-extrabold text-slate-900 money tabular-nums">{formatPrice(v.pricePerDay)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase">Tổng đơn</p>
+                      <p className="text-meta text-slate-500">Tổng đơn</p>
                       <p className="text-sm font-extrabold text-slate-800">{vOrders.length} đơn</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Giá mua</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Giá mua</p>
                       <p className="text-sm font-bold text-slate-800 tabular-nums">{formatPrice(v.purchasePrice)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Lần BT gần nhất</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Lần BT gần nhất</p>
                       <p className="text-sm font-bold text-slate-800 tabular-nums">
                         {(v.last_maintenance_km ?? 0).toLocaleString("vi-VN")} km
                       </p>
@@ -415,20 +457,20 @@ export default function MaintenancePage() {
 
                   {v.notes && v.notes.trim() && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
                       <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {recentOrders.map((o) => (
                           <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
                             <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
-                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
                               {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
                             </span>
                           </div>
@@ -441,7 +483,7 @@ export default function MaintenancePage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <p className="text-meta text-slate-500 mb-2">Ảnh xe</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.vehicleImages.map((img, index) => (
                               <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
@@ -453,7 +495,7 @@ export default function MaintenancePage() {
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <p className="text-meta text-slate-500 mb-2">Ảnh giấy tờ</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.documentImages.map((img, index) => (
                               <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
@@ -474,20 +516,20 @@ export default function MaintenancePage() {
                   <div className="flex gap-2 pt-1">
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 text-sm"
+                      className="flex-1 h-11 text-body rounded-[var(--radius-control)]"
                       onClick={() => setViewingVehicle(null)}
                     >
                       Đóng
                     </Button>
                     <Button
-                      className="flex-1 h-9 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="flex-1 h-11 text-body bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
                       disabled={maintaining === v.id}
                       onClick={async () => {
                         await handleMaintained(v.id, v.name, v.current_km)
                         setViewingVehicle(null)
                       }}
                     >
-                      <Check className="w-3.5 h-3.5 mr-1.5" />
+                      <Check className="w-4 h-4 mr-1.5" />
                       Đã bảo trì
                     </Button>
                   </div>
@@ -504,7 +546,7 @@ export default function MaintenancePage() {
           onClick={() => setIsGuideOpen(!isGuideOpen)}
           className="w-full px-5 py-4 flex items-center justify-between text-left font-semibold text-blue-900 hover:bg-blue-50/80 transition-colors"
         >
-          <span className="flex items-center gap-2">ℹ️ Hướng dẫn bảo trì</span>
+          <span className="flex items-center gap-2">Hướng dẫn bảo trì</span>
           {isGuideOpen ? <ChevronUp className="w-4 h-4 text-blue-700" /> : <ChevronDown className="w-4 h-4 text-blue-700" />}
         </button>
         {isGuideOpen && (

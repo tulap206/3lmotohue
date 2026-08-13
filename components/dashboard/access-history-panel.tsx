@@ -143,11 +143,11 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
   "Chỉnh sửa": { icon: Pencil, color: "text-amber-700", bg: "bg-amber-50" },
   "Xóa": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50" },
   "Xoá": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50" },
-  "Sao lưu": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
-  "Sao lưu dữ liệu": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
-  "Sao lưu tự động": { icon: Database, color: "text-indigo-700", bg: "bg-indigo-50" },
-  "Khôi phục": { icon: RefreshCw, color: "text-violet-700", bg: "bg-violet-50" },
-  "Khôi phục dữ liệu": { icon: RefreshCw, color: "text-violet-700", bg: "bg-violet-50" },
+  "Sao lưu": { icon: Database, color: "text-slate-700", bg: "bg-slate-100" },
+  "Sao lưu dữ liệu": { icon: Database, color: "text-slate-700", bg: "bg-slate-100" },
+  "Sao lưu tự động": { icon: Database, color: "text-slate-700", bg: "bg-slate-100" },
+  "Khôi phục": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100" },
+  "Khôi phục dữ liệu": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100" },
   "Xem": { icon: Eye, color: "text-slate-600", bg: "bg-slate-100" },
 }
 
@@ -159,9 +159,9 @@ const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> 
   "Cho vay": { icon: Wallet, color: "text-emerald-600" },
   "Cầm đồ": { icon: Wallet, color: "text-amber-600" },
   "Mua bán xe": { icon: Car, color: "text-blue-600" },
-  "Báo cáo": { icon: FileText, color: "text-violet-600" },
-  "Lịch sử truy cập": { icon: History, color: "text-purple-600" },
-  "Quản lý người dùng": { icon: Users, color: "text-cyan-600" },
+  "Báo cáo": { icon: FileText, color: "text-slate-600" },
+  "Lịch sử truy cập": { icon: History, color: "text-slate-600" },
+  "Quản lý người dùng": { icon: Users, color: "text-slate-600" },
 }
 
 function extractIpFromDetails(details: string): string | undefined {
@@ -392,6 +392,27 @@ export function AccessHistoryPanel({
   )
   const emptySlots = Math.max(0, itemsPerPage - paginatedLogs.length)
 
+  const logStats = useMemo(() => {
+    const today = new Date()
+    const isToday = (ts: string) => {
+      const d = new Date(ts)
+      return (
+        d.getFullYear() === today.getFullYear() &&
+        d.getMonth() === today.getMonth() &&
+        d.getDate() === today.getDate()
+      )
+    }
+    return {
+      total: normalizedLogs.length,
+      today: normalizedLogs.filter((l) => l.timestamp && isToday(l.timestamp)).length,
+      logins: normalizedLogs.filter((l) => getActionLabel(l.action) === "Đăng nhập").length,
+      changes: normalizedLogs.filter((l) => {
+        const a = getActionLabel(l.action)
+        return a === "Thêm mới" || a === "Chỉnh sửa" || a === "Xóa"
+      }).length,
+    }
+  }, [normalizedLogs])
+
   if (loading) {
     return (
       <div className={panelShellClass(layout)}>
@@ -407,9 +428,27 @@ export function AccessHistoryPanel({
 
   return (
     <div className={panelShellClass(layout)}>
+      {layout === "page" && (
+        <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "Tổng log", value: logStats.total },
+            { label: "Hôm nay", value: logStats.today },
+            { label: "Đăng nhập", value: logStats.logins },
+            { label: "Thay đổi dữ liệu", value: logStats.changes },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-[var(--radius-container)] border border-slate-100 bg-white px-3 py-2.5"
+            >
+              <p className="text-meta text-slate-500">{stat.label}</p>
+              <p className="mt-0.5 text-lg font-semibold text-slate-900 money tabular-nums">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
       <div
         className={cn(
-          "module-card relative flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm ring-1",
+          "module-card relative flex flex-col overflow-hidden rounded-[var(--radius-container)] border border-slate-100 bg-white shadow-sm ring-1",
           layout === "page" && "min-h-0 flex-1",
           styles.ring
         )}
@@ -427,11 +466,11 @@ export function AccessHistoryPanel({
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-sm font-bold text-slate-800">{title}</h2>
                   {scopeLabel && (
-                    <span className={cn("hidden rounded-full border px-2 py-0.5 text-sm font-semibold sm:inline", styles.badge)}>
+                    <span className={cn("hidden rounded-[var(--radius-badge)] border px-2 py-0.5 text-sm font-semibold sm:inline", styles.badge)}>
                       {scopeLabel}
                     </span>
                   )}
-                  <span className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-sm font-semibold tabular-nums text-slate-600">
+                  <span className="rounded-[var(--radius-badge)] border border-slate-200 bg-white px-1.5 py-0.5 text-sm font-semibold tabular-nums text-slate-600">
                     {filteredLogs.length}
                   </span>
                 </div>
@@ -448,7 +487,7 @@ export function AccessHistoryPanel({
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="h-8 rounded-lg border-slate-200 bg-white pl-8 text-sm"
+                className="h-9 rounded-[var(--radius-control)] border-slate-200 bg-white pl-8 text-sm"
               />
             </div>
 
@@ -459,11 +498,11 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-sm text-slate-800 font-medium">
+              <SelectTrigger className="h-9 w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-sm text-slate-800 font-medium">
                 <SelectValue placeholder="Tài khoản" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
-                <SelectItem value="all">Tất cả tài khoản</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
                 {accounts.map((account) => (
                   <SelectItem key={account} value={account}>
                     {account}
@@ -481,11 +520,11 @@ export function AccessHistoryPanel({
                   setCurrentPage(1)
                 }}
               >
-                <SelectTrigger className="h-8 w-[11rem] rounded-lg border-slate-200 bg-white text-sm text-slate-800 font-medium">
+                <SelectTrigger className="h-9 w-[11rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-sm text-slate-800 font-medium">
                   <SelectValue placeholder="Phân hệ" />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
-                  <SelectItem value="all">Tất cả phân hệ</SelectItem>
+                  <SelectItem value="all">Tất cả</SelectItem>
                   {modules.map((moduleName) => (
                     <SelectItem key={moduleName} value={moduleName}>
                       {moduleName}
@@ -502,7 +541,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-8 w-[10rem] rounded-lg border-slate-200 bg-white text-sm text-slate-800 font-medium">
+              <SelectTrigger className="h-9 w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-sm text-slate-800 font-medium">
                 <SelectValue placeholder="Hành động" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -531,9 +570,9 @@ export function AccessHistoryPanel({
         {/* Table */}
         <div className={layout === "page" ? "min-h-0 flex-1 overflow-hidden" : ""}>
           {filteredLogs.length === 0 ? (
-            <div className="flex h-32 flex-col items-center justify-center text-slate-400">
-              <History className="mb-2 h-8 w-8 text-slate-200" />
-              <p className="text-sm font-medium">Không có dữ liệu lịch sử</p>
+            <div className="flex h-32 flex-col items-center justify-center text-center px-4">
+              <p className="text-title text-slate-600">Không có dữ liệu lịch sử</p>
+              <p className="text-meta mt-2 max-w-sm">Thử đổi từ khóa hoặc bộ lọc tài khoản / phân hệ / hành động.</p>
             </div>
           ) : (
             <div className={layout === "page" ? "h-full overflow-x-auto" : "overflow-x-auto"}>
@@ -594,7 +633,7 @@ export function AccessHistoryPanel({
                           </div>
                         </td>
                         <td className="px-3 py-0">
-                          <p className="truncate text-slate-600 font-medium text-[13px]" title={log.details}>
+                          <p className="truncate text-slate-600 font-medium text-meta" title={log.details}>
                             {log.details || "—"}
                           </p>
                           <p className="mt-0.5 font-mono text-sm font-semibold text-rose-600" title={log.ipAddress || undefined}>
@@ -624,7 +663,7 @@ export function AccessHistoryPanel({
               disabled={safePage === 1}
               variant="outline"
               size="icon"
-              className="h-7 w-7 rounded-md border-slate-200"
+              className="h-9 w-9 rounded-[var(--radius-control)] border-slate-200"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
@@ -652,7 +691,7 @@ export function AccessHistoryPanel({
                     variant={safePage === p ? "default" : "outline"}
                     size="icon"
                     className={cn(
-                      "h-7 w-7 rounded-md text-sm font-semibold",
+                      "h-9 w-9 rounded-[var(--radius-control)] text-sm font-semibold",
                       safePage === p
                         ? "bg-slate-800 text-white border-slate-800 hover:bg-slate-700"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -667,7 +706,7 @@ export function AccessHistoryPanel({
               disabled={safePage === totalPages}
               variant="outline"
               size="icon"
-              className="h-7 w-7 rounded-md border-slate-200"
+              className="h-9 w-9 rounded-[var(--radius-control)] border-slate-200"
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
