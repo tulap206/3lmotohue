@@ -1435,11 +1435,11 @@ export default function OrdersPage() {
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200">
                         <th className={cn(rentalTableHeadClass, "w-12 text-center text-slate-600")}>STT</th>
-                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Khách hàng</th>
+                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Khách</th>
                         <th className={cn(rentalTableHeadClass, "text-slate-600")}>Xe thuê</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Thời gian</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Tổng tiền</th>
-                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Doanh thu</th>
+                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thu</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thao tác</th>
                       </tr>
