@@ -61,7 +61,7 @@ export const EntityFormDialogContent = React.forwardRef<
     <DialogContent
       ref={ref}
       className={cn(
-        "border-slate-200 rounded-[var(--radius-container)] max-h-[90vh] overflow-y-auto bg-white p-0 gap-0",
+        "block border-slate-200 rounded-[var(--radius-container)] max-h-[90vh] overflow-y-auto bg-white p-0 gap-0",
         maxW,
         className
       )}
