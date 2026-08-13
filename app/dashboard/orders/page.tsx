@@ -43,7 +43,7 @@ import {
   EntityFormTip,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -376,6 +376,7 @@ export default function OrdersPage() {
 
     return {
       total: scoped.length,
+      pending: scoped.filter((o) => o.status === "pending").length,
       active: scoped.filter((o) => o.status === "active").length,
       overdue: scoped.filter((o) => isOrderOverdue(o)).length,
       completed: scoped.filter((o) => o.status === "completed").length,
@@ -1334,7 +1335,7 @@ export default function OrdersPage() {
         </Dialog>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        <ModuleKpiGrid columns={5}>
           <RentalKpiCard
             variant="hero"
             label="Tổng đơn thuê"
@@ -1348,6 +1349,7 @@ export default function OrdersPage() {
               </>
             }
           />
+          <RentalKpiCard variant="hero" label="Chờ giao xe" value={orderStats.pending} sublabel="Chưa giao xe" valueClassName="text-amber-700" />
           <RentalKpiCard variant="hero" label="Đang thuê" value={orderStats.active} sublabel="Đơn hiện hành" valueClassName="text-blue-700" />
           <RentalKpiCard variant="hero" label="Quá hạn" value={orderStats.overdue} sublabel="Cần theo dõi" valueClassName="text-amber-700" />
           <RentalKpiCard variant="hero"
@@ -1356,7 +1358,7 @@ export default function OrdersPage() {
             sublabel={`Doanh thu: ${formatPrice(orderStats.revenue)}`}
             valueClassName="text-emerald-700"
           />
-        </div>
+        </ModuleKpiGrid>
 
       <ModuleSectionCard
         title="Danh sách đơn thuê xe"
