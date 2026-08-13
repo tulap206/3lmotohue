@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
 import { logger } from "@/lib/logger"
 import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -19,12 +19,14 @@ import {
   EntityFormDialogContent,
   EntityFormHeader,
   EntityFormBody,
+  EntityFormSection,
   EntityFormFooter,
+  EntityFormField,
+  entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
@@ -35,7 +37,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Settings, Clock, Calendar, History } from "lucide-react"
+import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Pencil, Clock, Calendar, History } from "lucide-react"
 
 interface Customer {
   id: string
@@ -67,19 +69,19 @@ const ImageUploadButton = ({
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   return (
-    <div className="space-y-2">
-      <Label className="text-slate-600">{label}</Label>
+    <div className="space-y-1.5">
+      <p className="text-label">{label}</p>
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 hover:border-blue-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
+        className="w-full border-2 border-dashed border-slate-300 rounded-[var(--radius-control)] p-5 hover:border-blue-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
       >
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <Upload className="w-6 h-6 text-blue-600" />
+        <div className="bg-blue-50 p-3 rounded-[var(--radius-badge)]">
+          <Upload className="w-5 h-5 text-blue-600" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-slate-700">Thêm ảnh</p>
-          <p className="text-sm text-slate-500">JPG, PNG, GIF</p>
+          <p className="text-body font-medium text-slate-700">Thêm ảnh</p>
+          <p className="text-meta">JPG, PNG, GIF</p>
         </div>
       </button>
       <input
@@ -101,9 +103,30 @@ const ImageUploadButton = ({
       />
       {preview && (
         <div className="relative w-fit">
-          <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded-[var(--radius-control)] border border-slate-200" />
         </div>
       )}
+    </div>
+  )
+}
+
+const customerActionBtnClass =
+  "h-9 w-9 p-0 border-slate-200 rounded-[var(--radius-control)] hover:bg-slate-50 text-slate-500"
+const customerStatusBadgeClass =
+  "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
+
+function CustomerAvatar({ src, name }: { src?: string; name: string }) {
+  return src ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={name}
+      className="h-11 w-11 shrink-0 rounded-[var(--radius-badge)] object-cover border border-slate-200"
+    />
+  ) : (
+    <div className="h-11 w-11 shrink-0 rounded-[var(--radius-badge)] bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 text-body font-semibold">
+      {name.charAt(0).toUpperCase()}
     </div>
   )
 }
@@ -586,7 +609,7 @@ export default function CustomersPage() {
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              className="bg-rose-600 text-white hover:bg-rose-700"
+              className="bg-rose-600 !text-white hover:bg-rose-700 hover:!text-white"
             >
               Xoá
             </Button>
@@ -624,86 +647,80 @@ export default function CustomersPage() {
               />
               <form onSubmit={handleSubmit}>
                 <EntityFormBody>
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-slate-600">Họ và tên</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="VD: Nguyễn Văn A"
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-slate-600">Số điện thoại</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="VD: 0901234567"
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="idcard" className="text-slate-600">Số CCCD/CMND</Label>
-                  <Input
-                    id="idcard"
-                    value={formData.idcard}
-                    onChange={(e) => setFormData({ ...formData, idcard: e.target.value })}
-                    placeholder="VD: 079123456789"
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address" className="text-slate-600">Địa chỉ</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM"
-                    className="bg-slate-50 border-slate-200 rounded-xl"
-                    required
-                  />
-                </div>
-                
-                {/* Image Upload Section */}
-                <div className="space-y-4 pt-4 border-t border-slate-200">
-                  <p className="font-medium text-slate-700">Thêm ảnh (tùy chọn)</p>
-                  
-                  <ImageUploadButton
-                    label="Ảnh khách hàng"
-                    preview={formData.customerphoto?.[0]}
-                    onImageSelected={(base64) => setFormData({ ...formData, customerphoto: base64 ? [base64] : [] })}
-                  />
+                  <EntityFormSection title="Thông tin khách" description="Thông tin liên hệ và định danh">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <EntityFormField label="Họ và tên" required>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="VD: Nguyễn Văn A"
+                          className={entityFormInputClass}
+                          required
+                        />
+                      </EntityFormField>
+                      <EntityFormField label="Số điện thoại" required>
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="VD: 0901234567"
+                          className={entityFormInputClass}
+                          required
+                        />
+                      </EntityFormField>
+                      <EntityFormField label="Số CCCD/CMND" required>
+                        <Input
+                          id="idcard"
+                          value={formData.idcard}
+                          onChange={(e) => setFormData({ ...formData, idcard: e.target.value })}
+                          placeholder="VD: 079123456789"
+                          className={entityFormInputClass}
+                          required
+                        />
+                      </EntityFormField>
+                      <EntityFormField label="Địa chỉ" required>
+                        <Input
+                          id="address"
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM"
+                          className={entityFormInputClass}
+                          required
+                        />
+                      </EntityFormField>
+                    </div>
+                  </EntityFormSection>
 
-                  <ImageUploadButton
-                    label="Ảnh CCCD mặt trước"
-                    preview={formData.cccdfront?.[0]}
-                    onImageSelected={(base64) => setFormData({ ...formData, cccdfront: base64 ? [base64] : [] })}
-                  />
-
-                  <ImageUploadButton
-                    label="Ảnh CCCD mặt sau"
-                    preview={formData.cccdback?.[0]}
-                    onImageSelected={(base64) => setFormData({ ...formData, cccdback: base64 ? [base64] : [] })}
-                  />
-
-                  <ImageUploadButton
-                    label="Ảnh GPLX mặt trước"
-                    preview={formData.licensefront?.[0]}
-                    onImageSelected={(base64) => setFormData({ ...formData, licensefront: base64 ? [base64] : [] })}
-                  />
-
-                  <ImageUploadButton
-                    label="Ảnh GPLX mặt sau"
-                    preview={formData.licenseback?.[0]}
-                    onImageSelected={(base64) => setFormData({ ...formData, licenseback: base64 ? [base64] : [] })}
-                  />
-                </div>
-                
+                  <EntityFormSection title="Ảnh tài liệu" description="Tùy chọn — CCCD, GPLX, ảnh khách">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <ImageUploadButton
+                        label="Ảnh khách hàng"
+                        preview={formData.customerphoto?.[0]}
+                        onImageSelected={(base64) => setFormData({ ...formData, customerphoto: base64 ? [base64] : [] })}
+                      />
+                      <ImageUploadButton
+                        label="Ảnh CCCD mặt trước"
+                        preview={formData.cccdfront?.[0]}
+                        onImageSelected={(base64) => setFormData({ ...formData, cccdfront: base64 ? [base64] : [] })}
+                      />
+                      <ImageUploadButton
+                        label="Ảnh CCCD mặt sau"
+                        preview={formData.cccdback?.[0]}
+                        onImageSelected={(base64) => setFormData({ ...formData, cccdback: base64 ? [base64] : [] })}
+                      />
+                      <ImageUploadButton
+                        label="Ảnh GPLX mặt trước"
+                        preview={formData.licensefront?.[0]}
+                        onImageSelected={(base64) => setFormData({ ...formData, licensefront: base64 ? [base64] : [] })}
+                      />
+                      <ImageUploadButton
+                        label="Ảnh GPLX mặt sau"
+                        preview={formData.licenseback?.[0]}
+                        onImageSelected={(base64) => setFormData({ ...formData, licenseback: base64 ? [base64] : [] })}
+                      />
+                    </div>
+                  </EntityFormSection>
                 </EntityFormBody>
                 <EntityFormFooter
                   accent="blue"
@@ -715,7 +732,7 @@ export default function CustomersPage() {
           </Dialog>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        <ModuleKpiGrid columns={4}>
           <RentalKpiCard
             variant="hero"
             label="Tổng khách hàng"
@@ -728,11 +745,33 @@ export default function CustomersPage() {
                 </span>
               </>
             }
+            onClick={() => setFilterStatus("all")}
           />
-          <RentalKpiCard variant="hero" label="Đang thuê" value={customerStats.renting} sublabel="Khách đang giữ xe" valueClassName="text-blue-700" />
-          <RentalKpiCard variant="hero" label="Chờ giao xe" value={customerStats.pending} sublabel="Đơn chờ xử lý" valueClassName="text-amber-700" />
-          <RentalKpiCard variant="hero" label="Ngừng hoạt động" value={customerStats.inactive} sublabel="Không giao dịch" valueClassName="text-slate-600" />
-        </div>
+          <RentalKpiCard
+            variant="hero"
+            label="Chờ giao xe"
+            value={customerStats.pending}
+            sublabel="Đơn chờ xử lý"
+            valueClassName="text-amber-700"
+            onClick={() => setFilterStatus("pending")}
+          />
+          <RentalKpiCard
+            variant="hero"
+            label="Đang thuê"
+            value={customerStats.renting}
+            sublabel="Khách đang giữ xe"
+            valueClassName="text-blue-700"
+            onClick={() => setFilterStatus("renting")}
+          />
+          <RentalKpiCard
+            variant="hero"
+            label="Ngừng hoạt động"
+            value={customerStats.inactive}
+            sublabel="Không giao dịch"
+            valueClassName="text-slate-600"
+            onClick={() => setFilterStatus("inactive")}
+          />
+        </ModuleKpiGrid>
 
       <ModuleSectionCard
         title="Danh sách khách hàng"
@@ -749,14 +788,14 @@ export default function CustomersPage() {
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full lg:w-40 h-10 rounded-xl border-slate-200 text-sm bg-white">
+              <SelectTrigger className="w-full lg:w-36 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-slate-100 rounded-xl">
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
+                <SelectItem value="all">Tất cả</SelectItem>
                 <SelectItem value="active">Hoạt động</SelectItem>
-                <SelectItem value="renting">Đang thuê xe</SelectItem>
                 <SelectItem value="pending">Chờ giao xe</SelectItem>
+                <SelectItem value="renting">Đang thuê xe</SelectItem>
                 <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
               </SelectContent>
             </Select>
@@ -765,59 +804,53 @@ export default function CustomersPage() {
       >
         <CardContent className="p-0">
           {filteredCustomers.length === 0 ? (
-            <div className="text-center py-12">
-              <User className="w-12 h-12 text-slate-200 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm">Không tìm thấy khách hàng nào</p>
-            </div>
+            <ModuleEmptyState
+              title="Không tìm thấy khách hàng nào"
+              description="Thử đổi từ khóa hoặc bộ lọc, hoặc thêm khách hàng mới."
+            />
           ) : (
             <>
               <ModuleResponsiveTable
                 desktop={
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className={cn(rentalTableHeadClass, "w-12 text-center text-slate-600")}>STT</th>
-                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Khách hàng</th>
-                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Liên hệ</th>
-                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>CCCD</th>
-                        <th className={cn(rentalTableHeadClass, "text-slate-600")}>Địa chỉ</th>
-                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
-                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thao tác</th>
+                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
+                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
+                        <th className={rentalTableHeadClass}>Khách hàng</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Liên hệ</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>CCCD</th>
+                        <th className={rentalTableHeadClass}>Địa chỉ</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Trạng thái</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                    <tbody className="divide-y divide-slate-50 text-body text-slate-700">
                       {paginatedCustomers.map((customer, index) => (
                         <tr key={customer.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
                           <td className="py-3.5 px-4 text-center text-sm text-slate-400 font-medium">
                             {(currentPage - 1) * itemsPerPage + index + 1}
                           </td>
                           <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-2">
-                              {customer.customerphoto && customer.customerphoto.length > 0 ? (
-                                <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
-                              ) : (
-                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm font-bold">
-                                  {customer.name.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                              <div>
-                                 <button
-                                   type="button"
-                                   className="font-bold text-slate-800 hover:text-slate-700 hover:underline text-left"
-                                   onClick={() => openDetailDialog(customer)}
-                                 >
-                                   {customer.name}
-                                 </button>
-                                 <p className="text-sm text-slate-400 font-medium">
-                                   Đã thuê: <span className="font-bold text-blue-600">{customer.totalrentals} lượt</span>
-                                 </p>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <CustomerAvatar src={customer.customerphoto?.[0]} name={customer.name} />
+                              <div className="min-w-0">
+                                <button
+                                  type="button"
+                                  className="font-semibold text-slate-800 text-body hover:text-blue-700 hover:underline text-left truncate block"
+                                  onClick={() => openDetailDialog(customer)}
+                                >
+                                  {customer.name}
+                                </button>
+                                <p className="text-meta font-medium">
+                                  Đã thuê: <span className="font-semibold text-blue-700">{customer.totalrentals} lượt</span>
+                                </p>
                               </div>
                             </div>
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             <div className="flex flex-col items-center gap-0.5 text-sm">
                               <span className="font-medium text-slate-700 inline-flex items-center gap-1">
-                                <Phone className="w-3 h-3 text-slate-400" /> {customer.phone}
+                                <Phone className="w-3.5 h-3.5 text-slate-400" /> {customer.phone}
                               </span>
                             </div>
                           </td>
@@ -825,13 +858,10 @@ export default function CustomersPage() {
                             {customer.idcard || "—"}
                           </td>
                           <td className="py-3.5 px-4 text-sm text-slate-500 max-w-[200px] truncate">
-                            {customer.address}
+                            {customer.address || "—"}
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <span className={cn(
-                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-bold border",
-                              rentalCustomerStatusBadgeClass(customer.status)
-                            )}>
+                            <span className={cn(customerStatusBadgeClass, rentalCustomerStatusBadgeClass(customer.status))}>
                               {getRentalCustomerStatusLabel(customer.status)}
                             </span>
                           </td>
@@ -839,39 +869,39 @@ export default function CustomersPage() {
                             <div className="flex justify-end gap-1">
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
+                                size="icon-sm"
+                                className={customerActionBtnClass}
                                 onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }}
                                 title="Lịch sử thuê"
                               >
-                                <Clock className="w-3.5 h-3.5" />
+                                <Clock className="w-4 h-4" />
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
+                                size="icon-sm"
+                                className={customerActionBtnClass}
                                 onClick={() => openDetailDialog(customer)}
                                 title="Chi tiết"
                               >
-                                <Eye className="w-3.5 h-3.5" />
+                                <Eye className="w-4 h-4" />
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500"
+                                size="icon-sm"
+                                className={customerActionBtnClass}
                                 onClick={() => handleEdit(customer)}
                                 title="Chỉnh sửa"
                               >
-                                <Settings className="w-3.5 h-3.5" />
+                                <Pencil className="w-4 h-4" />
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className="h-7 w-7 p-0 border-rose-200 rounded-lg hover:bg-rose-50 text-rose-500"
+                                size="icon-sm"
+                                className="h-9 w-9 p-0 border-rose-200 rounded-[var(--radius-control)] hover:bg-rose-50 text-rose-600"
                                 onClick={() => handleDelete(customer.id)}
                                 title="Xóa"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
                           </td>
@@ -882,55 +912,49 @@ export default function CustomersPage() {
                 }
                 mobile={paginatedCustomers.map((customer) => (
                   <ModuleMobileCard key={customer.id}>
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex items-center gap-2">
-                        {customer.customerphoto && customer.customerphoto.length > 0 ? (
-                          <img src={customer.customerphoto[0]} alt={customer.name} className="w-8 h-8 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm font-bold">
-                            {customer.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <CustomerAvatar src={customer.customerphoto?.[0]} name={customer.name} />
+                        <div className="min-w-0">
                           <button
                             type="button"
-                            className="font-bold text-slate-800 text-sm hover:text-slate-700 hover:underline text-left"
+                            className="font-semibold text-slate-800 text-body hover:text-blue-700 hover:underline text-left truncate"
                             onClick={() => openDetailDialog(customer)}
                           >
                             {customer.name}
                           </button>
-                          <p className="text-sm text-slate-500">Đã thuê: <span className="font-bold text-blue-600">{customer.totalrentals} lượt</span></p>
+                          <p className="text-meta">Đã thuê: <span className="font-semibold text-blue-700">{customer.totalrentals} lượt</span></p>
                         </div>
                       </div>
-                      <span className={`text-sm font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalCustomerStatusBadgeClass(customer.status)}`}>
+                      <span className={cn(customerStatusBadgeClass, "shrink-0", rentalCustomerStatusBadgeClass(customer.status))}>
                         {getRentalCustomerStatusLabel(customer.status)}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 text-sm text-slate-500">
                       <div className="flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-slate-400" />
+                        <Phone className="w-3.5 h-3.5 text-slate-400" />
                         {customer.phone}
                       </div>
                       <div className="flex items-center gap-1 truncate">
-                        <MapPin className="w-3 h-3 text-slate-400" />
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
                         {customer.address}
                       </div>
                     </div>
                     <div className="flex justify-end gap-1 mt-2 pt-2 border-t border-slate-100/50 items-center">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }} title="Lịch sử thuê">
-                        <Clock className="w-3.5 h-3.5" />
+                      <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }} title="Lịch sử thuê">
+                        <Clock className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => openDetailDialog(customer)} title="Chi tiết">
-                        <Eye className="w-3.5 h-3.5" />
+                      <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openDetailDialog(customer)} title="Chi tiết">
+                        <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => handleEdit(customer)} title="Chỉnh sửa">
-                        <Settings className="w-3.5 h-3.5" />
+                      <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => handleEdit(customer)} title="Chỉnh sửa">
+                        <Pencil className="w-4 h-4" />
                       </Button>
                       {user?.permissions.canDelete && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700" 
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                           onClick={() => {
                             if (window.confirm(`Bạn có chắc chắn muốn xóa khách hàng ${customer.name}?`)) {
                               handleDelete(customer.id)
@@ -938,7 +962,7 @@ export default function CustomersPage() {
                           }}
                           title="Xóa"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
@@ -1001,7 +1025,7 @@ export default function CustomersPage() {
                               <p className="font-semibold text-slate-800 text-sm">{r.vehicleName}</p>
                               <p className="text-sm text-slate-400 font-mono">{r.licensePlate}</p>
                             </div>
-                            <span className={`text-sm font-bold px-2 py-0.5 rounded-full border shrink-0 ${statusColor}`}>{statusLabel}</span>
+                            <span className={`text-sm font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border shrink-0 ${statusColor}`}>{statusLabel}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-slate-500">
                             <Calendar className="w-3 h-3 shrink-0" />
@@ -1075,7 +1099,7 @@ export default function CustomersPage() {
                       )}
                       <div className="pt-1">
                         <span className={cn(
-                          "inline-flex items-center text-sm font-bold px-2 py-0.5 rounded-full border",
+                          customerStatusBadgeClass,
                           rentalCustomerStatusBadgeClass(cust.status)
                         )}>
                           {getRentalCustomerStatusLabel(cust.status)}
@@ -1136,24 +1160,24 @@ export default function CustomersPage() {
                   <div className="flex gap-2 pt-1">
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 text-sm"
+                      className="flex-1 h-11 text-body"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         setHistoryCustomer(cust)
                         setIsHistoryDialogOpen(true)
                       }}
                     >
-                      <History className="w-3.5 h-3.5 mr-1.5" />
+                      <History className="w-4 h-4 mr-1.5" />
                       Xem lịch sử
                     </Button>
                     <Button
-                      className="flex-1 h-9 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                      className="flex-1 h-11 text-body bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white [&_svg]:!text-white"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         handleEdit(cust)
                       }}
                     >
-                      <Settings className="w-3.5 h-3.5 mr-1.5" />
+                      <Pencil className="w-4 h-4 mr-1.5" />
                       Chỉnh sửa
                     </Button>
                   </div>
