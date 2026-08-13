@@ -55,27 +55,11 @@ interface ReportData {
   activeRentals: number
   vehiclesInMaintenance: number
   monthlyRevenue: Array<{ month: string; revenue: number }>
-  topVehicles: Array<{ name: string; rentals: number; revenue: number }>
   /** Tổng HH Home đã trừ trong DT (đơn completed) */
   commissionHomeTotal: number
   commissionByHome: CommissionHomeRow[]
   fleetPerformance: Array<{ name: string; licensePlate: string; activeDays: number; revenue: number; utilizationRate: number }>
   expenseStructure: Array<{ name: string; value: number; color: string }>
-}
-
-interface Vehicle {
-  id: string
-  name: string
-  licensePlate: string
-  color: string
-  pricePerDay: number
-  status: string
-  current_km: number
-  purchasePrice: number
-  notes: string
-  totalRentalDays: number
-  totalRevenue: number
-  profit: number
 }
 
 export default function ReportsPage() {
@@ -94,8 +78,6 @@ export default function ReportsPage() {
 
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -499,30 +481,6 @@ export default function ReportsPage() {
         { month: "T12", revenue: monthlyData["T12"] || 0 },
       ]
 
-      // Top vehicles - calculate from rentals
-      const vehiclesWithStats = vehicles.map((v: any) => {
-        const vehicleRentals = rentals.filter((r: any) => r.vehicleId === v.id && r.status === 'completed')
-        const revenue = vehicleRentals
-          .filter((r: any) => {
-            const rDate = parseVietnamDate(r.endDate || r.startDate)
-            return rDate >= start && rDate <= end
-          })
-          .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
-        return {
-          name: v.name,
-          rentals: vehicleRentals.filter((r: any) => {
-            const rDate = parseVietnamDate(r.endDate || r.startDate)
-            return rDate >= start && rDate <= end
-          }).length,
-          revenue: revenue,
-        }
-      })
-
-      const topVehicles = vehiclesWithStats
-        .filter((v: any) => v.revenue > 0) // Only show vehicles with revenue
-        .sort((a: any, b: any) => b.revenue - a.revenue)
-        .slice(0, 5)
-
       // Helper to calculate overlap days for fleet utilization
       const getOverlapDays = (rStartStr: string, rEndStr: string, periodStart: Date, periodEnd: Date): number => {
         const rStart = parseVietnamDate(rStartStr)
@@ -618,7 +576,6 @@ export default function ReportsPage() {
         activeRentals,
         vehiclesInMaintenance,
         monthlyRevenue,
-        topVehicles,
         commissionHomeTotal,
         commissionByHome,
         fleetPerformance,
@@ -646,7 +603,6 @@ export default function ReportsPage() {
           { month: "T5", revenue: 0 },
           { month: "T6", revenue: 0 },
         ],
-        topVehicles: [],
         commissionHomeTotal: 0,
         commissionByHome: [],
         fleetPerformance: [],
@@ -1006,50 +962,6 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      {/* Top Vehicles */}
-      <Card>
-        <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
-          <CardTitle className="text-title">Xe Top Doanh Thu</CardTitle>
-          <CardDescription className="text-sm md:text-sm">Top 5 xe có doanh thu cao nhất</CardDescription>
-        </CardHeader>
-        <CardContent className="p-3 md:p-4">
-          {reportData.topVehicles.length > 0 ? (
-            <div className="space-y-2 md:space-y-3">
-              {reportData.topVehicles.map((vehicle, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex items-start justify-between border-b pb-2 md:pb-3 last:border-b-0 cursor-pointer hover:bg-slate-50 p-2 rounded transition gap-2"
-                  onClick={async () => {
-                    const { data } = await supabase
-                      .from('vehicles')
-                      .select('*')
-                      .eq('name', vehicle.name)
-                      .single()
-                    
-                    if (data) {
-                      setSelectedVehicle(data)
-                      setIsDetailOpen(true)
-                    }
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-slate-900 break-words">{vehicle.name}</p>
-                    <p className="text-sm text-slate-500">{vehicle.rentals} lần thuê</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-semibold text-sm text-slate-900 money break-words">
-                      {vehicle.revenue.toLocaleString("vi-VN")}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-center py-6 text-sm">Chưa có dữ liệu xe</p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Fleet Performance Analytics */}
       <Card>
         <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
@@ -1134,58 +1046,6 @@ export default function ReportsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Vehicle Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="bg-white rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-slate-800">Chi tiết xe</DialogTitle>
-            <DialogDescription className="text-slate-500">Thông tin chi tiết của xe</DialogDescription>
-          </DialogHeader>
-          {selectedVehicle && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Tên xe</p>
-                  <p className="font-medium text-slate-800 text-sm">{selectedVehicle.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Biển số</p>
-                  <p className="font-medium text-slate-800 text-sm">{selectedVehicle.licensePlate}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Màu sắc</p>
-                  <p className="font-medium text-slate-800 text-sm">{selectedVehicle.color}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Giá/ngày</p>
-                  <p className="font-medium text-slate-800 text-sm">{selectedVehicle.pricePerDay.toLocaleString()} đ</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Trạng thái</p>
-                  <p className="font-medium text-slate-800">{selectedVehicle.status}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Km hiện tại</p>
-                  <p className="font-medium text-slate-800">{selectedVehicle.current_km} km</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Giá mua</p>
-                  <p className="font-medium text-slate-800">{selectedVehicle.purchasePrice.toLocaleString("vi-VN")} đ</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Doanh thu</p>
-                  <p className="font-medium text-slate-800">{selectedVehicle.totalRevenue.toLocaleString("vi-VN")} đ</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-slate-500">Ghi chú</p>
-                  <p className="font-medium text-slate-800">{selectedVehicle.notes || "Không có"}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Transactions Table */}
       <Card>
