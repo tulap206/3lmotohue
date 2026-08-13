@@ -141,7 +141,7 @@ export function OverdueOrdersPanel({
       accent="rose"
       headerExtra={
         <div className="text-right shrink-0">
-          <p className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Tổng</p>
+          <p className="text-meta text-slate-400">Tổng</p>
           <p className="text-lg font-extrabold text-rose-600 tabular-nums leading-none">{orders.length}</p>
           <p className="text-sm text-slate-500 mt-0.5">đơn</p>
         </div>
@@ -152,10 +152,10 @@ export function OverdueOrdersPanel({
           <table className="w-full text-left border-collapse text-sm min-w-[320px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider w-10">#</th>
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider">Khách</th>
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Xe</th>
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider text-right">Quá hạn</th>
+                <th className="py-2.5 px-4 text-label text-slate-500 w-10">#</th>
+                <th className="py-2.5 px-4 text-label text-slate-500">Khách</th>
+                <th className="py-2.5 px-4 text-label text-slate-500 hidden sm:table-cell">Xe</th>
+                <th className="py-2.5 px-4 text-label text-slate-500 text-right">Quá hạn</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -179,7 +179,7 @@ export function OverdueOrdersPanel({
                     <p className="text-sm text-slate-400">{row.licensePlate}</p>
                   </td>
                   <td className="py-2.5 px-4 text-right whitespace-nowrap">
-                    <span className="inline-flex items-center text-sm font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md tabular-nums">
+                    <span className="inline-flex items-center text-sm font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-[var(--radius-badge)] tabular-nums">
                       {row.daysOver} ngày
                     </span>
                     <p className="text-sm text-slate-400 mt-0.5">Hạn {row.endDate}</p>
@@ -246,8 +246,8 @@ export function CommissionHomeReportPanel({
       accent="amber"
       headerExtra={
         <div className="text-right shrink-0 max-w-[9rem]">
-          <p className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Chi HH</p>
-          <p className="text-sm font-extrabold text-amber-700 tabular-nums leading-tight truncate" title={formatPrice(grandTotal)}>
+          <p className="text-meta text-slate-400">Chi HH</p>
+          <p className="text-sm font-extrabold text-amber-700 money tabular-nums leading-tight truncate" title={formatPrice(grandTotal)}>
             {formatPrice(grandTotal)}
           </p>
         </div>
@@ -258,10 +258,10 @@ export function CommissionHomeReportPanel({
           <table className="w-full text-left border-collapse text-sm min-w-[280px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider w-10">#</th>
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider">Home</th>
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider text-center">Đơn</th>
-                <th className="py-2.5 px-4 text-sm font-bold text-slate-500 uppercase tracking-wider text-right">Hoa hồng</th>
+                <th className="py-2.5 px-4 text-label text-slate-500 w-10">#</th>
+                <th className="py-2.5 px-4 text-label text-slate-500">Home</th>
+                <th className="py-2.5 px-4 text-label text-slate-500 text-center">Đơn</th>
+                <th className="py-2.5 px-4 text-label text-slate-500 text-right">Hoa hồng</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -282,11 +282,11 @@ export function CommissionHomeReportPanel({
                       </div>
                     </td>
                     <td className="py-2.5 px-4 text-center">
-                      <span className="inline-flex min-w-[1.75rem] justify-center text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md tabular-nums">
+                      <span className="inline-flex min-w-[1.75rem] justify-center text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-[var(--radius-badge)] tabular-nums">
                         {row.count}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 text-right font-bold text-amber-700 tabular-nums whitespace-nowrap">
+                    <td className="py-2.5 px-4 text-right font-bold text-amber-700 money tabular-nums whitespace-nowrap">
                       {formatPrice(row.total)}
                     </td>
                   </tr>

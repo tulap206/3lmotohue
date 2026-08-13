@@ -74,6 +74,7 @@ export function RentalKpiCard({
   valueClassName,
   valueTitle,
   onClick,
+  selected,
   variant = "hero",
   icon,
   iconColor,
@@ -92,6 +93,7 @@ export function RentalKpiCard({
       valueClassName={valueClassName}
       valueTitle={valueTitle}
       onClick={onClick}
+      selected={selected}
       variant={variant}
       icon={icon}
       iconColor={iconColor}

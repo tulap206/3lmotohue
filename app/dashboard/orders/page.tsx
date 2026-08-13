@@ -41,6 +41,7 @@ import {
   EntityFormToggle,
   EntityFormInfoBox,
   EntityFormTip,
+  EntityFormField,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
 import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
@@ -1031,7 +1032,7 @@ export default function OrdersPage() {
             />
             <form onSubmit={handleSubmit} className="space-y-6">
               <EntityFormBody>
-                <EntityFormSection title="👤 1. Thông tin khách thuê" description="Chọn khách hàng hiện có hoặc thêm khách mới để tạo đơn thuê">
+                <EntityFormSection title="1. Thông tin khách thuê" description="Chọn khách hàng hiện có hoặc thêm khách mới để tạo đơn thuê">
                   <EntityFormToggle
                     value={isNewCustomer ? "new" : "existing"}
                     onChange={(val) => setIsNewCustomer(val === "new")}
@@ -1043,23 +1044,24 @@ export default function OrdersPage() {
 
                   {!isNewCustomer ? (
                     <div className="space-y-2 relative">
-                      <Label htmlFor="customer" className="text-slate-600">Tìm kiếm khách hàng</Label>
-                      <Input
-                        placeholder="Nhập tên, số điện thoại hoặc ID khách..."
-                        value={customerSearch}
-                        onChange={(e) => {
-                          setCustomerSearch(e.target.value)
-                          setShowCustomerDropdown(true)
-                          setFormData(prev => ({ ...prev, customerId: "" }))
-                        }}
-                        onFocus={() => setShowCustomerDropdown(true)}
-                        className="bg-white border-slate-200 rounded-xl"
-                        required={!isNewCustomer}
-                      />
+                      <EntityFormField label="Tìm kiếm khách hàng">
+                        <Input
+                          placeholder="Nhập tên, số điện thoại hoặc ID khách..."
+                          value={customerSearch}
+                          onChange={(e) => {
+                            setCustomerSearch(e.target.value)
+                            setShowCustomerDropdown(true)
+                            setFormData(prev => ({ ...prev, customerId: "" }))
+                          }}
+                          onFocus={() => setShowCustomerDropdown(true)}
+                          className={entityFormInputClass}
+                          required={!isNewCustomer}
+                        />
+                      </EntityFormField>
                       {showCustomerDropdown && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
-                          <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+                          <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
                             {filteredCustomersForSelect.length === 0 ? (
                               <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng nào</div>
                             ) : (
@@ -1085,68 +1087,58 @@ export default function OrdersPage() {
                   ) : (
                     <div className="space-y-3">
                       <EntityFormInfoBox>
-                        ℹ️ <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
+                        <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
                       </EntityFormInfoBox>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Tên khách hàng <span className="text-blue-500">*</span></Label>
-                        <p className="text-sm text-slate-400">Họ và tên đầy đủ của khách</p>
+                      <EntityFormField label="Tên khách hàng" hint="Họ và tên đầy đủ của khách" required>
                         <Input
                           placeholder="VD: Nguyễn Văn A"
                           value={newCustomerName}
                           onChange={(e) => setNewCustomerName(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                           required={isNewCustomer}
                         />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số điện thoại <span className="text-blue-500">*</span></Label>
-                        <p className="text-sm text-slate-400">Dùng để liên lạc với khách hàng</p>
+                      </EntityFormField>
+                      <EntityFormField label="Số điện thoại" hint="Dùng để liên lạc với khách hàng" required>
                         <Input
                           placeholder="VD: 0912345678"
                           value={newCustomerPhone}
                           onChange={(e) => setNewCustomerPhone(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                           required={isNewCustomer}
                         />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Địa chỉ khách <span className="text-blue-500">*</span></Label>
-                        <p className="text-sm text-slate-400">Địa chỉ cư trú của khách</p>
+                      </EntityFormField>
+                      <EntityFormField label="Địa chỉ khách" hint="Địa chỉ cư trú của khách" required>
                         <Input
                           placeholder="VD: 123 Nguyễn Huệ, Huế"
                           value={newCustomerAddress}
                           onChange={(e) => setNewCustomerAddress(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                           required={isNewCustomer}
                         />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số CCCD khách (tùy chọn)</Label>
-                        <p className="text-sm text-slate-400">Số chứng minh thư hoặc CCCD</p>
+                      </EntityFormField>
+                      <EntityFormField label="Số CCCD khách (tùy chọn)" hint="Số chứng minh thư hoặc CCCD">
                         <Input
                           placeholder="VD: 046200012345"
                           value={newCustomerCCCD}
                           onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                         />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh CCCD (tùy chọn)</Label>
-                        <p className="text-sm text-slate-400">Ảnh mặt trước chứng minh thư hoặc CCCD</p>
+                      </EntityFormField>
+                      <EntityFormField label="Ảnh CCCD (tùy chọn)" hint="Ảnh mặt trước chứng minh thư hoặc CCCD">
                         <Input
                           type="file"
                           accept="image/*"
                           onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm p-1"
+                          className={cn(entityFormInputClass, "p-1")}
                         />
-                      </div>
+                      </EntityFormField>
                     </div>
                   )}
                 </EntityFormSection>
 
-                <EntityFormSection title="🚗 2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
+                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
                   <div className="space-y-3 relative">
-                    <Label htmlFor="vehicle" className="text-slate-600 text-sm">Chọn xe thuê <span className="text-blue-500">*</span></Label>
+                    <p className="text-label">Chọn xe thuê <span className="text-rose-500">*</span></p>
                     
                     {/* Selected vehicles badges */}
                     {formData.vehicleIds.length > 0 && (
@@ -1157,7 +1149,7 @@ export default function OrdersPage() {
                           return (
                             <span 
                               key={vId} 
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
+                              className="inline-flex items-center gap-1.5 text-meta font-semibold px-2.5 py-1 rounded-[var(--radius-badge)] bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
                             >
                               <span>{vObj.name} ({vObj.licensePlate})</span>
                               <button 
@@ -1178,7 +1170,7 @@ export default function OrdersPage() {
                       </div>
                     )}
 
-                    <p className="text-xs text-slate-400">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
+                    <p className="text-meta">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
                     <Input
                       placeholder="VD: Wave Alpha hoặc 75F1-12345..."
                       value={vehicleSearch}
@@ -1187,7 +1179,7 @@ export default function OrdersPage() {
                         setShowVehicleDropdown(true)
                       }}
                       onFocus={() => setShowVehicleDropdown(true)}
-                      className="bg-white border-slate-200 rounded-xl"
+                      className={entityFormInputClass}
                     />
                     
                     {showVehicleDropdown && (
@@ -1220,9 +1212,8 @@ export default function OrdersPage() {
                   </div>
                 </EntityFormSection>
 
-                <EntityFormSection title="📋 3. Chi tiết hợp đồng thuê" description="Nhập loại thuê, ngày thuê, thời hạn và tiền đặt cọc">
-                  <div className="space-y-1">
-                    <Label className="text-slate-600 text-sm">Loại thuê <span className="text-blue-500">*</span></Label>
+                <EntityFormSection title="3. Chi tiết hợp đồng thuê" description="Nhập loại thuê, ngày thuê, thời hạn và tiền đặt cọc">
+                  <EntityFormField label="Loại thuê" required>
                     <EntityFormToggle
                       value={formData.rentalTerm}
                       onChange={(val) => setFormData({ ...formData, rentalTerm: val as RentalTerm })}
@@ -1231,38 +1222,32 @@ export default function OrdersPage() {
                         { value: "long", label: "Thuê dài hạn" },
                       ]}
                     />
-                  </div>
+                  </EntityFormField>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label htmlFor="startDate" className="text-slate-600 text-sm">Ngày bắt đầu <span className="text-blue-500">*</span></Label>
-                      <p className="text-sm text-slate-400">Ngày khách nhận xe</p>
-                      <Input
+                    <EntityFormField label="Ngày bắt đầu" hint="Ngày khách nhận xe" required>
+                        <Input
                         id="startDate"
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                        className={entityFormInputClass}
                         required
                       />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="endDate" className="text-slate-600 text-sm">Ngày kết thúc <span className="text-blue-500">*</span></Label>
-                      <p className="text-sm text-slate-400">Ngày khách trả xe</p>
-                      <Input
+                      </EntityFormField>
+                    <EntityFormField label="Ngày kết thúc" hint="Ngày khách trả xe" required>
+                        <Input
                         id="endDate"
                         type="date"
                         value={formData.endDate}
                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                        className={entityFormInputClass}
                         required
                       />
-                    </div>
+                      </EntityFormField>
                   </div>
 
-                  <div className="space-y-1">
-                    <Label htmlFor="deposit" className="text-slate-600 text-sm">Tiền đặt cọc <span className="text-blue-500">*</span></Label>
-                    <p className="text-sm text-slate-400">Tiền cọc để bảo vệ xe (thường 30-50% giá thuê)</p>
-                    <Input
+                  <EntityFormField label="Tiền đặt cọc" hint="Tiền cọc để bảo vệ xe (thường 30-50% giá thuê)" required>
+                        <Input
                       id="deposit"
                       type="text"
                       value={formData.deposit}
@@ -1271,10 +1256,10 @@ export default function OrdersPage() {
                         setFormData({ ...formData, deposit: formatted })
                       }}
                       placeholder="VD: 500.000"
-                      className="bg-white border-slate-200 rounded-xl font-mono h-9 text-sm"
+                      className={cn(entityFormInputClass, "font-mono")}
                       required
                     />
-                  </div>
+                      </EntityFormField>
 
                   <div className="flex items-center space-x-2 pt-2">
                     <input
@@ -1289,21 +1274,17 @@ export default function OrdersPage() {
 
                   {hasCommission && (
                     <div className="grid grid-cols-1 gap-3 pt-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
-                      <div className="space-y-1">
-                        <Label htmlFor="homeName" className="text-slate-600 text-sm">Tên Home</Label>
-                        <p className="text-sm text-slate-400">Tên đơn vị/người chia hoa hồng</p>
+                      <EntityFormField label="Tên Home" hint="Tên đơn vị/người chia hoa hồng">
                         <Input
                           id="homeName"
                           type="text"
                           value={formData.homeName}
                           onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
                           placeholder="VD: Home ABC"
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                         />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="commissionHome" className="text-slate-600 text-sm">Chia hoa hồng cho Home (VND/ngày)</Label>
-                        <p className="text-sm text-slate-400">Tiền hoa hồng/ngày cho đơn vị (VD: 20.000đ/ngày)</p>
+                      </EntityFormField>
+                      <EntityFormField label="Chia hoa hồng cho Home (VND/ngày)" hint="Tiền hoa hồng/ngày cho đơn vị (VD: 20.000đ/ngày)">
                         <Input
                           id="commissionHome"
                           type="text"
@@ -1313,15 +1294,15 @@ export default function OrdersPage() {
                             setFormData({ ...formData, commissionHome: formatted })
                           }}
                           placeholder="VD: 20.000"
-                          className="bg-white border-slate-200 rounded-xl font-mono h-9 text-sm"
+                          className={cn(entityFormInputClass, "font-mono")}
                         />
-                      </div>
+                      </EntityFormField>
                     </div>
                   )}
 
                   <EntityFormTip
                     variant="green"
-                    title="💡 Hướng dẫn tính toán"
+                    title="Hướng dẫn tính toán"
                     items={[
                       "• Số ngày: Tính từ ngày bắt đầu đến ngày kết thúc (VD: 3 ngày)",
                       "• Tiền cọc: Thường 30-50% tổng giá thuê để bảo vệ xe",
@@ -1356,6 +1337,7 @@ export default function OrdersPage() {
               </>
             }
             onClick={() => setFilterStatus("all")}
+            selected={filterStatus === "all"}
           />
           <RentalKpiCard
             variant="hero"
@@ -1364,6 +1346,7 @@ export default function OrdersPage() {
             sublabel="Chưa giao xe"
             valueClassName="text-amber-700"
             onClick={() => setFilterStatus("pending")}
+            selected={filterStatus === "pending"}
           />
           <RentalKpiCard
             variant="hero"
@@ -1372,6 +1355,7 @@ export default function OrdersPage() {
             sublabel="Đơn hiện hành"
             valueClassName="text-blue-700"
             onClick={() => setFilterStatus("active")}
+            selected={filterStatus === "active"}
           />
           <RentalKpiCard
             variant="hero"
@@ -1380,6 +1364,7 @@ export default function OrdersPage() {
             sublabel="Cần theo dõi"
             valueClassName="text-rose-600"
             onClick={() => setFilterStatus("overdue")}
+            selected={filterStatus === "overdue"}
           />
           <RentalKpiCard
             variant="hero"
@@ -1388,6 +1373,7 @@ export default function OrdersPage() {
             sublabel={`Doanh thu: ${formatPrice(orderStats.revenue)}`}
             valueClassName="text-emerald-700"
             onClick={() => setFilterStatus("completed")}
+            selected={filterStatus === "completed"}
           />
         </ModuleKpiGrid>
 
@@ -1453,7 +1439,6 @@ export default function OrdersPage() {
                         <th className={cn(rentalTableHeadClass, "text-slate-600")}>Xe thuê</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Thời gian</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Số ngày</th>
-                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Giá/ngày</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Tổng tiền</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Doanh thu</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
@@ -1477,13 +1462,13 @@ export default function OrdersPage() {
                             <td className="py-3.5 px-4">
                               <div className="flex flex-col gap-1.5">
                                 <button
-                                  className="font-bold text-slate-800 text-[15px] hover:text-slate-700 hover:underline text-left block"
+                                  className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left block"
                                   onClick={() => openVehicleDetail(order.vehicleId)}
                                 >
                                   {order.vehicleName}
                                 </button>
                                 <div>
-                                  <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-2.5 py-1 rounded text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
+                                  <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
                                     {order.licensePlate}
                                   </span>
                                 </div>
@@ -1494,9 +1479,9 @@ export default function OrdersPage() {
                               <div className="whitespace-nowrap"><span className="text-slate-400 text-sm mr-1">→</span>{formatDisplayDate(order.endDate)}</div>
                             </td>
                             <td className="py-3.5 px-4 text-center font-semibold text-slate-700 whitespace-nowrap">{order.totalDays} ngày</td>
-                            <td className="py-3.5 px-4 text-right font-mono text-sm tabular-nums text-blue-600 font-bold whitespace-nowrap">{order.pricePerDay.toLocaleString("vi-VN")} đ</td>
                             <td className="py-3.5 px-4 text-right">
-                              <div className="font-bold font-mono text-sm tabular-nums text-blue-600 whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</div>
+                              <div className="font-bold money text-sm tabular-nums text-slate-900 whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</div>
+                              <div className="text-meta text-slate-500 mt-0.5 whitespace-nowrap">{order.pricePerDay.toLocaleString("vi-VN")} đ/ngày</div>
                               <div className="flex items-center justify-end mt-0.5">
                                 {order.deposit > 0 ? (
                                   <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">Đã cọc {order.deposit.toLocaleString("vi-VN")}đ</span>
@@ -1507,7 +1492,7 @@ export default function OrdersPage() {
                             </td>
                             <td className="py-3.5 px-4 text-right font-mono text-sm whitespace-nowrap">
                               {order.revenue > 0 ? (
-                                <span className="font-bold tabular-nums text-blue-600">
+                                <span className="font-bold money tabular-nums text-emerald-700">
                                   {order.revenue.toLocaleString("vi-VN")} đ
                                 </span>
                               ) : (
@@ -1568,7 +1553,7 @@ export default function OrdersPage() {
                           <p className="font-semibold text-slate-800 truncate">{order.customerName}</p>
                           <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                             <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
-                            <span className="inline-block bg-white text-slate-800 border border-slate-350 font-mono font-bold px-1.5 py-0.5 rounded text-sm shadow-sm tracking-wider uppercase">
+                            <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase">
                               {order.licensePlate}
                             </span>
                           </div>
@@ -1609,7 +1594,7 @@ export default function OrdersPage() {
                             </Button>
                           )}
                         </div>
-                        <span className="font-bold text-blue-600 tabular-nums text-sm">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
+                        <span className="font-bold text-slate-900 money tabular-nums text-sm">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
                       </div>
 
                       <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
@@ -1694,12 +1679,12 @@ export default function OrdersPage() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-blue-600 uppercase">Tổng tiền thuê</p>
-                      <p className="text-lg font-extrabold text-blue-700 tabular-nums">{formatPrice(o.totalPrice + (o.extraFees || 0))}</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Tổng tiền thuê</p>
+                      <p className="text-lg font-extrabold text-slate-900 money tabular-nums">{formatPrice(o.totalPrice + (o.extraFees || 0))}</p>
                     </div>
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-amber-600 uppercase">Tiền cọc</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Tiền cọc</p>
                       <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(o.deposit)}</p>
                     </div>
                     <div className={cn(
@@ -1711,7 +1696,7 @@ export default function OrdersPage() {
                           : "bg-slate-50 border-slate-100"
                     )}>
                       <p className={cn(
-                        "text-sm font-semibold uppercase",
+                        "text-meta",
                         o.status === "completed" ? "text-emerald-600"
                           : o.status === "cancelled" ? "text-amber-600"
                           : "text-slate-500"
@@ -1737,7 +1722,7 @@ export default function OrdersPage() {
                         openCustomerDetail(o.customerId)
                       }}
                     >
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Khách hàng</p>
+                      <p className="text-meta text-slate-500 mb-1">Khách hàng</p>
                       <p className="font-bold text-slate-900">{o.customerName}</p>
                       <p className="text-sm text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
                     </div>
@@ -1748,7 +1733,7 @@ export default function OrdersPage() {
                         openVehicleDetail(o.vehicleId)
                       }}
                     >
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Xe thuê</p>
+                      <p className="text-meta text-slate-500 mb-1">Xe thuê</p>
                       <p className="font-bold text-slate-900">{o.vehicleName}</p>
                       <p className="text-sm font-mono text-slate-500">{o.licensePlate || "Chưa biển"}</p>
                       <p className="text-sm text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
@@ -1757,38 +1742,38 @@ export default function OrdersPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Nhận xe</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Nhận xe</p>
                       <p className="text-sm font-bold text-slate-800">{formatDisplayDate(o.startDate)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Trả xe</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Trả xe</p>
                       <p className="text-sm font-bold text-slate-800">{formatDisplayDate(o.endDate)}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số ngày</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Số ngày</p>
                       <p className="text-sm font-bold text-slate-800">{o.totalDays} ngày</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Giá/ngày</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Giá/ngày</p>
                       <p className="text-sm font-bold text-slate-800 tabular-nums">{formatPrice(o.pricePerDay)}</p>
                     </div>
                     {o.extraFees > 0 && (
-                      <div className="bg-orange-50 border border-orange-100 rounded-xl p-3">
-                        <p className="text-sm font-semibold text-orange-600 uppercase mb-0.5">Phí phát sinh</p>
-                        <p className="text-sm font-bold text-orange-700 tabular-nums">{formatPrice(o.extraFees)}</p>
+                      <div className="bg-amber-50 border border-amber-100 rounded-[var(--radius-control)] p-3">
+                        <p className="text-meta text-amber-700 mb-0.5">Phí phát sinh</p>
+                        <p className="text-sm font-bold text-amber-700 money tabular-nums">{formatPrice(o.extraFees)}</p>
                       </div>
                     )}
                     {commissionTotal > 0 && (
-                      <div className="bg-violet-50 border border-violet-100 rounded-xl p-3">
-                        <p className="text-sm font-semibold text-violet-600 uppercase mb-0.5">HH Home{o.homeName ? ` · ${o.homeName}` : ""}</p>
-                        <p className="text-sm font-bold text-violet-700 tabular-nums">{formatPrice(commissionTotal)}</p>
+                      <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                        <p className="text-meta text-slate-500 mb-0.5">HH Home{o.homeName ? ` · ${o.homeName}` : ""}</p>
+                        <p className="text-sm font-bold text-slate-900 money tabular-nums">{formatPrice(commissionTotal)}</p>
                       </div>
                     )}
                   </div>
 
                   {notesClean && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
                       <p className="text-sm text-slate-700 whitespace-pre-line">{notesClean}</p>
                     </div>
                   )}
@@ -1848,9 +1833,9 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  <div className="bg-slate-950 text-white rounded-xl p-4 flex flex-col items-center gap-2">
+                  <div className="bg-slate-900 text-white rounded-[var(--radius-container)] p-4 flex flex-col items-center gap-2">
                     <div className="flex items-center justify-between w-full border-b border-slate-800 pb-2">
-                      <span className="text-sm bg-blue-600 text-white font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                      <span className="text-meta bg-blue-600 text-white font-bold px-2 py-0.5 rounded-[var(--radius-badge)]">
                         QR SHB
                       </span>
                       <span className="text-sm text-slate-400">{QUY79_BUSINESS.hotline}</span>
@@ -1936,8 +1921,7 @@ export default function OrdersPage() {
           />
           <form onSubmit={handleEditSubmit}>
             <EntityFormBody>
-            <div className="space-y-2">
-              <Label className="text-slate-600">Loại thuê</Label>
+            <EntityFormField label="Loại thuê">
               <EntityFormToggle
                 value={editFormData.rentalTerm}
                 onChange={(val) => setEditFormData({ ...editFormData, rentalTerm: val as RentalTerm })}
@@ -1946,27 +1930,25 @@ export default function OrdersPage() {
                   { value: "long", label: "Thuê dài hạn" },
                 ]}
               />
-            </div>
+            </EntityFormField>
 
-            <div className="space-y-2">
-              <Label className="text-slate-600">Khách hàng</Label>
+            <EntityFormField label="Khách hàng">
               <Input
                 value={editingOrder?.customerName || ""}
                 disabled
-                className="bg-slate-100 border-slate-200 rounded-xl text-slate-500 cursor-not-allowed"
+                className={cn(entityFormInputClass, "bg-slate-100 text-slate-500 cursor-not-allowed")}
               />
-            </div>
+            </EntityFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-vehicle" className="text-slate-600">Xe thuê</Label>
+            <EntityFormField label="Xe thuê">
               <Select
                 value={editFormData.vehicleId}
                 onValueChange={(value) => setEditFormData({ ...editFormData, vehicleId: value })}
               >
-                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
+                <SelectTrigger className={entityFormInputClass}>
                   <SelectValue placeholder="Chọn xe" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-slate-200 rounded-xl">
+                <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
                   {vehicles
                     .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
                     .map((vehicle) => (
@@ -1976,35 +1958,32 @@ export default function OrdersPage() {
                     ))}
                 </SelectContent>
               </Select>
-            </div>
+            </EntityFormField>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-startDate" className="text-slate-600">Ngày bắt đầu</Label>
-                <Input
+              <EntityFormField label="Ngày bắt đầu">
+              <Input
                   id="edit-startDate"
                   type="date"
                   value={editFormData.startDate}
                   onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
-                  className="bg-slate-50 border-slate-200 rounded-xl"
+                  className={entityFormInputClass}
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-endDate" className="text-slate-600">Ngày kết thúc</Label>
-                <Input
+            </EntityFormField>
+              <EntityFormField label="Ngày kết thúc">
+              <Input
                   id="edit-endDate"
                   type="date"
                   value={editFormData.endDate}
                   onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
-                  className="bg-slate-50 border-slate-200 rounded-xl"
+                  className={entityFormInputClass}
                   required
                 />
-              </div>
+            </EntityFormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-deposit" className="text-slate-600">Tiền đặt cọc (VND)</Label>
+            <EntityFormField label="Tiền đặt cọc (VND)">
               <Input
                 id="edit-deposit"
                 type="text"
@@ -2013,13 +1992,12 @@ export default function OrdersPage() {
                   const formatted = formatMoneyInput(e.target.value)
                   setEditFormData({ ...editFormData, deposit: formatted })
                 }}
-                className="bg-slate-50 border-slate-200 rounded-xl font-mono"
+                className={cn(entityFormInputClass, "font-mono")}
                 required
               />
-            </div>
+            </EntityFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-extraFees" className="text-slate-600">Phí phát sinh (VND)</Label>
+            <EntityFormField label="Phí phát sinh (VND)">
               <Input
                 id="edit-extraFees"
                 type="text"
@@ -2028,26 +2006,24 @@ export default function OrdersPage() {
                   const formatted = formatMoneyInput(e.target.value)
                   setEditFormData({ ...editFormData, extraFees: formatted })
                 }}
-                className="bg-slate-50 border-slate-200 rounded-xl font-mono"
+                className={cn(entityFormInputClass, "font-mono")}
                 placeholder="0"
               />
-            </div>
+            </EntityFormField>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-homeName" className="text-slate-600">Tên Home (Homestay giới thiệu)</Label>
-                <Input
+              <EntityFormField label="Tên Home (Homestay giới thiệu)">
+              <Input
                   id="edit-homeName"
                   type="text"
                   value={editFormData.homeName}
                   onChange={(e) => setEditFormData({ ...editFormData, homeName: e.target.value })}
                   placeholder="VD: Home ABC"
-                  className="bg-slate-50 border-slate-200 rounded-xl"
+                  className={entityFormInputClass}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-commissionHome" className="text-slate-600">Chia hoa hồng cho Home (VND/ngày)</Label>
-                <Input
+            </EntityFormField>
+              <EntityFormField label="Chia hoa hồng cho Home (VND/ngày)">
+              <Input
                   id="edit-commissionHome"
                   type="text"
                   value={editFormData.commissionHome}
@@ -2056,39 +2032,37 @@ export default function OrdersPage() {
                     setEditFormData({ ...editFormData, commissionHome: formatted })
                   }}
                   placeholder="VD: 20.000"
-                  className="bg-slate-50 border-slate-200 rounded-xl font-mono"
+                  className={cn(entityFormInputClass, "font-mono")}
                 />
-              </div>
+            </EntityFormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-notes" className="text-slate-600">Ghi chú</Label>
+            <EntityFormField label="Ghi chú">
               <Textarea
                 id="edit-notes"
                 value={editFormData.notes}
                 onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-                className="bg-slate-50 border-slate-200 rounded-xl min-h-20 resize-y"
+                className={cn(entityFormInputClass, "min-h-20 resize-y")}
                 placeholder="Nhập ghi chú cho đơn thuê..."
               />
-            </div>
+            </EntityFormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-status" className="text-slate-600">Trạng thái</Label>
+            <EntityFormField label="Trạng thái">
               <Select
                 value={editFormData.status}
                 onValueChange={(value: RentalOrder["status"]) => setEditFormData({ ...editFormData, status: value })}
               >
-                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-xl">
+                <SelectTrigger className={entityFormInputClass}>
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-slate-200 rounded-xl">
+                <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
                   <SelectItem value="pending">Chờ giao xe</SelectItem>
                   <SelectItem value="active">Đang thuê</SelectItem>
                   <SelectItem value="completed">Hoàn thành</SelectItem>
                   <SelectItem value="cancelled">Đã hủy</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </EntityFormField>
 
             </EntityFormBody>
             <EntityFormFooter
@@ -2160,18 +2134,18 @@ export default function OrdersPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số CCCD / CMND</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Số CCCD / CMND</p>
                       <p className="text-sm font-bold text-slate-800 font-mono">{cust.idcard || "—"}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Tổng lần thuê</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Tổng lần thuê</p>
                       <p className="text-lg font-extrabold text-slate-800">{cust.totalrentals || custRentals.length} lượt</p>
                     </div>
                   </div>
 
                   {docImages.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh tài liệu</p>
+                      <p className="text-meta text-slate-500 mb-2">Ảnh tài liệu</p>
                       <div className="grid grid-cols-2 gap-3">
                         {docImages.map((img) => (
                           <div key={img.label}>
@@ -2190,13 +2164,13 @@ export default function OrdersPage() {
 
                   {custRentals.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {custRentals.slice(0, 4).map((r) => (
                           <div key={r.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{r.vehicleName}</span>
                             <span className="text-slate-400 font-mono shrink-0">{r.licensePlate}</span>
-                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
                               {(r.totalPrice || 0).toLocaleString("vi-VN")}đ
                             </span>
                           </div>
@@ -2286,16 +2260,16 @@ export default function OrdersPage() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Giá thuê/ngày</p>
                       <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
                     </div>
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-amber-600 uppercase">Giá mua</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Giá mua</p>
                       <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(v.purchasePrice)}</p>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-emerald-600 uppercase">Tổng thu</p>
+                      <p className="text-meta text-slate-500">Tổng thu</p>
                       <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{formatPrice(totalRevenue)}</p>
                     </div>
                     <div className={cn(
@@ -2303,7 +2277,7 @@ export default function OrdersPage() {
                       profit >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
                     )}>
                       <p className={cn(
-                        "text-sm font-semibold uppercase",
+                        "text-meta",
                         profit >= 0 ? "text-emerald-600" : "text-blue-600"
                       )}>Lợi nhuận</p>
                       <p className={cn(
@@ -2317,42 +2291,42 @@ export default function OrdersPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số KM hiện tại</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Số KM hiện tại</p>
                       <p className="text-sm font-bold text-slate-800">{(v.current_km || 0).toLocaleString("vi-VN")} km</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Ngày đã cho thuê</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Ngày đã cho thuê</p>
                       <p className="text-sm font-bold text-slate-800">{v.totalRentalDays || 0} ngày</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Lấp đầy 30 ngày</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Lấp đầy 30 ngày</p>
                       <p className={cn(
                         "text-sm font-extrabold tabular-nums",
                         u30.pct >= 70 ? "text-emerald-600" : u30.pct >= 40 ? "text-amber-600" : "text-blue-500"
                       )}>{u30.pct}%</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Tổng đơn thuê</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Tổng đơn thuê</p>
                       <p className="text-sm font-bold text-slate-800">{totalRentalCount} đơn</p>
                     </div>
                   </div>
 
                   {v.notes && v.notes.trim() && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
                       <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {recentOrders.map((o) => (
                           <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
                             <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
-                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
                               {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
                             </span>
                           </div>
@@ -2365,7 +2339,7 @@ export default function OrdersPage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <p className="text-meta text-slate-500 mb-2">Ảnh xe</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.vehicleImages.map((img, index) => (
                               <div
@@ -2384,7 +2358,7 @@ export default function OrdersPage() {
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <p className="text-meta text-slate-500 mb-2">Ảnh giấy tờ</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.documentImages.map((img, index) => (
                               <div

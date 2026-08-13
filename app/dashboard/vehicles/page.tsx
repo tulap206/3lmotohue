@@ -907,7 +907,14 @@ export default function VehiclesPage() {
 
       <div className="space-y-4">
         <ModuleKpiGrid columns={5}>
-          <RentalKpiCard variant="hero" label="Tổng số xe" value={vehicleStats.total} sublabel={`${filteredVehicles.length} đang lọc`} />
+          <RentalKpiCard
+            variant="hero"
+            label="Tổng số xe"
+            value={vehicleStats.total}
+            sublabel={`${filteredVehicles.length} đang lọc`}
+            onClick={() => setStatusFilter("all")}
+            selected={statusFilter === "all"}
+          />
           <RentalKpiCard
             variant="hero"
             label="Sẵn sàng"
@@ -915,6 +922,7 @@ export default function VehiclesPage() {
             sublabel="Có thể cho thuê"
             valueClassName="text-emerald-700"
             onClick={() => setStatusFilter("available")}
+            selected={statusFilter === "available"}
           />
           <RentalKpiCard
             variant="hero"
@@ -923,6 +931,7 @@ export default function VehiclesPage() {
             sublabel="Chờ giao xe"
             valueClassName="text-amber-700"
             onClick={() => setStatusFilter("pending")}
+            selected={statusFilter === "pending"}
           />
           <RentalKpiCard
             variant="hero"
@@ -931,6 +940,7 @@ export default function VehiclesPage() {
             sublabel="Xe đang cho khách"
             valueClassName="text-blue-700"
             onClick={() => setStatusFilter("rented")}
+            selected={statusFilter === "rented"}
           />
           <RentalKpiCard
             variant="hero"
@@ -939,6 +949,7 @@ export default function VehiclesPage() {
             sublabel="Tạm ngừng cho thuê"
             valueClassName="text-amber-700"
             onClick={() => setStatusFilter("maintenance")}
+            selected={statusFilter === "maintenance"}
           />
         </ModuleKpiGrid>
 
@@ -1022,10 +1033,16 @@ export default function VehiclesPage() {
                             {(() => {
                               const { utilizationRate, revenue30d } = vehiclePerformanceMap[vehicle.id] || { utilizationRate: 0, revenue30d: 0 }
                               return (
-                                <div className="flex flex-col items-center gap-1">
+                                <div className="flex flex-col items-center gap-1.5 w-full max-w-[7.5rem] mx-auto">
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-100">
                                     Lấp đầy: {utilizationRate}%
                                   </span>
+                                  <div className="w-full h-1.5 rounded-[var(--radius-badge)] bg-slate-100 overflow-hidden">
+                                    <div
+                                      className="h-full rounded-[var(--radius-badge)] bg-blue-600"
+                                      style={{ width: `${Math.min(100, Math.max(0, utilizationRate))}%` }}
+                                    />
+                                  </div>
                                   {revenue30d > 0 && (
                                     <span className="text-meta font-semibold text-rose-600 tabular-nums money">
                                       {formatPrice(revenue30d)}
@@ -1438,16 +1455,16 @@ export default function VehiclesPage() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-blue-600 uppercase">Giá thuê/ngày</p>
-                      <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Giá thuê/ngày</p>
+                      <p className="text-sm font-extrabold text-slate-900 money tabular-nums">{formatPrice(v.pricePerDay)}</p>
                     </div>
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-amber-600 uppercase">Giá mua</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Giá mua</p>
                       <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(v.purchasePrice)}</p>
                     </div>
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-emerald-600 uppercase">Tổng thu</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
+                      <p className="text-meta text-slate-500">Tổng thu</p>
                       <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{formatPrice(totalRevenue)}</p>
                     </div>
                     <div className={cn(
@@ -1456,11 +1473,11 @@ export default function VehiclesPage() {
                     )}>
                       <p className={cn(
                         "text-sm font-semibold uppercase",
-                        profit >= 0 ? "text-emerald-600" : "text-blue-600"
+                        profit >= 0 ? "text-emerald-600" : "text-slate-500"
                       )}>Lợi nhuận</p>
                       <p className={cn(
                         "text-sm font-extrabold tabular-nums",
-                        profit >= 0 ? "text-emerald-700" : "text-blue-600"
+                        profit >= 0 ? "text-emerald-700 money" : "text-slate-900 money"
                       )}>
                         {profit >= 0 ? "+" : ""}{formatPrice(profit)}
                       </p>
@@ -1469,42 +1486,42 @@ export default function VehiclesPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số KM hiện tại</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Số KM hiện tại</p>
                       <p className="text-sm font-bold text-slate-800">{(v.current_km || 0).toLocaleString("vi-VN")} km</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Ngày đã cho thuê</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Ngày đã cho thuê</p>
                       <p className="text-sm font-bold text-slate-800">{v.totalRentalDays || 0} ngày</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Lấp đầy 30 ngày</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Lấp đầy 30 ngày</p>
                       <p className={cn(
                         "text-sm font-extrabold tabular-nums",
                         u30.pct >= 70 ? "text-emerald-600" : u30.pct >= 40 ? "text-amber-600" : "text-blue-500"
                       )}>{u30.pct}%</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Tổng đơn thuê</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Tổng đơn thuê</p>
                       <p className="text-sm font-bold text-slate-800">{totalRentalCount} đơn</p>
                     </div>
                   </div>
 
                   {v.notes && v.notes.trim() && (
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-1">Ghi chú</p>
+                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
                       <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {recentOrders.map((o) => (
                           <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
                             <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
-                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
                               {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
                             </span>
                           </div>
@@ -1517,7 +1534,7 @@ export default function VehiclesPage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh xe</p>
+                          <p className="text-meta text-slate-500 mb-2">Ảnh xe</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.vehicleImages.map((img, index) => (
                               <div
@@ -1536,7 +1553,7 @@ export default function VehiclesPage() {
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh giấy tờ</p>
+                          <p className="text-meta text-slate-500 mb-2">Ảnh giấy tờ</p>
                           <div className="grid grid-cols-3 gap-2">
                             {v.documentImages.map((img, index) => (
                               <div
@@ -1597,23 +1614,23 @@ export default function VehiclesPage() {
             {historyVehicle && (
               <div className="space-y-4">
                 {getVehicleHistory(historyVehicle.id).length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+                  <div className="text-center py-8 text-slate-400">
                     <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p>Chưa có lịch sử hoạt động</p>
                   </div>
                 ) : (
                   <div className="relative">
-                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
                     <div className="space-y-4">
                       {getVehicleHistory(historyVehicle.id).map((log) => (
                         <div key={log.id} className="relative pl-10">
                           <div className={`absolute left-2.5 w-3 h-3 rounded-full ${
-                            log.type === "rent" ? "bg-chart-2" : 
-                            log.type === "return" ? "bg-primary" : "bg-chart-5"
+                            log.type === "rent" ? "bg-blue-500" :
+                            log.type === "return" ? "bg-emerald-500" : "bg-amber-500"
                           }`} />
-                          <div className="bg-muted/30 rounded-lg p-3">
+                          <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${historyTypeConfig[log.type].className}`}>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] text-sm font-medium ${historyTypeConfig[log.type].className}`}>
                                 {historyTypeConfig[log.type].label}
                               </span>
                               <span className="text-sm text-muted-foreground">{log.datetime}</span>

@@ -746,6 +746,7 @@ export default function CustomersPage() {
               </>
             }
             onClick={() => setFilterStatus("all")}
+            selected={filterStatus === "all"}
           />
           <RentalKpiCard
             variant="hero"
@@ -754,6 +755,7 @@ export default function CustomersPage() {
             sublabel="Đơn chờ xử lý"
             valueClassName="text-amber-700"
             onClick={() => setFilterStatus("pending")}
+            selected={filterStatus === "pending"}
           />
           <RentalKpiCard
             variant="hero"
@@ -762,6 +764,7 @@ export default function CustomersPage() {
             sublabel="Khách đang giữ xe"
             valueClassName="text-blue-700"
             onClick={() => setFilterStatus("renting")}
+            selected={filterStatus === "renting"}
           />
           <RentalKpiCard
             variant="hero"
@@ -770,6 +773,7 @@ export default function CustomersPage() {
             sublabel="Không giao dịch"
             valueClassName="text-slate-600"
             onClick={() => setFilterStatus("inactive")}
+            selected={filterStatus === "inactive"}
           />
         </ModuleKpiGrid>
 
@@ -842,7 +846,7 @@ export default function CustomersPage() {
                                   {customer.name}
                                 </button>
                                 <p className="text-meta font-medium">
-                                  Đã thuê: <span className="font-semibold text-blue-700">{customer.totalrentals} lượt</span>
+                                  Đã thuê: <span className="font-semibold text-slate-600">{customer.totalrentals} lượt</span>
                                 </p>
                               </div>
                             </div>
@@ -923,7 +927,7 @@ export default function CustomersPage() {
                           >
                             {customer.name}
                           </button>
-                          <p className="text-meta">Đã thuê: <span className="font-semibold text-blue-700">{customer.totalrentals} lượt</span></p>
+                          <p className="text-meta">Đã thuê: <span className="font-semibold text-slate-600">{customer.totalrentals} lượt</span></p>
                         </div>
                       </div>
                       <span className={cn(customerStatusBadgeClass, "shrink-0", rentalCustomerStatusBadgeClass(customer.status))}>
@@ -1007,8 +1011,8 @@ export default function CustomersPage() {
                     <p className="text-lg font-extrabold text-emerald-700">{cRentals.filter(r => r.status === "completed").length}</p>
                   </div>
                   <div className="bg-blue-50 rounded-xl p-3 text-center">
-                    <p className="text-sm text-blue-500">Tổng doanh thu</p>
-                    <p className="text-sm font-extrabold text-blue-700 tabular-nums">{totalRev.toLocaleString("vi-VN")}đ</p>
+                    <p className="text-meta text-slate-500">Tổng doanh thu</p>
+                    <p className="text-sm font-extrabold text-emerald-700 money tabular-nums">{totalRev.toLocaleString("vi-VN")}đ</p>
                   </div>
                 </div>
                 {cRentals.length === 0 ? (
@@ -1110,18 +1114,18 @@ export default function CustomersPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Số CCCD / CMND</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Số CCCD / CMND</p>
                       <p className="text-sm font-bold text-slate-800 font-mono">{cust.idcard || "—"}</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-0.5">Tổng lần thuê</p>
+                      <p className="text-meta text-slate-500 mb-0.5">Tổng lần thuê</p>
                       <p className="text-lg font-extrabold text-slate-800">{cust.totalrentals || custRentals.length} lượt</p>
                     </div>
                   </div>
 
                   {docImages.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Ảnh tài liệu</p>
+                      <p className="text-meta text-slate-500 mb-2">Ảnh tài liệu</p>
                       <div className="grid grid-cols-2 gap-3">
                         {docImages.map((img) => (
                           <div key={img.label}>
@@ -1139,13 +1143,13 @@ export default function CustomersPage() {
 
                   {custRentals.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-slate-500 uppercase mb-2">Đơn thuê gần đây</p>
+                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
                       <div className="space-y-1.5">
                         {custRentals.slice(0, 4).map((r) => (
                           <div key={r.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
                             <span className="font-bold text-slate-700 truncate">{r.vehicleName}</span>
                             <span className="text-slate-400 font-mono shrink-0">{r.licensePlate}</span>
-                            <span className="font-bold tabular-nums text-blue-600 shrink-0">
+                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
                               {(r.totalPrice || 0).toLocaleString("vi-VN")}đ
                             </span>
                           </div>

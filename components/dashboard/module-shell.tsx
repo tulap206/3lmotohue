@@ -193,6 +193,7 @@ export function ModuleKpiCard({
   valueClassName,
   valueTitle,
   onClick,
+  selected = false,
   variant = "compact",
   icon,
   iconColor,
@@ -206,6 +207,7 @@ export function ModuleKpiCard({
   valueClassName?: string
   valueTitle?: string
   onClick?: () => void
+  selected?: boolean
   variant?: "compact" | "hero"
   icon?: React.ReactNode
   iconColor?: string
@@ -240,10 +242,12 @@ export function ModuleKpiCard({
             "ui-transition",
             ACCENT_KPI_HOVER_CLASS[accent],
             onClick && "cursor-pointer",
+            selected && "ring-2 ring-blue-500/35 border-blue-200",
             isOverdue && "animate-pulse-red-glow-direct"
           )}
           style={{ animationDelay: `${delay * 60}ms` }}
           onClick={onClick}
+          aria-pressed={onClick ? selected : undefined}
         >
           {watermark && (
             <div
@@ -285,9 +289,11 @@ export function ModuleKpiCard({
         "module-card group relative rounded-[var(--radius-container)] border border-slate-100/80 overflow-hidden",
         "ui-transition",
         ACCENT_KPI_HOVER_CLASS[accent],
-        onClick && "cursor-pointer"
+        onClick && "cursor-pointer",
+        selected && "ring-2 ring-blue-500/35 border-blue-200"
       )}
       onClick={onClick}
+      aria-pressed={onClick ? selected : undefined}
     >
       {watermark && (
         <div

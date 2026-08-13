@@ -37,6 +37,8 @@ import {
   EntityFormToggle,
   EntityFormInfoBox,
   EntityFormTip,
+  EntityFormField,
+  entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
 import { fetchVehicles, fetchRentals, fetchTransactions, fetchCustomers, insertCustomer, insertTransaction, deleteTransaction, updateTransaction, supabase } from "@/lib/supabase"
 import { uploadImage } from "@/lib/storage"
@@ -852,7 +854,7 @@ export default function DashboardPage() {
               variant="hero"
               label="Quá hạn"
               value={stats.overdueRentals}
-              valueClassName="text-amber-700"
+              valueClassName="text-rose-600"
               sublabel="đơn trễ hạn trả"
               onClick={() => router.push("/dashboard/orders?status=overdue")}
             />
@@ -874,7 +876,7 @@ export default function DashboardPage() {
               variant="hero"
               label="Tổng lợi nhuận"
               value={formatPrice(stats.totalProfit)}
-              valueClassName="text-blue-700"
+              valueClassName="text-slate-900"
               sublabel="sau chi vận hành"
             />
             <RentalKpiCard
@@ -897,13 +899,13 @@ export default function DashboardPage() {
                   ? `sau chi vận hành + HH Home`
                   : "sau chi vận hành"
               }
-              valueClassName="text-blue-700"
+              valueClassName="text-slate-900"
             />
             <RentalKpiCard
               variant="hero"
               label="Tiền quỹ còn lại"
               value={formatPrice(stats.cashOnHand)}
-              valueClassName={stats.cashOnHand >= 0 ? "text-blue-700" : "text-rose-700"}
+              valueClassName={stats.cashOnHand >= 0 ? "text-slate-900" : "text-rose-700"}
               sublabel="số dư quỹ tích lũy"
             />
             <RentalKpiCard
@@ -996,19 +998,19 @@ export default function DashboardPage() {
                             </td>
                             <td className="py-3 px-4">
                               {isDividendTransaction(tx) ? (
-                                <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-purple-50 text-purple-700 border-purple-100">
+                                <span className="inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border bg-slate-100 text-slate-700 border-slate-200">
                                   Cổ tức
                                 </span>
                               ) : isSalaryTransaction(tx) ? (
-                                <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-100">
+                                <span className="inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border bg-slate-100 text-slate-600 border-slate-200">
                                   Lương NV
                                 </span>
                               ) : isCapitalTransaction(tx) ? (
-                                <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-700 border-amber-100">
+                                <span className="inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border bg-amber-50 text-amber-700 border-amber-100">
                                   Vốn/Tài sản
                                 </span>
                               ) : (
-                                <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                                <span className={`inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border ${
                                   tx.type === "income"
                                     ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                                     : "bg-rose-50 text-rose-700 border-rose-100"
@@ -1030,17 +1032,17 @@ export default function DashboardPage() {
                                 <div className="flex gap-1 justify-center">
                                   <button
                                     onClick={() => handleEditTx(tx)}
-                                    className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-lg transition"
+                                    className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-[var(--radius-control)] transition"
                                     title="Sửa"
                                   >
-                                    <Edit2 className="w-3.5 h-3.5" />
+                                    <Edit2 className="w-4 h-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteTx(tx)}
-                                    className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1 rounded-lg transition"
+                                    className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[var(--radius-control)] transition"
                                     title="Xoá"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <Trash2 className="w-4 h-4" />
                                   </button>
                                 </div>
                               </td>
@@ -1054,19 +1056,19 @@ export default function DashboardPage() {
                     <ModuleMobileCard key={tx.id}>
                       <div className="flex justify-between items-start gap-2">
                         {isDividendTransaction(tx) ? (
-                          <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-purple-50 text-purple-700 border-purple-100">
+                          <span className="inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border bg-slate-100 text-slate-700 border-slate-200">
                             Cổ tức
                           </span>
                         ) : isSalaryTransaction(tx) ? (
-                          <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-100">
+                          <span className="inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border bg-slate-100 text-slate-600 border-slate-200">
                             Lương NV
                           </span>
                         ) : isCapitalTransaction(tx) ? (
-                          <span className="inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-700 border-amber-100">
+                          <span className="inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border bg-amber-50 text-amber-700 border-amber-100">
                             Vốn/Tài sản
                           </span>
                         ) : (
-                          <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                          <span className={`inline-flex text-meta font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border ${
                             tx.type === "income"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                               : "bg-rose-50 text-rose-700 border-rose-100"
@@ -1074,7 +1076,7 @@ export default function DashboardPage() {
                             {getRentalTransactionTypeLabel(tx.type)}
                           </span>
                         )}
-                        <span className="text-xs text-slate-400 font-medium">
+                        <span className="text-meta text-slate-400 font-medium">
                           {formatDisplayDate(tx.timestamp || tx.created_at)}
                         </span>
                       </div>
@@ -1083,24 +1085,24 @@ export default function DashboardPage() {
                         <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-rose-600"}`}>
                           {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
                         </span>
-                        <span className="text-slate-500 text-xs">bởi {tx.user}</span>
+                        <span className="text-meta text-slate-500">bởi {tx.user}</span>
                       </div>
                       {user?.role === "admin" && (
                         <div className="flex justify-end gap-3 mt-2 pt-2 border-t border-slate-100/50">
                           <button
                             onClick={() => handleEditTx(tx)}
-                            className="text-slate-500 hover:text-blue-600 p-1 flex items-center gap-1 text-xs font-medium"
+                            className="h-9 px-2.5 inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-meta font-medium rounded-[var(--radius-control)]"
                             title="Sửa"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            <Edit2 className="w-4 h-4" />
                             Sửa
                           </button>
                           <button
                             onClick={() => handleDeleteTx(tx)}
-                            className="text-rose-500 hover:text-rose-600 p-1 flex items-center gap-1 text-xs font-medium"
+                            className="h-9 px-2.5 inline-flex items-center gap-1.5 text-rose-500 hover:text-rose-600 text-meta font-medium rounded-[var(--radius-control)]"
                             title="Xóa"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                             Xóa
                           </button>
                         </div>
@@ -1126,15 +1128,14 @@ export default function DashboardPage() {
       <Dialog open={isAddTxOpen} onOpenChange={setIsAddTxOpen}>
         <EntityFormDialogContent accent="blue" maxWidth="md">
           <EntityFormHeader
-            title="Thêm Khoản Thu/Chi"
+            title="Thêm khoản thu/chi"
             description="Nhập thông tin khoản thu hoặc chi"
           />
           <form onSubmit={handleAddTx}>
             <EntityFormBody>
-              <div>
-                <Label className="text-slate-700 text-sm font-medium">Loại</Label>
+              <EntityFormField label="Loại">
                 <Select value={txFormData.type} onValueChange={(val) => setTxFormData({ ...txFormData, type: val as "income" | "expense" })}>
-                  <SelectTrigger className="border-slate-300 rounded-lg">
+                  <SelectTrigger className={entityFormInputClass}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
@@ -1142,14 +1143,13 @@ export default function DashboardPage() {
                     <SelectItem value="expense">Chi</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label className="text-slate-700 text-sm font-medium">Phân loại khoản</Label>
+              </EntityFormField>
+              <EntityFormField label="Phân loại khoản" hint="Ví dụ vốn: góp vốn, mua xe, mũ, định vị. Không làm lệch doanh thu/lợi nhuận.">
                 <Select
                   value={txFormData.isCapital ? "capital" : "operating"}
                   onValueChange={(val) => setTxFormData({ ...txFormData, isCapital: val === "capital" })}
                 >
-                  <SelectTrigger className="border-slate-300 rounded-lg">
+                  <SelectTrigger className={entityFormInputClass}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
@@ -1157,29 +1157,25 @@ export default function DashboardPage() {
                     <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-slate-500 mt-1">Ví dụ vốn: góp vốn, mua xe, mũ, định vị. Không làm lệch doanh thu/lợi nhuận.</p>
-              </div>
-              <div>
-                <Label className="text-slate-700 text-sm font-medium">Mô Tả</Label>
+              </EntityFormField>
+              <EntityFormField label="Mô tả">
                 <Input
                   placeholder="Nhập mô tả (ví dụ: mua định vị, sửa xe)"
                   value={txFormData.description}
                   onChange={(e) => setTxFormData({ ...txFormData, description: e.target.value })}
-                  className="border-slate-300 rounded-lg"
+                  className={entityFormInputClass}
                 />
-              </div>
-               <div>
-                 <Label className="text-slate-700 text-sm font-medium">Ngày Giao Dịch</Label>
-                 <Input
+              </EntityFormField>
+               <EntityFormField label="Ngày giao dịch">
+                <Input
                    type="date"
                    value={txFormData.timestamp}
                    onChange={(e) => setTxFormData({ ...txFormData, timestamp: e.target.value })}
-                   className="border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                   className={entityFormInputClass}
                  />
-               </div>
-               <div>
-                 <Label className="text-slate-700 text-sm font-medium">Số Tiền (VND)</Label>
-                 <Input
+              </EntityFormField>
+               <EntityFormField label="Số tiền (VND)">
+                <Input
                    type="text"
                    placeholder="Nhập số tiền (VD: 1.000.000)"
                    value={txFormData.amount}
@@ -1189,7 +1185,7 @@ export default function DashboardPage() {
                    }}
                    className="border-slate-300 rounded-lg font-mono"
                  />
-               </div>
+              </EntityFormField>
              </EntityFormBody>
             <EntityFormFooter
               accent="blue"
@@ -1241,15 +1237,14 @@ export default function DashboardPage() {
       <Dialog open={isEditTxOpen} onOpenChange={setIsEditTxOpen}>
         <EntityFormDialogContent accent="blue" maxWidth="md">
           <EntityFormHeader
-            title="Sửa Khoản Thu/Chi"
+            title="Sửa khoản thu/chi"
             description="Cập nhật thông tin khoản thu/chi"
           />
           <form onSubmit={(e) => { e.preventDefault(); handleConfirmEditTx(); }}>
             <EntityFormBody>
-            <div>
-              <Label className="text-slate-700 text-sm font-medium">Loại</Label>
-              <Select value={txEditFormData.type} onValueChange={(val) => setTxEditFormData({...txEditFormData, type: val as "income" | "expense"})}>
-                <SelectTrigger className="border-slate-300 rounded-lg">
+            <EntityFormField label="Loại">
+                <Select value={txEditFormData.type} onValueChange={(val) => setTxEditFormData({...txEditFormData, type: val as "income" | "expense"})}>
+                <SelectTrigger className={entityFormInputClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
@@ -1257,14 +1252,13 @@ export default function DashboardPage() {
                   <SelectItem value="expense">Chi</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label className="text-slate-700 text-sm font-medium">Phân loại khoản</Label>
-              <Select
+              </EntityFormField>
+            <EntityFormField label="Phân loại khoản">
+                <Select
                 value={txEditFormData.isCapital ? "capital" : "operating"}
                 onValueChange={(val) => setTxEditFormData({ ...txEditFormData, isCapital: val === "capital" })}
               >
-                <SelectTrigger className="border-slate-300 rounded-lg">
+                <SelectTrigger className={entityFormInputClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
@@ -1272,28 +1266,25 @@ export default function DashboardPage() {
                   <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label className="text-slate-700 text-sm font-medium">Mô Tả</Label>
-              <Input
+              </EntityFormField>
+            <EntityFormField label="Mô tả">
+                <Input
                 placeholder="Nhập mô tả"
                 value={txEditFormData.description}
                 onChange={(e) => setTxEditFormData({...txEditFormData, description: e.target.value})}
-                className="border-slate-300 rounded-lg"
+                className={entityFormInputClass}
               />
-            </div>
-            <div>
-              <Label className="text-slate-700 text-sm font-medium">Ngày Giao Dịch</Label>
-              <Input
+              </EntityFormField>
+            <EntityFormField label="Ngày giao dịch">
+                <Input
                 type="date"
                 value={txEditFormData.timestamp}
                 onChange={(e) => setTxEditFormData({ ...txEditFormData, timestamp: e.target.value })}
-                className="border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                className={entityFormInputClass}
               />
-            </div>
-            <div>
-              <Label className="text-slate-700 text-sm font-medium">Số Tiền (VND)</Label>
-              <Input
+              </EntityFormField>
+            <EntityFormField label="Số tiền (VND)">
+                <Input
                 type="text"
                 placeholder="Nhập số tiền (VD: 1.000.000)"
                 value={txEditFormData.amount}
@@ -1303,7 +1294,7 @@ export default function DashboardPage() {
                 }}
                 className="border-slate-300 rounded-lg font-mono"
               />
-            </div>
+              </EntityFormField>
             </EntityFormBody>
             <EntityFormFooter
               accent="blue"
@@ -1323,7 +1314,7 @@ export default function DashboardPage() {
           />
           <form onSubmit={handleSubmit} className="space-y-6">
             <EntityFormBody>
-              <EntityFormSection title="👤 1. Thông tin khách thuê" description="Chọn khách hàng hiện có hoặc thêm khách mới để tạo đơn thuê">
+              <EntityFormSection title="1. Thông tin khách thuê" description="Chọn khách hàng hiện có hoặc thêm khách mới để tạo đơn thuê">
                 <EntityFormToggle
                   value={isNewCustomer ? "new" : "existing"}
                   onChange={(val) => setIsNewCustomer(val === "new")}
@@ -1335,23 +1326,24 @@ export default function DashboardPage() {
 
                 {!isNewCustomer ? (
                     <div className="space-y-2 relative">
-                      <Label htmlFor="customer" className="text-slate-600">Tìm kiếm khách hàng</Label>
-                      <Input
-                        placeholder="Nhập tên, số điện thoại hoặc ID khách..."
-                        value={customerSearch}
-                        onChange={(e) => {
-                          setCustomerSearch(e.target.value)
-                          setShowCustomerDropdown(true)
-                          setFormData(prev => ({ ...prev, customerId: "" }))
-                        }}
-                        onFocus={() => setShowCustomerDropdown(true)}
-                        className="bg-white border-slate-200 rounded-xl"
-                        required={!isNewCustomer}
-                      />
+                      <EntityFormField label="Tìm kiếm khách hàng">
+                        <Input
+                          placeholder="Nhập tên, số điện thoại hoặc ID khách..."
+                          value={customerSearch}
+                          onChange={(e) => {
+                            setCustomerSearch(e.target.value)
+                            setShowCustomerDropdown(true)
+                            setFormData(prev => ({ ...prev, customerId: "" }))
+                          }}
+                          onFocus={() => setShowCustomerDropdown(true)}
+                          className={entityFormInputClass}
+                          required={!isNewCustomer}
+                        />
+                      </EntityFormField>
                       {showCustomerDropdown && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
-                          <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+                          <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
                             {filteredCustomersForSelect.length === 0 ? (
                               <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng nào</div>
                             ) : (
@@ -1377,64 +1369,66 @@ export default function DashboardPage() {
                   ) : (
                     <div className="space-y-3">
                       <EntityFormInfoBox>
-                        ℹ️ <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
+                        <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
                       </EntityFormInfoBox>
-                      <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Tên khách hàng <span className="text-rose-500">*</span></Label>
-                        <p className="text-sm text-slate-400">Họ và tên đầy đủ của khách</p>
+                      <EntityFormField label="Tên khách hàng" hint="Họ và tên đầy đủ của khách" required>
                         <Input
                           placeholder="VD: Nguyễn Văn A"
                           value={newCustomerName}
                           onChange={(e) => setNewCustomerName(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                           required={isNewCustomer}
                         />
-                      </div>
+                      </EntityFormField>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số điện thoại <span className="text-rose-500">*</span></Label>
-                        <Input
+                        <EntityFormField label="Số điện thoại" required>
+                          <Input
                           placeholder="Nhập số điện thoại..."
                           value={newCustomerPhone}
                           onChange={(e) => setNewCustomerPhone(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                           required={isNewCustomer}
                         />
+                        </EntityFormField>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Địa chỉ khách <span className="text-rose-500">*</span></Label>
-                        <Input
+                        <EntityFormField label="Địa chỉ khách" required>
+                          <Input
                           placeholder="Nhập địa chỉ..."
                           value={newCustomerAddress}
                           onChange={(e) => setNewCustomerAddress(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                           required={isNewCustomer}
                         />
+                        </EntityFormField>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Số CCCD khách (tùy chọn)</Label>
-                        <Input
+                        <EntityFormField label="Số CCCD khách (tùy chọn)">
+                          <Input
                           placeholder="Nhập số CCCD..."
                           value={newCustomerCCCD}
                           onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                         />
+                        </EntityFormField>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-slate-600 text-sm">Ảnh CCCD (tùy chọn)</Label>
-                        <Input
+                        <EntityFormField label="Ảnh CCCD (tùy chọn)">
+                          <Input
                           type="file"
                           accept="image/*"
                           onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm p-1"
+                          className={cn(entityFormInputClass, "p-1")}
                         />
+                        </EntityFormField>
                       </div>
                     </div>
                   )}
                 </EntityFormSection>
 
-                <EntityFormSection title="🚗 2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
+                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
                   <div className="space-y-3 relative">
-                    <Label htmlFor="vehicle" className="text-slate-600 text-sm">Chọn xe thuê <span className="text-rose-500">*</span></Label>
+                    <p className="text-label">Chọn xe thuê <span className="text-rose-500">*</span></p>
                     
                     {/* Selected vehicles badges */}
                     {formData.vehicleIds.length > 0 && (
@@ -1445,7 +1439,7 @@ export default function DashboardPage() {
                           return (
                             <span 
                               key={vId} 
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
+                              className="inline-flex items-center gap-1.5 text-meta font-semibold px-2.5 py-1 rounded-[var(--radius-badge)] bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
                             >
                               <span>{vObj.name} ({vObj.licensePlate})</span>
                               <button 
@@ -1466,7 +1460,7 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    <p className="text-xs text-slate-400">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
+                    <p className="text-meta">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
                     <Input
                       placeholder="VD: Wave Alpha hoặc 75F1-12345..."
                       value={vehicleSearch}
@@ -1475,7 +1469,7 @@ export default function DashboardPage() {
                         setShowVehicleDropdown(true)
                       }}
                       onFocus={() => setShowVehicleDropdown(true)}
-                      className="bg-white border-slate-200 rounded-xl"
+                      className={entityFormInputClass}
                     />
                     
                     {showVehicleDropdown && (
@@ -1508,35 +1502,37 @@ export default function DashboardPage() {
                   </div>
                 </EntityFormSection>
 
-                <EntityFormSection title="📋 3. Chi tiết hợp đồng thuê" description="Nhập ngày thuê, thời hạn và tiền đặt cọc">
+                <EntityFormSection title="3. Chi tiết hợp đồng thuê" description="Nhập ngày thuê, thời hạn và tiền đặt cọc">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label htmlFor="startDate" className="text-slate-600 text-sm">Ngày bắt đầu</Label>
-                      <Input
+                      <EntityFormField label="Ngày bắt đầu">
+                        <Input
                         id="startDate"
                         type="date"
                         value={formData.startDate}
                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                        className={entityFormInputClass}
                         required
                       />
+                      </EntityFormField>
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="endDate" className="text-slate-600 text-sm">Ngày kết thúc</Label>
-                      <Input
+                      <EntityFormField label="Ngày kết thúc">
+                        <Input
                         id="endDate"
                         type="date"
                         value={formData.endDate}
                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                        className={entityFormInputClass}
                         required
                       />
+                      </EntityFormField>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="deposit" className="text-slate-600 text-sm">Tiền đặt cọc (VND)</Label>
-                    <Input
+                    <EntityFormField label="Tiền đặt cọc (VND)">
+                      <Input
                       id="deposit"
                       type="text"
                       value={formData.deposit}
@@ -1545,9 +1541,10 @@ export default function DashboardPage() {
                         setFormData({ ...formData, deposit: formatted })
                       }}
                       placeholder="VD: 500.000"
-                      className="bg-white border-slate-200 rounded-xl font-mono h-9 text-sm"
+                      className={cn(entityFormInputClass, "font-mono")}
                       required
                     />
+                    </EntityFormField>
                   </div>
 
                   <div className="flex items-center space-x-2 pt-2">
@@ -1564,19 +1561,20 @@ export default function DashboardPage() {
                   {hasCommission && (
                     <div className="grid grid-cols-1 gap-3 pt-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
                       <div className="space-y-1">
-                        <Label htmlFor="homeName" className="text-slate-600 text-sm">Tên Home</Label>
-                        <Input
+                        <EntityFormField label="Tên Home">
+                          <Input
                           id="homeName"
                           type="text"
                           value={formData.homeName}
                           onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
                           placeholder="VD: Home ABC"
-                          className="bg-white border-slate-200 rounded-xl h-9 text-sm"
+                          className={entityFormInputClass}
                         />
+                        </EntityFormField>
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="commissionHome" className="text-slate-600 text-sm">Chia hoa hồng cho Home (VND/ngày)</Label>
-                        <Input
+                        <EntityFormField label="Chia hoa hồng cho Home (VND/ngày)">
+                          <Input
                           id="commissionHome"
                           type="text"
                           value={formData.commissionHome}
@@ -1585,14 +1583,15 @@ export default function DashboardPage() {
                             setFormData({ ...formData, commissionHome: formatted })
                           }}
                           placeholder="VD: 20.000"
-                          className="bg-white border-slate-200 rounded-xl font-mono h-9 text-sm"
+                          className={cn(entityFormInputClass, "font-mono")}
                         />
+                        </EntityFormField>
                       </div>
                     </div>
                   )}
                   <EntityFormTip
                     variant="green"
-                    title="💡 Hướng dẫn tính toán"
+                    title="Hướng dẫn tính toán"
                     items={[
                       "• Số ngày: Tính từ ngày bắt đầu đến ngày kết thúc (VD: 3 ngày)",
                       "• Tiền cọc: Thường 30-50% tổng giá thuê để bảo vệ xe",
