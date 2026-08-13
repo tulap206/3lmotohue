@@ -57,9 +57,8 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Printer, FileText, Play, CheckCircle, DollarSign } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, DollarSign } from "lucide-react"
 import { QUY79_BUSINESS } from "@/lib/business-info"
-import { PrintBusinessHeader, PrintShopPartyBlock } from "@/components/dashboard/print-business-blocks"
 import {
   type RentalTerm,
   getRentalTerm,
@@ -197,7 +196,6 @@ export default function OrdersPage() {
   const [hasCommission, setHasCommission] = useState(false)
   const { addAccessLog, user } = useAuth()
   const { orders, setOrders, customers, setCustomers, vehicles, setVehicles, isLoading: loading } = useRentalData()
-  const [printingOrder, setPrintingOrder] = useState<RentalOrder | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterTerm, setFilterTerm] = useState<RentalTerm>("short")
@@ -1518,9 +1516,6 @@ export default function OrdersPage() {
                                 <Button variant="outline" size="icon-sm" className={orderActionBtnClass} onClick={() => setViewingOrder(order)} title="Xem chi tiết">
                                   <Eye className="w-4 h-4" />
                                 </Button>
-                                <Button variant="outline" size="icon-sm" className={orderActionBtnClass} onClick={() => setPrintingOrder(order)} title="In hợp đồng">
-                                  <Printer className="w-4 h-4" />
-                                </Button>
                                 <Button variant="outline" size="icon-sm" className={orderActionBtnClass} onClick={() => openEditDialog(order)} title="Chỉnh sửa">
                                   <Pencil className="w-4 h-4" />
                                 </Button>
@@ -1601,9 +1596,6 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => setViewingOrder(order)} title="Xem chi tiết">
                             <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => setPrintingOrder(order)} title="In hợp đồng">
-                            <Printer className="w-4 h-4" />
                           </Button>
                           <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openEditDialog(order)} title="Chỉnh sửa">
                             <Pencil className="w-4 h-4" />
@@ -2391,170 +2383,6 @@ export default function OrdersPage() {
             )
           })()}
         </EntityFormDialogContent>
-      </Dialog>
-
-      {/* Print Rental Contract Modal (A4 Standard Format) */}
-      <Dialog open={printingOrder !== null} onOpenChange={(open) => !open && setPrintingOrder(null)}>
-        <DialogContent className="max-w-4xl bg-white rounded-2xl max-h-[90vh] overflow-y-auto p-6 print:p-0 print:max-h-full print:overflow-visible print:border-none print:shadow-none">
-          <DialogHeader className="print:hidden">
-            <DialogTitle className="flex justify-between items-center pr-6">
-              <span>Xem trước bản in Hợp đồng thuê xe (A4)</span>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => window.print()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm gap-2"
-                >
-                  <Printer className="w-4 h-4" /> In Hợp Đồng (A4)
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setPrintingOrder(null)}
-                  className="rounded-xl"
-                >
-                  Đóng
-                </Button>
-              </div>
-            </DialogTitle>
-            <DialogDescription>
-              Xem trước hợp đồng cho thuê xe máy và biên nhận giao nhận xe chuẩn A4.
-            </DialogDescription>
-          </DialogHeader>
-
-          {printingOrder && (() => {
-            const cust = customers.find(c => c.id === printingOrder.customerId)
-            const veh = vehicles.find(v => v.id === printingOrder.vehicleId)
-            
-            return (
-              <div id="print-area" className="bg-white p-8 border border-slate-200 rounded-xl shadow-sm max-w-[21cm] mx-auto text-slate-900 font-sans print:border-none print:shadow-none print:p-0 print:mx-0">
-                {/* Print Custom Styles */}
-                <style dangerouslySetInnerHTML={{__html: `
-                  @media print {
-                    body * {
-                      visibility: hidden;
-                    }
-                    #print-area, #print-area * {
-                      visibility: visible;
-                    }
-                    #print-area {
-                      position: absolute;
-                      left: 0;
-                      top: 0;
-                      width: 100%;
-                      height: 100%;
-                      padding: 0;
-                      margin: 0;
-                      border: none;
-                      box-shadow: none;
-                    }
-                    .print\\:hidden {
-                      display: none !important;
-                    }
-                  }
-                `}} />
-
-                <PrintBusinessHeader
-                  documentTitle="HỢP ĐỒNG CHO THUÊ XE MÁY & BIÊN NHẬN"
-                  metaLine={`Số HĐ: ${printingOrder.rentalCode || printingOrder.id} | Ngày lập: ${formatDisplayDate(printingOrder.createdAt || printingOrder.created_at || new Date())}`}
-                />
-
-                {/* Main Content Info */}
-                <div className="grid grid-cols-2 gap-6 text-sm mb-6">
-                  {/* Customer Info */}
-                  <div className="border border-slate-200 rounded-xl p-4">
-                    <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-sm">
-                      BÊN A: BÊN THUÊ XE (KHÁCH HÀNG)
-                    </h3>
-                    <div className="space-y-1.5">
-                      <p><span className="text-slate-500">Họ và tên:</span> <span className="font-bold">{printingOrder.customerName}</span></p>
-                      <p><span className="text-slate-500">Số điện thoại:</span> <span className="font-semibold">{(cust as any)?.phone || 'N/A'}</span></p>
-                      <p><span className="text-slate-500">CCCD/CMND:</span> {(cust as any)?.idcard || 'N/A'}</p>
-                      <p><span className="text-slate-500">Địa chỉ:</span> {(cust as any)?.address || 'N/A'}</p>
-                    </div>
-                  </div>
-
-                  <PrintShopPartyBlock title="BÊN B: BÊN CHO THUÊ (CỬA HÀNG)" variant="rental" />
-                </div>
-
-                {/* Vehicle Specifications */}
-                <div className="border border-slate-200 rounded-xl p-4 mb-6">
-                  <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-3 uppercase text-sm">CHI TIẾT PHƯƠNG TIỆN CHO THUÊ</h3>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                    <p><span className="text-slate-500">Tên xe máy:</span> <span className="font-bold">{printingOrder.vehicleName}</span></p>
-                    <p><span className="text-slate-500">Biển kiểm soát:</span> <span className="font-bold">{printingOrder.licensePlate}</span></p>
-                    <p><span className="text-slate-500">Màu sơn:</span> {(veh as any)?.color || 'N/A'}</p>
-                    <p><span className="text-slate-500">Số ODO lúc bàn giao:</span> {(veh as any)?.current_km?.toLocaleString('vi-VN') || 0} km</p>
-                  </div>
-                </div>
-
-                {/* Financial Details */}
-                <div className="border-2 border-slate-200 rounded-[var(--radius-container)] p-5 bg-slate-50/50 mb-6">
-                  <h3 className="font-bold text-slate-800 border-b border-slate-200 pb-1.5 mb-3 uppercase text-sm">THỜI GIAN & CHI TIẾT THANH TOÁN</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between text-slate-700">
-                      <span>Thời gian thuê xe:</span>
-                      <span className="font-semibold text-slate-900">{formatDisplayDate(printingOrder.startDate)} đến {formatDisplayDate(printingOrder.endDate)}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-700">
-                      <span>Tổng số ngày thuê:</span>
-                      <span className="font-semibold text-slate-900">{printingOrder.totalDays} ngày</span>
-                    </div>
-                    <div className="flex justify-between text-slate-700">
-                      <span>Đơn giá thuê / ngày:</span>
-                      <span className="font-semibold text-slate-900">{printingOrder.pricePerDay.toLocaleString('vi-VN')} đ / ngày</span>
-                    </div>
-                    <div className="flex justify-between text-slate-700">
-                      <span>Tiền đặt cọc thế chấp:</span>
-                      <span className="font-semibold text-amber-600">{printingOrder.deposit.toLocaleString('vi-VN')} đ</span>
-                    </div>
-                    {printingOrder.extraFees > 0 && (
-                      <div className="flex justify-between text-slate-700">
-                        <span>Phí phát sinh (nếu có):</span>
-                        <span className="font-semibold text-rose-600">{printingOrder.extraFees.toLocaleString('vi-VN')} đ</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between border-t border-slate-200 pt-2 font-bold text-base text-slate-900">
-                      <span>{printingOrder.extraFees > 0 ? "Tổng chi phí thanh toán:" : "Tổng chi phí dự kiến:"}</span>
-                      <span className="text-lg text-blue-600">{(printingOrder.totalPrice + (printingOrder.extraFees || 0)).toLocaleString('vi-VN')} đ</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Terms and Conditions */}
-                <div className="border border-slate-200 rounded-xl p-4 mb-6 text-sm text-slate-600 leading-relaxed">
-                  <h3 className="font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2 uppercase text-sm">ĐIỀU KHOẢN THỎA THUẬN</h3>
-                  <ol className="list-decimal pl-4 space-y-1.5">
-                    <li>Bên thuê xe (Bên A) cam kết tự bảo quản xe máy thuê, không sử dụng xe vào mục đích vi phạm pháp luật Việt Nam.</li>
-                    <li>Bên A phải tự chịu chi phí xăng dầu, vá lốp xe trong quá trình di chuyển thuê xe.</li>
-                    <li>Khi xảy ra sự cố hư hỏng nhẹ, Bên A vui lòng liên hệ ngay hotline Bên B để được hướng dẫn xử lý hoặc tìm tiệm sửa chữa uy tín. Trong trường hợp tai nạn hư hỏng nặng do lỗi của khách hàng, khách hàng phải đền bù chi phí sửa chữa xe theo bảng giá chính hãng.</li>
-                    <li>Thời gian bàn giao trả xe đúng hẹn ghi trong hợp đồng. Trả xe muộn sau giờ quy định sẽ tính phí phụ thu phát sinh theo chính sách của cửa hàng.</li>
-                  </ol>
-                </div>
-
-                {/* Signatures */}
-                <div className="grid grid-cols-2 text-center text-sm mt-8 mb-16">
-                  <div>
-                    <p className="font-bold uppercase text-slate-800">ĐẠI DIỆN BÊN A (KHÁCH THUÊ)</p>
-                    <p className="text-sm text-slate-400 italic mt-0.5">(Ký và ghi rõ họ tên)</p>
-                    <div className="h-16" />
-                    <p className="font-bold text-slate-900">{printingOrder.customerName}</p>
-                  </div>
-                  <div>
-                    <p className="font-bold uppercase text-slate-800">ĐẠI DIỆN BÊN B (CỬA HÀNG)</p>
-                    <p className="text-sm text-slate-400 italic mt-0.5">(Ký và đóng dấu)</p>
-                    <div className="h-16" />
-                    <p className="font-bold text-slate-900">Trần Đức Quý</p>
-                  </div>
-                </div>
-
-                {/* Footer Notes */}
-                <div className="text-center text-sm text-slate-400 border-t border-slate-100 pt-4 leading-relaxed">
-                  Cảm ơn Quý khách đã tin tưởng và sử dụng dịch vụ cho thuê xe máy tại Hệ thống Xe máy Quy79.<br />
-                  Biên nhận này làm căn cứ bàn giao tài sản và hoàn trả tiền đặt cọc cựu sau khi kiểm tra trả xe.
-                </div>
-              </div>
-            )
-          })()}
-        </DialogContent>
       </Dialog>
 
       {/* Lightbox */}
