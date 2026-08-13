@@ -499,7 +499,7 @@ export default function DashboardPage() {
     const overdue = orders.filter((o) => isOrderOverdue(o)).length
     const active = orders.filter((o) => o.status === "active" && !isOrderOverdue(o)).length
     return [
-      { name: "Chờ xử lý", value: orders.filter((o) => o.status === "pending").length },
+      { name: "Chờ giao xe", value: orders.filter((o) => o.status === "pending").length },
       { name: "Đang thuê", value: active },
       { name: "Quá hạn", value: overdue },
       { name: "Hoàn thành", value: orders.filter((o) => o.status === "completed").length },

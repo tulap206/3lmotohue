@@ -221,12 +221,14 @@ type StatusDatum = { name: string; value: number }
 type AmountDatum = { name: string; income: number; expense: number }
 
 const STATUS_TONE: Record<string, string> = {
-  "Chờ xử lý": "#D97706",
+  "Chờ giao xe": "#D97706",
   "Đang thuê": "#2563EB",
   "Quá hạn": "#E11D48",
   "Hoàn thành": "#059669",
   "Đã hủy": "#64748B",
 }
+
+const STATUS_ORDER = ["Chờ giao xe", "Đang thuê", "Quá hạn", "Hoàn thành", "Đã hủy"] as const
 
 const FLEET_TONE: Record<string, string> = {
   "Sẵn sàng": "#059669",
@@ -253,17 +255,19 @@ function RankedComposition({
         role="img"
         aria-label={`Tỷ trọng ${unit}`}
       >
-        {items.map((entry) => {
-          const pct = total > 0 ? (entry.value / total) * 100 : 0
-          return (
-            <div
-              key={entry.name}
-              className="h-full min-w-[3px] first:rounded-l-[var(--radius-badge)] last:rounded-r-[var(--radius-badge)]"
-              style={{ width: `${pct}%`, backgroundColor: entry.color }}
-              title={`${entry.name}: ${Math.round(pct)}%`}
-            />
-          )
-        })}
+        {items
+          .filter((entry) => entry.value > 0)
+          .map((entry) => {
+            const pct = total > 0 ? (entry.value / total) * 100 : 0
+            return (
+              <div
+                key={entry.name}
+                className="h-full min-w-[3px] first:rounded-l-[var(--radius-badge)] last:rounded-r-[var(--radius-badge)]"
+                style={{ width: `${pct}%`, backgroundColor: entry.color }}
+                title={`${entry.name}: ${Math.round(pct)}%`}
+              />
+            )
+          })}
       </div>
       <ul className="flex flex-col gap-3.5">
         {items.map((entry) => {
@@ -298,12 +302,21 @@ function RankedComposition({
 
 export function RentalStatusChart({ data }: { data: StatusDatum[] }) {
   const total = data.reduce((sum, d) => sum + d.value, 0)
-  const rows = data
-    .filter((d) => d.value > 0)
-    .map((d, index) => ({ ...d, color: toneFor(d.name, STATUS_TONE, index) }))
-    .sort((a, b) => b.value - a.value)
+  const byName = new Map(data.map((d) => [d.name, d.value]))
+  const extra = data.filter((d) => !(STATUS_ORDER as readonly string[]).includes(d.name) && d.value > 0)
+  const rows = [
+    ...STATUS_ORDER.map((name, index) => ({
+      name,
+      value: byName.get(name) ?? 0,
+      color: toneFor(name, STATUS_TONE, index),
+    })),
+    ...extra.map((d, index) => ({
+      ...d,
+      color: toneFor(d.name, STATUS_TONE, STATUS_ORDER.length + index),
+    })),
+  ]
 
-  if (rows.length === 0) {
+  if (total === 0) {
     return (
       <ChartShell
         title="Trạng thái đơn thuê"
