@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { BackupRestorePanel } from "@/components/dashboard/backup-restore-panel"
 import { ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
-import { formatDisplayDateTime } from "@/lib/format-date"
 
 interface BackupData {
   timestamp: string
@@ -221,16 +220,16 @@ export default function SettingsPage() {
         logger.log(user.username, user.displayName, "Sao lưu dữ liệu", "settings", `Sao lưu ${customers?.length || 0} khách, ${vehicles?.length || 0} xe, ${rentals?.length || 0} đơn thuê`)
       }
 
-      setMessage({ 
-        type: 'success', 
-        text: `✅ Sao lưu thành công!\n- ${customers?.length || 0} khách\n- ${vehicles?.length || 0} xe\n- ${rentals?.length || 0} đơn thuê\n\nFile: ${fileName}` 
+      setMessage({
+        type: "success",
+        text: `Sao lưu thành công: ${customers?.length || 0} khách, ${vehicles?.length || 0} xe, ${rentals?.length || 0} đơn thuê.`,
       })
 
       // Reload backup files
       setTimeout(() => loadBackupFiles(), 1000)
     } catch (error) {
       console.error("Backup error:", error)
-      setMessage({ type: 'error', text: `❌ Lỗi sao lưu: ${(error as any).message}` })
+      setMessage({ type: "error", text: `Lỗi sao lưu: ${(error as any).message}` })
     } finally {
       setLoading(false)
     }
@@ -241,16 +240,13 @@ export default function SettingsPage() {
     try {
       // Check admin permission
       if (user?.role !== 'admin') {
-        setMessage({ type: 'error', text: '❌ Bạn không có quyền khôi phục dữ liệu' })
+        setMessage({ type: "error", text: "Bạn không có quyền khôi phục dữ liệu" })
         return
       }
 
       setLoading(true)
       setMessage(null)
 
-      console.log("📥 Starting restore from:", fileName)
-
-      // Fetch file từ URL
       const response = await fetch(fileUrl)
       if (!response.ok) throw new Error("Lỗi tải file")
 
@@ -258,24 +254,6 @@ export default function SettingsPage() {
 
       if (!backupData.customers || !backupData.vehicles || !backupData.rentals) {
         throw new Error("File backup không hợp lệ")
-      }
-
-      // Confirm restore
-      const confirmed = window.confirm(
-        `⚠️ CẢNH BÁO KHÔI PHỤC DỮ LIỆU:\n` +
-        `Bạn có chắc chắn muốn khôi phục dữ liệu từ file này? Dữ liệu hiện tại trên hệ thống sẽ bị ghi đè hoàn toàn.\n\n` +
-        `Thông tin file:\n` +
-        `- Tên file: ${fileName}\n` +
-        `- Ngày sao lưu: ${formatDisplayDateTime(backupData.timestamp)}\n` +
-        `- Khách hàng: ${backupData.customers.length}\n` +
-        `- Xe: ${backupData.vehicles.length}\n` +
-        `- Đơn thuê: ${backupData.rentals.length}\n\n` +
-        `Hành động này không thể hoàn tác. Bạn có đồng ý tiếp tục?`
-      )
-
-      if (!confirmed) {
-        setMessage({ type: 'error', text: '❌ Khôi phục bị hủy' })
-        return
       }
 
       // Xóa dữ liệu cũ
@@ -313,40 +291,30 @@ export default function SettingsPage() {
         logger.log(user.username, user.displayName, "Khôi phục dữ liệu", "settings", `Khôi phục ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê từ file: ${fileName}`)
       }
 
-      setMessage({ 
-        type: 'success', 
-        text: `✅ Khôi phục thành công!\n- ${backupData.customers.length} khách\n- ${backupData.vehicles.length} xe\n- ${backupData.rentals.length} đơn thuê` 
+      setMessage({
+        type: "success",
+        text: `Khôi phục thành công: ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê.`,
       })
 
-      // Reload page
       setTimeout(() => window.location.reload(), 1500)
     } catch (error) {
       console.error("Restore error:", error)
-      setMessage({ type: 'error', text: `❌ Lỗi khôi phục: ${(error as any).message}` })
+      setMessage({ type: "error", text: `Lỗi khôi phục: ${(error as any).message}` })
     } finally {
       setLoading(false)
     }
   }
 
-  // Restore từ file upload
-  const handleRestoreFromUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRestoreFromUpload = async (file: File) => {
     try {
-      // Check admin permission
-      if (user?.role !== 'admin') {
-        setMessage({ type: 'error', text: '❌ Bạn không có quyền khôi phục dữ liệu' })
-        event.target.value = ""
+      if (user?.role !== "admin") {
+        setMessage({ type: "error", text: "Bạn không có quyền khôi phục dữ liệu" })
         return
       }
 
       setLoading(true)
       setMessage(null)
 
-      const file = event.target.files?.[0]
-      if (!file) return
-
-      console.log("📥 Starting restore from file:", file.name)
-
-      // Read file
       const text = await file.text()
       const backupData: BackupData = JSON.parse(text)
 
@@ -354,30 +322,10 @@ export default function SettingsPage() {
         throw new Error("File backup không hợp lệ")
       }
 
-      // Confirm restore
-      const confirmed = window.confirm(
-        `⚠️ BẠN SẼ RESTORE DỮ LIỆU TỪ FILE:\n${file.name}\n\n` +
-        `📊 Dữ liệu sẽ được nhập:\n` +
-        `- ${backupData.customers.length} khách hàng\n` +
-        `- ${backupData.vehicles.length} xe\n` +
-        `- ${backupData.rentals.length} đơn thuê\n\n` +
-        `⚠️ Dữ liệu hiện tại sẽ bị XÓA!\n\nBạn có chắc chắn không?`
-      )
-
-      if (!confirmed) {
-        setMessage({ type: 'error', text: '❌ Khôi phục bị hủy' })
-        return
-      }
-
-      // Xóa dữ liệu cũ
-      console.log("🗑️ Deleting old data...")
       await supabase.from("rentals").delete().neq("id", "00000000-0000-0000-0000-000000000000")
       await supabase.from("vehicles").delete().neq("id", "00000000-0000-0000-0000-000000000000")
       await supabase.from("customers").delete().neq("id", "00000000-0000-0000-0000-000000000000")
 
-      // Insert dữ liệu mới
-      console.log("📥 Inserting new data...")
-      
       if (backupData.customers.length > 0) {
         const { error: customersError } = await supabase
           .from("customers")
@@ -399,43 +347,39 @@ export default function SettingsPage() {
         if (rentalsError) throw rentalsError
       }
 
-      // Log to access_logs
       if (user) {
         logger.log(user.username, user.displayName, "Khôi phục dữ liệu", "settings", `Khôi phục ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê từ file tải lên`)
       }
 
-      setMessage({ 
-        type: 'success', 
-        text: `✅ Khôi phục thành công!\n- ${backupData.customers.length} khách\n- ${backupData.vehicles.length} xe\n- ${backupData.rentals.length} đơn thuê` 
+      setMessage({
+        type: "success",
+        text: `Khôi phục thành công: ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê.`,
       })
 
-      // Reload page
       setTimeout(() => window.location.reload(), 1500)
     } catch (error) {
       console.error("Restore error:", error)
-      setMessage({ type: 'error', text: `❌ Lỗi khôi phục: ${(error as any).message}` })
+      setMessage({ type: "error", text: `Lỗi khôi phục: ${(error as any).message}` })
     } finally {
       setLoading(false)
-      event.target.value = ""
     }
+  }
   }
 
   // Delete backup file
   const handleDeleteBackup = async (fileName: string) => {
     try {
-      if (!window.confirm(`Xóa file backup "${fileName}"?`)) return
-
       const { error } = await supabase.storage
         .from("backups")
         .remove([fileName])
 
       if (error) throw error
 
-      setMessage({ type: 'success', text: `✅ Xóa file thành công` })
+      setMessage({ type: "success", text: "Đã xóa file sao lưu." })
       loadBackupFiles()
     } catch (error) {
       console.error("Delete error:", error)
-      setMessage({ type: 'error', text: `❌ Lỗi xóa: ${(error as any).message}` })
+      setMessage({ type: "error", text: `Lỗi xóa: ${(error as any).message}` })
     }
   }
 
@@ -444,7 +388,7 @@ export default function SettingsPage() {
       <ModuleSubpageHeader
         module="rental"
         title="Sao lưu & khôi phục"
-        subtitle="Quản lý backup dữ liệu phân hệ cho thuê xe"
+        subtitle="Sao lưu khách, xe và đơn thuê lên đám mây. Khôi phục ghi đè toàn bộ dữ liệu hiện tại."
         breadcrumbs={[
           { label: "Cho thuê xe", href: "/dashboard" },
           { label: "Sao lưu khôi phục" },
@@ -454,7 +398,7 @@ export default function SettingsPage() {
         accent="blue"
         moduleName="Phân hệ cho thuê xe"
         scopeLabel="Khách · Xe · Đơn thuê"
-        fileHint="Tiền tố backup-, auto-backup-"
+        fileHint="Nhấn tên file để xem nội dung. Khôi phục ghi đè dữ liệu hiện tại."
         files={backupFiles}
         filesLoading={filesLoading}
         loading={loading}
