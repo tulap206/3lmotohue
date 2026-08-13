@@ -918,11 +918,19 @@ export default function DashboardPage() {
           </ModuleKpiGrid>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <RentalStatusChart data={rentalStatusChartData} />
-          <RentalFleetChart data={rentalFleetChartData} />
-          <MonthlyRevenueChart data={monthlyRevenue} formatPrice={formatPrice} />
-          <RentalIncomeExpenseChart data={rentalIncomeExpenseChartData} formatPrice={formatPrice} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-7 min-w-0">
+            <MonthlyRevenueChart data={monthlyRevenue} formatPrice={formatPrice} />
+          </div>
+          <div className="lg:col-span-5 min-w-0">
+            <RentalStatusChart data={rentalStatusChartData} />
+          </div>
+          <div className="lg:col-span-7 min-w-0">
+            <RentalIncomeExpenseChart data={rentalIncomeExpenseChartData} formatPrice={formatPrice} />
+          </div>
+          <div className="lg:col-span-5 min-w-0">
+            <RentalFleetChart data={rentalFleetChartData} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
