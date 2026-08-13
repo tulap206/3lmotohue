@@ -100,6 +100,8 @@ export default function ReportsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
+  const [fleetPage, setFleetPage] = useState(1)
+  const fleetItemsPerPage = 10
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
@@ -163,6 +165,7 @@ export default function ReportsPage() {
   }, [])
 
   useEffect(() => {
+    setFleetPage(1)
     loadReportData(false)
   }, [filterPeriod, startDate, endDate])
 
@@ -393,7 +396,29 @@ export default function ReportsPage() {
       }
 
       const { start, end } = getPeriodDateRange(filterPeriod, startDate, endDate)
-      const totalDaysInPeriod = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+
+      // Cửa sổ lấp đầy: không dùng 1970→2100 (lọc "Tất cả") vì mẫu số quá lớn → luôn ra 0%.
+      const todayEnd = new Date()
+      todayEnd.setHours(23, 59, 59, 999)
+      let utilStart = new Date(start)
+      let utilEnd = end > todayEnd ? new Date(todayEnd) : new Date(end)
+      if (filterPeriod === "all") {
+        let earliest: Date | null = null
+        for (const r of rentals as any[]) {
+          const d = parseVietnamDate(r.startDate || r.start_date)
+          if (!Number.isNaN(d.getTime()) && d.getTime() > 0) {
+            if (!earliest || d < earliest) earliest = d
+          }
+        }
+        utilStart = earliest ? new Date(earliest) : new Date(todayEnd)
+        utilStart.setHours(0, 0, 0, 0)
+        utilEnd = new Date(todayEnd)
+      }
+      const msPerDay = 1000 * 60 * 60 * 24
+      const totalDaysInPeriod = Math.max(
+        1,
+        Math.round((utilEnd.getTime() - utilStart.getTime()) / msPerDay) + 1
+      )
 
       // Filter rentals & transactions in this period
       const filteredRentals = rentals.filter((r: any) => {
@@ -515,13 +540,16 @@ export default function ReportsPage() {
 
       // Fleet utilization and performance calculation
       const fleetPerformance = vehicles.map((v: any) => {
-        const vehicleRentals = rentals.filter((r: any) => r.vehicleId === v.id)
+        const vehicleRentals = rentals.filter((r: any) => (r.vehicleId || r.vehicle_id) === v.id)
         
-        // Sum overlap days in period
-        const activeDays = vehicleRentals.reduce((sum: number, r: any) => {
-          if (r.status !== 'active' && r.status !== 'completed') return sum
-          return sum + getOverlapDays(r.startDate, r.endDate, start, end)
-        }, 0)
+        // Sum overlap days in utilization window
+        const activeDays = Math.min(
+          totalDaysInPeriod,
+          vehicleRentals.reduce((sum: number, r: any) => {
+            if (r.status !== "active" && r.status !== "completed") return sum
+            return sum + getOverlapDays(r.startDate || r.start_date, r.endDate || r.end_date, utilStart, utilEnd)
+          }, 0)
+        )
 
         // Sum revenue in period
         const revenue = vehicleRentals
@@ -1038,6 +1066,7 @@ export default function ReportsPage() {
             <table className="w-full text-left text-meta border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
+                  <th className="p-3 w-12 text-center">STT</th>
                   <th className="p-3">Xe máy</th>
                   <th className="p-3">Biển số</th>
                   <th className="p-3 text-center">Số ngày chạy</th>
@@ -1047,24 +1076,29 @@ export default function ReportsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {reportData.fleetPerformance.length > 0 ? (
-                  reportData.fleetPerformance.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                  reportData.fleetPerformance
+                    .slice((fleetPage - 1) * fleetItemsPerPage, fleetPage * fleetItemsPerPage)
+                    .map((item, idx) => (
+                    <tr key={`${item.licensePlate}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="p-3 text-center text-slate-400 font-medium tabular-nums">
+                        {(fleetPage - 1) * fleetItemsPerPage + idx + 1}
+                      </td>
                       <td className="p-3 font-semibold text-slate-800">{item.name}</td>
                       <td className="p-3 text-slate-500 tabular-nums">{item.licensePlate}</td>
                       <td className="p-3 text-center text-slate-700 font-medium tabular-nums">{item.activeDays} ngày</td>
                       <td className="p-3 text-right font-bold text-emerald-600 tabular-nums">{item.revenue.toLocaleString("vi-VN")} đ</td>
                       <td className="p-3 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <div className="w-12 bg-slate-100 rounded-full h-1.5 hidden sm:block">
+                          <div className="w-12 bg-slate-100 rounded-[var(--radius-badge)] h-1.5 hidden sm:block overflow-hidden">
                             <div 
-                              className={`h-1.5 rounded-full ${
+                              className={`h-1.5 rounded-[var(--radius-badge)] ${
                                 item.utilizationRate >= 70 
                                   ? 'bg-emerald-500' 
                                   : item.utilizationRate >= 40 
                                     ? 'bg-amber-500' 
                                     : 'bg-blue-500'
                               }`}
-                              style={{ width: `${item.utilizationRate}%` }}
+                              style={{ width: `${Math.min(100, Math.max(0, item.utilizationRate))}%` }}
                             />
                           </div>
                           <span className={`font-semibold tabular-nums ${
@@ -1072,7 +1106,7 @@ export default function ReportsPage() {
                               ? 'text-emerald-600' 
                               : item.utilizationRate >= 40 
                                 ? 'text-amber-600' 
-                                : 'text-slate-900 money'
+                                : 'text-slate-900'
                           }`}>
                             {item.utilizationRate}%
                           </span>
@@ -1082,12 +1116,22 @@ export default function ReportsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="p-4 text-center text-slate-400">Không có dữ liệu đội xe</td>
+                    <td colSpan={6} className="p-4 text-center text-slate-400">Không có dữ liệu đội xe</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+          {reportData.fleetPerformance.length > 0 && (
+            <ModulePagination
+              page={fleetPage}
+              totalPages={Math.max(1, Math.ceil(reportData.fleetPerformance.length / fleetItemsPerPage))}
+              totalItems={reportData.fleetPerformance.length}
+              itemLabel="xe"
+              onPageChange={setFleetPage}
+              className="rounded-b-2xl"
+            />
+          )}
         </CardContent>
       </Card>
 
