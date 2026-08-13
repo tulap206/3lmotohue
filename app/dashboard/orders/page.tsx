@@ -1438,7 +1438,6 @@ export default function OrdersPage() {
                         <th className={cn(rentalTableHeadClass, "text-slate-600")}>Khách hàng</th>
                         <th className={cn(rentalTableHeadClass, "text-slate-600")}>Xe thuê</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Thời gian</th>
-                        <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Số ngày</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Tổng tiền</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Doanh thu</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
@@ -1477,8 +1476,8 @@ export default function OrdersPage() {
                             <td className="py-3.5 px-4 text-center text-sm font-semibold text-slate-700">
                               <div className="whitespace-nowrap">{formatDisplayDate(order.startDate)}</div>
                               <div className="whitespace-nowrap"><span className="text-slate-400 text-sm mr-1">→</span>{formatDisplayDate(order.endDate)}</div>
+                              <div className="text-meta text-slate-500 mt-0.5 whitespace-nowrap">{order.totalDays} ngày</div>
                             </td>
-                            <td className="py-3.5 px-4 text-center font-semibold text-slate-700 whitespace-nowrap">{order.totalDays} ngày</td>
                             <td className="py-3.5 px-4 text-right">
                               <div className="font-bold money text-sm tabular-nums text-slate-900 whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</div>
                               <div className="text-meta text-slate-500 mt-0.5 whitespace-nowrap">{order.pricePerDay.toLocaleString("vi-VN")} đ/ngày</div>
