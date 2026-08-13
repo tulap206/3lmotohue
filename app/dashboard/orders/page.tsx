@@ -43,7 +43,7 @@ import {
   EntityFormTip,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -56,7 +56,7 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, ClipboardList, Calendar, User, Car, Settings, X, ImageIcon, Phone, MapPin, Trash2, Printer, FileText, Play, CheckCircle, DollarSign } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Printer, FileText, Play, CheckCircle, DollarSign } from "lucide-react"
 import { QUY79_BUSINESS } from "@/lib/business-info"
 import { PrintBusinessHeader, PrintShopPartyBlock } from "@/components/dashboard/print-business-blocks"
 import {
@@ -126,6 +126,13 @@ interface Vehicle {
   profit?: number
   category?: "car" | "bike"
 }
+
+const orderActionBtnClass =
+  "h-9 w-9 p-0 border-slate-200 rounded-[var(--radius-control)] hover:bg-slate-50 text-slate-500"
+const orderStatusBadgeClass =
+  "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
+const orderQuickActionClass =
+  "h-9 px-2.5 text-sm rounded-[var(--radius-control)] gap-1"
 
 // Lightbox component
 function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () => void }) {
@@ -1348,15 +1355,39 @@ export default function OrdersPage() {
                 </span>
               </>
             }
+            onClick={() => setFilterStatus("all")}
           />
-          <RentalKpiCard variant="hero" label="Chờ giao xe" value={orderStats.pending} sublabel="Chưa giao xe" valueClassName="text-amber-700" />
-          <RentalKpiCard variant="hero" label="Đang thuê" value={orderStats.active} sublabel="Đơn hiện hành" valueClassName="text-blue-700" />
-          <RentalKpiCard variant="hero" label="Quá hạn" value={orderStats.overdue} sublabel="Cần theo dõi" valueClassName="text-amber-700" />
-          <RentalKpiCard variant="hero"
+          <RentalKpiCard
+            variant="hero"
+            label="Chờ giao xe"
+            value={orderStats.pending}
+            sublabel="Chưa giao xe"
+            valueClassName="text-amber-700"
+            onClick={() => setFilterStatus("pending")}
+          />
+          <RentalKpiCard
+            variant="hero"
+            label="Đang thuê"
+            value={orderStats.active}
+            sublabel="Đơn hiện hành"
+            valueClassName="text-blue-700"
+            onClick={() => setFilterStatus("active")}
+          />
+          <RentalKpiCard
+            variant="hero"
+            label="Quá hạn"
+            value={orderStats.overdue}
+            sublabel="Cần theo dõi"
+            valueClassName="text-rose-600"
+            onClick={() => setFilterStatus("overdue")}
+          />
+          <RentalKpiCard
+            variant="hero"
             label="Hoàn thành"
             value={orderStats.completed}
             sublabel={`Doanh thu: ${formatPrice(orderStats.revenue)}`}
             valueClassName="text-emerald-700"
+            onClick={() => setFilterStatus("completed")}
           />
         </ModuleKpiGrid>
 
@@ -1375,11 +1406,11 @@ export default function OrdersPage() {
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full lg:w-44 h-10 rounded-xl border-slate-200 text-sm bg-white">
+              <SelectTrigger className="w-full lg:w-44 h-10 rounded-[var(--radius-control)] border-slate-200 text-sm bg-white">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-slate-100 rounded-xl">
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
+                <SelectItem value="all">Tất cả</SelectItem>
                 <SelectItem value="pickup_today">Nhận xe hôm nay</SelectItem>
                 <SelectItem value="return_today">Trả xe hôm nay</SelectItem>
                 <SelectItem value="pending">Chờ giao xe</SelectItem>
@@ -1394,12 +1425,22 @@ export default function OrdersPage() {
       >
         <CardContent className="p-0">
           {filteredOrders.length === 0 ? (
-            <div className="text-center py-12">
-              <ClipboardList className="w-12 h-12 text-slate-200 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm">
-                Chưa có đơn {filterTerm === "long" ? "thuê dài hạn" : "thuê ngắn hạn"} nào
-              </p>
-            </div>
+            <ModuleEmptyState
+              title={`Chưa có đơn ${filterTerm === "long" ? "thuê dài hạn" : "thuê ngắn hạn"}`}
+              description="Thử đổi từ khóa hoặc bộ lọc, hoặc tạo đơn thuê mới."
+              action={
+                <Button
+                  className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, rentalTerm: filterTerm }))
+                    setIsDialogOpen(true)
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tạo đơn thuê mới
+                </Button>
+              }
+            />
           ) : (
             <>
               <ModuleResponsiveTable
@@ -1458,9 +1499,9 @@ export default function OrdersPage() {
                               <div className="font-bold font-mono text-sm tabular-nums text-blue-600 whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</div>
                               <div className="flex items-center justify-end mt-0.5">
                                 {order.deposit > 0 ? (
-                                  <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">Đã cọc {order.deposit.toLocaleString("vi-VN")}đ</span>
+                                  <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">Đã cọc {order.deposit.toLocaleString("vi-VN")}đ</span>
                                 ) : (
-                                  <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100 whitespace-nowrap">Chưa cọc</span>
+                                  <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-amber-50 text-amber-600 border border-amber-100 whitespace-nowrap">Chưa cọc</span>
                                 )}
                               </div>
                             </td>
@@ -1474,35 +1515,40 @@ export default function OrdersPage() {
                               )}
                             </td>
                             <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                              <span className={`inline-flex items-center text-sm font-bold px-2 py-0.5 rounded-full border ${rentalOrderStatusBadgeClass(order.status, isOverdue)}`}>
+                              <span className={cn(orderStatusBadgeClass, rentalOrderStatusBadgeClass(order.status, isOverdue))}>
                                 {getRentalOrderStatusLabel(order.status, isOverdue)}
                               </span>
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center justify-end gap-1 flex-nowrap">
-                                {/* #5 Quick action */}
                                 {order.status === "pending" && (
-                                  <Button variant="ghost" size="sm" className="h-7 px-2 text-sm text-emerald-700 hover:text-emerald-800 rounded-lg hover:bg-emerald-50 gap-1" onClick={() => updateOrderStatus(order.id, "active")} title="Giao xe">
-                                    <Play className="w-3 h-3" />Giao
+                                  <Button variant="ghost" size="sm" className={cn(orderQuickActionClass, "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50")} onClick={() => updateOrderStatus(order.id, "active")} title="Giao xe">
+                                    <Play className="w-3.5 h-3.5" />Giao
                                   </Button>
                                 )}
                                 {(order.status === "active" || isOrderOverdue(order)) && (
-                                  <Button variant="ghost" size="sm" className="h-7 px-2 text-sm text-blue-700 hover:text-blue-800 rounded-lg hover:bg-blue-50 gap-1" onClick={() => openCompleteWithLateFee(order.id)} title="Hoàn thành">
-                                    <CheckCircle className="w-3 h-3" />Xong
+                                  <Button variant="ghost" size="sm" className={cn(orderQuickActionClass, "text-blue-700 hover:text-blue-800 hover:bg-blue-50")} onClick={() => openCompleteWithLateFee(order.id)} title="Hoàn thành">
+                                    <CheckCircle className="w-3.5 h-3.5" />Xong
                                   </Button>
                                 )}
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100" onClick={() => setViewingOrder(order)} title="Xem chi tiết">
-                                  <Eye className="w-3.5 h-3.5" />
+                                <Button variant="outline" size="icon-sm" className={orderActionBtnClass} onClick={() => setViewingOrder(order)} title="Xem chi tiết">
+                                  <Eye className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100" onClick={() => setPrintingOrder(order)} title="In hợp đồng">
-                                  <Printer className="w-3.5 h-3.5" />
+                                <Button variant="outline" size="icon-sm" className={orderActionBtnClass} onClick={() => setPrintingOrder(order)} title="In hợp đồng">
+                                  <Printer className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100" onClick={() => openEditDialog(order)} title="Chỉnh sửa">
-                                  <Settings className="w-3.5 h-3.5" />
+                                <Button variant="outline" size="icon-sm" className={orderActionBtnClass} onClick={() => openEditDialog(order)} title="Chỉnh sửa">
+                                  <Pencil className="w-4 h-4" />
                                 </Button>
                                 {user?.permissions.canDelete && (
-                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50" onClick={() => handleDeleteClick(order)} title="Xóa">
-                                    <Trash2 className="w-3.5 h-3.5" />
+                                  <Button
+                                    variant="outline"
+                                    size="icon-sm"
+                                    className="h-9 w-9 p-0 border-rose-200 rounded-[var(--radius-control)] hover:bg-rose-50 text-rose-600"
+                                    onClick={() => handleDeleteClick(order)}
+                                    title="Xóa"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
                                   </Button>
                                 )}
                               </div>
@@ -1527,12 +1573,12 @@ export default function OrdersPage() {
                             </span>
                           </div>
                         </div>
-                        <span className={`text-sm font-bold px-2 py-0.5 rounded-full border shrink-0 ${rentalOrderStatusBadgeClass(order.status, isOverdue)}`}>
+                        <span className={cn(orderStatusBadgeClass, "shrink-0", rentalOrderStatusBadgeClass(order.status, isOverdue))}>
                           {getRentalOrderStatusLabel(order.status, isOverdue)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <Calendar className="w-3 h-3 shrink-0" />
+                        <Calendar className="w-3.5 h-3.5 shrink-0" />
                         <span>{formatDisplayDate(order.startDate)} → {formatDisplayDate(order.endDate)}</span>
                         <span className="text-slate-300">·</span>
                         <span>{order.totalDays} ngày</span>
@@ -1540,53 +1586,54 @@ export default function OrdersPage() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-1.5">
                           {order.deposit > 0 ? (
-                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">Đã cọc</span>
+                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-emerald-50 text-emerald-700 border border-emerald-100">Đã cọc</span>
                           ) : (
-                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-100">Chưa cọc</span>
+                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-amber-50 text-amber-600 border border-amber-100">Chưa cọc</span>
                           )}
-                          {(order.status === "pending") && (
-                            <button className="text-sm font-semibold px-2 py-0.5 rounded bg-emerald-600 text-white" onClick={() => updateOrderStatus(order.id, "active")}>Giao xe</button>
+                          {order.status === "pending" && (
+                            <Button
+                              size="sm"
+                              className="h-9 px-2.5 text-sm bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)]"
+                              onClick={() => updateOrderStatus(order.id, "active")}
+                            >
+                              Giao xe
+                            </Button>
                           )}
                           {(order.status === "active" || isOverdue) && (
-                            <button className="text-sm font-semibold px-2 py-0.5 rounded bg-blue-600 text-white" onClick={() => openCompleteWithLateFee(order.id)}>Xong</button>
+                            <Button
+                              size="sm"
+                              className="h-9 px-2.5 text-sm bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)]"
+                              onClick={() => openCompleteWithLateFee(order.id)}
+                            >
+                              Xong
+                            </Button>
                           )}
                         </div>
                         <span className="font-bold text-blue-600 tabular-nums text-sm">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
                       </div>
-                      
-                      {/* Mobile action bar */}
+
                       <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
-                        <span className="text-[10px] text-slate-400">Đơn #{order.rentalCode || order.id.substring(0, 8)}</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setViewingOrder(order)}
-                            className="text-slate-500 hover:text-blue-600 p-1"
-                            title="Xem chi tiết"
-                          >
+                        <span className="text-meta text-slate-400">Đơn #{order.rentalCode || order.id.substring(0, 8)}</span>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => setViewingOrder(order)} title="Xem chi tiết">
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setPrintingOrder(order)}
-                            className="text-slate-500 hover:text-blue-600 p-1"
-                            title="In hợp đồng"
-                          >
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => setPrintingOrder(order)} title="In hợp đồng">
                             <Printer className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => openEditDialog(order)}
-                            className="text-slate-500 hover:text-blue-600 p-1"
-                            title="Chỉnh sửa"
-                          >
-                            <Settings className="w-4 h-4" />
-                          </button>
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openEditDialog(order)} title="Chỉnh sửa">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                           {user?.permissions.canDelete && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                               onClick={() => handleDeleteClick(order)}
-                              className="text-blue-600 hover:text-blue-700 p-1"
                               title="Xóa"
                             >
                               <Trash2 className="w-4 h-4" />
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -1600,6 +1647,7 @@ export default function OrdersPage() {
                 totalItems={filteredOrders.length}
                 itemLabel="đơn"
                 onPageChange={setCurrentPage}
+                className="rounded-b-2xl"
               />
             </>
           )}
@@ -1623,26 +1671,23 @@ export default function OrdersPage() {
                 />
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={cn(
-                      "inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border",
-                      rentalOrderStatusBadgeClass(o.status, overdue)
-                    )}>
+                    <span className={cn(orderStatusBadgeClass, rentalOrderStatusBadgeClass(o.status, overdue))}>
                       {getRentalOrderStatusLabel(o.status, overdue)}
                     </span>
                     <span className={cn(
-                      "inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border",
+                      orderStatusBadgeClass,
                       term === "long"
-                        ? "bg-violet-50 text-violet-700 border-violet-100"
-                        : "bg-sky-50 text-sky-700 border-sky-100"
+                        ? "bg-slate-100 text-slate-700 border-slate-200"
+                        : "bg-blue-50 text-blue-700 border-blue-100"
                     )}>
                       {getRentalTermLabel(term)}
                     </span>
                     {o.deposit > 0 ? (
-                      <span className="inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-100">
+                      <span className={cn(orderStatusBadgeClass, "bg-emerald-50 text-emerald-700 border-emerald-100")}>
                         Đã cọc
                       </span>
                     ) : (
-                      <span className="inline-flex items-center text-sm font-bold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-100">
+                      <span className={cn(orderStatusBadgeClass, "bg-amber-50 text-amber-700 border-amber-100")}>
                         Chưa cọc
                       </span>
                     )}
@@ -1825,7 +1870,7 @@ export default function OrdersPage() {
                     {o.status === "pending" && (
                       <>
                         <Button
-                          className="flex-1 h-9 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                          className="flex-1 h-11 text-body bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
                           onClick={() => {
                             updateOrderStatus(o.id, "active")
                             setViewingOrder(null)
@@ -1835,7 +1880,7 @@ export default function OrdersPage() {
                         </Button>
                         <Button
                           variant="outline"
-                          className="flex-1 h-9 text-sm"
+                          className="flex-1 h-11 text-body rounded-[var(--radius-control)]"
                           onClick={() => {
                             updateOrderStatus(o.id, "cancelled")
                             setViewingOrder(null)
@@ -1847,7 +1892,7 @@ export default function OrdersPage() {
                     )}
                     {(o.status === "active" || overdue) && o.status !== "completed" && o.status !== "cancelled" && (
                       <Button
-                        className="flex-1 h-9 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="flex-1 h-11 text-body bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
                         onClick={() => {
                           setViewingOrder(null)
                           openCompleteWithLateFee(o.id)
@@ -1858,18 +1903,18 @@ export default function OrdersPage() {
                     )}
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 text-sm"
+                      className="flex-1 h-11 text-body rounded-[var(--radius-control)]"
                       onClick={() => {
                         setViewingOrder(null)
                         openEditDialog(o)
                       }}
                     >
-                      <Settings className="w-3.5 h-3.5 mr-1.5" />
+                      <Pencil className="w-4 h-4 mr-1.5" />
                       Chỉnh sửa
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-9 text-sm px-3"
+                      className="h-11 text-body px-3 rounded-[var(--radius-control)]"
                       onClick={() => setViewingOrder(null)}
                     >
                       Đóng
@@ -2106,10 +2151,7 @@ export default function OrdersPage() {
                         </p>
                       )}
                       <div className="pt-1">
-                        <span className={cn(
-                          "inline-flex items-center text-sm font-bold px-2 py-0.5 rounded-full border",
-                          rentalCustomerStatusBadgeClass(cust.status)
-                        )}>
+                        <span className={cn(orderStatusBadgeClass, rentalCustomerStatusBadgeClass(cust.status))}>
                           {getRentalCustomerStatusLabel(cust.status)}
                         </span>
                       </div>
@@ -2231,7 +2273,7 @@ export default function OrdersPage() {
                 <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "inline-flex items-center text-sm font-bold px-2 py-1 rounded-full border",
+                      orderStatusBadgeClass,
                       rentalVehicleStatusBadgeClass(v.status)
                     )}>
                       {getRentalVehicleStatusLabel(v.status)}

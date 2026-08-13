@@ -179,7 +179,7 @@ export function getRentalOrderStatusLabel(status?: string, isOverdue?: boolean):
 }
 
 export function rentalOrderStatusBadgeClass(status?: string, isOverdue?: boolean): string {
-  if (isOverdue) return "bg-orange-50 text-orange-700 border-orange-100"
+  if (isOverdue) return "bg-rose-50 text-rose-700 border-rose-100"
   switch (status) {
     case "pending":
       return "bg-amber-50 text-amber-700 border-amber-100"
