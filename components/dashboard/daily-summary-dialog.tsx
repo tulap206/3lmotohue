@@ -219,7 +219,7 @@ export function DailySummaryDialog({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 pr-6 sm:pr-8">
             <div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-6 bg-emerald-500 rounded-full shrink-0" />
+                <div className="w-2 h-6 bg-red-500 rounded-full shrink-0" />
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                   Báo Cáo Tổng Kết Ngày
                 </h2>
@@ -240,7 +240,7 @@ export function DailySummaryDialog({
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full sm:w-auto pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition shadow-2xs cursor-pointer"
+                  className="w-full sm:w-auto pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 transition shadow-2xs cursor-pointer"
                 />
               </div>
 
@@ -261,13 +261,13 @@ export function DailySummaryDialog({
 
           {/* Light Minimalist KPI Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
-            {/* Card 1: Doanh Thu - Highlighted Money */}
-            <div className="bg-emerald-50/40 border border-emerald-200/80 rounded-xl p-3 sm:p-4">
-              <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider block">
+            {/* Card 1: Doanh Thu - Red Money Highlight */}
+            <div className="bg-red-50/40 border border-red-200/80 rounded-xl p-3 sm:p-4">
+              <span className="text-[11px] font-semibold text-red-800 uppercase tracking-wider block">
                 Doanh Thu Thực Thu
               </span>
               <div className="mt-1.5">
-                <span className="text-lg sm:text-2xl font-bold text-emerald-600 font-mono block truncate">
+                <span className="text-lg sm:text-2xl font-bold text-red-600 font-mono block truncate">
                   {formatPrice(dailyRevenue)}
                 </span>
               </div>
@@ -402,8 +402,8 @@ export function DailySummaryDialog({
                               : order.status}
                           </span>
                         </td>
-                        {/* HIGHLIGHTED 3: Số Tiền */}
-                        <td className="py-2 px-3 text-right font-bold text-slate-900 font-mono text-xs">
+                        {/* HIGHLIGHTED 3: Số Tiền RED COLOR */}
+                        <td className="py-2 px-3 text-right font-bold text-red-600 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
                       </tr>
@@ -417,8 +417,8 @@ export function DailySummaryDialog({
                         TỔNG CỘNG ĐƠN GIAO XE ({dispatchedOrders.length} ĐƠN - {dispatchedVehiclesCount} XE)
                       </td>
                       <td className="py-2.5 px-3 text-center"></td>
-                      {/* HIGHLIGHTED 3: Số Tiền Tổng */}
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 text-xs sm:text-sm font-bold">
+                      {/* HIGHLIGHTED 3: Số Tiền Tổng RED COLOR */}
+                      <td className="py-2.5 px-3 text-right font-mono text-red-600 text-xs sm:text-sm font-bold">
                         {formatPrice(
                           dispatchedOrders.reduce((acc, curr) => acc + (curr.revenue || curr.totalPrice || 0), 0)
                         )}
@@ -490,8 +490,8 @@ export function DailySummaryDialog({
                             Hoàn thành
                           </span>
                         </td>
-                        {/* HIGHLIGHTED 3: Số Tiền */}
-                        <td className="py-2 px-3 text-right font-bold text-emerald-600 font-mono text-xs">
+                        {/* HIGHLIGHTED 3: Số Tiền RED COLOR */}
+                        <td className="py-2 px-3 text-right font-bold text-red-600 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
                       </tr>
@@ -500,13 +500,13 @@ export function DailySummaryDialog({
                 </tbody>
                 {completedOrders.length > 0 && (
                   <tfoot>
-                    <tr className="bg-emerald-50/40 font-bold text-slate-900 border-t border-emerald-200/80 text-xs">
+                    <tr className="bg-red-50/30 font-bold text-slate-900 border-t border-red-200/80 text-xs">
                       <td colSpan={4} className="py-2.5 px-3 text-[11px] sm:text-xs">
                         TỔNG CỘNG ĐƠN NHẬN XE ({completedOrders.length} ĐƠN - {completedVehiclesCount} XE)
                       </td>
                       <td className="py-2.5 px-3 text-center"></td>
-                      {/* HIGHLIGHTED 3: Số Tiền Tổng */}
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 text-xs sm:text-sm font-bold">
+                      {/* HIGHLIGHTED 3: Số Tiền Tổng RED COLOR */}
+                      <td className="py-2.5 px-3 text-right font-mono text-red-600 text-xs sm:text-sm font-bold">
                         {formatPrice(dailyRevenue)}
                       </td>
                     </tr>
