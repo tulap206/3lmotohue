@@ -367,7 +367,7 @@ export function DailySummaryDialog({
             </div>
 
             <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
-              <table className="w-full min-w-[680px] text-left text-xs border-collapse">
+              <table className="w-full min-w-[620px] text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-blue-50/60 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                     <th className="py-2.5 px-3 w-10 text-center">STT</th>
@@ -375,14 +375,13 @@ export function DailySummaryDialog({
                     <th className="py-2.5 px-3 min-w-[140px]">Xe Thuê & Biển Số</th>
                     <th className="py-2.5 px-3 min-w-[140px] text-center">Thời Gian Thuê</th>
                     <th className="py-2.5 px-3 min-w-[100px] text-center">Trạng Thái</th>
-                    <th className="py-2.5 px-3 min-w-[100px] text-right">Tiền Cọc</th>
                     <th className="py-2.5 px-3 min-w-[120px] text-right">Doanh Thu / Giá</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {dispatchedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-5 text-center text-slate-400">
+                      <td colSpan={6} className="py-5 text-center text-slate-400">
                         <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-300" />
                         <p className="font-medium text-slate-500 text-xs">Không có đơn giao xe nào trong ngày này.</p>
                       </td>
@@ -430,9 +429,6 @@ export function DailySummaryDialog({
                               : order.status}
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-right font-mono text-[11px] text-slate-600">
-                          {order.deposit ? formatPrice(order.deposit) : "0 ₫"}
-                        </td>
                         <td className="py-2 px-3 text-right font-bold text-slate-900 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
@@ -447,11 +443,6 @@ export function DailySummaryDialog({
                         TỔNG CỘNG ĐƠN GIAO XE ({dispatchedOrders.length} ĐƠN - {dispatchedVehiclesCount} XE)
                       </td>
                       <td className="py-2.5 px-3 text-center text-slate-500"></td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                        {formatPrice(
-                          dispatchedOrders.reduce((acc, curr) => acc + (curr.deposit || 0), 0)
-                        )}
-                      </td>
                       <td className="py-2.5 px-3 text-right font-mono text-blue-700 text-sm font-black">
                         {formatPrice(
                           dispatchedOrders.reduce((acc, curr) => acc + (curr.revenue || curr.totalPrice || 0), 0)
@@ -479,7 +470,7 @@ export function DailySummaryDialog({
             </div>
 
             <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
-              <table className="w-full min-w-[680px] text-left text-xs border-collapse">
+              <table className="w-full min-w-[620px] text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-emerald-50/60 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                     <th className="py-2.5 px-3 w-10 text-center">STT</th>
@@ -487,14 +478,13 @@ export function DailySummaryDialog({
                     <th className="py-2.5 px-3 min-w-[140px]">Xe Thuê & Biển Số</th>
                     <th className="py-2.5 px-3 min-w-[140px] text-center">Thời Gian Thuê</th>
                     <th className="py-2.5 px-3 min-w-[100px] text-center">Trạng Thái</th>
-                    <th className="py-2.5 px-3 min-w-[100px] text-right">Tiền Cọc</th>
                     <th className="py-2.5 px-3 min-w-[120px] text-right">Doanh Thu Thực Thu</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {completedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-5 text-center text-slate-400">
+                      <td colSpan={6} className="py-5 text-center text-slate-400">
                         <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-300" />
                         <p className="font-medium text-slate-500 text-xs">Không có đơn hoàn thành nhận lại xe nào trong ngày này.</p>
                       </td>
@@ -525,9 +515,6 @@ export function DailySummaryDialog({
                             Hoàn thành
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-right font-mono text-[11px] text-slate-600">
-                          {order.deposit ? formatPrice(order.deposit) : "0 ₫"}
-                        </td>
                         <td className="py-2 px-3 text-right font-bold text-emerald-700 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
@@ -542,11 +529,6 @@ export function DailySummaryDialog({
                         TỔNG CỘNG ĐƠN NHẬN XE ({completedOrders.length} ĐƠN - {completedVehiclesCount} XE)
                       </td>
                       <td className="py-2.5 px-3 text-center text-slate-500"></td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                        {formatPrice(
-                          completedOrders.reduce((acc, curr) => acc + (curr.deposit || 0), 0)
-                        )}
-                      </td>
                       <td className="py-2.5 px-3 text-right font-mono text-emerald-700 text-sm font-black">
                         {formatPrice(dailyRevenue)}
                       </td>
