@@ -21,6 +21,8 @@ import {
   FileSpreadsheet,
   AlertCircle,
   Sparkles,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from "lucide-react"
 import { toPng } from "html-to-image"
 import { formatDisplayDate, parseDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
@@ -93,35 +95,48 @@ export function DailySummaryDialog({
     return formatDisplayDate(selectedDate)
   }, [selectedDate])
 
-  // Filter orders for selectedDate
-  const dailyOrders = useMemo(() => {
+  // 1. Đơn giao xe trong ngày (startDate hoặc created_at khớp ngày chọn)
+  const dispatchedOrders = useMemo(() => {
     return orders.filter((order) => {
       if (order.status === "cancelled") return false
-      const createdDate = getYYYYMMDD(order.created_at)
       const startDate = getYYYYMMDD(order.startDate)
-      const endDate = getYYYYMMDD(order.endDate)
-
-      // Order created or started on selected date, or active during selected date
-      const isCreatedOrStarted = createdDate === selectedDate || startDate === selectedDate
-      const isActiveOnDate = startDate <= selectedDate && endDate >= selectedDate
-
-      return isCreatedOrStarted || isActiveOnDate
+      const createdDate = getYYYYMMDD(order.created_at)
+      return startDate === selectedDate || createdDate === selectedDate
     })
   }, [orders, selectedDate])
 
-  // Distinct vehicles rented on selected date
-  const dailyRentedVehicles = useMemo(() => {
-    const vehicleIds = new Set<string>()
-    dailyOrders.forEach((o) => {
-      if (o.vehicleId) vehicleIds.add(o.vehicleId)
+  // Distinct vehicles dispatched on selectedDate
+  const dispatchedVehiclesCount = useMemo(() => {
+    const vIds = new Set<string>()
+    dispatchedOrders.forEach((o) => {
+      if (o.vehicleId) vIds.add(o.vehicleId)
     })
-    return vehicleIds.size
-  }, [dailyOrders])
+    return vIds.size
+  }, [dispatchedOrders])
+
+  // 2. Đơn hoàn thành & nhận lại xe trong ngày (endDate hoặc ngày hoàn thành khớp ngày chọn và status = completed)
+  const completedOrders = useMemo(() => {
+    return orders.filter((order) => {
+      if (order.status !== "completed") return false
+      const endDate = getYYYYMMDD(order.endDate)
+      const createdDate = getYYYYMMDD(order.created_at)
+      return endDate === selectedDate || (createdDate === selectedDate && order.status === "completed")
+    })
+  }, [orders, selectedDate])
+
+  // Distinct vehicles returned/completed on selectedDate
+  const completedVehiclesCount = useMemo(() => {
+    const vIds = new Set<string>()
+    completedOrders.forEach((o) => {
+      if (o.vehicleId) vIds.add(o.vehicleId)
+    })
+    return vIds.size
+  }, [completedOrders])
 
   // Daily revenue calculation
   const dailyRevenue = useMemo(() => {
-    // Rental revenue from orders created/started on this date or completed on this date
-    const orderRevenue = dailyOrders.reduce((sum, order) => {
+    // Revenue from completed orders today
+    const completedRevenue = completedOrders.reduce((sum, order) => {
       return sum + (order.revenue || order.totalPrice || 0)
     }, 0)
 
@@ -130,8 +145,8 @@ export function DailySummaryDialog({
       .filter((tx) => tx.type === "income" && getYYYYMMDD(tx.timestamp) === selectedDate)
       .reduce((sum, tx) => sum + (tx.amount || 0), 0)
 
-    return orderRevenue + txIncome
-  }, [dailyOrders, transactions, selectedDate])
+    return completedRevenue + txIncome
+  }, [completedOrders, transactions, selectedDate])
 
   // Vehicle status metrics
   const vehicleStats = useMemo(() => {
@@ -273,15 +288,16 @@ export function DailySummaryDialog({
                 </span>
               </div>
               <p className="text-[11px] text-blue-600 font-medium mt-0.5">
-                {dailyOrders.length} đơn thuê phát sinh
+                {completedOrders.length} đơn hoàn thành chốt doanh thu
               </p>
             </div>
 
-            {/* Card 2: Đơn thuê & Xe thuê */}
+            {/* Card 2: Đơn Giao Trong Ngày */}
             <div className="bg-gradient-to-br from-indigo-50 via-purple-50/40 to-indigo-50/20 border border-indigo-100/80 rounded-xl p-3.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
-                  Đơn & Xe Cho Thuê
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1">
+                  <ArrowUpRight className="w-3.5 h-3.5 text-indigo-600" />
+                  Đơn Giao Trong Ngày
                 </span>
                 <div className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-xs">
                   <Car className="w-3.5 h-3.5" />
@@ -289,35 +305,40 @@ export function DailySummaryDialog({
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">
-                  {dailyOrders.length} <span className="text-xs font-semibold text-indigo-700">đơn</span>
+                  {dispatchedOrders.length} <span className="text-xs font-semibold text-indigo-700">đơn</span>
                 </span>
                 <span className="text-slate-300 font-light">/</span>
                 <span className="text-lg font-bold text-indigo-800">
-                  {dailyRentedVehicles} <span className="text-[11px] font-medium text-indigo-600">xe</span>
+                  {dispatchedVehiclesCount} <span className="text-[11px] font-medium text-indigo-600">xe giao</span>
                 </span>
               </div>
               <p className="text-[11px] text-indigo-600 font-medium mt-0.5">
-                Xe thực tế hoạt động trong ngày
+                Đơn thuê mới & bàn giao xe
               </p>
             </div>
 
-            {/* Card 3: Xe Sẵn Sàng */}
+            {/* Card 3: Đơn Nhận xe trong ngày */}
             <div className="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-50/20 border border-emerald-100/80 rounded-xl p-3.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                  Xe Sẵn Sàng
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
+                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" />
+                  Đơn Nhận Xe Trong Ngày
                 </span>
                 <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-xs">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="mt-2">
+              <div className="mt-2 flex items-baseline gap-1.5">
                 <span className="text-xl sm:text-2xl font-black text-emerald-950 tracking-tight">
-                  {vehicleStats.available.length} <span className="text-xs font-semibold text-emerald-700">xe</span>
+                  {completedOrders.length} <span className="text-xs font-semibold text-emerald-700">đơn</span>
+                </span>
+                <span className="text-slate-300 font-light">/</span>
+                <span className="text-lg font-bold text-emerald-800">
+                  {completedVehiclesCount} <span className="text-[11px] font-medium text-emerald-600">xe nhận</span>
                 </span>
               </div>
               <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
-                Sẵn sàng giao cho khách
+                Xe khách hoàn thành & trả lại
               </p>
             </div>
 
@@ -325,43 +346,47 @@ export function DailySummaryDialog({
             <div className="bg-gradient-to-br from-amber-50 via-orange-50/40 to-amber-50/20 border border-amber-100/80 rounded-xl p-3.5 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                  Xe Đang Bảo Trì
+                  Xe Sẵn Sàng / Bảo Trì
                 </span>
                 <div className="p-1.5 bg-amber-600 text-white rounded-lg shadow-xs">
                   <Wrench className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <div className="mt-2">
-                <span className="text-xl sm:text-2xl font-black text-amber-950 tracking-tight">
-                  {vehicleStats.maintenance.length} <span className="text-xs font-semibold text-amber-700">xe</span>
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-emerald-700 tracking-tight">
+                  {vehicleStats.available.length} <span className="text-xs font-semibold text-emerald-800">sẵn sàng</span>
+                </span>
+                <span className="text-slate-300 font-light">•</span>
+                <span className="text-lg font-bold text-amber-800">
+                  {vehicleStats.maintenance.length} <span className="text-[11px] font-medium text-amber-700">bảo trì</span>
                 </span>
               </div>
-              <p className="text-[11px] text-amber-600 font-medium mt-0.5">
-                Đang bảo dưỡng / sửa chữa
+              <p className="text-[11px] text-amber-700 font-medium mt-0.5">
+                Trạng thái hiện tại của đội xe
               </p>
             </div>
           </div>
 
-          {/* Section 1: Bảng Số Đơn Thuê & Xe Thuê, Doanh Thu Trong Ngày */}
+          {/* BẢNG 1: Đơn giao xe trong ngày */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
               <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                <ArrowUpRight className="w-4 h-4 text-blue-600" />
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  1. Chi Tiết Đơn Thuê & Doanh Thu Ngày {formattedSelectedDate}
+                  1. Danh Sách Đơn Giao Xe Trong Ngày ({formattedSelectedDate})
                 </h3>
               </div>
-              <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">
-                Tổng: <strong className="text-slate-900 font-bold">{dailyOrders.length}</strong> đơn thuê
+              <span className="text-xs text-blue-700 font-semibold bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">
+                Tổng: <strong className="text-blue-900 font-bold">{dispatchedOrders.length}</strong> đơn giao xe ({dispatchedVehiclesCount} xe)
               </span>
             </div>
 
             <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
               <table className="w-full min-w-[680px] text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-100/80 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                  <tr className="bg-blue-50/60 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                     <th className="py-2.5 px-3 w-10 text-center">STT</th>
-                    <th className="py-2.5 px-3 min-w-[120px]">Khách Hàng</th>
+                    <th className="py-2.5 px-3 min-w-[130px]">Khách Hàng</th>
                     <th className="py-2.5 px-3 min-w-[140px]">Xe Thuê & Biển Số</th>
                     <th className="py-2.5 px-3 min-w-[140px] text-center">Thời Gian Thuê</th>
                     <th className="py-2.5 px-3 min-w-[100px] text-center">Trạng Thái</th>
@@ -370,16 +395,16 @@ export function DailySummaryDialog({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {dailyOrders.length === 0 ? (
+                  {dispatchedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-6 text-center text-slate-400">
-                        <AlertCircle className="w-6 h-6 mx-auto mb-1 text-slate-300" />
-                        <p className="font-medium text-slate-500 text-xs">Không có đơn thuê phát sinh trong ngày này.</p>
+                      <td colSpan={7} className="py-5 text-center text-slate-400">
+                        <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-300" />
+                        <p className="font-medium text-slate-500 text-xs">Không có đơn giao xe nào trong ngày này.</p>
                       </td>
                     </tr>
                   ) : (
-                    dailyOrders.map((order, idx) => (
-                      <tr key={order.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                    dispatchedOrders.map((order, idx) => (
+                      <tr key={order.id || idx} className="hover:bg-blue-50/30 transition-colors">
                         <td className="py-2 px-3 text-center font-mono text-xs text-slate-400 font-medium">
                           {idx + 1}
                         </td>
@@ -430,19 +455,114 @@ export function DailySummaryDialog({
                     ))
                   )}
                 </tbody>
-                {dailyOrders.length > 0 && (
+                {dispatchedOrders.length > 0 && (
                   <tfoot>
-                    <tr className="bg-slate-100/90 font-bold text-slate-900 border-t-2 border-slate-200 text-xs">
+                    <tr className="bg-blue-50/70 font-bold text-slate-900 border-t-2 border-blue-200 text-xs">
                       <td colSpan={4} className="py-2.5 px-3">
-                        TỔNG CỘNG ({dailyOrders.length} ĐƠN THUÊ - {dailyRentedVehicles} XE)
+                        TỔNG CỘNG ĐƠN GIAO XE ({dispatchedOrders.length} ĐƠN - {dispatchedVehiclesCount} XE)
                       </td>
                       <td className="py-2.5 px-3 text-center text-slate-500"></td>
                       <td className="py-2.5 px-3 text-right font-mono text-slate-700">
                         {formatPrice(
-                          dailyOrders.reduce((acc, curr) => acc + (curr.deposit || 0), 0)
+                          dispatchedOrders.reduce((acc, curr) => acc + (curr.deposit || 0), 0)
                         )}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-blue-700 text-sm font-black">
+                        {formatPrice(
+                          dispatchedOrders.reduce((acc, curr) => acc + (curr.revenue || curr.totalPrice || 0), 0)
+                        )}
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </div>
+
+          {/* BẢNG 2: Đơn hoàn thành nhận lại xe trong ngày */}
+          <div className="space-y-2.5 pt-1">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <div className="flex items-center gap-2">
+                <ArrowDownLeft className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                  2. Danh Sách Đơn Hoàn Thành & Nhận Lại Xe Trong Ngày ({formattedSelectedDate})
+                </h3>
+              </div>
+              <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">
+                Tổng: <strong className="text-emerald-900 font-bold">{completedOrders.length}</strong> đơn nhận xe ({completedVehiclesCount} xe)
+              </span>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
+              <table className="w-full min-w-[680px] text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-emerald-50/60 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                    <th className="py-2.5 px-3 w-10 text-center">STT</th>
+                    <th className="py-2.5 px-3 min-w-[130px]">Khách Hàng</th>
+                    <th className="py-2.5 px-3 min-w-[140px]">Xe Thuê & Biển Số</th>
+                    <th className="py-2.5 px-3 min-w-[140px] text-center">Thời Gian Thuê</th>
+                    <th className="py-2.5 px-3 min-w-[100px] text-center">Trạng Thái</th>
+                    <th className="py-2.5 px-3 min-w-[100px] text-right">Tiền Cọc</th>
+                    <th className="py-2.5 px-3 min-w-[120px] text-right">Doanh Thu Thực Thu</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {completedOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-5 text-center text-slate-400">
+                        <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-300" />
+                        <p className="font-medium text-slate-500 text-xs">Không có đơn hoàn thành nhận lại xe nào trong ngày này.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    completedOrders.map((order, idx) => (
+                      <tr key={order.id || idx} className="hover:bg-emerald-50/30 transition-colors">
+                        <td className="py-2 px-3 text-center font-mono text-xs text-slate-400 font-medium">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2 px-3 font-bold text-slate-900">
+                          {order.customerName || "Khách lẻ"}
+                        </td>
+                        <td className="py-2 px-3">
+                          <div className="font-semibold text-slate-800">{order.vehicleName || "Xe thuê"}</div>
+                          {order.licensePlate && (
+                            <span className="inline-block px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded text-[10px] font-mono font-medium mt-0.5 border border-slate-200">
+                              {order.licensePlate}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 text-center text-[11px] text-slate-600">
+                          <div className="font-medium text-slate-800">{order.startDate || "—"}</div>
+                          <div className="text-slate-400 text-[10px]">đến {order.endDate || "—"}</div>
+                        </td>
+                        <td className="py-2 px-3 text-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+                            Hoàn thành
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono text-[11px] text-slate-600">
+                          {order.deposit ? formatPrice(order.deposit) : "0 ₫"}
+                        </td>
+                        <td className="py-2 px-3 text-right font-bold text-emerald-700 font-mono text-xs">
+                          {formatPrice(order.revenue || order.totalPrice || 0)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+                {completedOrders.length > 0 && (
+                  <tfoot>
+                    <tr className="bg-emerald-50/70 font-bold text-slate-900 border-t-2 border-emerald-200 text-xs">
+                      <td colSpan={4} className="py-2.5 px-3">
+                        TỔNG CỘNG ĐƠN NHẬN XE ({completedOrders.length} ĐƠN - {completedVehiclesCount} XE)
+                      </td>
+                      <td className="py-2.5 px-3 text-center text-slate-500"></td>
+                      <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                        {formatPrice(
+                          completedOrders.reduce((acc, curr) => acc + (curr.deposit || 0), 0)
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-emerald-700 text-sm font-black">
                         {formatPrice(dailyRevenue)}
                       </td>
                     </tr>
@@ -452,26 +572,26 @@ export function DailySummaryDialog({
             </div>
           </div>
 
-          {/* Section 2: Bảng Xe Sẵn Sàng & Xe Bảo Trì */}
+          {/* BẢNG 3: Bảng Xe Sẵn Sàng & Xe Bảo Trì */}
           <div className="space-y-2.5 pt-1">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-emerald-600" />
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  2. Trạng Thái Đội Xe Hiện Tại (Sẵn Sàng & Bảo Trì)
+                  3. Trạng Thái Đội Xe Hiện Tại (Sẵn Sàng & Bảo Trì)
                 </h3>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
                   {vehicleStats.available.length} Sẵn sàng
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
                   {vehicleStats.maintenance.length} Bảo trì
                 </span>
               </div>
             </div>
 
-            {/* Split View: Xe Sẵn Sàng vs Xe Bảo Trì - Full height without internal scrolling */}
+            {/* Split View: Xe Sẵn Sàng vs Xe Bảo Trì */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Box 1: Xe Sẵn Sàng */}
               <div className="border border-emerald-200 rounded-xl bg-emerald-50/20 overflow-hidden shadow-xs">
@@ -483,7 +603,6 @@ export function DailySummaryDialog({
                     </h4>
                   </div>
                 </div>
-                {/* Full list without scrollbar */}
                 <div className="divide-y divide-emerald-100/60 bg-white">
                   {vehicleStats.available.length === 0 ? (
                     <div className="p-3 text-center text-xs text-slate-400">
@@ -536,7 +655,6 @@ export function DailySummaryDialog({
                     </h4>
                   </div>
                 </div>
-                {/* Full list without scrollbar */}
                 <div className="divide-y divide-amber-100/60 bg-white">
                   {vehicleStats.maintenance.length === 0 ? (
                     <div className="p-3 text-center text-xs text-slate-400">
