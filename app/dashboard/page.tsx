@@ -21,7 +21,9 @@ import {
   TrendingUp,
   Search,
   X,
+  CalendarCheck,
 } from "lucide-react"
+import { DailySummaryDialog } from "@/components/dashboard/daily-summary-dialog"
 import { SkeletonMetricCards, SkeletonTable, SkeletonCharts } from "@/components/ui/skeleton-loader"
 import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeExpenseChart } from "@/components/dashboard/rental-charts"
 import { OverdueOrdersPanel, CommissionHomeReportPanel } from "@/components/dashboard/rental-overview-panels"
@@ -94,6 +96,7 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<any[]>([])
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isDailySummaryOpen, setIsDailySummaryOpen] = useState(false)
   const [formData, setFormData] = useState({
     customerId: "",
     vehicleIds: [] as string[],
@@ -799,13 +802,23 @@ export default function DashboardPage() {
         }
         subtitle="Vận hành đội xe và theo dõi hiệu suất kinh doanh"
         actions={
-          <Button
-            onClick={() => setIsDialogOpen(true)}
+          <div className="flex items-center gap-2.5">
+            <Button
+              onClick={() => setIsDialogOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Tạo đơn thuê mới
-          </Button>
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Tạo đơn thuê mới
+            </Button>
+            <Button
+              onClick={() => setIsDailySummaryOpen(true)}
+              variant="outline"
+              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:text-blue-600 hover:border-slate-400"
+            >
+              <CalendarCheck className="w-4 h-4 mr-2 text-blue-600" />
+              Tổng ngày
+            </Button>
+          </div>
         }
       />
 
@@ -1619,6 +1632,14 @@ export default function DashboardPage() {
             </form>
           </EntityFormDialogContent>
       </Dialog>
+
+      <DailySummaryDialog
+        isOpen={isDailySummaryOpen}
+        onClose={() => setIsDailySummaryOpen(false)}
+        orders={orders}
+        vehicles={vehicles}
+        transactions={transactions}
+      />
     </ModulePageShell>
   )
 }

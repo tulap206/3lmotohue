@@ -123,3 +123,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #daily-summary-print-area, #daily-summary-print-area * {
+    visibility: visible;
+  }
+  #daily-summary-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+}
+
