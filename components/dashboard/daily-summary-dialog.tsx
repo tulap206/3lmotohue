@@ -12,14 +12,10 @@ import {
   Loader2,
   TrendingUp,
   Car,
-  Wrench,
   CheckCircle2,
-  Clock,
   Calendar,
   Layers,
-  FileSpreadsheet,
   AlertCircle,
-  Sparkles,
   ArrowUpRight,
   ArrowDownLeft,
 } from "lucide-react"
@@ -224,22 +220,11 @@ export function DailySummaryDialog({
                 <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-                    Báo Cáo Tổng Kết Ngày
-                  </h2>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                    <Sparkles className="w-3 h-3 text-blue-600" />
-                    Báo cáo cuối ngày
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5 flex flex-wrap items-center gap-2">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    Ngày xem: <strong className="text-slate-800 font-semibold">{formattedSelectedDate}</strong>
-                  </span>
-                  <span className="text-slate-300 hidden sm:inline">•</span>
-                  <span className="text-slate-500">Cập nhật lúc: {formatDisplayDateTime(new Date())}</span>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+                  Báo Cáo Tổng Kết Ngày
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Cập nhật lúc: {formatDisplayDateTime(new Date())}
                 </p>
               </div>
             </div>
@@ -735,11 +720,8 @@ export function DailySummaryDialog({
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="bg-slate-100/80 px-5 py-3 border-t border-slate-200 flex items-center justify-between print:hidden rounded-b-2xl">
-          <p className="text-xs text-slate-500 font-medium hidden sm:block">
-            3L Moto — Hệ thống quản lý cho thuê xe máy
-          </p>
-          <div className="flex items-center gap-2 ml-auto">
+        <div className="bg-slate-100/80 px-5 py-3 border-t border-slate-200 flex items-center justify-end print:hidden rounded-b-2xl">
+          <div className="flex items-center gap-2">
             <Button
               onClick={handleDownloadImage}
               disabled={isExporting}
