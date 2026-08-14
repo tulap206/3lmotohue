@@ -162,6 +162,23 @@ export function DailySummaryDialog({
     }
   }, [vehicles])
 
+  // Split available vehicles into 3 categories: Vision, AB, Others
+  const availableVision = useMemo(() => {
+    return vehicleStats.available.filter((v) => /vision/i.test(v.name || ""))
+  }, [vehicleStats.available])
+
+  const availableAB = useMemo(() => {
+    return vehicleStats.available.filter((v) => /\b(ab|air\s*blade|airblade)\b/i.test(v.name || ""))
+  }, [vehicleStats.available])
+
+  const availableOthers = useMemo(() => {
+    return vehicleStats.available.filter((v) => {
+      const isVision = /vision/i.test(v.name || "")
+      const isAB = /\b(ab|air\s*blade|airblade)\b/i.test(v.name || "")
+      return !isVision && !isAB
+    })
+  }, [vehicleStats.available])
+
   const handleDownloadImage = async () => {
     const printArea = document.getElementById("daily-summary-print-area")
     if (!printArea) return
@@ -326,27 +343,23 @@ export function DailySummaryDialog({
               </p>
             </div>
 
-            {/* Card 4: Xe Bảo Trì */}
-            <div className="bg-gradient-to-br from-amber-50 via-orange-50/40 to-amber-50/20 border border-amber-100/80 rounded-xl p-3.5 shadow-xs">
+            {/* Card 4: Xe Sẵn Sàng */}
+            <div className="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-50/20 border border-emerald-100/80 rounded-xl p-3.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                  Xe Sẵn Sàng / Bảo Trì
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                  Xe Đang Sẵn Sàng
                 </span>
-                <div className="p-1.5 bg-amber-600 text-white rounded-lg shadow-xs">
-                  <Wrench className="w-3.5 h-3.5" />
+                <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                 </div>
               </div>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl font-black text-emerald-700 tracking-tight">
-                  {vehicleStats.available.length} <span className="text-xs font-semibold text-emerald-800">sẵn sàng</span>
-                </span>
-                <span className="text-slate-300 font-light">•</span>
-                <span className="text-lg font-bold text-amber-800">
-                  {vehicleStats.maintenance.length} <span className="text-[11px] font-medium text-amber-700">bảo trì</span>
+                <span className="text-xl sm:text-2xl font-black text-emerald-950 tracking-tight">
+                  {vehicleStats.available.length} <span className="text-xs font-semibold text-emerald-700">xe</span>
                 </span>
               </div>
-              <p className="text-[11px] text-amber-700 font-medium mt-0.5">
-                Trạng thái hiện tại của đội xe
+              <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                {availableVision.length} Vision · {availableAB.length} AB · {availableOthers.length} Khác
               </p>
             </div>
           </div>
@@ -538,68 +551,71 @@ export function DailySummaryDialog({
             </div>
           </div>
 
-          {/* BẢNG 3: Bảng Xe Sẵn Sàng & Xe Bảo Trì */}
+          {/* BẢNG 3: Danh Sách Xe Sẵn Sàng Cho Thuê (3 Cột: Vision, AB, Xe Khác) */}
           <div className="space-y-2.5 pt-1">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-emerald-600" />
                 <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                  3. Trạng Thái Đội Xe Hiện Tại (Sẵn Sàng & Bảo Trì)
+                  3. Danh Sách Xe Đang Sẵn Sàng Cho Thuê ({vehicleStats.available.length} xe)
                 </h3>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
-                  {vehicleStats.available.length} Sẵn sàng
+              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
+                  Vision: {availableVision.length}
                 </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
-                  {vehicleStats.maintenance.length} Bảo trì
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-semibold">
+                  AB: {availableAB.length}
+                </span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-semibold">
+                  Khác: {availableOthers.length}
                 </span>
               </div>
             </div>
 
-            {/* Split View: Xe Sẵn Sàng vs Xe Bảo Trì */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Box 1: Xe Sẵn Sàng */}
+            {/* 3 Cột: Vision, AB, Xe Khác */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Cột 1: Xe Vision */}
               <div className="border border-emerald-200 rounded-xl bg-emerald-50/20 overflow-hidden shadow-xs">
-                <div className="bg-emerald-100/70 px-3.5 py-2 border-b border-emerald-200 flex items-center justify-between">
+                <div className="bg-emerald-100/80 px-3.5 py-2 border-b border-emerald-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                     <h4 className="font-bold text-emerald-950 text-xs sm:text-sm">
-                      Xe Đang Sẵn Sàng Cho Thuê ({vehicleStats.available.length})
+                      Xe Vision ({availableVision.length})
                     </h4>
                   </div>
                 </div>
                 <div className="divide-y divide-emerald-100/60 bg-white">
-                  {vehicleStats.available.length === 0 ? (
+                  {availableVision.length === 0 ? (
                     <div className="p-3 text-center text-xs text-slate-400">
-                      Hiện tại không có xe nào sẵn sàng.
+                      Không có xe Vision sẵn sàng.
                     </div>
                   ) : (
-                    vehicleStats.available.map((vehicle, i) => {
+                    availableVision.map((vehicle, i) => {
                       const imageUrl = getVehicleImageUrl(vehicle)
                       return (
                         <div
                           key={vehicle.id || i}
-                          className="p-2 px-3 flex items-center gap-3 hover:bg-emerald-50/40 transition"
+                          className="p-2 px-3 flex items-center gap-2.5 hover:bg-emerald-50/40 transition"
                         >
-                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                          <span className="w-4 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
                             {i + 1}
                           </span>
                           {imageUrl ? (
                             <img
                               src={imageUrl}
                               alt={vehicle.name}
-                              className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                              className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
                             />
                           ) : (
-                            <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
                               <Car className="w-4 h-4 text-emerald-600" />
                             </div>
                           )}
-                          <div className="flex flex-wrap items-center gap-2 min-w-0">
-                            <span className="font-bold text-slate-900 text-xs sm:text-sm">{vehicle.name}</span>
+                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span className="font-bold text-slate-900 text-xs">{vehicle.name}</span>
                             {vehicle.licensePlate && (
-                              <span className="text-[11px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-semibold shrink-0">
+                              <span className="text-[10px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-semibold shrink-0">
                                 {vehicle.licensePlate}
                               </span>
                             )}
@@ -611,47 +627,99 @@ export function DailySummaryDialog({
                 </div>
               </div>
 
-              {/* Box 2: Xe Bảo Trì */}
-              <div className="border border-amber-200 rounded-xl bg-amber-50/20 overflow-hidden shadow-xs">
-                <div className="bg-amber-100/70 px-3.5 py-2 border-b border-amber-200 flex items-center justify-between">
+              {/* Cột 2: Xe AB */}
+              <div className="border border-blue-200 rounded-xl bg-blue-50/20 overflow-hidden shadow-xs">
+                <div className="bg-blue-100/80 px-3.5 py-2 border-b border-blue-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-amber-700" />
-                    <h4 className="font-bold text-amber-950 text-xs sm:text-sm">
-                      Xe Đang Trong Bảo Trì ({vehicleStats.maintenance.length})
+                    <CheckCircle2 className="w-4 h-4 text-blue-700" />
+                    <h4 className="font-bold text-blue-950 text-xs sm:text-sm">
+                      Xe AB (Air Blade) ({availableAB.length})
                     </h4>
                   </div>
                 </div>
-                <div className="divide-y divide-amber-100/60 bg-white">
-                  {vehicleStats.maintenance.length === 0 ? (
+                <div className="divide-y divide-blue-100/60 bg-white">
+                  {availableAB.length === 0 ? (
                     <div className="p-3 text-center text-xs text-slate-400">
-                      Không có xe nào đang bảo trì.
+                      Không có xe AB sẵn sàng.
                     </div>
                   ) : (
-                    vehicleStats.maintenance.map((vehicle, i) => {
+                    availableAB.map((vehicle, i) => {
                       const imageUrl = getVehicleImageUrl(vehicle)
                       return (
                         <div
                           key={vehicle.id || i}
-                          className="p-2 px-3 flex items-center gap-3 hover:bg-amber-50/40 transition"
+                          className="p-2 px-3 flex items-center gap-2.5 hover:bg-blue-50/40 transition"
                         >
-                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                          <span className="w-4 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
                             {i + 1}
                           </span>
                           {imageUrl ? (
                             <img
                               src={imageUrl}
                               alt={vehicle.name}
-                              className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                              className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
                             />
                           ) : (
-                            <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                              <Car className="w-4 h-4 text-amber-600" />
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                              <Car className="w-4 h-4 text-blue-600" />
                             </div>
                           )}
-                          <div className="flex flex-wrap items-center gap-2 min-w-0">
-                            <span className="font-bold text-slate-900 text-xs sm:text-sm">{vehicle.name}</span>
+                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span className="font-bold text-slate-900 text-xs">{vehicle.name}</span>
                             {vehicle.licensePlate && (
-                              <span className="text-[11px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-semibold shrink-0">
+                              <span className="text-[10px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-semibold shrink-0">
+                                {vehicle.licensePlate}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Cột 3: Xe Khác */}
+              <div className="border border-purple-200 rounded-xl bg-purple-50/20 overflow-hidden shadow-xs">
+                <div className="bg-purple-100/80 px-3.5 py-2 border-b border-purple-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-purple-700" />
+                    <h4 className="font-bold text-purple-950 text-xs sm:text-sm">
+                      Xe Khác ({availableOthers.length})
+                    </h4>
+                  </div>
+                </div>
+                <div className="divide-y divide-purple-100/60 bg-white">
+                  {availableOthers.length === 0 ? (
+                    <div className="p-3 text-center text-xs text-slate-400">
+                      Không có xe khác sẵn sàng.
+                    </div>
+                  ) : (
+                    availableOthers.map((vehicle, i) => {
+                      const imageUrl = getVehicleImageUrl(vehicle)
+                      return (
+                        <div
+                          key={vehicle.id || i}
+                          className="p-2 px-3 flex items-center gap-2.5 hover:bg-purple-50/40 transition"
+                        >
+                          <span className="w-4 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                            {i + 1}
+                          </span>
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={vehicle.name}
+                              className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                              <Car className="w-4 h-4 text-purple-600" />
+                            </div>
+                          )}
+                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span className="font-bold text-slate-900 text-xs">{vehicle.name}</span>
+                            {vehicle.licensePlate && (
+                              <span className="text-[10px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-semibold shrink-0">
                                 {vehicle.licensePlate}
                               </span>
                             )}
