@@ -25,7 +25,6 @@ import {
 } from "lucide-react"
 import { toPng } from "html-to-image"
 import { formatDisplayDate, parseDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
-import { QUY79_BUSINESS } from "@/lib/business-info"
 import { cn } from "@/lib/utils"
 
 interface DailySummaryDialogProps {
@@ -662,21 +661,6 @@ export function DailySummaryDialog({
                     })
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Business Sign-off Footer for Printed Reports / Downloaded Images */}
-          <div className="pt-4 border-t border-slate-300 mt-4 text-xs text-slate-600">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="font-bold text-slate-900 text-xs sm:text-sm">{QUY79_BUSINESS.brandName}</p>
-                <p className="mt-0.5 text-[11px]">Hotline: {QUY79_BUSINESS.hotline}</p>
-                <p className="text-slate-500 text-[11px] mt-0.5">Thời gian lập báo cáo: {formatDisplayDateTime(new Date())}</p>
-              </div>
-              <div className="text-center pr-6">
-                <p className="font-bold text-slate-800 text-xs">Người Kiểm Tra / Lập Báo Cáo</p>
-                <p className="text-slate-400 mt-8 text-[10px]">(Ký và ghi rõ họ tên)</p>
               </div>
             </div>
           </div>
