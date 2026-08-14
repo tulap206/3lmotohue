@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import {
   CalendarCheck,
   Printer,
+  Download,
+  Loader2,
   TrendingUp,
   Car,
   Wrench,
@@ -20,6 +22,7 @@ import {
   AlertCircle,
   Sparkles,
 } from "lucide-react"
+import { toPng } from "html-to-image"
 import { formatDisplayDate, parseDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
 import { QUY79_BUSINESS } from "@/lib/business-info"
 import { cn } from "@/lib/utils"
@@ -66,6 +69,7 @@ export function DailySummaryDialog({
   }, [])
 
   const [selectedDate, setSelectedDate] = useState<string>(todayStr)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Formatted date string for display (e.g. 14/08/2026)
   const formattedSelectedDate = useMemo(() => {
@@ -132,6 +136,39 @@ export function DailySummaryDialog({
     window.print()
   }
 
+  const handleDownloadImage = async () => {
+    const printArea = document.getElementById("daily-summary-print-area")
+    if (!printArea) return
+
+    setIsExporting(true)
+    try {
+      await new Promise((res) => setTimeout(res, 120))
+
+      const dataUrl = await toPng(printArea, {
+        quality: 0.98,
+        pixelRatio: 2, // High resolution (retina 2x)
+        backgroundColor: "#ffffff",
+        filter: (node) => {
+          if (node instanceof HTMLElement && node.classList.contains("print:hidden")) {
+            return false
+          }
+          return true
+        },
+      })
+
+      const link = document.createElement("a")
+      const fileDate = formattedSelectedDate.replace(/\//g, "-")
+      link.download = `Bao-Cao-Ngay-${fileDate}.png`
+      link.href = dataUrl
+      link.click()
+    } catch (err) {
+      console.error("Error exporting image:", err)
+      alert("⚠️ Lỗi tạo hình ảnh. Vui lòng thử lại!")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-5xl max-w-[95vw] w-full max-h-[90vh] overflow-y-auto bg-slate-50/50 p-0 rounded-2xl border-slate-200 shadow-2xl">
@@ -164,8 +201,8 @@ export function DailySummaryDialog({
               </div>
             </div>
 
-            {/* Date Selector & Print Control */}
-            <div className="flex flex-wrap items-center gap-2.5 print:hidden">
+            {/* Date Selector & Action Controls */}
+            <div className="flex flex-wrap items-center gap-2 print:hidden">
               <div className="relative">
                 <Calendar className="w-4 h-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
                 <input
@@ -177,10 +214,23 @@ export function DailySummaryDialog({
               </div>
 
               <Button
+                onClick={handleDownloadImage}
+                disabled={isExporting}
+                className="bg-emerald-600 hover:bg-emerald-700 !text-white rounded-lg font-semibold text-xs h-9 px-3.5 gap-1.5 shadow-sm transition"
+              >
+                {isExporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                {isExporting ? "Đang tạo ảnh..." : "Tải ảnh báo cáo"}
+              </Button>
+
+              <Button
                 onClick={handlePrint}
                 variant="outline"
                 size="sm"
-                className="bg-white text-slate-700 border-slate-300 hover:bg-slate-50 rounded-lg font-semibold text-xs h-9 px-3.5 gap-1.5 shadow-sm"
+                className="bg-white text-slate-700 border-slate-300 hover:bg-slate-50 rounded-lg font-semibold text-xs h-9 px-3 gap-1.5 shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5 text-slate-600" />
                 In báo cáo
@@ -494,17 +544,17 @@ export function DailySummaryDialog({
             </div>
           </div>
 
-          {/* Business Sign-off Footer for Printed Reports */}
-          <div className="hidden print:block pt-6 border-t border-slate-300 mt-6 text-xs text-slate-600">
+          {/* Business Sign-off Footer for Printed Reports / Downloaded Images */}
+          <div className="pt-6 border-t border-slate-300 mt-6 text-xs text-slate-600">
             <div className="flex justify-between items-start">
               <div>
-                <p className="font-bold text-slate-800">{QUY79_BUSINESS.brandName}</p>
-                <p>Hotline: {QUY79_BUSINESS.hotline}</p>
-                <p>Ngày in: {formatDisplayDateTime(new Date())}</p>
+                <p className="font-bold text-slate-900 text-sm">{QUY79_BUSINESS.brandName}</p>
+                <p className="mt-0.5">Hotline: {QUY79_BUSINESS.hotline}</p>
+                <p className="text-slate-500 mt-0.5">Thời gian lập báo cáo: {formatDisplayDateTime(new Date())}</p>
               </div>
-              <div className="text-center pr-8">
+              <div className="text-center pr-6">
                 <p className="font-bold text-slate-800">Người Kiểm Tra / Lập Báo Cáo</p>
-                <p className="text-slate-400 mt-12">(Ký và ghi rõ họ tên)</p>
+                <p className="text-slate-400 mt-10 text-[11px]">(Ký và ghi rõ họ tên)</p>
               </div>
             </div>
           </div>
@@ -512,14 +562,26 @@ export function DailySummaryDialog({
 
         {/* Modal Footer Controls */}
         <div className="bg-slate-100/80 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between print:hidden rounded-b-2xl">
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 font-medium hidden sm:block">
             3L Moto — Hệ thống quản lý cho thuê xe máy
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              onClick={handleDownloadImage}
+              disabled={isExporting}
+              className="bg-emerald-600 hover:bg-emerald-700 !text-white font-semibold text-xs h-9 px-4 rounded-lg shadow-sm transition"
+            >
+              {isExporting ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              {isExporting ? "Đang tạo ảnh..." : "Tải Ảnh Báo Cáo"}
+            </Button>
             <Button
               onClick={handlePrint}
               variant="outline"
-              className="bg-white border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs h-9 px-4 rounded-lg shadow-sm"
+              className="bg-white border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs h-9 px-3.5 rounded-lg shadow-sm"
             >
               <Printer className="w-3.5 h-3.5 mr-1.5 text-slate-600" />
               In Báo Cáo
