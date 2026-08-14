@@ -52,6 +52,23 @@ function formatPrice(value: number) {
   }).format(value || 0)
 }
 
+function getVehicleImageUrl(vehicle: any): string | null {
+  if (!vehicle) return null
+  if (Array.isArray(vehicle.vehicleImages) && vehicle.vehicleImages.length > 0 && typeof vehicle.vehicleImages[0] === 'string') {
+    return vehicle.vehicleImages[0]
+  }
+  if (Array.isArray(vehicle.vehiclephoto) && vehicle.vehiclephoto.length > 0 && typeof vehicle.vehiclephoto[0] === 'string') {
+    return vehicle.vehiclephoto[0]
+  }
+  if (Array.isArray(vehicle.images) && vehicle.images.length > 0 && typeof vehicle.images[0] === 'string') {
+    return vehicle.images[0]
+  }
+  if (typeof vehicle.image === "string" && vehicle.image) {
+    return vehicle.image
+  }
+  return null
+}
+
 export function DailySummaryDialog({
   isOpen,
   onClose,
@@ -466,35 +483,44 @@ export function DailySummaryDialog({
                     </h4>
                   </div>
                 </div>
-                <div className="max-h-64 overflow-y-auto divide-y divide-emerald-100/60 bg-white">
+                <div className="max-h-72 overflow-y-auto divide-y divide-emerald-100/60 bg-white">
                   {vehicleStats.available.length === 0 ? (
                     <div className="p-4 text-center text-xs text-slate-400">
                       Hiện tại không có xe nào sẵn sàng.
                     </div>
                   ) : (
-                    vehicleStats.available.map((vehicle, i) => (
-                      <div
-                        key={vehicle.id || i}
-                        className="p-3 px-4 flex items-center justify-between text-xs hover:bg-emerald-50/40 transition"
-                      >
-                        <div>
-                          <div className="font-bold text-slate-800 text-sm">{vehicle.name}</div>
-                          {vehicle.licensePlate && (
-                            <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 mt-0.5 inline-block">
-                              {vehicle.licensePlate}
-                            </span>
+                    vehicleStats.available.map((vehicle, i) => {
+                      const imageUrl = getVehicleImageUrl(vehicle)
+                      return (
+                        <div
+                          key={vehicle.id || i}
+                          className="p-2.5 px-3 flex items-center gap-3 hover:bg-emerald-50/40 transition"
+                        >
+                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                            {i + 1}
+                          </span>
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={vehicle.name}
+                              className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                              <Car className="w-5 h-5" />
+                            </div>
                           )}
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <span className="font-bold text-slate-900 text-sm">{vehicle.name}</span>
+                            {vehicle.licensePlate && (
+                              <span className="text-xs font-mono text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold shrink-0">
+                                {vehicle.licensePlate}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="font-bold text-emerald-700 font-mono text-sm block">
-                            {vehicle.pricePerDay ? formatPrice(vehicle.pricePerDay) : "—"}/ngày
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 inline-block mt-0.5">
-                            Sẵn sàng
-                          </span>
-                        </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </div>
@@ -509,35 +535,44 @@ export function DailySummaryDialog({
                     </h4>
                   </div>
                 </div>
-                <div className="max-h-64 overflow-y-auto divide-y divide-amber-100/60 bg-white">
+                <div className="max-h-72 overflow-y-auto divide-y divide-amber-100/60 bg-white">
                   {vehicleStats.maintenance.length === 0 ? (
                     <div className="p-4 text-center text-xs text-slate-400">
                       Không có xe nào đang bảo trì.
                     </div>
                   ) : (
-                    vehicleStats.maintenance.map((vehicle, i) => (
-                      <div
-                        key={vehicle.id || i}
-                        className="p-3 px-4 flex items-center justify-between text-xs hover:bg-amber-50/40 transition"
-                      >
-                        <div>
-                          <div className="font-bold text-slate-800 text-sm">{vehicle.name}</div>
-                          {vehicle.licensePlate && (
-                            <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 mt-0.5 inline-block">
-                              {vehicle.licensePlate}
-                            </span>
+                    vehicleStats.maintenance.map((vehicle, i) => {
+                      const imageUrl = getVehicleImageUrl(vehicle)
+                      return (
+                        <div
+                          key={vehicle.id || i}
+                          className="p-2.5 px-3 flex items-center gap-3 hover:bg-amber-50/40 transition"
+                        >
+                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                            {i + 1}
+                          </span>
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={vehicle.name}
+                              className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                              <Car className="w-5 h-5 text-amber-600" />
+                            </div>
                           )}
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <span className="font-bold text-slate-900 text-sm">{vehicle.name}</span>
+                            {vehicle.licensePlate && (
+                              <span className="text-xs font-mono text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-semibold shrink-0">
+                                {vehicle.licensePlate}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-[11px] text-amber-900 font-medium italic block max-w-[160px] truncate">
-                            {vehicle.notes || "Đang bảo dưỡng định kỳ"}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 inline-block mt-0.5">
-                            Bảo trì
-                          </span>
-                        </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </div>
