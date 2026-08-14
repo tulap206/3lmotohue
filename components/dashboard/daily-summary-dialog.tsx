@@ -402,8 +402,8 @@ export function DailySummaryDialog({
                               : order.status}
                           </span>
                         </td>
-                        {/* HIGHLIGHTED 3: Số Tiền RED COLOR */}
-                        <td className="py-2 px-3 text-right font-bold text-red-600 font-mono text-xs">
+                        {/* Số Tiền từng xe (màu đen) */}
+                        <td className="py-2 px-3 text-right font-bold text-slate-900 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
                       </tr>
@@ -490,8 +490,8 @@ export function DailySummaryDialog({
                             Hoàn thành
                           </span>
                         </td>
-                        {/* HIGHLIGHTED 3: Số Tiền RED COLOR */}
-                        <td className="py-2 px-3 text-right font-bold text-red-600 font-mono text-xs">
+                        {/* Số Tiền từng xe (màu đen) */}
+                        <td className="py-2 px-3 text-right font-bold text-slate-900 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
                       </tr>
