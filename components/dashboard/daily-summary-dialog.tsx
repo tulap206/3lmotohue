@@ -18,6 +18,8 @@ import {
   AlertCircle,
   ArrowUpRight,
   ArrowDownLeft,
+  Bike,
+  Sparkles,
 } from "lucide-react"
 import { toPng } from "html-to-image"
 import { formatDisplayDate, parseDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
@@ -210,211 +212,222 @@ export function DailySummaryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-5xl max-w-[96vw] w-full max-h-[96vh] overflow-y-auto bg-slate-50/50 p-0 rounded-2xl border-slate-200 shadow-2xl">
-        {/* Printable Section Wrapper */}
-        <div id="daily-summary-print-area" className="p-4 sm:p-6 space-y-5 bg-white">
-          {/* Header Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-200 pr-10">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-xl shadow-md shadow-blue-500/20 shrink-0">
-                <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6" />
+      <DialogContent className="sm:max-w-5xl max-w-[96vw] w-full max-h-[96vh] overflow-y-auto bg-slate-100/70 p-0 rounded-2xl border-slate-200/80 shadow-2xl">
+        {/* Printable Canvas Section */}
+        <div id="daily-summary-print-area" className="p-5 sm:p-7 space-y-6 bg-white rounded-t-2xl">
+          
+          {/* Header Banner Block */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200 pr-8">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 bg-slate-900 text-emerald-400 rounded-2xl shadow-md shadow-slate-900/10 shrink-0">
+                <CalendarCheck className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-                  Báo Cáo Tổng Kết Ngày
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Cập nhật lúc: {formatDisplayDateTime(new Date())}
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    BÁO CÁO TỔNG KẾT NGÀY
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-900 text-white tracking-wide">
+                    {formattedSelectedDate}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1 font-medium flex items-center gap-2">
+                  <span>Hệ thống 3L Moto</span>
+                  <span>•</span>
+                  <span>Thời gian cập nhật: {formatDisplayDateTime(new Date())}</span>
                 </p>
               </div>
             </div>
 
-            {/* Date Selector & Download Control */}
-            <div className="flex flex-wrap items-center gap-2 print:hidden">
+            {/* Date Selector & Export Actions */}
+            <div className="flex flex-wrap items-center gap-2.5 print:hidden">
               <div className="relative">
-                <Calendar className="w-4 h-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+                <Calendar className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs sm:text-sm text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 transition shadow-sm cursor-pointer"
+                  className="pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-800 transition shadow-xs cursor-pointer"
                 />
               </div>
 
               <Button
                 onClick={handleDownloadImage}
                 disabled={isExporting}
-                className="bg-emerald-600 hover:bg-emerald-700 !text-white rounded-lg font-semibold text-xs h-9 px-3.5 gap-1.5 shadow-sm transition"
+                className="bg-emerald-600 hover:bg-emerald-700 !text-white rounded-xl font-bold text-xs h-9 px-4 gap-2 shadow-sm transition"
               >
                 {isExporting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-4 h-4" />
                 )}
-                {isExporting ? "Đang tạo..." : "Tải ảnh báo cáo"}
+                {isExporting ? "Đang xuất..." : "Tải ảnh báo cáo"}
               </Button>
             </div>
           </div>
 
-          {/* KPI Highlight Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* Card 1: Doanh thu */}
-            <div className="bg-gradient-to-br from-blue-50 via-indigo-50/40 to-blue-50/20 border border-blue-100/80 rounded-xl p-3.5 shadow-xs relative overflow-hidden">
+          {/* Executive KPI Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Card 1: Doanh Thu */}
+            <div className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-200/80 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
-                  Doanh Thu Trong Ngày
+                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800">
+                  Doanh Thu Thực Thu
                 </span>
-                <div className="p-1.5 bg-blue-600 text-white rounded-lg shadow-xs">
-                  <TrendingUp className="w-3.5 h-3.5" />
+                <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+                  <TrendingUp className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-2">
-                <span className="text-xl sm:text-2xl font-black text-blue-950 tracking-tight">
+              <div className="mt-3">
+                <span className="text-xl sm:text-2xl font-black text-emerald-950 tracking-tight font-mono">
                   {formatPrice(dailyRevenue)}
                 </span>
               </div>
-              <p className="text-[11px] text-blue-600 font-medium mt-0.5">
-                {completedOrders.length} đơn hoàn thành chốt doanh thu
-              </p>
+              <div className="mt-1 text-[11px] font-semibold text-emerald-700">
+                {completedOrders.length} đơn hoàn thành chốt sổ
+              </div>
             </div>
 
             {/* Card 2: Đơn Giao Trong Ngày */}
-            <div className="bg-gradient-to-br from-indigo-50 via-purple-50/40 to-indigo-50/20 border border-indigo-100/80 rounded-xl p-3.5 shadow-xs">
+            <div className="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-200/80 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1">
-                  <ArrowUpRight className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="text-[11px] font-black uppercase tracking-wider text-blue-800 flex items-center gap-1">
+                  <ArrowUpRight className="w-3.5 h-3.5 text-blue-600" />
                   Đơn Giao Trong Ngày
                 </span>
-                <div className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-xs">
-                  <Car className="w-3.5 h-3.5" />
+                <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
+                  <Car className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">
-                  {dispatchedOrders.length} <span className="text-xs font-semibold text-indigo-700">đơn</span>
+              <div className="mt-3 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-blue-950 tracking-tight">
+                  {dispatchedOrders.length} <span className="text-xs font-bold text-blue-700">đơn</span>
                 </span>
                 <span className="text-slate-300 font-light">/</span>
-                <span className="text-lg font-bold text-indigo-800">
-                  {dispatchedVehiclesCount} <span className="text-[11px] font-medium text-indigo-600">xe giao</span>
+                <span className="text-base font-bold text-blue-800">
+                  {dispatchedVehiclesCount} <span className="text-[11px] font-medium text-blue-600">xe</span>
                 </span>
               </div>
-              <p className="text-[11px] text-indigo-600 font-medium mt-0.5">
-                Đơn thuê mới & bàn giao xe
-              </p>
+              <div className="mt-1 text-[11px] font-semibold text-blue-700">
+                Bàn giao xe cho khách
+              </div>
             </div>
 
             {/* Card 3: Đơn Nhận xe trong ngày */}
-            <div className="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-50/20 border border-emerald-100/80 rounded-xl p-3.5 shadow-xs">
+            <div className="bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent border border-teal-200/80 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
-                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-[11px] font-black uppercase tracking-wider text-teal-800 flex items-center gap-1">
+                  <ArrowDownLeft className="w-3.5 h-3.5 text-teal-600" />
                   Đơn Nhận Xe Trong Ngày
                 </span>
-                <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-xs">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <div className="p-2 bg-teal-600 text-white rounded-xl shadow-xs">
+                  <CheckCircle2 className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl font-black text-emerald-950 tracking-tight">
-                  {completedOrders.length} <span className="text-xs font-semibold text-emerald-700">đơn</span>
+              <div className="mt-3 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-teal-950 tracking-tight">
+                  {completedOrders.length} <span className="text-xs font-bold text-teal-700">đơn</span>
                 </span>
                 <span className="text-slate-300 font-light">/</span>
-                <span className="text-lg font-bold text-emerald-800">
-                  {completedVehiclesCount} <span className="text-[11px] font-medium text-emerald-600">xe nhận</span>
+                <span className="text-base font-bold text-teal-800">
+                  {completedVehiclesCount} <span className="text-[11px] font-medium text-teal-600">xe</span>
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
-                Xe khách hoàn thành & trả lại
-              </p>
+              <div className="mt-1 text-[11px] font-semibold text-teal-700">
+                Nhận trả xe hoàn thành
+              </div>
             </div>
 
             {/* Card 4: Xe Sẵn Sàng */}
-            <div className="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-50/20 border border-emerald-100/80 rounded-xl p-3.5 shadow-xs">
+            <div className="bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-transparent border border-indigo-200/80 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                <span className="text-[11px] font-black uppercase tracking-wider text-indigo-800">
                   Xe Đang Sẵn Sàng
                 </span>
-                <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-xs">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+                  <Bike className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl font-black text-emerald-950 tracking-tight">
-                  {vehicleStats.available.length} <span className="text-xs font-semibold text-emerald-700">xe</span>
+              <div className="mt-3 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">
+                  {vehicleStats.available.length} <span className="text-xs font-bold text-indigo-700">xe</span>
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
-                {availableVision.length} Vision · {availableAB.length} AB · {availableOthers.length} Khác
-              </p>
+              <div className="mt-1 text-[11px] font-bold text-indigo-800">
+                {availableVision.length} Vision • {availableAB.length} AB • {availableOthers.length} Khác
+              </div>
             </div>
           </div>
 
           {/* BẢNG 1: Đơn giao xe trong ngày */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between bg-blue-50/80 px-4 py-2.5 rounded-xl border border-blue-100">
               <div className="flex items-center gap-2">
-                <ArrowUpRight className="w-4 h-4 text-blue-600" />
-                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                <ArrowUpRight className="w-4 h-4 text-blue-700" />
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-950">
                   1. Danh Sách Đơn Giao Xe Trong Ngày ({formattedSelectedDate})
                 </h3>
               </div>
-              <span className="text-xs text-blue-700 font-semibold bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">
-                Tổng: <strong className="text-blue-900 font-bold">{dispatchedOrders.length}</strong> đơn giao xe ({dispatchedVehiclesCount} xe)
+              <span className="text-xs text-blue-800 font-bold bg-white px-3 py-1 rounded-lg border border-blue-200 shadow-2xs">
+                Tổng: {dispatchedOrders.length} đơn ({dispatchedVehiclesCount} xe)
               </span>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
+            <div className="overflow-x-auto border border-slate-200/90 rounded-2xl bg-white shadow-xs">
               <table className="w-full min-w-[620px] text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-blue-50/60 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                    <th className="py-2.5 px-3 w-10 text-center">STT</th>
-                    <th className="py-2.5 px-3 min-w-[130px]">Khách Hàng</th>
-                    <th className="py-2.5 px-3 min-w-[140px]">Xe Thuê & Biển Số</th>
-                    <th className="py-2.5 px-3 min-w-[140px] text-center">Thời Gian Thuê</th>
-                    <th className="py-2.5 px-3 min-w-[100px] text-center">Trạng Thái</th>
-                    <th className="py-2.5 px-3 min-w-[120px] text-right">Doanh Thu / Giá</th>
+                  <tr className="bg-slate-900 border-b border-slate-900 text-[11px] font-extrabold text-white uppercase tracking-wider">
+                    <th className="py-3 px-3.5 w-12 text-center">STT</th>
+                    <th className="py-3 px-3.5 min-w-[140px]">Khách Hàng</th>
+                    <th className="py-3 px-3.5 min-w-[160px]">Xe Thuê & Biển Số</th>
+                    <th className="py-3 px-3.5 min-w-[150px] text-center">Thời Gian Thuê</th>
+                    <th className="py-3 px-3.5 min-w-[110px] text-center">Trạng Thái</th>
+                    <th className="py-3 px-3.5 min-w-[130px] text-right">Doanh Thu / Giá</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-slate-100 text-slate-800">
                   {dispatchedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-5 text-center text-slate-400">
+                      <td colSpan={6} className="py-6 text-center text-slate-400">
                         <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                        <p className="font-medium text-slate-500 text-xs">Không có đơn giao xe nào trong ngày này.</p>
+                        <p className="font-semibold text-slate-500 text-xs">Không có đơn giao xe nào trong ngày này.</p>
                       </td>
                     </tr>
                   ) : (
                     dispatchedOrders.map((order, idx) => (
-                      <tr key={order.id || idx} className="hover:bg-blue-50/30 transition-colors">
-                        <td className="py-2 px-3 text-center font-mono text-xs text-slate-400 font-medium">
+                      <tr key={order.id || idx} className="hover:bg-blue-50/20 transition-colors">
+                        <td className="py-2.5 px-3.5 text-center font-mono text-xs text-slate-400 font-bold">
                           {idx + 1}
                         </td>
-                        <td className="py-2 px-3 font-bold text-slate-900">
+                        <td className="py-2.5 px-3.5 font-bold text-slate-900">
                           {order.customerName || "Khách lẻ"}
                         </td>
-                        <td className="py-2 px-3">
-                          <div className="font-semibold text-slate-800">{order.vehicleName || "Xe thuê"}</div>
-                          {order.licensePlate && (
-                            <span className="inline-block px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded text-[10px] font-mono font-medium mt-0.5 border border-slate-200">
-                              {order.licensePlate}
-                            </span>
-                          )}
+                        <td className="py-2.5 px-3.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-slate-900">{order.vehicleName || "Xe thuê"}</span>
+                            {order.licensePlate && (
+                              <span className="px-2 py-0.5 bg-slate-900 text-white rounded text-[11px] font-mono font-bold shrink-0 shadow-2xs">
+                                {order.licensePlate}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="py-2 px-3 text-center text-[11px] text-slate-600">
-                          <div className="font-medium text-slate-800">{order.startDate || "—"}</div>
-                          <div className="text-slate-400 text-[10px]">đến {order.endDate || "—"}</div>
+                        <td className="py-2.5 px-3.5 text-center">
+                          <div className="inline-block px-2.5 py-1 bg-slate-100 text-slate-800 rounded-lg font-medium text-[11px] border border-slate-200">
+                            {order.startDate || "—"} → {order.endDate || "—"}
+                          </div>
                         </td>
-                        <td className="py-2 px-3 text-center">
+                        <td className="py-2.5 px-3.5 text-center">
                           <span
                             className={cn(
-                              "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold shadow-xs",
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-2xs",
                               order.status === "completed"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                                 : order.status === "active"
-                                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                ? "bg-blue-100 text-blue-800 border border-blue-300"
                                 : order.status === "pending"
-                                ? "bg-orange-50 text-orange-700 border border-orange-200"
-                                : "bg-slate-100 text-slate-600 border border-slate-200"
+                                ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                : "bg-slate-100 text-slate-700 border border-slate-300"
                             )}
                           >
                             {order.status === "completed"
@@ -426,7 +439,7 @@ export function DailySummaryDialog({
                               : order.status}
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-right font-bold text-slate-900 font-mono text-xs">
+                        <td className="py-2.5 px-3.5 text-right font-black text-slate-900 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
                       </tr>
@@ -435,12 +448,12 @@ export function DailySummaryDialog({
                 </tbody>
                 {dispatchedOrders.length > 0 && (
                   <tfoot>
-                    <tr className="bg-blue-50/70 font-bold text-slate-900 border-t-2 border-blue-200 text-xs">
-                      <td colSpan={4} className="py-2.5 px-3">
+                    <tr className="bg-slate-900 text-white font-extrabold border-t-2 border-slate-900 text-xs">
+                      <td colSpan={4} className="py-3 px-3.5">
                         TỔNG CỘNG ĐƠN GIAO XE ({dispatchedOrders.length} ĐƠN - {dispatchedVehiclesCount} XE)
                       </td>
-                      <td className="py-2.5 px-3 text-center text-slate-500"></td>
-                      <td className="py-2.5 px-3 text-right font-mono text-blue-700 text-sm font-black">
+                      <td className="py-3 px-3.5 text-center"></td>
+                      <td className="py-3 px-3.5 text-right font-mono text-emerald-400 text-sm font-black">
                         {formatPrice(
                           dispatchedOrders.reduce((acc, curr) => acc + (curr.revenue || curr.totalPrice || 0), 0)
                         )}
@@ -453,66 +466,69 @@ export function DailySummaryDialog({
           </div>
 
           {/* BẢNG 2: Đơn hoàn thành nhận lại xe trong ngày */}
-          <div className="space-y-2.5 pt-1">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+          <div className="space-y-3 pt-1">
+            <div className="flex items-center justify-between bg-emerald-50/80 px-4 py-2.5 rounded-xl border border-emerald-100">
               <div className="flex items-center gap-2">
-                <ArrowDownLeft className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                <ArrowDownLeft className="w-4 h-4 text-emerald-700" />
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-emerald-950">
                   2. Danh Sách Đơn Hoàn Thành & Nhận Lại Xe Trong Ngày ({formattedSelectedDate})
                 </h3>
               </div>
-              <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md">
-                Tổng: <strong className="text-emerald-900 font-bold">{completedOrders.length}</strong> đơn nhận xe ({completedVehiclesCount} xe)
+              <span className="text-xs text-emerald-800 font-bold bg-white px-3 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+                Tổng: {completedOrders.length} đơn ({completedVehiclesCount} xe)
               </span>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-xs">
+            <div className="overflow-x-auto border border-slate-200/90 rounded-2xl bg-white shadow-xs">
               <table className="w-full min-w-[620px] text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-emerald-50/60 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                    <th className="py-2.5 px-3 w-10 text-center">STT</th>
-                    <th className="py-2.5 px-3 min-w-[130px]">Khách Hàng</th>
-                    <th className="py-2.5 px-3 min-w-[140px]">Xe Thuê & Biển Số</th>
-                    <th className="py-2.5 px-3 min-w-[140px] text-center">Thời Gian Thuê</th>
-                    <th className="py-2.5 px-3 min-w-[100px] text-center">Trạng Thái</th>
-                    <th className="py-2.5 px-3 min-w-[120px] text-right">Doanh Thu Thực Thu</th>
+                  <tr className="bg-slate-900 border-b border-slate-900 text-[11px] font-extrabold text-white uppercase tracking-wider">
+                    <th className="py-3 px-3.5 w-12 text-center">STT</th>
+                    <th className="py-3 px-3.5 min-w-[140px]">Khách Hàng</th>
+                    <th className="py-3 px-3.5 min-w-[160px]">Xe Thuê & Biển Số</th>
+                    <th className="py-3 px-3.5 min-w-[150px] text-center">Thời Gian Thuê</th>
+                    <th className="py-3 px-3.5 min-w-[110px] text-center">Trạng Thái</th>
+                    <th className="py-3 px-3.5 min-w-[130px] text-right">Doanh Thu Thực Thu</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-slate-100 text-slate-800">
                   {completedOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-5 text-center text-slate-400">
+                      <td colSpan={6} className="py-6 text-center text-slate-400">
                         <AlertCircle className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                        <p className="font-medium text-slate-500 text-xs">Không có đơn hoàn thành nhận lại xe nào trong ngày này.</p>
+                        <p className="font-semibold text-slate-500 text-xs">Không có đơn hoàn thành nhận lại xe nào trong ngày này.</p>
                       </td>
                     </tr>
                   ) : (
                     completedOrders.map((order, idx) => (
-                      <tr key={order.id || idx} className="hover:bg-emerald-50/30 transition-colors">
-                        <td className="py-2 px-3 text-center font-mono text-xs text-slate-400 font-medium">
+                      <tr key={order.id || idx} className="hover:bg-emerald-50/20 transition-colors">
+                        <td className="py-2.5 px-3.5 text-center font-mono text-xs text-slate-400 font-bold">
                           {idx + 1}
                         </td>
-                        <td className="py-2 px-3 font-bold text-slate-900">
+                        <td className="py-2.5 px-3.5 font-bold text-slate-900">
                           {order.customerName || "Khách lẻ"}
                         </td>
-                        <td className="py-2 px-3">
-                          <div className="font-semibold text-slate-800">{order.vehicleName || "Xe thuê"}</div>
-                          {order.licensePlate && (
-                            <span className="inline-block px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded text-[10px] font-mono font-medium mt-0.5 border border-slate-200">
-                              {order.licensePlate}
-                            </span>
-                          )}
+                        <td className="py-2.5 px-3.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-slate-900">{order.vehicleName || "Xe thuê"}</span>
+                            {order.licensePlate && (
+                              <span className="px-2 py-0.5 bg-slate-900 text-white rounded text-[11px] font-mono font-bold shrink-0 shadow-2xs">
+                                {order.licensePlate}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td className="py-2 px-3 text-center text-[11px] text-slate-600">
-                          <div className="font-medium text-slate-800">{order.startDate || "—"}</div>
-                          <div className="text-slate-400 text-[10px]">đến {order.endDate || "—"}</div>
+                        <td className="py-2.5 px-3.5 text-center">
+                          <div className="inline-block px-2.5 py-1 bg-slate-100 text-slate-800 rounded-lg font-medium text-[11px] border border-slate-200">
+                            {order.startDate || "—"} → {order.endDate || "—"}
+                          </div>
                         </td>
-                        <td className="py-2 px-3 text-center">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+                        <td className="py-2.5 px-3.5 text-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
                             Hoàn thành
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-right font-bold text-emerald-700 font-mono text-xs">
+                        <td className="py-2.5 px-3.5 text-right font-black text-emerald-700 font-mono text-xs">
                           {formatPrice(order.revenue || order.totalPrice || 0)}
                         </td>
                       </tr>
@@ -521,12 +537,12 @@ export function DailySummaryDialog({
                 </tbody>
                 {completedOrders.length > 0 && (
                   <tfoot>
-                    <tr className="bg-emerald-50/70 font-bold text-slate-900 border-t-2 border-emerald-200 text-xs">
-                      <td colSpan={4} className="py-2.5 px-3">
+                    <tr className="bg-slate-900 text-white font-extrabold border-t-2 border-slate-900 text-xs">
+                      <td colSpan={4} className="py-3 px-3.5">
                         TỔNG CỘNG ĐƠN NHẬN XE ({completedOrders.length} ĐƠN - {completedVehiclesCount} XE)
                       </td>
-                      <td className="py-2.5 px-3 text-center text-slate-500"></td>
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-700 text-sm font-black">
+                      <td className="py-3 px-3.5 text-center"></td>
+                      <td className="py-3 px-3.5 text-right font-mono text-emerald-400 text-sm font-black">
                         {formatPrice(dailyRevenue)}
                       </td>
                     </tr>
@@ -536,43 +552,43 @@ export function DailySummaryDialog({
             </div>
           </div>
 
-          {/* BẢNG 3: Danh Sách Xe Sẵn Sàng Cho Thuê (3 Cột: Vision, AB, Xe Khác) */}
-          <div className="space-y-2.5 pt-1">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+          {/* BẢNG 3: Danh Sách Xe Đang Sẵn Sàng (3 Cột) */}
+          <div className="space-y-3 pt-1">
+            <div className="flex items-center justify-between bg-indigo-50/80 px-4 py-2.5 rounded-xl border border-indigo-100">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                <Layers className="w-4 h-4 text-indigo-700" />
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-indigo-950">
                   3. Danh Sách Xe Đang Sẵn Sàng Cho Thuê ({vehicleStats.available.length} xe)
                 </h3>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-200">
                   Vision: {availableVision.length}
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-semibold">
+                <span className="px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-200">
                   AB: {availableAB.length}
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-semibold">
+                <span className="px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-900 border border-purple-200">
                   Khác: {availableOthers.length}
                 </span>
               </div>
             </div>
 
-            {/* 3 Cột: Vision, AB, Xe Khác */}
+            {/* 3 Cột Card Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Cột 1: Xe Vision */}
-              <div className="border border-emerald-200 rounded-xl bg-emerald-50/20 overflow-hidden shadow-xs">
-                <div className="bg-emerald-100/80 px-3.5 py-2 border-b border-emerald-200 flex items-center justify-between">
+              <div className="border border-emerald-200/90 rounded-2xl bg-white overflow-hidden shadow-xs">
+                <div className="bg-emerald-600 text-white px-3.5 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                    <h4 className="font-bold text-emerald-950 text-xs sm:text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                    <h4 className="font-extrabold text-xs tracking-wider uppercase">
                       Xe Vision ({availableVision.length})
                     </h4>
                   </div>
                 </div>
-                <div className="divide-y divide-emerald-100/60 bg-white">
+                <div className="divide-y divide-slate-100">
                   {availableVision.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400">
+                    <div className="p-4 text-center text-xs text-slate-400 font-medium">
                       Không có xe Vision sẵn sàng.
                     </div>
                   ) : (
@@ -581,26 +597,26 @@ export function DailySummaryDialog({
                       return (
                         <div
                           key={vehicle.id || i}
-                          className="p-2 px-3 flex items-center gap-2.5 hover:bg-emerald-50/40 transition"
+                          className="p-2.5 px-3 flex items-center gap-3 hover:bg-emerald-50/30 transition"
                         >
-                          <span className="w-4 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
                             {i + 1}
                           </span>
                           {imageUrl ? (
                             <img
                               src={imageUrl}
                               alt={vehicle.name}
-                              className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                              className="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-100 shadow-2xs"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                              <Car className="w-4 h-4 text-emerald-600" />
+                            <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 shadow-2xs">
+                              <Bike className="w-4 h-4" />
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span className="font-bold text-slate-900 text-xs">{vehicle.name}</span>
+                            <span className="font-extrabold text-slate-900 text-xs">{vehicle.name}</span>
                             {vehicle.licensePlate && (
-                              <span className="text-[10px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-semibold shrink-0">
+                              <span className="text-[10px] font-mono font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow-2xs shrink-0">
                                 {vehicle.licensePlate}
                               </span>
                             )}
@@ -613,18 +629,18 @@ export function DailySummaryDialog({
               </div>
 
               {/* Cột 2: Xe AB */}
-              <div className="border border-blue-200 rounded-xl bg-blue-50/20 overflow-hidden shadow-xs">
-                <div className="bg-blue-100/80 px-3.5 py-2 border-b border-blue-200 flex items-center justify-between">
+              <div className="border border-blue-200/90 rounded-2xl bg-white overflow-hidden shadow-xs">
+                <div className="bg-blue-600 text-white px-3.5 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-blue-700" />
-                    <h4 className="font-bold text-blue-950 text-xs sm:text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-blue-200" />
+                    <h4 className="font-extrabold text-xs tracking-wider uppercase">
                       Xe AB (Air Blade) ({availableAB.length})
                     </h4>
                   </div>
                 </div>
-                <div className="divide-y divide-blue-100/60 bg-white">
+                <div className="divide-y divide-slate-100">
                   {availableAB.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400">
+                    <div className="p-4 text-center text-xs text-slate-400 font-medium">
                       Không có xe AB sẵn sàng.
                     </div>
                   ) : (
@@ -633,26 +649,26 @@ export function DailySummaryDialog({
                       return (
                         <div
                           key={vehicle.id || i}
-                          className="p-2 px-3 flex items-center gap-2.5 hover:bg-blue-50/40 transition"
+                          className="p-2.5 px-3 flex items-center gap-3 hover:bg-blue-50/30 transition"
                         >
-                          <span className="w-4 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
                             {i + 1}
                           </span>
                           {imageUrl ? (
                             <img
                               src={imageUrl}
                               alt={vehicle.name}
-                              className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                              className="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-100 shadow-2xs"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                              <Car className="w-4 h-4 text-blue-600" />
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
+                              <Bike className="w-4 h-4" />
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span className="font-bold text-slate-900 text-xs">{vehicle.name}</span>
+                            <span className="font-extrabold text-slate-900 text-xs">{vehicle.name}</span>
                             {vehicle.licensePlate && (
-                              <span className="text-[10px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-semibold shrink-0">
+                              <span className="text-[10px] font-mono font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow-2xs shrink-0">
                                 {vehicle.licensePlate}
                               </span>
                             )}
@@ -665,18 +681,18 @@ export function DailySummaryDialog({
               </div>
 
               {/* Cột 3: Xe Khác */}
-              <div className="border border-purple-200 rounded-xl bg-purple-50/20 overflow-hidden shadow-xs">
-                <div className="bg-purple-100/80 px-3.5 py-2 border-b border-purple-200 flex items-center justify-between">
+              <div className="border border-purple-200/90 rounded-2xl bg-white overflow-hidden shadow-xs">
+                <div className="bg-purple-600 text-white px-3.5 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-purple-700" />
-                    <h4 className="font-bold text-purple-950 text-xs sm:text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-purple-200" />
+                    <h4 className="font-extrabold text-xs tracking-wider uppercase">
                       Xe Khác ({availableOthers.length})
                     </h4>
                   </div>
                 </div>
-                <div className="divide-y divide-purple-100/60 bg-white">
+                <div className="divide-y divide-slate-100">
                   {availableOthers.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400">
+                    <div className="p-4 text-center text-xs text-slate-400 font-medium">
                       Không có xe khác sẵn sàng.
                     </div>
                   ) : (
@@ -685,26 +701,26 @@ export function DailySummaryDialog({
                       return (
                         <div
                           key={vehicle.id || i}
-                          className="p-2 px-3 flex items-center gap-2.5 hover:bg-purple-50/40 transition"
+                          className="p-2.5 px-3 flex items-center gap-3 hover:bg-purple-50/30 transition"
                         >
-                          <span className="w-4 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
+                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-400 shrink-0">
                             {i + 1}
                           </span>
                           {imageUrl ? (
                             <img
                               src={imageUrl}
                               alt={vehicle.name}
-                              className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0 bg-slate-100"
+                              className="w-9 h-9 rounded-xl object-cover border border-slate-200 shrink-0 bg-slate-100 shadow-2xs"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                              <Car className="w-4 h-4 text-purple-600" />
+                            <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shrink-0 shadow-2xs">
+                              <Bike className="w-4 h-4" />
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span className="font-bold text-slate-900 text-xs">{vehicle.name}</span>
+                            <span className="font-extrabold text-slate-900 text-xs">{vehicle.name}</span>
                             {vehicle.licensePlate && (
-                              <span className="text-[10px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-semibold shrink-0">
+                              <span className="text-[10px] font-mono font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow-2xs shrink-0">
                                 {vehicle.licensePlate}
                               </span>
                             )}
@@ -720,23 +736,23 @@ export function DailySummaryDialog({
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="bg-slate-100/80 px-5 py-3 border-t border-slate-200 flex items-center justify-end print:hidden rounded-b-2xl">
-          <div className="flex items-center gap-2">
+        <div className="bg-slate-100/90 px-6 py-3.5 border-t border-slate-200 flex items-center justify-end print:hidden rounded-b-2xl">
+          <div className="flex items-center gap-2.5">
             <Button
               onClick={handleDownloadImage}
               disabled={isExporting}
-              className="bg-emerald-600 hover:bg-emerald-700 !text-white font-semibold text-xs h-9 px-4 rounded-lg shadow-sm transition"
+              className="bg-emerald-600 hover:bg-emerald-700 !text-white font-bold text-xs h-9 px-4 rounded-xl shadow-sm transition"
             >
               {isExporting ? (
-                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
               ) : (
-                <Download className="w-3.5 h-3.5 mr-1.5" />
+                <Download className="w-4 h-4 mr-1.5" />
               )}
               {isExporting ? "Đang tạo ảnh..." : "Tải Ảnh Báo Cáo"}
             </Button>
             <Button
               onClick={onClose}
-              className="bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs h-9 px-4 rounded-lg shadow-sm"
+              className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-sm"
             >
               Đóng Cửa Sổ
             </Button>
