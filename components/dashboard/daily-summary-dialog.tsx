@@ -8,7 +8,6 @@ import {
 import { Button } from "@/components/ui/button"
 import {
   CalendarCheck,
-  Printer,
   Download,
   Loader2,
   TrendingUp,
@@ -164,10 +163,6 @@ export function DailySummaryDialog({
     }
   }, [vehicles])
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   const handleDownloadImage = async () => {
     const printArea = document.getElementById("daily-summary-print-area")
     if (!printArea) return
@@ -233,7 +228,7 @@ export function DailySummaryDialog({
               </div>
             </div>
 
-            {/* Date Selector & Action Controls */}
+            {/* Date Selector & Download Control */}
             <div className="flex flex-wrap items-center gap-2 print:hidden">
               <div className="relative">
                 <Calendar className="w-4 h-4 text-blue-600 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
@@ -256,16 +251,6 @@ export function DailySummaryDialog({
                   <Download className="w-3.5 h-3.5" />
                 )}
                 {isExporting ? "Đang tạo..." : "Tải ảnh báo cáo"}
-              </Button>
-
-              <Button
-                onClick={handlePrint}
-                variant="outline"
-                size="sm"
-                className="bg-white text-slate-700 border-slate-300 hover:bg-slate-50 rounded-lg font-semibold text-xs h-9 px-3 gap-1.5 shadow-sm"
-              >
-                <Printer className="w-3.5 h-3.5 text-slate-600" />
-                In báo cáo
               </Button>
             </div>
           </div>
@@ -732,14 +717,6 @@ export function DailySummaryDialog({
                 <Download className="w-3.5 h-3.5 mr-1.5" />
               )}
               {isExporting ? "Đang tạo ảnh..." : "Tải Ảnh Báo Cáo"}
-            </Button>
-            <Button
-              onClick={handlePrint}
-              variant="outline"
-              className="bg-white border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs h-9 px-3.5 rounded-lg shadow-sm"
-            >
-              <Printer className="w-3.5 h-3.5 mr-1.5 text-slate-600" />
-              In Báo Cáo
             </Button>
             <Button
               onClick={onClose}
