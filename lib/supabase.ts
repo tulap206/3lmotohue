@@ -24,7 +24,7 @@ export interface Vehicle {
   licensePlate: string
   color: string
   pricePerDay: number
-  status: "available" | "rented" | "maintenance"
+  status: "available" | "rented" | "maintenance" | "pending"
   current_km: number
   last_maintenance_km?: number
   purchasePrice: number
@@ -103,8 +103,8 @@ export const fetchVehicles = async () => {
       .order('created_at', { ascending: false }),
     supabase
       .from('rentals')
-      .select('vehicleId')
-      .eq('status', 'active')
+      .select('vehicleId,status')
+      .in('status', ['active', 'pending'])
   ])
   
   if (vehiclesResult.error) {
@@ -112,19 +112,36 @@ export const fetchVehicles = async () => {
     return []
   }
   
-  const activeVehicleIds = new Set(
-    (rentalsResult.data || []).map((r: any) => r.vehicleId)
-  )
+  const activeVehicleIds = new Set<string>()
+  const pendingVehicleIds = new Set<string>()
+  
+  if (rentalsResult.data) {
+    rentalsResult.data.forEach((r: any) => {
+      if (r.status === 'active' && r.vehicleId) {
+        activeVehicleIds.add(r.vehicleId)
+      } else if (r.status === 'pending' && r.vehicleId) {
+        pendingVehicleIds.add(r.vehicleId)
+      }
+    })
+  }
   
   // Ensure all vehicles have the required fields with defaults and correct dynamic status
   return (vehiclesResult.data || []).map(vehicle => {
     let status = vehicle.status
     if (status !== 'maintenance') {
-      status = activeVehicleIds.has(vehicle.id) ? 'rented' : 'available'
+      if (activeVehicleIds.has(vehicle.id)) {
+        status = 'rented'
+      } else if (pendingVehicleIds.has(vehicle.id)) {
+        status = 'pending'
+      } else {
+        if (status !== 'pending') {
+          status = 'available'
+        }
+      }
     }
     return {
       ...vehicle,
-      status,
+      status: status as any,
       totalRentalDays: vehicle.totalRentalDays ?? 0,
       totalRevenue: vehicle.totalRevenue ?? 0,
       profit: vehicle.profit ?? 0,

@@ -115,7 +115,7 @@ interface Vehicle {
   licensePlate: string
   color: string
   pricePerDay: number
-  status: "available" | "rented" | "maintenance"
+  status: "available" | "rented" | "maintenance" | "pending"
   current_km: number
   purchasePrice: number
   notes: string

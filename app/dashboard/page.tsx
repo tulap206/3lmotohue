@@ -509,6 +509,7 @@ export default function DashboardPage() {
 
   const rentalFleetChartData = useMemo(() => [
     { name: "Sẵn sàng", value: vehicles.filter((v) => v.status === "available").length },
+    { name: "Chờ giao", value: vehicles.filter((v) => v.status === "pending").length },
     { name: "Đang cho thuê", value: vehicles.filter((v) => v.status === "rented").length },
     { name: "Bảo trì", value: vehicles.filter((v) => v.status === "maintenance").length },
   ], [vehicles])

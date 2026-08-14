@@ -54,7 +54,7 @@ import {
 import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
-type VehicleStatus = "available" | "rented" | "maintenance"
+type VehicleStatus = "available" | "rented" | "maintenance" | "pending"
 type HistoryType = "rent" | "return" | "maintenance"
 
 // Lightbox component tách riêng để tránh xung đột với Dialog
@@ -257,9 +257,7 @@ export default function VehiclesPage() {
       const matchesStatus =
         statusFilter === "all"
           ? true
-          : statusFilter === "pending"
-            ? pendingDeliveryVehicleIds.has(vehicle.id)
-            : vehicle.status === statusFilter
+          : vehicle.status === statusFilter
       return matchesSearch && matchesStatus
     })
 
@@ -280,7 +278,7 @@ export default function VehiclesPage() {
       // Tertiary sort: by name
       return a.name.localeCompare(b.name)
     })
-  }, [vehicles, searchTerm, statusFilter, pendingDeliveryVehicleIds, vehiclePerformanceMap])
+  }, [vehicles, searchTerm, statusFilter, vehiclePerformanceMap])
 
   // Reset page when filters change
   useEffect(() => {
@@ -304,11 +302,11 @@ export default function VehiclesPage() {
     return {
       total: vehicles.length,
       available: vehicles.filter((v) => v.status === "available").length,
-      pendingDelivery: pendingDeliveryVehicleIds.size,
+      pendingDelivery: vehicles.filter((v) => v.status === "pending").length,
       rented: vehicles.filter((v) => v.status === "rented").length,
       maintenance: vehicles.filter((v) => v.status === "maintenance").length,
     }
-  }, [vehicles, pendingDeliveryVehicleIds])
+  }, [vehicles])
 
   const handleAddVehicle = async () => {
     if (!newVehicle.name || !newVehicle.name.trim()) {
@@ -807,6 +805,7 @@ export default function VehiclesPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
                         <SelectItem value="available">Sẵn sàng</SelectItem>
+                        <SelectItem value="pending">Chờ giao</SelectItem>
                         <SelectItem value="rented">Đang thuê</SelectItem>
                         <SelectItem value="maintenance">Bảo trì</SelectItem>
                       </SelectContent>
@@ -1293,6 +1292,7 @@ export default function VehiclesPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
                           <SelectItem value="available">Sẵn sàng</SelectItem>
+                          <SelectItem value="pending">Chờ giao</SelectItem>
                           <SelectItem value="rented">Đang thuê</SelectItem>
                           <SelectItem value="maintenance">Bảo trì</SelectItem>
                         </SelectContent>

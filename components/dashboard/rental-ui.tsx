@@ -120,6 +120,8 @@ export function getRentalVehicleStatusLabel(status?: string): string {
       return "Đang thuê"
     case "maintenance":
       return "Bảo trì"
+    case "pending":
+      return "Chờ giao"
     default:
       return status || "—"
   }
@@ -133,6 +135,8 @@ export function rentalVehicleStatusBadgeClass(status?: string): string {
       return "bg-blue-50 text-blue-700 border-blue-100"
     case "maintenance":
       return "bg-amber-50 text-amber-700 border-amber-100"
+    case "pending":
+      return "bg-orange-50 text-orange-700 border-orange-100"
     default:
       return "bg-slate-100 text-slate-500 border-slate-200"
   }
