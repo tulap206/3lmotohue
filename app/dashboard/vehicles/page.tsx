@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { showError, showWarning } from "@/lib/toast-utils"
+import { showError, showWarning, showSuccess } from "@/lib/toast-utils"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
@@ -32,7 +32,8 @@ import { logger } from "@/lib/logger"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -51,8 +52,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History, MapPin, Save } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
+
+export function extractVehicleLocation(notes?: string): { location: string; cleanNotes: string } {
+  if (!notes) return { location: "", cleanNotes: "" }
+  const match = notes.match(/\[location:(.*?)\]/i)
+  if (match) {
+    const location = match[1].trim()
+    const cleanNotes = notes.replace(/\[location:(.*?)\]/gi, "").trim()
+    return { location, cleanNotes }
+  }
+  return { location: "", cleanNotes: notes }
+}
+
+export function buildVehicleNotesWithLocation(existingNotes: string | undefined, location: string): string {
+  const { cleanNotes } = extractVehicleLocation(existingNotes)
+  const locStr = location.trim()
+  if (!locStr) return cleanNotes
+  return cleanNotes ? `${cleanNotes}\n[location:${locStr}]` : `[location:${locStr}]`
+}
 
 type VehicleStatus = "available" | "rented" | "maintenance" | "pending"
 type HistoryType = "rent" | "return" | "maintenance"
@@ -190,6 +209,41 @@ export default function VehiclesPage() {
     vehicleImages: [] as File[],
     documentImages: [] as File[],
   })
+
+  // State for vehicle location editing
+  const [editingLocationVehicle, setEditingLocationVehicle] = useState<Vehicle | null>(null)
+  const [locationInput, setLocationInput] = useState("")
+  const [savingLocation, setSavingLocation] = useState(false)
+
+  const openEditLocationDialog = (vehicle: Vehicle) => {
+    setEditingLocationVehicle(vehicle)
+    const { location } = extractVehicleLocation(vehicle.notes)
+    setLocationInput(location)
+  }
+
+  const handleSaveVehicleLocation = async () => {
+    if (!editingLocationVehicle) return
+    try {
+      setSavingLocation(true)
+      const updatedNotes = buildVehicleNotesWithLocation(editingLocationVehicle.notes, locationInput)
+
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ notes: updatedNotes, updated_at: new Date().toISOString() })
+        .eq('id', editingLocationVehicle.id)
+
+      if (error) throw error
+
+      setVehicles(prev => prev.map(v => v.id === editingLocationVehicle.id ? { ...v, notes: updatedNotes } : v))
+      showSuccess(`Đã cập nhật vị trí cho xe ${editingLocationVehicle.name}`)
+      setEditingLocationVehicle(null)
+    } catch (err: any) {
+      console.error("Error saving vehicle location:", err)
+      showError(`Lỗi khi lưu vị trí: ${err.message}`)
+    } finally {
+      setSavingLocation(false)
+    }
+  }
 
   const vehiclePerformanceMap = useMemo(() => {
     const today = new Date()
@@ -1000,6 +1054,7 @@ export default function VehiclesPage() {
                         <th className={rentalTableHeadClass}>Loại xe</th>
                         <th className={cn(rentalTableHeadClass, "text-right")}>Giá thuê/ngày</th>
                         <th className={cn(rentalTableHeadClass, "text-center")}>Hiệu suất (30 ngày)</th>
+                        <th className={cn(rentalTableHeadClass, "text-left min-w-[150px]")}>Vị trí</th>
                         <th className={cn(rentalTableHeadClass, "text-center")}>Trạng thái</th>
                         <th className={cn(rentalTableHeadClass, "text-right")}>Thao tác</th>
                       </tr>
@@ -1047,6 +1102,28 @@ export default function VehiclesPage() {
                                       {formatPrice(revenue30d)}
                                     </span>
                                   )}
+                                </div>
+                              )
+                            })()}
+                          </td>
+                          <td className="py-3.5 px-4 text-left">
+                            {(() => {
+                              const { location } = extractVehicleLocation(vehicle.notes)
+                              return (
+                                <div className="flex items-center gap-1.5 group">
+                                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span className={cn("text-xs font-medium truncate max-w-[130px]", location ? "text-slate-800 font-semibold" : "text-slate-400 italic")}>
+                                    {location || "chưa cập nhật"}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => openEditLocationDialog(vehicle)}
+                                    className="h-6 w-6 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-md transition-colors shrink-0"
+                                    title="Chỉnh sửa vị trí xe"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </Button>
                                 </div>
                               )
                             })()}
@@ -1660,6 +1737,58 @@ export default function VehiclesPage() {
           onClose={() => setLightboxImage(null)} 
         />
       )}
+
+      {/* Popup nhỏ Cập nhật Vị trí xe */}
+      <Dialog open={!!editingLocationVehicle} onOpenChange={(open) => !open && setEditingLocationVehicle(null)}>
+        <DialogContent className="w-[95vw] sm:max-w-md p-5 rounded-[var(--radius-container)] gap-4">
+          <DialogHeader className="border-b pb-3">
+            <DialogTitle className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-blue-600 shrink-0" />
+              Cập nhật vị trí hiện tại của xe
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 mt-1">
+              Xe: <strong className="text-slate-800">{editingLocationVehicle?.name}</strong> ({editingLocationVehicle?.licensePlate})
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-1">
+            <Label htmlFor="vehicle-location-input" className="text-xs font-semibold text-slate-700">
+              Địa chỉ / Vị trí hiện tại của xe
+            </Label>
+            <Input
+              id="vehicle-location-input"
+              value={locationInput}
+              onChange={(e) => setLocationInput(e.target.value)}
+              placeholder="Ví dụ: Bãi xe A, 123 Lê Lợi, Khách đang gửi..."
+              className="h-10 text-sm bg-white border-slate-200"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleSaveVehicleLocation()
+                }
+              }}
+            />
+            <p className="text-[11px] text-slate-500">
+              Nhập địa chỉ hoặc vị trí cụ thể để dễ dàng quản lý bãi và điều phối xe. Để trống nếu muốn xóa vị trí.
+            </p>
+          </div>
+
+          <DialogFooter className="pt-2 border-t flex flex-row gap-2 justify-end">
+            <Button variant="outline" onClick={() => setEditingLocationVehicle(null)} className="h-9 text-xs flex-1 sm:flex-none">
+              Hủy
+            </Button>
+            <Button
+              disabled={savingLocation}
+              onClick={handleSaveVehicleLocation}
+              className="h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 gap-1.5 flex-1 sm:flex-none"
+            >
+              <Save className="w-4 h-4" />
+              {savingLocation ? "Đang lưu..." : "Lưu vị trí"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ModulePageShell>
   )
 }
