@@ -1100,3 +1100,14 @@
 .travel-glow {
   box-shadow: 0 0 40px rgba(14, 165, 233, 0.12);
 }
+
+/* Global backdrop blur effect for all modal windows, dialogs, drawers, and sheets */
+[data-slot="dialog-overlay"],
+[data-slot="alert-dialog-overlay"],
+[data-slot="sheet-overlay"],
+[data-slot="drawer-overlay"],
+.modal-overlay {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
