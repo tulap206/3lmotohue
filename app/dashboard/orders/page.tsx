@@ -279,10 +279,11 @@ export default function OrdersPage() {
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
 
   // Unassigned vehicle booking states
+  const [unassignedQuantity, setUnassignedQuantity] = useState("1")
   const [unassignedPricePerDay, setUnassignedPricePerDay] = useState("150.000")
   const [assigningOrder, setAssigningOrder] = useState<RentalOrder | null>(null)
   const [assignVehicleSearch, setAssignVehicleSearch] = useState("")
-  const [selectedVehicleForAssign, setSelectedVehicleForAssign] = useState<Vehicle | null>(null)
+  const [selectedVehiclesForAssignList, setSelectedVehiclesForAssignList] = useState<Vehicle[]>([])
   const [assigningSubmitting, setAssigningSubmitting] = useState(false)
 
   const filteredCustomersForSelect = customers.filter(c => 
@@ -661,7 +662,7 @@ export default function OrdersPage() {
   const handleDeliverOrderClick = (order: RentalOrder) => {
     if (order.licensePlate === "CHỜ GÁN XE" || order.vehicleId === "00000000-0000-0000-0000-000000000000") {
       setAssigningOrder(order)
-      setSelectedVehicleForAssign(null)
+      setSelectedVehiclesForAssignList([])
       setAssignVehicleSearch("")
     } else {
       updateOrderStatus(order.id, "active")
@@ -669,57 +670,82 @@ export default function OrdersPage() {
   }
 
   const availableVehiclesForAssign = vehicles.filter((v) => 
-    (v.status === "available" || v.id === selectedVehicleForAssign?.id) &&
+    (v.status === "available" || selectedVehiclesForAssignList.some(item => item.id === v.id)) &&
     (v.name.toLowerCase().includes(assignVehicleSearch.toLowerCase()) || 
      v.licensePlate.toLowerCase().includes(assignVehicleSearch.toLowerCase()))
   )
 
   const handleConfirmAssignVehicle = async () => {
-    if (!assigningOrder || !selectedVehicleForAssign) return
+    if (!assigningOrder || selectedVehiclesForAssignList.length === 0) return
     try {
       setAssigningSubmitting(true)
-      const totalPrice = assigningOrder.totalDays * selectedVehicleForAssign.pricePerDay
       const now = new Date().toISOString()
       
-      let { data, error } = await supabase
-        .from('rentals')
-        .update({
-          vehicleId: selectedVehicleForAssign.id,
-          vehicleName: selectedVehicleForAssign.name,
-          licensePlate: selectedVehicleForAssign.licensePlate,
-          pricePerDay: selectedVehicleForAssign.pricePerDay,
-          totalPrice,
-          status: 'active',
-          received_at: now
-        })
-        .eq('id', assigningOrder.id)
-        .select()
+      // Find all pending unassigned orders for this customer starting with assigningOrder
+      const customerPendingOrders = orders.filter(o => 
+        o.customerId === assigningOrder.customerId && 
+        o.status === "pending" && 
+        (o.vehicleId === "00000000-0000-0000-0000-000000000000" || o.licensePlate === "CHỜ GÁN XE")
+      )
 
-      if (error) throw error
+      // Pair each selected vehicle with a pending order
+      const updatePromises = selectedVehiclesForAssignList.map(async (v, index) => {
+        const targetOrder = customerPendingOrders[index] || assigningOrder
+        const totalPrice = targetOrder.totalDays * v.pricePerDay
 
-      setOrders(prev => prev.map(o => o.id === assigningOrder.id ? {
-        ...o,
-        vehicleId: selectedVehicleForAssign.id,
-        vehicleName: selectedVehicleForAssign.name,
-        licensePlate: selectedVehicleForAssign.licensePlate,
-        pricePerDay: selectedVehicleForAssign.pricePerDay,
-        totalPrice,
-        status: 'active',
-        received_at: now
-      } : o))
+        const { error } = await supabase
+          .from('rentals')
+          .update({
+            vehicleId: v.id,
+            vehicleName: v.name,
+            licensePlate: v.licensePlate,
+            pricePerDay: v.pricePerDay,
+            totalPrice,
+            status: 'active',
+            received_at: now
+          })
+          .eq('id', targetOrder.id)
 
-      // Update vehicle status in vehicles list
-      setVehicles(prev => prev.map(v => v.id === selectedVehicleForAssign.id ? { ...v, status: 'rented' as Vehicle['status'] } : v))
+        if (error) throw error
+
+        return { orderId: targetOrder.id, vehicle: v, totalPrice }
+      })
+
+      const results = await Promise.all(updatePromises)
+
+      // Update orders local state
+      setOrders(prev => prev.map(o => {
+        const match = results.find(r => r.orderId === o.id)
+        if (match) {
+          return {
+            ...o,
+            vehicleId: match.vehicle.id,
+            vehicleName: match.vehicle.name,
+            licensePlate: match.vehicle.licensePlate,
+            pricePerDay: match.vehicle.pricePerDay,
+            totalPrice: match.totalPrice,
+            status: 'active',
+            received_at: now
+          }
+        }
+        return o
+      }))
+
+      // Update vehicles state (mark assigned vehicles as rented)
+      const assignedIds = selectedVehiclesForAssignList.map(v => v.id)
+      setVehicles(prev => prev.map(v => assignedIds.includes(v.id) ? { ...v, status: 'rented' as Vehicle['status'] } : v))
 
       if (user) {
-        logger.addRental(user.username, user.displayName, assigningOrder.customerName, selectedVehicleForAssign.name)
+        selectedVehiclesForAssignList.forEach(v => {
+          logger.addRental(user.username, user.displayName, assigningOrder.customerName, v.name)
+        })
       }
 
-      showSuccess(`Đã gán xe ${selectedVehicleForAssign.licensePlate} (${selectedVehicleForAssign.name}) và bàn giao cho khách!`)
+      showSuccess(`Đã gán ${selectedVehiclesForAssignList.length} xe và bàn giao cho khách ${assigningOrder.customerName}!`)
       setAssigningOrder(null)
-      setSelectedVehicleForAssign(null)
+      setSelectedVehiclesForAssignList([])
     } catch (err: any) {
-      console.error("Error assigning vehicle:", err)
+      console.error("Error assigning vehicles:", err)
       showError(`Lỗi khi gán xe: ${err.message}`)
     } finally {
       setAssigningSubmitting(false)
@@ -1270,16 +1296,27 @@ export default function OrdersPage() {
                     />
 
                     {formData.vehicleIds.length === 0 && (
-                      <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2">
+                      <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-3">
                         <div className="flex items-center gap-2 text-xs font-semibold text-amber-900">
                           <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                           Đang để trống xe — Đơn tạo sẽ ở trạng thái "Chờ giao xe"
                         </div>
                         <p className="text-[11px] text-amber-800 leading-relaxed">
-                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
+                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn các chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
                         </p>
-                        <div className="pt-1">
-                          <EntityFormField label="Đơn giá thuê dự kiến (VND/ngày)" hint="Đơn giá dự kiến để tính tiền cọc & tổng tiền hợp đồng">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <EntityFormField label="Số lượng xe đặt trước" hint="Số lượng xe khách muốn đặt">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={unassignedQuantity}
+                              onChange={(e) => setUnassignedQuantity(e.target.value)}
+                              placeholder="1"
+                              className={cn(entityFormInputClass, "font-bold bg-white")}
+                            />
+                          </EntityFormField>
+                          <EntityFormField label="Đơn giá dự kiến / xe (VND/ngày)" hint="Tính tiền cọc & tổng tiền">
                             <Input
                               type="text"
                               value={unassignedPricePerDay}
@@ -2550,9 +2587,16 @@ export default function OrdersPage() {
               />
             </div>
 
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 pt-1">
-              Xe đang sẵn sàng ở bãi ({availableVehiclesForAssign.length} xe):
-            </p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                Xe đang sẵn sàng ở bãi ({availableVehiclesForAssign.length} xe):
+              </p>
+              {selectedVehiclesForAssignList.length > 0 && (
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                  Đã chọn {selectedVehiclesForAssignList.length} xe
+                </span>
+              )}
+            </div>
 
             <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
               {availableVehiclesForAssign.length === 0 ? (
@@ -2561,11 +2605,17 @@ export default function OrdersPage() {
                 </div>
               ) : (
                 availableVehiclesForAssign.map((v) => {
-                  const isSelected = selectedVehicleForAssign?.id === v.id
+                  const isSelected = selectedVehiclesForAssignList.some(item => item.id === v.id)
                   return (
                     <div
                       key={v.id}
-                      onClick={() => setSelectedVehicleForAssign(v)}
+                      onClick={() => {
+                        setSelectedVehiclesForAssignList(prev => {
+                          const exists = prev.some(item => item.id === v.id)
+                          if (exists) return prev.filter(item => item.id !== v.id)
+                          return [...prev, v]
+                        })
+                      }}
                       className={`p-3 text-sm flex items-center justify-between cursor-pointer ui-transition ${
                         isSelected ? "bg-emerald-50/80 border-l-4 border-l-emerald-600" : "hover:bg-slate-50"
                       }`}
@@ -2592,12 +2642,16 @@ export default function OrdersPage() {
               Hủy
             </Button>
             <Button
-              disabled={!selectedVehicleForAssign || assigningSubmitting}
+              disabled={selectedVehiclesForAssignList.length === 0 || assigningSubmitting}
               onClick={handleConfirmAssignVehicle}
               className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 gap-1.5 flex-1 sm:flex-none"
             >
               <Play className="w-4 h-4" />
-              {assigningSubmitting ? "Đang gán xe..." : "Xác nhận Gán xe & Giao xe"}
+              {assigningSubmitting
+                ? "Đang gán xe..."
+                : selectedVehiclesForAssignList.length > 1
+                ? `Gán ${selectedVehiclesForAssignList.length} xe & Giao`
+                : "Xác nhận Gán xe & Giao xe"}
             </Button>
           </DialogFooter>
         </DialogContent>

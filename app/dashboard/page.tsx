@@ -164,9 +164,11 @@ export default function DashboardPage() {
     setHasCommission(false)
     setCustomerSearch("")
     setVehicleSearch("")
+    setUnassignedQuantity("1")
     setIsDialogOpen(false)
   }
 
+  const [unassignedQuantity, setUnassignedQuantity] = useState("1")
   const [unassignedPricePerDay, setUnassignedPricePerDay] = useState("150.000")
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,16 +177,15 @@ export default function DashboardPage() {
     const selectedVehicles = vehicles.filter((v) => formData.vehicleIds.includes(v.id))
     const isUnassigned = selectedVehicles.length === 0
     const unassignedPriceVal = parseMoneyInput(unassignedPricePerDay) || 150000
+    const quantity = isUnassigned ? Math.max(1, parseInt(unassignedQuantity, 10) || 1) : selectedVehicles.length
 
     const targetVehicles = isUnassigned
-      ? [
-          {
-            id: "00000000-0000-0000-0000-000000000000",
-            name: "Chưa gán xe (Gán khi giao)",
-            licensePlate: "CHỜ GÁN XE",
-            pricePerDay: unassignedPriceVal,
-          },
-        ]
+      ? Array.from({ length: quantity }, (_, i) => ({
+          id: "00000000-0000-0000-0000-000000000000",
+          name: quantity > 1 ? `Chưa gán xe (Xe ${i + 1}/${quantity})` : "Chưa gán xe (Gán khi giao)",
+          licensePlate: "CHỜ GÁN XE",
+          pricePerDay: unassignedPriceVal,
+        }))
       : selectedVehicles
 
     const startDate = new Date(formData.startDate)
@@ -1502,16 +1503,27 @@ export default function DashboardPage() {
                     />
 
                     {formData.vehicleIds.length === 0 && (
-                      <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2">
+                      <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-3">
                         <div className="flex items-center gap-2 text-xs font-semibold text-amber-900">
                           <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                           Đang để trống xe — Đơn tạo sẽ ở trạng thái "Chờ giao xe"
                         </div>
                         <p className="text-[11px] text-amber-800 leading-relaxed">
-                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
+                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn các chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
                         </p>
-                        <div className="pt-1">
-                          <EntityFormField label="Đơn giá thuê dự kiến (VND/ngày)" hint="Đơn giá dự kiến để tính tiền cọc & tổng tiền hợp đồng">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <EntityFormField label="Số lượng xe đặt trước" hint="Số lượng xe khách muốn đặt">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={unassignedQuantity}
+                              onChange={(e) => setUnassignedQuantity(e.target.value)}
+                              placeholder="1"
+                              className={cn(entityFormInputClass, "font-bold bg-white")}
+                            />
+                          </EntityFormField>
+                          <EntityFormField label="Đơn giá dự kiến / xe (VND/ngày)" hint="Tính tiền cọc & tổng tiền">
                             <Input
                               type="text"
                               value={unassignedPricePerDay}
