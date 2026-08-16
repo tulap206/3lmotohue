@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { data: users, error } = await supabase
       .from('auth_users')
-      .select('id, username, displayname, role, can_delete, can_backup, can_view_access_history, created_at')
+      .select('*')
       .order('username')
 
     if (error) throw error
@@ -43,7 +43,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Không có quyền truy cập' }, { status: 403 })
     }
 
-    const { username, displayName, role, canDelete, canBackup, canViewAccessHistory, password } = await request.json()
+    const body = await request.json()
+    const {
+      username,
+      displayName,
+      role,
+      password,
+      canDelete,
+      canBackup,
+      canViewAccessHistory,
+      canManageUsers,
+      canAccessRental,
+      canAccessPawnshop,
+      canAccessLoan,
+      canAccessSales,
+      canDeleteRental,
+      canDeletePawnshop,
+      canDeleteLoan,
+      canDeleteSales,
+      canBackupRental,
+      canBackupPawnshop,
+      canBackupLoan,
+      canBackupSales,
+      canViewHistoryRental,
+      canViewHistoryPawnshop,
+      canViewHistoryLoan,
+      canViewHistorySales,
+    } = body
 
     if (!username || !displayName || !role || !password) {
       return NextResponse.json({ error: 'Vui lòng điền đầy đủ thông tin' }, { status: 400 })
@@ -68,19 +94,38 @@ export async function POST(request: NextRequest) {
     const salt = generateSalt()
     const password_hash = hashPassword(password, salt)
 
+    const insertData: any = {
+      username,
+      displayname: displayName,
+      role,
+      salt,
+      password_hash,
+      password: null, // No plain-text password!
+      can_delete: !!canDelete,
+      can_backup: !!canBackup,
+      can_view_access_history: canViewAccessHistory !== undefined ? !!canViewAccessHistory : true,
+      can_manage_users: role === 'admin' || !!canManageUsers,
+      can_access_rental: role === 'admin' || canAccessRental !== undefined ? !!canAccessRental : true,
+      can_access_pawnshop: role === 'admin' || canAccessPawnshop !== undefined ? !!canAccessPawnshop : true,
+      can_access_loan: role === 'admin' || canAccessLoan !== undefined ? !!canAccessLoan : true,
+      can_access_sales: role === 'admin' || canAccessSales !== undefined ? !!canAccessSales : true,
+      can_delete_rental: role === 'admin' || !!canDeleteRental,
+      can_delete_pawnshop: role === 'admin' || !!canDeletePawnshop,
+      can_delete_loan: role === 'admin' || !!canDeleteLoan,
+      can_delete_sales: role === 'admin' || !!canDeleteSales,
+      can_backup_rental: role === 'admin' || !!canBackupRental,
+      can_backup_pawnshop: role === 'admin' || !!canBackupPawnshop,
+      can_backup_loan: role === 'admin' || !!canBackupLoan,
+      can_backup_sales: role === 'admin' || !!canBackupSales,
+      can_view_history_rental: role === 'admin' || canViewHistoryRental !== undefined ? !!canViewHistoryRental : true,
+      can_view_history_pawnshop: role === 'admin' || canViewHistoryPawnshop !== undefined ? !!canViewHistoryPawnshop : true,
+      can_view_history_loan: role === 'admin' || canViewHistoryLoan !== undefined ? !!canViewHistoryLoan : true,
+      can_view_history_sales: role === 'admin' || canViewHistorySales !== undefined ? !!canViewHistorySales : true,
+    }
+
     const { data: newUser, error } = await supabase
       .from('auth_users')
-      .insert([{
-        username,
-        displayname: displayName,
-        role,
-        can_delete: !!canDelete,
-        can_backup: !!canBackup,
-        can_view_access_history: !!canViewAccessHistory,
-        salt,
-        password_hash,
-        password: null // No plain-text password!
-      }])
+      .insert([insertData])
       .select()
       .single()
 
