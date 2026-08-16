@@ -55,13 +55,48 @@ import {
 import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History, MapPin, Save } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
-export function extractVehicleLocation(notes?: string): { location: string; cleanNotes: string } {
+export interface VehicleLocationInfo {
+  location: string
+  cleanNotes: string
+  lat?: number
+  lng?: number
+  updatedAt?: string
+}
+
+export function extractVehicleLocation(notes?: string): VehicleLocationInfo {
   if (!notes) return { location: "", cleanNotes: "" }
   const match = notes.match(/\[location:(.*?)\]/i)
   if (match) {
-    const location = match[1].trim()
+    const raw = match[1].trim()
     const cleanNotes = notes.replace(/\[location:(.*?)\]/gi, "").trim()
-    return { location, cleanNotes }
+
+    if (raw.includes("|")) {
+      const parts = raw.split("|")
+      const coords = parts[0].split(",")
+      const lat = parseFloat(coords[0])
+      const lng = parseFloat(coords[1])
+      const address = parts[1] || ""
+      const updatedAt = parts[2] || ""
+      return {
+        location: address || parts[0],
+        cleanNotes,
+        lat: isNaN(lat) ? undefined : lat,
+        lng: isNaN(lng) ? undefined : lng,
+        updatedAt,
+      }
+    }
+
+    const coordsMatch = raw.match(/^(-?\d+\.\d+),\s*(-?\d+\.\d+)$/)
+    if (coordsMatch) {
+      return {
+        location: raw,
+        cleanNotes,
+        lat: parseFloat(coordsMatch[1]),
+        lng: parseFloat(coordsMatch[2]),
+      }
+    }
+
+    return { location: raw, cleanNotes }
   }
   return { location: "", cleanNotes: notes }
 }
@@ -210,8 +245,9 @@ export default function VehiclesPage() {
     documentImages: [] as File[],
   })
 
-  // State for vehicle location editing
+  // State for vehicle location editing & map modal
   const [editingLocationVehicle, setEditingLocationVehicle] = useState<Vehicle | null>(null)
+  const [selectedMapVehicle, setSelectedMapVehicle] = useState<Vehicle | null>(null)
   const [locationInput, setLocationInput] = useState("")
   const [savingLocation, setSavingLocation] = useState(false)
 
@@ -1109,13 +1145,20 @@ export default function VehiclesPage() {
                           </td>
                           <td className="py-3.5 px-4 text-left">
                             {(() => {
-                              const { location } = extractVehicleLocation(vehicle.notes)
+                              const locInfo = extractVehicleLocation(vehicle.notes)
+                              const locationStr = locInfo.location
                               return (
                                 <div className="flex items-center gap-1.5 group">
-                                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                  <span className={cn("text-xs font-medium truncate max-w-[130px]", location ? "text-slate-800 font-semibold" : "text-slate-400 italic")}>
-                                    {location || "chưa cập nhật"}
-                                  </span>
+                                  <button
+                                    onClick={() => setSelectedMapVehicle(vehicle)}
+                                    className="flex items-center gap-1.5 text-left hover:text-blue-600 transition min-w-0"
+                                    title={locationStr ? "Bấm để xem vị trí xe trên bản đồ" : "Chưa có vị trí xe"}
+                                  >
+                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0", locationStr ? "text-blue-600 animate-pulse" : "text-slate-400")} />
+                                    <span className={cn("text-xs truncate max-w-[130px]", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2" : "text-slate-400 italic")}>
+                                      {locationStr || "chưa cập nhật"}
+                                    </span>
+                                  </button>
                                   <Button
                                     variant="ghost"
                                     size="icon-sm"
@@ -1790,6 +1833,97 @@ export default function VehiclesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Xem vị trí & Bản đồ xe */}
+      {selectedMapVehicle && (() => {
+        const locInfo = extractVehicleLocation(selectedMapVehicle.notes)
+        const locationStr = locInfo.location
+        const lat = locInfo.lat
+        const lng = locInfo.lng
+        const mapQuery = lat && lng ? `${lat},${lng}` : encodeURIComponent(locationStr || selectedMapVehicle.name)
+        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
+        const embedUrl = `https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`
+
+        return (
+          <Dialog open={!!selectedMapVehicle} onOpenChange={(open) => !open && setSelectedMapVehicle(null)}>
+            <DialogContent className="w-[95vw] sm:max-w-xl p-0 overflow-hidden rounded-[var(--radius-container)] bg-white shadow-2xl border-0">
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-rose-500 animate-pulse" />
+                    <h3 className="font-bold text-lg">{selectedMapVehicle.name}</h3>
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-white/10 border border-white/15 font-mono">{selectedMapVehicle.licensePlate}</span>
+                  </div>
+                  <p className="text-xs text-slate-300">Định vị & Bản đồ vị trí xe hiện tại</p>
+                </div>
+                <button onClick={() => setSelectedMapVehicle(null)} className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-4">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>Địa chỉ xe:</span>
+                    {locInfo.updatedAt && (
+                      <span className="text-[11px] text-blue-600 font-semibold">Cập nhật: {new Date(locInfo.updatedAt).toLocaleTimeString('vi-VN')} {new Date(locInfo.updatedAt).toLocaleDateString('vi-VN')}</span>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {locationStr || "Chưa có dữ liệu vị trí cập nhật."}
+                  </p>
+                  {lat && lng && (
+                    <p className="text-xs font-mono text-slate-500 pt-0.5">
+                      Tọa độ GPS: {lat.toFixed(6)}, {lng.toFixed(6)}
+                    </p>
+                  )}
+                </div>
+
+                {/* Map Iframe Embed */}
+                <div className="relative w-full h-64 rounded-xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100">
+                  {locationStr || (lat && lng) ? (
+                    <iframe
+                      title="Vehicle Location Map"
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      scrolling="no"
+                      marginHeight={0}
+                      marginWidth={0}
+                      src={embedUrl}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs space-y-2">
+                      <MapPin className="w-8 h-8 opacity-40" />
+                      <p>Chưa có dữ liệu định vị để hiển thị bản đồ</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action links */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  <a
+                    href={googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Mở chỉ đường Google Maps
+                  </a>
+                  <a
+                    href="findmy://"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs shadow-sm transition"
+                  >
+                    <Car className="w-4 h-4" />
+                    Mở app Apple Find My
+                  </a>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )
+      })()}
     </ModulePageShell>
   )
 }
