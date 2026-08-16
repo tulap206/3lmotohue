@@ -41,21 +41,26 @@ import {
   KeyRound,
   Database,
   History,
-  Car,
-  Gem,
-  Coins,
-  Tag,
-  Check,
-  SlidersHorizontal,
+  LayoutDashboard,
+  Bike,
+  ClipboardList,
+  Wrench,
+  FileText,
+  Settings,
   Sparkles,
+  SlidersHorizontal,
   Layers,
 } from "lucide-react"
 
-export interface ModulePermission {
-  access: boolean
-  canDelete: boolean
-  canBackup: boolean
-  canViewHistory: boolean
+export interface SubModulesAccess {
+  dashboard: boolean
+  vehicles: boolean
+  customers: boolean
+  orders: boolean
+  maintenance: boolean
+  reports: boolean
+  settings: boolean
+  accessHistory: boolean
 }
 
 export interface UserAccount {
@@ -63,16 +68,10 @@ export interface UserAccount {
   username: string
   displayName: string
   role: "admin" | "staff"
-  modules: {
-    rental: ModulePermission
-    pawnshop: ModulePermission
-    loan: ModulePermission
-    sales: ModulePermission
-  }
-  globalPermissions: {
+  subModules: SubModulesAccess
+  actions: {
     canDelete: boolean
     canBackup: boolean
-    canViewAccessHistory: boolean
     canManageUsers: boolean
   }
   createdAt?: string
@@ -106,27 +105,29 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null)
   
-  // Detailed modular form data
   const [formData, setFormData] = useState({
     username: "",
     displayName: "",
     role: "staff" as "admin" | "staff",
     password: "",
-    modules: {
-      rental: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-      pawnshop: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-      loan: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-      sales: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
+    subModules: {
+      dashboard: true,
+      vehicles: true,
+      customers: true,
+      orders: true,
+      maintenance: true,
+      reports: true,
+      settings: false,
+      accessHistory: false,
     },
-    globalPermissions: {
+    actions: {
       canDelete: false,
       canBackup: false,
-      canViewAccessHistory: true,
       canManageUsers: false,
     },
   })
   
-  const [activeTab, setActiveTab] = useState<"info" | "modules" | "global">("info")
+  const [activeTab, setActiveTab] = useState<"info" | "submodules" | "actions">("info")
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -142,36 +143,19 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
             username: u.username,
             displayName: u.displayname,
             role: u.role,
-            modules: {
-              rental: {
-                access: u.role === "admin" || u.can_access_rental !== false,
-                canDelete: u.role === "admin" || !!u.can_delete_rental,
-                canBackup: u.role === "admin" || !!u.can_backup_rental,
-                canViewHistory: u.role === "admin" || u.can_view_history_rental !== false,
-              },
-              pawnshop: {
-                access: u.role === "admin" || u.can_access_pawnshop !== false,
-                canDelete: u.role === "admin" || !!u.can_delete_pawnshop,
-                canBackup: u.role === "admin" || !!u.can_backup_pawnshop,
-                canViewHistory: u.role === "admin" || u.can_view_history_pawnshop !== false,
-              },
-              loan: {
-                access: u.role === "admin" || u.can_access_loan !== false,
-                canDelete: u.role === "admin" || !!u.can_delete_loan,
-                canBackup: u.role === "admin" || !!u.can_backup_loan,
-                canViewHistory: u.role === "admin" || u.can_view_history_loan !== false,
-              },
-              sales: {
-                access: u.role === "admin" || u.can_access_sales !== false,
-                canDelete: u.role === "admin" || !!u.can_delete_sales,
-                canBackup: u.role === "admin" || !!u.can_backup_sales,
-                canViewHistory: u.role === "admin" || u.can_view_history_sales !== false,
-              },
+            subModules: {
+              dashboard: u.role === "admin" || u.can_access_rental !== false,
+              vehicles: u.role === "admin" || u.can_access_sales !== false,
+              customers: u.role === "admin" || u.can_access_pawnshop !== false,
+              orders: u.role === "admin" || u.can_access_loan !== false,
+              maintenance: u.role === "admin" || u.can_view_history_rental !== false,
+              reports: u.role === "admin" || u.can_view_history_sales !== false,
+              settings: u.role === "admin" || u.can_backup !== false,
+              accessHistory: u.role === "admin" || u.can_view_access_history || false,
             },
-            globalPermissions: {
+            actions: {
               canDelete: u.role === "admin" || !!u.can_delete,
               canBackup: u.role === "admin" || !!u.can_backup,
-              canViewAccessHistory: u.role === "admin" || u.can_view_access_history !== false,
               canManageUsers: u.role === "admin" || !!u.can_manage_users,
             },
             createdAt: u.created_at,
@@ -199,16 +183,19 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
       displayName: "",
       role: "staff",
       password: "",
-      modules: {
-        rental: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-        pawnshop: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-        loan: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-        sales: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
+      subModules: {
+        dashboard: true,
+        vehicles: true,
+        customers: true,
+        orders: true,
+        maintenance: true,
+        reports: true,
+        settings: false,
+        accessHistory: false,
       },
-      globalPermissions: {
+      actions: {
         canDelete: false,
         canBackup: false,
-        canViewAccessHistory: true,
         canManageUsers: false,
       },
     })
@@ -224,13 +211,8 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
       displayName: userAccount.displayName,
       role: userAccount.role,
       password: "",
-      modules: {
-        rental: { ...userAccount.modules.rental },
-        pawnshop: { ...userAccount.modules.pawnshop },
-        loan: { ...userAccount.modules.loan },
-        sales: { ...userAccount.modules.sales },
-      },
-      globalPermissions: { ...userAccount.globalPermissions },
+      subModules: { ...userAccount.subModules },
+      actions: { ...userAccount.actions },
     })
     setActiveTab("info")
     setFormError(null)
@@ -238,53 +220,47 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
   }
 
   // Quick Shortcuts for setting permissions
-  const handleApplyShortcut = (type: "all" | "read-only" | "none") => {
+  const handleApplyShortcut = (type: "all" | "rental-core" | "none") => {
     if (type === "all") {
       setFormData((prev) => ({
         ...prev,
-        modules: {
-          rental: { access: true, canDelete: true, canBackup: true, canViewHistory: true },
-          pawnshop: { access: true, canDelete: true, canBackup: true, canViewHistory: true },
-          loan: { access: true, canDelete: true, canBackup: true, canViewHistory: true },
-          sales: { access: true, canDelete: true, canBackup: true, canViewHistory: true },
-        },
-        globalPermissions: {
-          canDelete: true,
-          canBackup: true,
-          canViewAccessHistory: true,
-          canManageUsers: false,
+        subModules: {
+          dashboard: true,
+          vehicles: true,
+          customers: true,
+          orders: true,
+          maintenance: true,
+          reports: true,
+          settings: true,
+          accessHistory: true,
         },
       }))
-    } else if (type === "read-only") {
+    } else if (type === "rental-core") {
       setFormData((prev) => ({
         ...prev,
-        modules: {
-          rental: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-          pawnshop: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-          loan: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-          sales: { access: true, canDelete: false, canBackup: false, canViewHistory: true },
-        },
-        globalPermissions: {
-          canDelete: false,
-          canBackup: false,
-          canViewAccessHistory: true,
-          canManageUsers: false,
+        subModules: {
+          dashboard: true,
+          vehicles: true,
+          customers: true,
+          orders: true,
+          maintenance: true,
+          reports: false,
+          settings: false,
+          accessHistory: false,
         },
       }))
     } else if (type === "none") {
       setFormData((prev) => ({
         ...prev,
-        modules: {
-          rental: { access: false, canDelete: false, canBackup: false, canViewHistory: false },
-          pawnshop: { access: false, canDelete: false, canBackup: false, canViewHistory: false },
-          loan: { access: false, canDelete: false, canBackup: false, canViewHistory: false },
-          sales: { access: false, canDelete: false, canBackup: false, canViewHistory: false },
-        },
-        globalPermissions: {
-          canDelete: false,
-          canBackup: false,
-          canViewAccessHistory: false,
-          canManageUsers: false,
+        subModules: {
+          dashboard: false,
+          vehicles: false,
+          customers: false,
+          orders: false,
+          maintenance: false,
+          reports: false,
+          settings: false,
+          accessHistory: false,
         },
       }))
     }
@@ -329,28 +305,18 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
             displayName: formData.displayName,
             role: formData.role,
             password: formData.password || undefined,
-            // Modular permissions
-            canAccessRental: formData.role === "admin" || formData.modules.rental.access,
-            canAccessPawnshop: formData.role === "admin" || formData.modules.pawnshop.access,
-            canAccessLoan: formData.role === "admin" || formData.modules.loan.access,
-            canAccessSales: formData.role === "admin" || formData.modules.sales.access,
-            canDeleteRental: formData.role === "admin" || formData.modules.rental.canDelete,
-            canDeletePawnshop: formData.role === "admin" || formData.modules.pawnshop.canDelete,
-            canDeleteLoan: formData.role === "admin" || formData.modules.loan.canDelete,
-            canDeleteSales: formData.role === "admin" || formData.modules.sales.canDelete,
-            canBackupRental: formData.role === "admin" || formData.modules.rental.canBackup,
-            canBackupPawnshop: formData.role === "admin" || formData.modules.pawnshop.canBackup,
-            canBackupLoan: formData.role === "admin" || formData.modules.loan.canBackup,
-            canBackupSales: formData.role === "admin" || formData.modules.sales.canBackup,
-            canViewHistoryRental: formData.role === "admin" || formData.modules.rental.canViewHistory,
-            canViewHistoryPawnshop: formData.role === "admin" || formData.modules.pawnshop.canViewHistory,
-            canViewHistoryLoan: formData.role === "admin" || formData.modules.loan.canViewHistory,
-            canViewHistorySales: formData.role === "admin" || formData.modules.sales.canViewHistory,
-            // Global permissions
-            canDelete: formData.role === "admin" || formData.globalPermissions.canDelete,
-            canBackup: formData.role === "admin" || formData.globalPermissions.canBackup,
-            canViewAccessHistory: formData.role === "admin" || formData.globalPermissions.canViewAccessHistory,
-            canManageUsers: formData.role === "admin" || formData.globalPermissions.canManageUsers,
+            // Sub-modules mapping to DB columns
+            canAccessRental: formData.role === "admin" || formData.subModules.dashboard,
+            canAccessSales: formData.role === "admin" || formData.subModules.vehicles,
+            canAccessPawnshop: formData.role === "admin" || formData.subModules.customers,
+            canAccessLoan: formData.role === "admin" || formData.subModules.orders,
+            canViewHistoryRental: formData.role === "admin" || formData.subModules.maintenance,
+            canViewHistorySales: formData.role === "admin" || formData.subModules.reports,
+            canBackup: formData.role === "admin" || formData.subModules.settings || formData.actions.canBackup,
+            canViewAccessHistory: formData.role === "admin" || formData.subModules.accessHistory,
+            // Actions
+            canDelete: formData.role === "admin" || formData.actions.canDelete,
+            canManageUsers: formData.role === "admin" || formData.actions.canManageUsers,
           }),
         })
 
@@ -360,7 +326,7 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
         addAccessLog(
           "Chỉnh sửa",
           "Cài đặt - Phân quyền người dùng",
-          `Cập nhật tài khoản và phân quyền: ${formData.username} (${formData.displayName})`
+          `Cập nhật tài khoản và quyền phân hệ con: ${formData.username} (${formData.displayName})`
         )
       } else {
         const res = await fetch("/api/auth/users", {
@@ -371,28 +337,18 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
             displayName: formData.displayName,
             role: formData.role,
             password: formData.password,
-            // Modular permissions
-            canAccessRental: formData.role === "admin" || formData.modules.rental.access,
-            canAccessPawnshop: formData.role === "admin" || formData.modules.pawnshop.access,
-            canAccessLoan: formData.role === "admin" || formData.modules.loan.access,
-            canAccessSales: formData.role === "admin" || formData.modules.sales.access,
-            canDeleteRental: formData.role === "admin" || formData.modules.rental.canDelete,
-            canDeletePawnshop: formData.role === "admin" || formData.modules.pawnshop.canDelete,
-            canDeleteLoan: formData.role === "admin" || formData.modules.loan.canDelete,
-            canDeleteSales: formData.role === "admin" || formData.modules.sales.canDelete,
-            canBackupRental: formData.role === "admin" || formData.modules.rental.canBackup,
-            canBackupPawnshop: formData.role === "admin" || formData.modules.pawnshop.canBackup,
-            canBackupLoan: formData.role === "admin" || formData.modules.loan.canBackup,
-            canBackupSales: formData.role === "admin" || formData.modules.sales.canBackup,
-            canViewHistoryRental: formData.role === "admin" || formData.modules.rental.canViewHistory,
-            canViewHistoryPawnshop: formData.role === "admin" || formData.modules.pawnshop.canViewHistory,
-            canViewHistoryLoan: formData.role === "admin" || formData.modules.loan.canViewHistory,
-            canViewHistorySales: formData.role === "admin" || formData.modules.sales.canViewHistory,
-            // Global permissions
-            canDelete: formData.role === "admin" || formData.globalPermissions.canDelete,
-            canBackup: formData.role === "admin" || formData.globalPermissions.canBackup,
-            canViewAccessHistory: formData.role === "admin" || formData.globalPermissions.canViewAccessHistory,
-            canManageUsers: formData.role === "admin" || formData.globalPermissions.canManageUsers,
+            // Sub-modules mapping to DB columns
+            canAccessRental: formData.role === "admin" || formData.subModules.dashboard,
+            canAccessSales: formData.role === "admin" || formData.subModules.vehicles,
+            canAccessPawnshop: formData.role === "admin" || formData.subModules.customers,
+            canAccessLoan: formData.role === "admin" || formData.subModules.orders,
+            canViewHistoryRental: formData.role === "admin" || formData.subModules.maintenance,
+            canViewHistorySales: formData.role === "admin" || formData.subModules.reports,
+            canBackup: formData.role === "admin" || formData.subModules.settings || formData.actions.canBackup,
+            canViewAccessHistory: formData.role === "admin" || formData.subModules.accessHistory,
+            // Actions
+            canDelete: formData.role === "admin" || formData.actions.canDelete,
+            canManageUsers: formData.role === "admin" || formData.actions.canManageUsers,
           }),
         })
 
@@ -473,10 +429,10 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
             </div>
             <div>
               <DialogTitle className="text-xl font-bold text-slate-900">
-                Thống kê & Phân quyền Tài khoản theo Phân hệ
+                Thống kê & Phân quyền Truy cập Phân hệ Con
               </DialogTitle>
               <DialogDescription className="text-sm text-slate-500 mt-0.5">
-                Quản lý quyền truy cập các phân hệ (Thuê xe, Cầm đồ, Cho vay, Mua bán) & quyền thao tác của nhân viên
+                Cấu hình quyền truy cập 8 trang phân hệ con (Tổng quan, Quản lý xe, Khách thuê, Đơn thuê, Bảo trì, Báo cáo, Cài đặt, Lịch sử)
               </DialogDescription>
             </div>
           </div>
@@ -520,13 +476,13 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
             </CardContent>
           </Card>
 
-          <Card className="bg-purple-50/60 border-purple-200">
+          <Card className="bg-indigo-50/60 border-indigo-200">
             <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-purple-700 truncate">Số Phân hệ</p>
-                <p className="text-xl sm:text-2xl font-bold text-purple-900 money mt-0.5">4 Phân Hệ</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 truncate">Trang phân hệ con</p>
+                <p className="text-xl sm:text-2xl font-bold text-indigo-900 money mt-0.5">8 Trang</p>
               </div>
-              <div className="p-2 rounded-lg bg-purple-200/80 text-purple-800 shrink-0">
+              <div className="p-2 rounded-lg bg-indigo-200/80 text-indigo-800 shrink-0">
                 <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </CardContent>
@@ -567,13 +523,13 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
             <>
               {/* Table view for desktop/tablet */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left text-sm min-w-[780px]">
+                <table className="w-full text-left text-sm min-w-[800px]">
                   <thead>
                     <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider">
                       <th className="py-3 px-4 min-w-[160px]">Tài khoản</th>
                       <th className="py-3 px-4 min-w-[100px]">Vai Trò</th>
-                      <th className="py-3 px-4 min-w-[300px]">Truy Cập Phân Hệ</th>
-                      <th className="py-3 px-4 min-w-[160px]">Quyền Xóa / Thao tác</th>
+                      <th className="py-3 px-4 min-w-[340px]">Truy Cập Phân Hệ Con</th>
+                      <th className="py-3 px-4 min-w-[130px]">Quyền Xóa</th>
                       <th className="py-3 px-4 text-right w-36 min-w-[130px]">Hành Động</th>
                     </tr>
                   </thead>
@@ -624,79 +580,50 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
 
                           <td className="py-3.5 px-4">
                             {isAdmin ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                                 <Sparkles className="w-3.5 h-3.5" />
-                                Toàn quyền truy cập cả 4 phân hệ
+                                Toàn quyền 8 phân hệ con
                               </span>
                             ) : (
-                              <div className="flex flex-wrap gap-1.5">
-                                <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ${
-                                    account.modules.rental.access
-                                      ? "bg-blue-50 text-blue-700 border-blue-200"
-                                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-50 line-through"
-                                  }`}
-                                >
-                                  <Car className="w-3 h-3" />
-                                  Thuê xe
+                              <div className="flex flex-wrap gap-1">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.dashboard ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Tổng quan
                                 </span>
-
-                                <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ${
-                                    account.modules.pawnshop.access
-                                      ? "bg-amber-50 text-amber-700 border-amber-200"
-                                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-50 line-through"
-                                  }`}
-                                >
-                                  <Gem className="w-3 h-3" />
-                                  Cầm đồ
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.vehicles ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Quản lý xe
                                 </span>
-
-                                <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ${
-                                    account.modules.loan.access
-                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-50 line-through"
-                                  }`}
-                                >
-                                  <Coins className="w-3 h-3" />
-                                  Cho vay
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.customers ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Khách thuê
                                 </span>
-
-                                <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ${
-                                    account.modules.sales.access
-                                      ? "bg-purple-50 text-purple-700 border-purple-200"
-                                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-50 line-through"
-                                  }`}
-                                >
-                                  <Tag className="w-3 h-3" />
-                                  Mua bán
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.orders ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Đơn thuê
+                                </span>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.maintenance ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Bảo trì
+                                </span>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.reports ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Báo cáo
+                                </span>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.settings ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Cài đặt
+                                </span>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${account.subModules.accessHistory ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-50 text-slate-400 opacity-40 line-through"}`}>
+                                  Lịch sử
                                 </span>
                               </div>
                             )}
                           </td>
 
                           <td className="py-3.5 px-4 whitespace-nowrap">
-                            {isAdmin ? (
-                              <span className="text-xs font-medium text-slate-600">Được phép xóa & sao lưu</span>
+                            {isAdmin || account.actions.canDelete ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                                <KeyRound className="w-3 h-3" />
+                                Cho phép xóa
+                              </span>
                             ) : (
-                              <div className="flex flex-wrap gap-1">
-                                {account.globalPermissions.canDelete ||
-                                account.modules.rental.canDelete ||
-                                account.modules.pawnshop.canDelete ||
-                                account.modules.loan.canDelete ||
-                                account.modules.sales.canDelete ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                                    <KeyRound className="w-3 h-3" />
-                                    Có quyền xóa
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-50 text-slate-500 border border-slate-200">
-                                    Không được xóa
-                                  </span>
-                                )}
-                              </div>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-50 text-slate-500 border border-slate-200">
+                                Khóa quyền xóa
+                              </span>
                             )}
                           </td>
 
@@ -794,15 +721,17 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                       </div>
 
                       <div className="space-y-1 pt-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Phân hệ truy cập:</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Phân hệ con được truy cập:</p>
                         {isAdmin ? (
-                          <p className="text-xs font-medium text-blue-700">✓ Toàn quyền 4 phân hệ</p>
+                          <p className="text-xs font-medium text-blue-700">✓ Toàn quyền 8 phân hệ con</p>
                         ) : (
-                          <div className="flex flex-wrap gap-1.5">
-                            {account.modules.rental.access && <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">Thuê xe</span>}
-                            {account.modules.pawnshop.access && <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded">Cầm đồ</span>}
-                            {account.modules.loan.access && <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">Cho vay</span>}
-                            {account.modules.sales.access && <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded">Mua bán</span>}
+                          <div className="flex flex-wrap gap-1">
+                            {account.subModules.dashboard && <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded">Tổng quan</span>}
+                            {account.subModules.vehicles && <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded">Quản lý xe</span>}
+                            {account.subModules.customers && <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded">Khách thuê</span>}
+                            {account.subModules.orders && <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded">Đơn thuê</span>}
+                            {account.subModules.maintenance && <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded">Bảo trì</span>}
+                            {account.subModules.reports && <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded">Báo cáo</span>}
                           </div>
                         )}
                       </div>
@@ -866,7 +795,7 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                 {editingUser ? `Chỉnh sửa & Phân quyền: @${editingUser.username}` : "Tạo mới & Phân quyền tài khoản"}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
-                Cấu hình tài khoản và phân quyền chi tiết từng phân hệ hoạt động (Thuê xe, Cầm đồ, Cho vay, Mua bán)
+                Cấu hình quyền truy cập cho từng phân hệ con (Tổng quan, Quản lý xe, Khách thuê, Đơn thuê, Bảo trì, Báo cáo, Cài đặt, Lịch sử)
               </DialogDescription>
             </DialogHeader>
 
@@ -885,25 +814,25 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("modules")}
+                onClick={() => setActiveTab("submodules")}
                 className={`flex-1 py-2 px-3 text-xs font-semibold rounded-md ui-transition text-center ${
-                  activeTab === "modules"
+                  activeTab === "submodules"
                     ? "bg-white text-blue-700 shadow-xs border border-slate-200"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                2. Phân quyền theo Phân hệ
+                2. Phân quyền Phân hệ Con (8 Trang)
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("global")}
+                onClick={() => setActiveTab("actions")}
                 className={`flex-1 py-2 px-3 text-xs font-semibold rounded-md ui-transition text-center ${
-                  activeTab === "global"
+                  activeTab === "actions"
                     ? "bg-white text-blue-700 shadow-xs border border-slate-200"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                3. Quyền hệ thống
+                3. Quyền Thao tác & Hệ thống
               </button>
             </div>
 
@@ -919,9 +848,9 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="smart-username" className="text-xs font-semibold text-slate-700">Tên Đăng Nhập</Label>
+                      <Label htmlFor="sub-username" className="text-xs font-semibold text-slate-700">Tên Đăng Nhập</Label>
                       <Input
-                        id="smart-username"
+                        id="sub-username"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         placeholder="ví dụ: nyan, loca..."
@@ -932,9 +861,9 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                     </div>
 
                     <div>
-                      <Label htmlFor="smart-displayName" className="text-xs font-semibold text-slate-700">Tên Hiển Thị</Label>
+                      <Label htmlFor="sub-displayName" className="text-xs font-semibold text-slate-700">Tên Hiển Thị</Label>
                       <Input
-                        id="smart-displayName"
+                        id="sub-displayName"
                         value={formData.displayName}
                         onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                         placeholder="ví dụ: Nguyễn Văn A..."
@@ -946,11 +875,11 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="smart-password" className="text-xs font-semibold text-slate-700">
+                      <Label htmlFor="sub-password" className="text-xs font-semibold text-slate-700">
                         {editingUser ? "Mật khẩu mới (Để trống nếu giữ nguyên)" : "Mật khẩu"}
                       </Label>
                       <Input
-                        id="smart-password"
+                        id="sub-password"
                         type="password"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -961,27 +890,27 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                     </div>
 
                     <div>
-                      <Label htmlFor="smart-role" className="text-xs font-semibold text-slate-700">Vai Trò Hệ Thống</Label>
+                      <Label htmlFor="sub-role" className="text-xs font-semibold text-slate-700">Vai Trò Hệ Thống</Label>
                       <select
-                        id="smart-role"
+                        id="sub-role"
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value as "admin" | "staff" })}
                         className="mt-1 w-full h-10 px-3 bg-white border border-slate-200 rounded-[var(--radius-control)] text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       >
-                        <option value="staff">Nhân viên (Staff - Phân quyền theo phân hệ)</option>
-                        <option value="admin">Quản trị viên (Admin - Toàn quyền hệ thống)</option>
+                        <option value="staff">Nhân viên (Staff - Phân quyền theo phân hệ con)</option>
+                        <option value="admin">Quản trị viên (Admin - Toàn quyền tất cả trang)</option>
                       </select>
                     </div>
                   </div>
 
                   {formData.role === "admin" ? (
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 font-medium">
-                      💡 Tài khoản <strong>Admin (Quản trị viên)</strong> mặc định có toàn bộ quyền truy cập và thao tác trên cả 4 phân hệ.
+                      💡 Tài khoản <strong>Admin (Quản trị viên)</strong> mặc định có toàn bộ quyền truy cập cả 8 trang phân hệ con.
                     </div>
                   ) : (
-                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between gap-2">
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                       <span className="text-xs text-slate-600 font-medium">Phân quyền nhanh cho Nhân viên:</span>
-                      <div className="flex gap-1.5">
+                      <div className="flex flex-wrap gap-1.5">
                         <Button
                           type="button"
                           variant="outline"
@@ -989,16 +918,25 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                           onClick={() => handleApplyShortcut("all")}
                           className="h-7 text-[11px] bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
                         >
-                          Tất cả phân hệ
+                          Bật cả 8 phân hệ con
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => handleApplyShortcut("read-only")}
+                          onClick={() => handleApplyShortcut("rental-core")}
                           className="h-7 text-[11px] bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                         >
-                          Chỉ xem (Không xóa)
+                          Chỉ Thuê xe & Đơn hàng
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleApplyShortcut("none")}
+                          className="h-7 text-[11px] bg-white text-rose-700 border-rose-200 hover:bg-rose-50"
+                        >
+                          Tắt tất cả
                         </Button>
                       </div>
                     </div>
@@ -1007,296 +945,208 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                   <div className="flex justify-end pt-2">
                     <Button
                       type="button"
-                      onClick={() => setActiveTab("modules")}
+                      onClick={() => setActiveTab("submodules")}
                       className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium"
                     >
-                      Tiếp tục: Phân quyền Phân hệ →
+                      Tiếp tục: Phân quyền Phân hệ Con →
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* TAB 2: PHÂN QUYỀN THEO PHÂN HỆ */}
-              {activeTab === "modules" && (
+              {/* TAB 2: PHÂN QUYỀN TRUY CẬP PHÂN HỆ CON (8 TRANG) */}
+              {activeTab === "submodules" && (
                 <div className="space-y-4">
                   {formData.role === "admin" && (
                     <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-                      ℹ️ Đang chọn vai trò Admin. Tài khoản này sẽ có toàn quyền truy cập tất cả phân hệ bên dưới.
+                      ℹ️ Đang chọn vai trò Admin. Tài khoản này tự động có quyền mở tất cả 8 trang bên dưới.
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    {/* 1. CHO THUÊ XE */}
-                    <div className="p-3.5 border border-slate-200 rounded-xl bg-white space-y-2.5">
-                      <div className="flex items-center justify-between border-b pb-2">
-                        <span className="font-bold text-xs text-blue-900 flex items-center gap-1.5">
-                          <Car className="w-4 h-4 text-blue-600" />
-                          Phân hệ Cho thuê xe
-                        </span>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin"}
-                            checked={formData.role === "admin" || formData.modules.rental.access}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  rental: { ...prev.modules.rental, access: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-4 h-4 rounded text-blue-600"
-                          />
-                          <span className="text-xs font-semibold text-slate-700">Cho truy cập</span>
-                        </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* 1. TỔNG QUAN */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.dashboard}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, dashboard: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <LayoutDashboard className="w-4 h-4 text-blue-600" />
+                          Trang Tổng quan (Dashboard)
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Trang chủ tổng quan chỉ số kinh doanh & biểu đồ</p>
                       </div>
+                    </label>
 
-                      <div className="space-y-2 pt-1 pl-1">
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.rental.access}
-                            checked={formData.role === "admin" || formData.modules.rental.canDelete}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  rental: { ...prev.modules.rental, canDelete: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-rose-600"
-                          />
-                          <span>Quyền xóa xe / đơn thuê xe</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.rental.access}
-                            checked={formData.role === "admin" || formData.modules.rental.canBackup}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  rental: { ...prev.modules.rental, canBackup: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-emerald-600"
-                          />
-                          <span>Quyền sao lưu dữ liệu cho thuê</span>
-                        </label>
+                    {/* 2. QUẢN LÝ XE */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.vehicles}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, vehicles: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Bike className="w-4 h-4 text-blue-600" />
+                          Trang Quản lý Xe
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Xem danh sách xe, thêm xe mới, tình trạng xe</p>
                       </div>
-                    </div>
+                    </label>
 
-                    {/* 2. CẦM ĐỒ */}
-                    <div className="p-3.5 border border-slate-200 rounded-xl bg-white space-y-2.5">
-                      <div className="flex items-center justify-between border-b pb-2">
-                        <span className="font-bold text-xs text-amber-900 flex items-center gap-1.5">
-                          <Gem className="w-4 h-4 text-amber-600" />
-                          Phân hệ Cầm đồ
-                        </span>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin"}
-                            checked={formData.role === "admin" || formData.modules.pawnshop.access}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  pawnshop: { ...prev.modules.pawnshop, access: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-4 h-4 rounded text-blue-600"
-                          />
-                          <span className="text-xs font-semibold text-slate-700">Cho truy cập</span>
-                        </label>
+                    {/* 3. KHÁCH THUÊ */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.customers}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, customers: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Users className="w-4 h-4 text-blue-600" />
+                          Trang Khách thuê
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Danh sách khách hàng, giấy tờ CCCD, lịch sử thuê</p>
                       </div>
+                    </label>
 
-                      <div className="space-y-2 pt-1 pl-1">
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.pawnshop.access}
-                            checked={formData.role === "admin" || formData.modules.pawnshop.canDelete}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  pawnshop: { ...prev.modules.pawnshop, canDelete: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-rose-600"
-                          />
-                          <span>Quyền xóa hợp đồng cầm đồ</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.pawnshop.access}
-                            checked={formData.role === "admin" || formData.modules.pawnshop.canBackup}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  pawnshop: { ...prev.modules.pawnshop, canBackup: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-emerald-600"
-                          />
-                          <span>Quyền sao lưu dữ liệu cầm đồ</span>
-                        </label>
+                    {/* 4. ĐƠN THUÊ */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.orders}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, orders: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <ClipboardList className="w-4 h-4 text-blue-600" />
+                          Trang Đơn thuê
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Tạo đơn thuê xe, trả xe, gia hạn, hợp đồng thuê</p>
                       </div>
-                    </div>
+                    </label>
 
-                    {/* 3. CHO VAY */}
-                    <div className="p-3.5 border border-slate-200 rounded-xl bg-white space-y-2.5">
-                      <div className="flex items-center justify-between border-b pb-2">
-                        <span className="font-bold text-xs text-emerald-900 flex items-center gap-1.5">
-                          <Coins className="w-4 h-4 text-emerald-600" />
-                          Phân hệ Cho vay
-                        </span>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin"}
-                            checked={formData.role === "admin" || formData.modules.loan.access}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  loan: { ...prev.modules.loan, access: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-4 h-4 rounded text-blue-600"
-                          />
-                          <span className="text-xs font-semibold text-slate-700">Cho truy cập</span>
-                        </label>
+                    {/* 5. BẢO TRÌ */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.maintenance}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, maintenance: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Wrench className="w-4 h-4 text-blue-600" />
+                          Trang Bảo trì xe
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Nhật ký thay nhớt, bảo dưỡng định kỳ và sửa chữa</p>
                       </div>
+                    </label>
 
-                      <div className="space-y-2 pt-1 pl-1">
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.loan.access}
-                            checked={formData.role === "admin" || formData.modules.loan.canDelete}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  loan: { ...prev.modules.loan, canDelete: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-rose-600"
-                          />
-                          <span>Quyền xóa hợp đồng cho vay</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.loan.access}
-                            checked={formData.role === "admin" || formData.modules.loan.canBackup}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  loan: { ...prev.modules.loan, canBackup: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-emerald-600"
-                          />
-                          <span>Quyền sao lưu dữ liệu cho vay</span>
-                        </label>
+                    {/* 6. BÁO CÁO */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.reports}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, reports: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <FileText className="w-4 h-4 text-blue-600" />
+                          Trang Báo cáo & Thống kê
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Báo cáo doanh thu, lợi nhuận và xuất file chi tiết</p>
                       </div>
-                    </div>
+                    </label>
 
-                    {/* 4. MUA BÁN XE */}
-                    <div className="p-3.5 border border-slate-200 rounded-xl bg-white space-y-2.5">
-                      <div className="flex items-center justify-between border-b pb-2">
-                        <span className="font-bold text-xs text-purple-900 flex items-center gap-1.5">
-                          <Tag className="w-4 h-4 text-purple-600" />
-                          Phân hệ Mua bán xe
-                        </span>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin"}
-                            checked={formData.role === "admin" || formData.modules.sales.access}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  sales: { ...prev.modules.sales, access: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-4 h-4 rounded text-blue-600"
-                          />
-                          <span className="text-xs font-semibold text-slate-700">Cho truy cập</span>
-                        </label>
+                    {/* 7. CÀI ĐẶT & SAO LƯU */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.settings}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, settings: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Settings className="w-4 h-4 text-blue-600" />
+                          Trang Sao lưu & Cài đặt
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Sao lưu dữ liệu đám mây và cài đặt hệ thống</p>
                       </div>
+                    </label>
 
-                      <div className="space-y-2 pt-1 pl-1">
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.sales.access}
-                            checked={formData.role === "admin" || formData.modules.sales.canDelete}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  sales: { ...prev.modules.sales, canDelete: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-rose-600"
-                          />
-                          <span>Quyền xóa dữ liệu mua bán</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            disabled={formData.role === "admin" || !formData.modules.sales.access}
-                            checked={formData.role === "admin" || formData.modules.sales.canBackup}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                modules: {
-                                  ...prev.modules,
-                                  sales: { ...prev.modules.sales, canBackup: e.target.checked },
-                                },
-                              }))
-                            }
-                            className="w-3.5 h-3.5 rounded text-emerald-600"
-                          />
-                          <span>Quyền sao lưu dữ liệu mua bán</span>
-                        </label>
+                    {/* 8. LỊCH SỬ TRUY CẬP */}
+                    <label className="p-3 border border-slate-200 rounded-xl bg-white flex items-start gap-3 hover:bg-slate-50/70 cursor-pointer ui-transition">
+                      <input
+                        type="checkbox"
+                        disabled={formData.role === "admin"}
+                        checked={formData.role === "admin" || formData.subModules.accessHistory}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            subModules: { ...prev.subModules, accessHistory: e.target.checked },
+                          }))
+                        }
+                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <History className="w-4 h-4 text-blue-600" />
+                          Trang Lịch sử truy cập
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Nhật ký hoạt động thao tác của tất cả các tài khoản</p>
                       </div>
-                    </div>
+                    </label>
                   </div>
 
                   <div className="flex justify-between pt-2">
@@ -1310,28 +1160,28 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                     </Button>
                     <Button
                       type="button"
-                      onClick={() => setActiveTab("global")}
+                      onClick={() => setActiveTab("actions")}
                       className="h-9 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium"
                     >
-                      Tiếp tục: Quyền Hệ thống →
+                      Tiếp tục: Quyền Thao tác →
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* TAB 3: QUYỀN HỆ THỐNG */}
-              {activeTab === "global" && (
+              {/* TAB 3: QUYỀN THAO TÁC & HỆ THỐNG */}
+              {activeTab === "actions" && (
                 <div className="space-y-4">
                   <div className="space-y-2.5">
                     <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer ui-transition">
                       <input
                         type="checkbox"
                         disabled={formData.role === "admin"}
-                        checked={formData.role === "admin" || formData.globalPermissions.canDelete}
+                        checked={formData.role === "admin" || formData.actions.canDelete}
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            globalPermissions: { ...prev.globalPermissions, canDelete: e.target.checked },
+                            actions: { ...prev.actions, canDelete: e.target.checked },
                           }))
                         }
                         className="w-4 h-4 mt-0.5 rounded text-blue-600"
@@ -1339,9 +1189,9 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                       <div>
                         <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                           <KeyRound className="w-4 h-4 text-rose-500" />
-                          Quyền xóa dữ liệu chung
+                          Quyền xóa dữ liệu (Xe, Đơn thuê, Khách)
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">Cho phép thao tác xóa danh mục khách hàng, xe và các bản ghi tổng thể</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Cho phép nhân viên này có nút Xóa xe, Xóa đơn hàng và Xóa khách hàng</p>
                       </div>
                     </label>
 
@@ -1349,11 +1199,11 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                       <input
                         type="checkbox"
                         disabled={formData.role === "admin"}
-                        checked={formData.role === "admin" || formData.globalPermissions.canBackup}
+                        checked={formData.role === "admin" || formData.actions.canBackup}
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            globalPermissions: { ...prev.globalPermissions, canBackup: e.target.checked },
+                            actions: { ...prev.actions, canBackup: e.target.checked },
                           }))
                         }
                         className="w-4 h-4 mt-0.5 rounded text-blue-600"
@@ -1361,9 +1211,9 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                       <div>
                         <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                           <Database className="w-4 h-4 text-emerald-600" />
-                          Quyền sao lưu & khôi phục dữ liệu
+                          Quyền sao lưu dữ liệu
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">Cho phép tải và khôi phục bản sao lưu hệ thống trong trang Cài đặt</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Cho phép tạo và tải file sao lưu dữ liệu hệ thống</p>
                       </div>
                     </label>
 
@@ -1371,33 +1221,11 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                       <input
                         type="checkbox"
                         disabled={formData.role === "admin"}
-                        checked={formData.role === "admin" || formData.globalPermissions.canViewAccessHistory}
+                        checked={formData.role === "admin" || formData.actions.canManageUsers}
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            globalPermissions: { ...prev.globalPermissions, canViewAccessHistory: e.target.checked },
-                          }))
-                        }
-                        className="w-4 h-4 mt-0.5 rounded text-blue-600"
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                          <History className="w-4 h-4 text-blue-600" />
-                          Quyền xem lịch sử truy cập nhật ký
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">Cho phép xem nhật ký hoạt động hệ thống của các nhân viên khác</p>
-                      </div>
-                    </label>
-
-                    <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer ui-transition">
-                      <input
-                        type="checkbox"
-                        disabled={formData.role === "admin"}
-                        checked={formData.role === "admin" || formData.globalPermissions.canManageUsers}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            globalPermissions: { ...prev.globalPermissions, canManageUsers: e.target.checked },
+                            actions: { ...prev.actions, canManageUsers: e.target.checked },
                           }))
                         }
                         className="w-4 h-4 mt-0.5 rounded text-blue-600"
@@ -1407,7 +1235,7 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                           <Users className="w-4 h-4 text-purple-600" />
                           Quyền quản lý người dùng & phân quyền
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">Cho phép mở cửa sổ phân quyền này để thêm/sửa nhân viên khác</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Cho phép mở cửa sổ phân quyền này để thêm/sửa các nhân viên khác</p>
                       </div>
                     </label>
                   </div>
@@ -1416,10 +1244,10 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setActiveTab("modules")}
+                      onClick={() => setActiveTab("submodules")}
                       className="h-9 text-xs"
                     >
-                      ← Quay lại Phân hệ
+                      ← Quay lại Phân hệ Con
                     </Button>
                   </div>
                 </div>

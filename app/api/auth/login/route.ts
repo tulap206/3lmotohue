@@ -85,9 +85,17 @@ export async function POST(request: NextRequest) {
       displayName: userRecord.displayname,
       role: userRecord.role,
       permissions: {
-        canDelete: userRecord.can_delete || false,
+        canAccessDashboard: userRecord.role === 'admin' || userRecord.can_access_rental !== false,
+        canAccessVehicles: userRecord.role === 'admin' || userRecord.can_access_sales !== false,
+        canAccessCustomers: userRecord.role === 'admin' || userRecord.can_access_pawnshop !== false,
+        canAccessOrders: userRecord.role === 'admin' || userRecord.can_access_loan !== false,
+        canAccessMaintenance: userRecord.role === 'admin' || userRecord.can_view_history_rental !== false,
+        canAccessReports: userRecord.role === 'admin' || userRecord.can_view_history_sales !== false,
+        canAccessSettings: userRecord.role === 'admin' || userRecord.can_backup !== false,
+        canViewAccessHistory: userRecord.role === 'admin' || userRecord.can_view_access_history || false,
+        canDelete: userRecord.role === 'admin' || userRecord.can_delete || false,
         canBackup: userRecord.role === 'admin' || userRecord.can_backup || false,
-        canViewAccessHistory: userRecord.can_view_access_history || false,
+        canManageUsers: userRecord.role === 'admin' || userRecord.can_manage_users || false,
       }
     }
 

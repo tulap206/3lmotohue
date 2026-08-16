@@ -109,10 +109,18 @@ export function DashboardSidebar({ children }: SidebarProps) {
   }
 
   const visibleItems = menuItems.filter((item) => {
-    if (item.href === "/dashboard/access-history") {
-      return user?.role === "admin" || user?.permissions?.canViewAccessHistory
-    }
-    return !("adminOnly" in item && item.adminOnly) || user?.role === "admin"
+    if (user?.role === "admin") return true
+    const perms = (user?.permissions || {}) as any
+
+    if (item.href === "/dashboard") return perms.canAccessDashboard !== false
+    if (item.href === "/dashboard/vehicles") return perms.canAccessVehicles !== false
+    if (item.href === "/dashboard/customers") return perms.canAccessCustomers !== false
+    if (item.href === "/dashboard/orders") return perms.canAccessOrders !== false
+    if (item.href === "/dashboard/maintenance") return perms.canAccessMaintenance !== false
+    if (item.href === "/dashboard/reports") return perms.canAccessReports !== false
+    if (item.href === "/dashboard/access-history") return !!perms.canViewAccessHistory
+
+    return !("adminOnly" in item && item.adminOnly)
   })
 
   const nav = (
