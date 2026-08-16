@@ -182,7 +182,7 @@ export default function DashboardPage() {
     const targetVehicles = isUnassigned
       ? Array.from({ length: quantity }, (_, i) => ({
           id: "00000000-0000-0000-0000-000000000000",
-          name: quantity > 1 ? `Chưa gán xe (Xe ${i + 1}/${quantity})` : "Chưa gán xe (Gán khi giao)",
+          name: quantity > 1 ? `Chưa gán xe (Xe ${i + 1}/${quantity})` : "Chưa gán xe",
           licensePlate: "CHỜ GÁN XE",
           pricePerDay: unassignedPriceVal,
         }))

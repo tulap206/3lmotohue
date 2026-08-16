@@ -489,15 +489,15 @@ export default function OrdersPage() {
     const isUnassigned = selectedVehicles.length === 0
     const unassignedPriceVal = parseMoneyInput(unassignedPricePerDay) || 150000
 
+    const quantity = isUnassigned ? Math.max(1, parseInt(unassignedQuantity, 10) || 1) : selectedVehicles.length
+
     const targetVehicles = isUnassigned
-      ? [
-          {
-            id: "00000000-0000-0000-0000-000000000000",
-            name: "Chưa gán xe (Gán khi giao)",
-            licensePlate: "CHỜ GÁN XE",
-            pricePerDay: unassignedPriceVal,
-          },
-        ]
+      ? Array.from({ length: quantity }, (_, i) => ({
+          id: "00000000-0000-0000-0000-000000000000",
+          name: quantity > 1 ? `Chưa gán xe (Xe ${i + 1}/${quantity})` : "Chưa gán xe",
+          licensePlate: "CHỜ GÁN XE",
+          pricePerDay: unassignedPriceVal,
+        }))
       : selectedVehicles
 
     const startDate = new Date(formData.startDate)
@@ -785,7 +785,7 @@ export default function OrdersPage() {
     if (!vehicle) {
       vehicle = {
         id: editFormData.vehicleId || editingOrder.vehicleId,
-        name: editingOrder.vehicleName || "Chưa gán xe (Gán khi giao)",
+        name: editingOrder.vehicleName || "Chưa gán xe",
         licensePlate: editingOrder.licensePlate || "CHỜ GÁN XE",
         pricePerDay: editingOrder.pricePerDay || 0,
         color: "",
@@ -2079,7 +2079,7 @@ export default function OrdersPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
                   {(editFormData.vehicleId === "00000000-0000-0000-0000-000000000000" || editingOrder?.vehicleId === "00000000-0000-0000-0000-000000000000") && (
-                    <SelectItem value="00000000-0000-0000-0000-000000000000">Chưa gán xe (Gán khi giao)</SelectItem>
+                    <SelectItem value="00000000-0000-0000-0000-000000000000">Chưa gán xe</SelectItem>
                   )}
                   {vehicles
                     .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
