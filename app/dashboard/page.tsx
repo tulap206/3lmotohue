@@ -23,8 +23,10 @@ import {
   X,
   CalendarCheck,
   Sparkles,
+  Bell,
 } from "lucide-react"
 import { DailySummaryDialog } from "@/components/dashboard/daily-summary-dialog"
+import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { SkeletonMetricCards, SkeletonTable, SkeletonCharts } from "@/components/ui/skeleton-loader"
 import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeExpenseChart } from "@/components/dashboard/rental-charts"
 import { OverdueOrdersPanel, CommissionHomeReportPanel } from "@/components/dashboard/rental-overview-panels"
@@ -55,7 +57,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { formatDisplayDate, toStoredDateValue } from "@/lib/format-date"
+import { formatDisplayDate, parseDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { Textarea } from "@/components/ui/textarea"
@@ -100,6 +102,79 @@ export default function DashboardPage() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDailySummaryOpen, setIsDailySummaryOpen] = useState(false)
+  const [isDailyNotificationOpen, setIsDailyNotificationOpen] = useState(false)
+  const [hasCheckedDailyNotification, setHasCheckedDailyNotification] = useState(false)
+
+  // Auto-open daily notification popup on first load/login of the day
+  useEffect(() => {
+    if (orders.length === 0 || hasCheckedDailyNotification) return
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    const lastCheckDate = typeof window !== "undefined" ? localStorage.getItem("daily_notification_last_date") : null
+
+    if (lastCheckDate !== todayStr) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      const in2DaysEnd = new Date(today)
+      in2DaysEnd.setDate(today.getDate() + 2)
+      in2DaysEnd.setHours(23, 59, 59, 999)
+
+      const overdueCount = orders.filter((o) => {
+        if (o.status !== "active") return false
+        const end = parseDisplayDate(o.endDate)
+        if (!end) return false
+        end.setHours(0, 0, 0, 0)
+        return end < today
+      }).length
+
+      const upcomingCount = orders.filter((o) => {
+        if (o.status !== "pending") return false
+        const start = parseDisplayDate(o.startDate)
+        if (!start) return false
+        start.setHours(0, 0, 0, 0)
+        return start >= today && start <= in2DaysEnd
+      }).length
+
+      if (overdueCount > 0 || upcomingCount > 0) {
+        setIsDailyNotificationOpen(true)
+      }
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("daily_notification_last_date", todayStr)
+      }
+    }
+
+    setHasCheckedDailyNotification(true)
+  }, [orders, hasCheckedDailyNotification])
+
+  // Count total pending & overdue items for badge
+  const dailyNotifyBadgeCount = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const in2DaysEnd = new Date(today)
+    in2DaysEnd.setDate(today.getDate() + 2)
+    in2DaysEnd.setHours(23, 59, 59, 999)
+
+    const overdue = orders.filter((o) => {
+      if (o.status !== "active") return false
+      const end = parseDisplayDate(o.endDate)
+      if (!end) return false
+      end.setHours(0, 0, 0, 0)
+      return end < today
+    }).length
+
+    const upcoming = orders.filter((o) => {
+      if (o.status !== "pending") return false
+      const start = parseDisplayDate(o.startDate)
+      if (!start) return false
+      start.setHours(0, 0, 0, 0)
+      return start >= today && start <= in2DaysEnd
+    }).length
+
+    return overdue + upcoming
+  }, [orders])
   const [formData, setFormData] = useState({
     customerId: "",
     vehicleIds: [] as string[],
@@ -814,6 +889,19 @@ export default function DashboardPage() {
         subtitle="Vận hành đội xe và theo dõi hiệu suất kinh doanh"
         actions={
           <div className="flex items-center gap-2.5">
+            <Button
+              onClick={() => setIsDailyNotificationOpen(true)}
+              variant="outline"
+              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3.5 ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
+            >
+              <Bell className="w-4 h-4 mr-1.5 text-amber-500" />
+              Thông báo
+              {dailyNotifyBadgeCount > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none">
+                  {dailyNotifyBadgeCount}
+                </span>
+              )}
+            </Button>
             <Button
               onClick={() => setIsDialogOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
@@ -1686,6 +1774,13 @@ export default function DashboardPage() {
         orders={orders}
         vehicles={vehicles}
         transactions={transactions}
+      />
+
+      <DailyNotificationModal
+        isOpen={isDailyNotificationOpen}
+        onClose={() => setIsDailyNotificationOpen(false)}
+        orders={orders}
+        vehicles={vehicles}
       />
     </ModulePageShell>
   )

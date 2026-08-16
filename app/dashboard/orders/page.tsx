@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
 import { logger } from "@/lib/logger"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { formatDisplayDate, formatDisplayDateTime, toDateInputValue, toStoredDateValue } from "@/lib/format-date"
+import { formatDisplayDate, formatDisplayDateTime, parseDisplayDate, toDateInputValue, toStoredDateValue } from "@/lib/format-date"
 import { supabase, fetchVehicles, fetchCustomers, fetchRentals, insertCustomer } from "@/lib/supabase"
 import { uploadImage } from "@/lib/storage"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -57,7 +57,8 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, DollarSign, Sparkles, Bike } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, DollarSign, Sparkles, Bike, Bell } from "lucide-react"
+import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { QUY79_BUSINESS } from "@/lib/business-info"
 import {
   type RentalTerm,
@@ -239,6 +240,34 @@ export default function OrdersPage() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [orderToDelete, setOrderToDelete] = useState<RentalOrder | null>(null)
+  const [isDailyNotificationOpen, setIsDailyNotificationOpen] = useState(false)
+
+  const dailyNotifyBadgeCount = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const in2DaysEnd = new Date(today)
+    in2DaysEnd.setDate(today.getDate() + 2)
+    in2DaysEnd.setHours(23, 59, 59, 999)
+
+    const overdue = orders.filter((o) => {
+      if (o.status !== "active") return false
+      const end = parseDisplayDate(o.endDate)
+      if (!end) return false
+      end.setHours(0, 0, 0, 0)
+      return end < today
+    }).length
+
+    const upcoming = orders.filter((o) => {
+      if (o.status !== "pending") return false
+      const start = parseDisplayDate(o.startDate)
+      if (!start) return false
+      start.setHours(0, 0, 0, 0)
+      return start >= today && start <= in2DaysEnd
+    }).length
+
+    return overdue + upcoming
+  }, [orders])
   const [formData, setFormData] = useState({
     customerId: "",
     vehicleIds: [] as string[],
@@ -1124,6 +1153,19 @@ export default function OrdersPage() {
                 )
               })}
             </div>
+            <Button
+              variant="outline"
+              onClick={() => setIsDailyNotificationOpen(true)}
+              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
+            >
+              <Bell className="w-4 h-4 mr-1.5 text-amber-500" />
+              Thông báo
+              {dailyNotifyBadgeCount > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none">
+                  {dailyNotifyBadgeCount}
+                </span>
+              )}
+            </Button>
             <Button
               className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
               onClick={() => {
@@ -2667,6 +2709,17 @@ export default function OrdersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DailyNotificationModal
+        isOpen={isDailyNotificationOpen}
+        onClose={() => setIsDailyNotificationOpen(false)}
+        orders={orders}
+        vehicles={vehicles}
+        onDeliverOrderClick={(order) => {
+          setAssigningOrder(order)
+          setSelectedVehiclesForAssignList([])
+        }}
+      />
     </ModulePageShell>
   )
 }
