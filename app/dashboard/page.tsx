@@ -22,6 +22,7 @@ import {
   Search,
   X,
   CalendarCheck,
+  Sparkles,
 } from "lucide-react"
 import { DailySummaryDialog } from "@/components/dashboard/daily-summary-dialog"
 import { SkeletonMetricCards, SkeletonTable, SkeletonCharts } from "@/components/ui/skeleton-loader"
@@ -166,19 +167,25 @@ export default function DashboardPage() {
     setIsDialogOpen(false)
   }
 
+  const [unassignedPricePerDay, setUnassignedPricePerDay] = useState("150.000")
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (formData.vehicleIds.length === 0) {
-      alert("⚠️ Vui lòng chọn ít nhất một xe thuê!")
-      return
-    }
-
     const selectedVehicles = vehicles.filter((v) => formData.vehicleIds.includes(v.id))
-    if (selectedVehicles.length === 0) {
-      alert("⚠️ Vui lòng chọn ít nhất một xe thuê!")
-      return
-    }
+    const isUnassigned = selectedVehicles.length === 0
+    const unassignedPriceVal = parseMoneyInput(unassignedPricePerDay) || 150000
+
+    const targetVehicles = isUnassigned
+      ? [
+          {
+            id: "00000000-0000-0000-0000-000000000000",
+            name: "Chưa gán xe (Gán khi giao)",
+            licensePlate: "CHỜ GÁN XE",
+            pricePerDay: unassignedPriceVal,
+          },
+        ]
+      : selectedVehicles
 
     const startDate = new Date(formData.startDate)
     const endDate = new Date(formData.endDate)
@@ -254,16 +261,16 @@ export default function DashboardPage() {
       const startDateVN = toStoredDateValue(formData.startDate)
       const now = new Date().toISOString()
 
-      // Split deposit and commission equally among all selected vehicles
+      // Split deposit and commission equally among target vehicles
       const totalDeposit = parseMoneyInput(formData.deposit) || 0
-      const dividedDeposit = Math.round(totalDeposit / selectedVehicles.length)
+      const dividedDeposit = Math.round(totalDeposit / targetVehicles.length)
 
       const totalCommission = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
-      const dividedCommission = Math.round(totalCommission / selectedVehicles.length)
+      const dividedCommission = Math.round(totalCommission / targetVehicles.length)
 
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
 
-      const insertPayloads = selectedVehicles.map((vehicle) => {
+      const insertPayloads = targetVehicles.map((vehicle) => {
         const totalPrice = totalDays * vehicle.pricePerDay
         return {
           customerId,
@@ -1448,9 +1455,9 @@ export default function DashboardPage() {
                   )}
                 </EntityFormSection>
 
-                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
+                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng hoặc để trống để gán xe sau">
                   <div className="space-y-3 relative">
-                    <p className="text-label">Chọn xe thuê <span className="text-rose-500">*</span></p>
+                    <p className="text-label">Chọn xe thuê <span className="text-slate-400 font-normal text-xs">(Có thể để trống để gán khi giao xe)</span></p>
                     
                     {/* Selected vehicles badges */}
                     {formData.vehicleIds.length > 0 && (
@@ -1484,7 +1491,7 @@ export default function DashboardPage() {
 
                     <p className="text-meta">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
                     <Input
-                      placeholder="VD: Wave Alpha hoặc 75F1-12345..."
+                      placeholder="VD: Wave Alpha hoặc 75F1-12345... (hoặc để trống)"
                       value={vehicleSearch}
                       onChange={(e) => {
                         setVehicleSearch(e.target.value)
@@ -1493,6 +1500,29 @@ export default function DashboardPage() {
                       onFocus={() => setShowVehicleDropdown(true)}
                       className={entityFormInputClass}
                     />
+
+                    {formData.vehicleIds.length === 0 && (
+                      <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-amber-900">
+                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                          Đang để trống xe — Đơn tạo sẽ ở trạng thái "Chờ giao xe"
+                        </div>
+                        <p className="text-[11px] text-amber-800 leading-relaxed">
+                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
+                        </p>
+                        <div className="pt-1">
+                          <EntityFormField label="Đơn giá thuê dự kiến (VND/ngày)" hint="Đơn giá dự kiến để tính tiền cọc & tổng tiền hợp đồng">
+                            <Input
+                              type="text"
+                              value={unassignedPricePerDay}
+                              onChange={(e) => setUnassignedPricePerDay(formatMoneyInput(e.target.value))}
+                              placeholder="VD: 150.000"
+                              className={cn(entityFormInputClass, "font-mono bg-white")}
+                            />
+                          </EntityFormField>
+                        </div>
+                      </div>
+                    )}
                     
                     {showVehicleDropdown && (
                       <>
@@ -1611,16 +1641,6 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   )}
-                  <EntityFormTip
-                    variant="green"
-                    title="Hướng dẫn tính toán"
-                    items={[
-                      "• Số ngày: Tính từ ngày bắt đầu đến ngày kết thúc (VD: 3 ngày)",
-                      "• Tiền cọc: Thường 30-50% tổng giá thuê để bảo vệ xe",
-                      "• Chia hoa hồng: Nếu có đơn vị môi giới, cộng số tiền hoa hồng/ngày",
-                      "• Ví dụ: Toyota Vios 300k/ngày × 3 ngày = 900k, cọc 450k",
-                    ]}
-                  />
                 </EntityFormSection>
               </EntityFormBody>
 

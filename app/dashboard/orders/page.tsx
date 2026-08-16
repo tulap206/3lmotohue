@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { showError, showWarning } from "@/lib/toast-utils"
+import { showError, showWarning, showSuccess } from "@/lib/toast-utils"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
@@ -57,7 +57,7 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, DollarSign } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, DollarSign, Sparkles, Bike } from "lucide-react"
 import { QUY79_BUSINESS } from "@/lib/business-info"
 import {
   type RentalTerm,
@@ -278,6 +278,13 @@ export default function OrdersPage() {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
 
+  // Unassigned vehicle booking states
+  const [unassignedPricePerDay, setUnassignedPricePerDay] = useState("150.000")
+  const [assigningOrder, setAssigningOrder] = useState<RentalOrder | null>(null)
+  const [assignVehicleSearch, setAssignVehicleSearch] = useState("")
+  const [selectedVehicleForAssign, setSelectedVehicleForAssign] = useState<Vehicle | null>(null)
+  const [assigningSubmitting, setAssigningSubmitting] = useState(false)
+
   const filteredCustomersForSelect = customers.filter(c => 
     c.name.toLowerCase().includes(customerSearch.toLowerCase()) || 
     (c.phone && c.phone.toLowerCase().includes(customerSearch.toLowerCase())) || 
@@ -477,16 +484,20 @@ export default function OrdersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (formData.vehicleIds.length === 0) {
-      showWarning("Vui lòng chọn ít nhất một xe thuê!")
-      return
-    }
-
     const selectedVehicles = vehicles.filter((v) => formData.vehicleIds.includes(v.id))
-    if (selectedVehicles.length === 0) {
-      showWarning("Vui lòng chọn ít nhất một xe thuê!")
-      return
-    }
+    const isUnassigned = selectedVehicles.length === 0
+    const unassignedPriceVal = parseMoneyInput(unassignedPricePerDay) || 150000
+
+    const targetVehicles = isUnassigned
+      ? [
+          {
+            id: "00000000-0000-0000-0000-000000000000",
+            name: "Chưa gán xe (Gán khi giao)",
+            licensePlate: "CHỜ GÁN XE",
+            pricePerDay: unassignedPriceVal,
+          },
+        ]
+      : selectedVehicles
 
     const startDate = new Date(formData.startDate)
     const endDate = new Date(formData.endDate)
@@ -561,17 +572,17 @@ export default function OrdersPage() {
       const startDateVN = toStoredDateValue(formData.startDate)
       const now = new Date().toISOString()
 
-      // Split deposit and commission equally among all selected vehicles
+      // Split deposit and commission equally among target vehicles
       const totalDeposit = parseMoneyInput(formData.deposit) || 0
-      const dividedDeposit = Math.round(totalDeposit / selectedVehicles.length)
+      const dividedDeposit = Math.round(totalDeposit / targetVehicles.length)
 
       const totalCommission = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
-      const dividedCommission = Math.round(totalCommission / selectedVehicles.length)
+      const dividedCommission = Math.round(totalCommission / targetVehicles.length)
 
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
       const termPayload = buildRentalTermPayload(formData.rentalTerm, "")
 
-      const insertPayloads = selectedVehicles.map((vehicle) => {
+      const insertPayloads = targetVehicles.map((vehicle) => {
         const totalPrice = totalDays * vehicle.pricePerDay
         return {
           customerId,
@@ -644,6 +655,75 @@ export default function OrdersPage() {
     setNewCustomerCCCDFront(null)
     setHasCommission(false)
     setIsDialogOpen(false)
+  }
+
+  // Handle deliver order (Giao xe) or open AssignVehicleModal if unassigned
+  const handleDeliverOrderClick = (order: RentalOrder) => {
+    if (order.licensePlate === "CHỜ GÁN XE" || order.vehicleId === "00000000-0000-0000-0000-000000000000") {
+      setAssigningOrder(order)
+      setSelectedVehicleForAssign(null)
+      setAssignVehicleSearch("")
+    } else {
+      updateOrderStatus(order.id, "active")
+    }
+  }
+
+  const availableVehiclesForAssign = vehicles.filter((v) => 
+    (v.status === "available" || v.id === selectedVehicleForAssign?.id) &&
+    (v.name.toLowerCase().includes(assignVehicleSearch.toLowerCase()) || 
+     v.licensePlate.toLowerCase().includes(assignVehicleSearch.toLowerCase()))
+  )
+
+  const handleConfirmAssignVehicle = async () => {
+    if (!assigningOrder || !selectedVehicleForAssign) return
+    try {
+      setAssigningSubmitting(true)
+      const totalPrice = assigningOrder.totalDays * selectedVehicleForAssign.pricePerDay
+      const now = new Date().toISOString()
+      
+      let { data, error } = await supabase
+        .from('rentals')
+        .update({
+          vehicleId: selectedVehicleForAssign.id,
+          vehicleName: selectedVehicleForAssign.name,
+          licensePlate: selectedVehicleForAssign.licensePlate,
+          pricePerDay: selectedVehicleForAssign.pricePerDay,
+          totalPrice,
+          status: 'active',
+          received_at: now
+        })
+        .eq('id', assigningOrder.id)
+        .select()
+
+      if (error) throw error
+
+      setOrders(prev => prev.map(o => o.id === assigningOrder.id ? {
+        ...o,
+        vehicleId: selectedVehicleForAssign.id,
+        vehicleName: selectedVehicleForAssign.name,
+        licensePlate: selectedVehicleForAssign.licensePlate,
+        pricePerDay: selectedVehicleForAssign.pricePerDay,
+        totalPrice,
+        status: 'active',
+        received_at: now
+      } : o))
+
+      // Update vehicle status in vehicles list
+      setVehicles(prev => prev.map(v => v.id === selectedVehicleForAssign.id ? { ...v, status: 'rented' as Vehicle['status'] } : v))
+
+      if (user) {
+        logger.addRental(user.username, user.displayName, assigningOrder.customerName, selectedVehicleForAssign.name)
+      }
+
+      showSuccess(`Đã gán xe ${selectedVehicleForAssign.licensePlate} (${selectedVehicleForAssign.name}) và bàn giao cho khách!`)
+      setAssigningOrder(null)
+      setSelectedVehicleForAssign(null)
+    } catch (err: any) {
+      console.error("Error assigning vehicle:", err)
+      showError(`Lỗi khi gán xe: ${err.message}`)
+    } finally {
+      setAssigningSubmitting(false)
+    }
   }
 
   const parseVNToISODate = toDateInputValue
@@ -1134,9 +1214,9 @@ export default function OrdersPage() {
                   )}
                 </EntityFormSection>
 
-                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng để cho thuê">
+                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng hoặc để trống để gán xe sau">
                   <div className="space-y-3 relative">
-                    <p className="text-label">Chọn xe thuê <span className="text-rose-500">*</span></p>
+                    <p className="text-label">Chọn xe thuê <span className="text-slate-400 font-normal text-xs">(Có thể để trống để gán khi giao xe)</span></p>
                     
                     {/* Selected vehicles badges */}
                     {formData.vehicleIds.length > 0 && (
@@ -1170,7 +1250,7 @@ export default function OrdersPage() {
 
                     <p className="text-meta">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
                     <Input
-                      placeholder="VD: Wave Alpha hoặc 75F1-12345..."
+                      placeholder="VD: Wave Alpha hoặc 75F1-12345... (hoặc để trống)"
                       value={vehicleSearch}
                       onChange={(e) => {
                         setVehicleSearch(e.target.value)
@@ -1179,6 +1259,29 @@ export default function OrdersPage() {
                       onFocus={() => setShowVehicleDropdown(true)}
                       className={entityFormInputClass}
                     />
+
+                    {formData.vehicleIds.length === 0 && (
+                      <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-amber-900">
+                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                          Đang để trống xe — Đơn tạo sẽ ở trạng thái "Chờ giao xe"
+                        </div>
+                        <p className="text-[11px] text-amber-800 leading-relaxed">
+                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
+                        </p>
+                        <div className="pt-1">
+                          <EntityFormField label="Đơn giá thuê dự kiến (VND/ngày)" hint="Đơn giá dự kiến để tính tiền cọc & tổng tiền hợp đồng">
+                            <Input
+                              type="text"
+                              value={unassignedPricePerDay}
+                              onChange={(e) => setUnassignedPricePerDay(formatMoneyInput(e.target.value))}
+                              placeholder="VD: 150.000"
+                              className={cn(entityFormInputClass, "font-mono bg-white")}
+                            />
+                          </EntityFormField>
+                        </div>
+                      </div>
+                    )}
                     
                     {showVehicleDropdown && (
                       <>
@@ -1297,17 +1400,6 @@ export default function OrdersPage() {
                       </EntityFormField>
                     </div>
                   )}
-
-                  <EntityFormTip
-                    variant="green"
-                    title="Hướng dẫn tính toán"
-                    items={[
-                      "• Số ngày: Tính từ ngày bắt đầu đến ngày kết thúc (VD: 3 ngày)",
-                      "• Tiền cọc: Thường 30-50% tổng giá thuê để bảo vệ xe",
-                      "• Chia hoa hồng: Nếu có đơn vị môi giới, cộng số tiền hoa hồng/ngày",
-                      "• Ví dụ: Toyota Vios 300k/ngày × 3 ngày = 900k, cọc 450k",
-                    ]}
-                  />
                 </EntityFormSection>
               </EntityFormBody>
 
@@ -1504,7 +1596,7 @@ export default function OrdersPage() {
                             <td className="py-3.5 px-4">
                               <div className="flex items-center justify-end gap-1 flex-nowrap">
                                 {order.status === "pending" && (
-                                  <Button variant="ghost" size="sm" className={cn(orderQuickActionClass, "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50")} onClick={() => updateOrderStatus(order.id, "active")} title="Giao xe">
+                                  <Button variant="ghost" size="sm" className={cn(orderQuickActionClass, "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50")} onClick={() => handleDeliverOrderClick(order)} title="Giao xe">
                                     <Play className="w-3.5 h-3.5" />Giao
                                   </Button>
                                 )}
@@ -1573,7 +1665,7 @@ export default function OrdersPage() {
                             <Button
                               size="sm"
                               className="h-9 px-2.5 text-sm bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)]"
-                              onClick={() => updateOrderStatus(order.id, "active")}
+                              onClick={() => handleDeliverOrderClick(order)}
                             >
                               Giao xe
                             </Button>
@@ -2420,6 +2512,83 @@ export default function OrdersPage() {
             </div>
           </div>
         </EntityFormDialogContent>
+      </Dialog>
+
+      {/* Modal Chọn xe gán cho đơn đặt trước */}
+      <Dialog open={!!assigningOrder} onOpenChange={(open) => !open && setAssigningOrder(null)}>
+        <DialogContent className="w-[95vw] sm:max-w-md p-5 rounded-[var(--radius-container)] gap-4">
+          <DialogHeader className="border-b pb-3">
+            <DialogTitle className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Bike className="w-5 h-5 text-emerald-600 shrink-0" />
+              Chọn xe gán & Giao cho khách
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500 mt-1">
+              Khách hàng: <strong className="text-slate-800">{assigningOrder?.customerName}</strong> ({assigningOrder?.totalDays} ngày thuê: {assigningOrder?.startDate} → {assigningOrder?.endDate})
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-1">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Tìm xe rảnh theo tên hoặc biển số..."
+                value={assignVehicleSearch}
+                onChange={(e) => setAssignVehicleSearch(e.target.value)}
+                className="pl-9 h-10 text-sm bg-white border-slate-200"
+              />
+            </div>
+
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 pt-1">
+              Xe đang sẵn sàng ở bãi ({availableVehiclesForAssign.length} xe):
+            </p>
+
+            <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
+              {availableVehiclesForAssign.length === 0 ? (
+                <div className="p-4 text-center text-slate-500 text-xs">
+                  Không tìm thấy xe nào đang rảnh phù hợp
+                </div>
+              ) : (
+                availableVehiclesForAssign.map((v) => {
+                  const isSelected = selectedVehicleForAssign?.id === v.id
+                  return (
+                    <div
+                      key={v.id}
+                      onClick={() => setSelectedVehicleForAssign(v)}
+                      className={`p-3 text-sm flex items-center justify-between cursor-pointer ui-transition ${
+                        isSelected ? "bg-emerald-50/80 border-l-4 border-l-emerald-600" : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="min-w-0 pr-2">
+                        <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">{v.name}</p>
+                        <p className="text-[11px] font-mono text-slate-500 flex items-center gap-1.5 mt-0.5">
+                          <span className="bg-slate-100 text-slate-700 font-bold px-1.5 py-0.2 rounded border border-slate-200">
+                            {v.licensePlate}
+                          </span>
+                          <span>· {v.pricePerDay.toLocaleString("vi-VN")}đ/ngày</span>
+                        </p>
+                      </div>
+                      {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="pt-2 border-t flex flex-row gap-2 justify-end">
+            <Button variant="outline" onClick={() => setAssigningOrder(null)} className="h-10 text-xs flex-1 sm:flex-none">
+              Hủy
+            </Button>
+            <Button
+              disabled={!selectedVehicleForAssign || assigningSubmitting}
+              onClick={handleConfirmAssignVehicle}
+              className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-4 gap-1.5 flex-1 sm:flex-none"
+            >
+              <Play className="w-4 h-4" />
+              {assigningSubmitting ? "Đang gán xe..." : "Xác nhận Gán xe & Giao xe"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </ModulePageShell>
   )
