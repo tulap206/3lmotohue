@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Không có quyền truy cập' }, { status: 403 })
     }
 
-    const { username, displayName, role, canDelete, password } = await request.json()
+    const { username, displayName, role, canDelete, canBackup, canViewAccessHistory, password } = await request.json()
 
     if (!username || !displayName || !role || !password) {
       return NextResponse.json({ error: 'Vui lòng điền đầy đủ thông tin' }, { status: 400 })
@@ -75,6 +75,8 @@ export async function POST(request: NextRequest) {
         displayname: displayName,
         role,
         can_delete: !!canDelete,
+        can_backup: !!canBackup,
+        can_view_access_history: !!canViewAccessHistory,
         salt,
         password_hash,
         password: null // No plain-text password!

@@ -27,7 +27,7 @@ export async function PUT(
 
     const params = await props.params
     const { id } = params
-    const { displayName, role, canDelete, password } = await request.json()
+    const { displayName, role, canDelete, canBackup, canViewAccessHistory, password } = await request.json()
 
     if (!displayName || !role) {
       return NextResponse.json({ error: 'Vui lòng điền đầy đủ thông tin' }, { status: 400 })
@@ -37,6 +37,8 @@ export async function PUT(
       displayname: displayName,
       role,
       can_delete: !!canDelete,
+      can_backup: !!canBackup,
+      can_view_access_history: !!canViewAccessHistory,
     }
 
     // Hash password if updating

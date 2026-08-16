@@ -6,6 +6,9 @@ import { supabase } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { BackupRestorePanel } from "@/components/dashboard/backup-restore-panel"
 import { ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
+import { UserAccountsModal } from "@/components/dashboard/user-accounts-modal"
+import { Button } from "@/components/ui/button"
+import { Users } from "lucide-react"
 
 interface BackupData {
   timestamp: string
@@ -27,6 +30,7 @@ export default function SettingsPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [backupFiles, setBackupFiles] = useState<BackupFile[]>([])
   const [filesLoading, setFilesLoading] = useState(true)
+  const [isAccountsModalOpen, setIsAccountsModalOpen] = useState(false)
 
   // Load backup files on mount
   useEffect(() => {
@@ -391,6 +395,21 @@ export default function SettingsPage() {
           { label: "Cho thuê xe", href: "/dashboard" },
           { label: "Sao lưu khôi phục" },
         ]}
+        actions={
+          user?.role === "admin" ? (
+            <Button
+              onClick={() => setIsAccountsModalOpen(true)}
+              className="h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm"
+            >
+              <Users className="w-4 h-4" />
+              Tài khoản
+            </Button>
+          ) : undefined
+        }
+      />
+      <UserAccountsModal
+        open={isAccountsModalOpen}
+        onOpenChange={setIsAccountsModalOpen}
       />
       <BackupRestorePanel
         accent="blue"
