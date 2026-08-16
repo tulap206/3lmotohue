@@ -1078,7 +1078,7 @@ export default function VehiclesPage() {
                                 <div className="flex items-center gap-2">
                                   <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
                                 </div>
-                                <span className="text-xs font-bold text-slate-900 tabular-nums money">
+                                <span className="text-xs font-bold text-rose-600 tabular-nums money">
                                   {formatPrice(vehicle.pricePerDay)}<span className="text-[11px] font-normal text-slate-500">/ngày</span>
                                 </span>
                               </div>
