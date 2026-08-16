@@ -1052,7 +1052,6 @@ export default function VehiclesPage() {
                       <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
                         <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
                         <th className={rentalTableHeadClass}>Loại xe</th>
-                        <th className={cn(rentalTableHeadClass, "text-right")}>Giá thuê/ngày</th>
                         <th className={cn(rentalTableHeadClass, "text-center")}>Hiệu suất (30 ngày)</th>
                         <th className={cn(rentalTableHeadClass, "text-left min-w-[150px]")}>Vị trí</th>
                         <th className={cn(rentalTableHeadClass, "text-center")}>Trạng thái</th>
@@ -1068,7 +1067,7 @@ export default function VehiclesPage() {
                           <td className="py-3.5 px-4 font-medium text-slate-900">
                             <div className="flex items-center gap-3 min-w-0">
                               <VehicleThumb src={vehicle.vehicleImages?.[0]} name={vehicle.name} />
-                              <div className="flex flex-col gap-1.5 min-w-0">
+                              <div className="flex flex-col gap-1 min-w-0">
                                 <button
                                   type="button"
                                   className="font-semibold text-slate-800 text-body hover:text-blue-700 hover:underline text-left truncate"
@@ -1076,12 +1075,14 @@ export default function VehiclesPage() {
                                 >
                                   {vehicle.name}
                                 </button>
-                                <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
+                                </div>
+                                <span className="text-xs font-bold text-slate-900 tabular-nums money">
+                                  {formatPrice(vehicle.pricePerDay)}<span className="text-[11px] font-normal text-slate-500">/ngày</span>
+                                </span>
                               </div>
                             </div>
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-semibold text-slate-900 tabular-nums money">
-                            {formatPrice(vehicle.pricePerDay)}
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             {(() => {
