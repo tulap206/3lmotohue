@@ -750,10 +750,35 @@ export default function OrdersPage() {
     e.preventDefault()
     if (!editingOrder) return
 
-    const customer = customers.find((c) => c.id === editFormData.customerId)
-    const vehicle = vehicles.find((v) => v.id === editFormData.vehicleId)
-    
-    if (!customer || !vehicle) return
+    const customer = customers.find((c) => c.id === editFormData.customerId) || {
+      id: editFormData.customerId || editingOrder.customerId,
+      name: editingOrder.customerName,
+    }
+
+    let vehicle = vehicles.find((v) => v.id === editFormData.vehicleId)
+    if (!vehicle) {
+      vehicle = {
+        id: editFormData.vehicleId || editingOrder.vehicleId,
+        name: editingOrder.vehicleName || "Chưa gán xe (Gán khi giao)",
+        licensePlate: editingOrder.licensePlate || "CHỜ GÁN XE",
+        pricePerDay: editingOrder.pricePerDay || 0,
+        color: "",
+        status: "available",
+        current_km: 0,
+        purchasePrice: 0,
+        notes: "",
+        vehicleImages: [],
+        documentImages: [],
+        totalRentalDays: 0,
+        totalRevenue: 0,
+        profit: 0,
+      }
+    }
+
+    if (!customer || !vehicle) {
+      showWarning("Không tìm thấy thông tin xe hoặc khách hàng tương ứng!")
+      return
+    }
 
     // Check if vehicle is already rented during this period (excluding this rental itself)
     const startDate = new Date(editFormData.startDate)
@@ -763,23 +788,6 @@ export default function OrdersPage() {
       showWarning("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!")
       return
     }
-
-    // TEMP: tắt kiểm tra trùng lịch để nhập đơn cũ trong quá khứ
-    // const conflictingRental = orders.find((order) => {
-    //   if (order.id === editingOrder.id) return false // Ignore current order
-    //   if (order.vehicleId !== vehicle.id) return false
-    //   if (order.status === "cancelled") return false // Ignore cancelled rentals
-    //   
-    //   const orderStart = new Date(order.startDate.split('/').reverse().join('-'))
-    //   const orderEnd = new Date(order.endDate.split('/').reverse().join('-'))
-    //   
-    //   return !(endDate < orderStart || startDate > orderEnd)
-    // })
-    // 
-    // if (conflictingRental) {
-    //   showWarning(`Xe "${vehicle.name}" (${vehicle.licensePlate}) đã được thuê trong khoảng thời gian này!`, `Khách: ${conflictingRental.customerName}\nNgày: ${formatDisplayDate(conflictingRental.startDate)} - ${formatDisplayDate(conflictingRental.endDate)}\nTrạng thái: ${conflictingRental.status}`)
-    //   return
-    // }
 
     try {
       const newExtraFees = parseMoneyInput(editFormData.extraFees)
@@ -867,6 +875,7 @@ export default function OrdersPage() {
 
       setOrders(orders.map((o) => (o.id === editingOrder.id ? updatedOrder : o)))
       if (user) logger.editRental(user.username, user.displayName, customer.name, vehicle.name)
+      showSuccess(`Đã lưu thay đổi cho đơn thuê ${editingOrder.customerName} thành công!`)
       setIsEditDialogOpen(false)
       setEditingOrder(null)
     } catch (error) {
@@ -2032,6 +2041,9 @@ export default function OrdersPage() {
                   <SelectValue placeholder="Chọn xe" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
+                  {(editFormData.vehicleId === "00000000-0000-0000-0000-000000000000" || editingOrder?.vehicleId === "00000000-0000-0000-0000-000000000000") && (
+                    <SelectItem value="00000000-0000-0000-0000-000000000000">Chưa gán xe (Gán khi giao)</SelectItem>
+                  )}
                   {vehicles
                     .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
                     .map((vehicle) => (
