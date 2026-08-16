@@ -41,7 +41,6 @@ import {
   KeyRound,
   Database,
   History,
-  Info,
 } from "lucide-react"
 
 export interface UserAccount {
@@ -300,11 +299,11 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-[var(--radius-container)]">
+      <DialogContent className="w-[95vw] sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-[var(--radius-container)] gap-4">
         <DialogHeader className="border-b pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-              <Shield className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 shrink-0">
+              <Shield className="w-6 h-6" />
             </div>
             <div>
               <DialogTitle className="text-xl font-bold text-slate-900">
@@ -318,78 +317,78 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
         </DialogHeader>
 
         {/* KPI Cards Thống Kê */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Card className="bg-slate-50/80 border-slate-200">
-            <CardContent className="p-3.5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng tài khoản</p>
-                <p className="text-2xl font-bold text-slate-800 money mt-0.5">{totalAccounts}</p>
+            <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">Tổng tài khoản</p>
+                <p className="text-xl sm:text-2xl font-bold text-slate-900 money mt-0.5">{totalAccounts}</p>
               </div>
-              <div className="p-2 rounded-lg bg-blue-100/70 text-blue-600">
-                <Users className="w-5 h-5" />
+              <div className="p-2 rounded-lg bg-blue-100/70 text-blue-600 shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-blue-50/60 border-blue-200">
-            <CardContent className="p-3.5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Quản trị viên (Admin)</p>
-                <p className="text-2xl font-bold text-blue-900 money mt-0.5">{adminCount}</p>
+            <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700 truncate">Quản trị viên</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-900 money mt-0.5">{adminCount}</p>
               </div>
-              <div className="p-2 rounded-lg bg-blue-200/80 text-blue-800">
-                <ShieldAlert className="w-5 h-5" />
+              <div className="p-2 rounded-lg bg-blue-200/80 text-blue-800 shrink-0">
+                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-emerald-50/60 border-emerald-200">
-            <CardContent className="p-3.5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Nhân viên (Staff)</p>
-                <p className="text-2xl font-bold text-emerald-900 money mt-0.5">{staffCount}</p>
+            <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 truncate">Nhân viên</p>
+                <p className="text-xl sm:text-2xl font-bold text-emerald-900 money mt-0.5">{staffCount}</p>
               </div>
-              <div className="p-2 rounded-lg bg-emerald-200/80 text-emerald-800">
-                <UserCheck className="w-5 h-5" />
+              <div className="p-2 rounded-lg bg-emerald-200/80 text-emerald-800 shrink-0">
+                <UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-amber-50/60 border-amber-200">
-            <CardContent className="p-3.5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">Quyền xóa dữ liệu</p>
-                <p className="text-2xl font-bold text-amber-900 money mt-0.5">{canDeleteCount}</p>
+            <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700 truncate">Quyền xóa dữ liệu</p>
+                <p className="text-xl sm:text-2xl font-bold text-amber-900 money mt-0.5">{canDeleteCount}</p>
               </div>
-              <div className="p-2 rounded-lg bg-amber-200/80 text-amber-800">
-                <KeyRound className="w-5 h-5" />
+              <div className="p-2 rounded-lg bg-amber-200/80 text-amber-800 shrink-0">
+                <KeyRound className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Action Toolbar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-          <div className="relative w-full sm:w-72">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+          <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm tài khoản..."
+              placeholder="Tìm theo tên hoặc username..."
               className="pl-9 h-10 bg-white border-slate-200 text-sm rounded-[var(--radius-control)]"
             />
           </div>
           <Button
             onClick={handleOpenCreate}
-            className="w-full sm:w-auto h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-[var(--radius-control)] font-medium text-sm gap-2"
+            className="h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-[var(--radius-control)] font-medium text-sm gap-2 shrink-0 shadow-xs"
           >
             <UserPlus className="w-4 h-4" />
             Thêm tài khoản mới
           </Button>
         </div>
 
-        {/* User Table List */}
-        <div className="border border-slate-200 rounded-[var(--radius-container)] overflow-hidden bg-white mt-1">
+        {/* Desktop & Tablet Table / Mobile List */}
+        <div className="border border-slate-200 rounded-[var(--radius-container)] overflow-hidden bg-white">
           {loading ? (
             <div className="py-12 text-center text-slate-500 text-sm">
               Đang tải danh sách tài khoản...
@@ -399,150 +398,276 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
               {searchQuery ? "Không tìm thấy tài khoản phù hợp" : "Chưa có tài khoản nào"}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold text-xs uppercase tracking-wider">
-                    <th className="py-3 px-4">Tên Đăng Nhập</th>
-                    <th className="py-3 px-4">Tên Hiển Thị</th>
-                    <th className="py-3 px-4">Vai Trò</th>
-                    <th className="py-3 px-4">Phân Quyền Bổ Sung</th>
-                    <th className="py-3 px-4 text-right">Hành Động</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredUsers.map((account) => {
-                    const isSelf = user?.id === account.id
-                    return (
-                      <tr key={account.id} className="hover:bg-slate-50/50 ui-transition">
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2">
+            <>
+              {/* Table view for desktop/tablet */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-sm min-w-[720px]">
+                  <thead>
+                    <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider">
+                      <th className="py-3 px-4 min-w-[150px]">Tên Đăng Nhập</th>
+                      <th className="py-3 px-4 min-w-[140px]">Tên Hiển Thị</th>
+                      <th className="py-3 px-4 min-w-[110px]">Vai Trò</th>
+                      <th className="py-3 px-4 min-w-[250px]">Phân Quyền Bổ Sung</th>
+                      <th className="py-3 px-4 text-right w-36 min-w-[130px]">Hành Động</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredUsers.map((account) => {
+                      const isSelf = user?.id === account.id
+                      return (
+                        <tr key={account.id} className="hover:bg-slate-50/60 ui-transition">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              {account.role === "admin" ? (
+                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                  <Shield className="w-4 h-4" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                  {account.displayName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <span className="font-semibold text-slate-900 font-mono text-sm block truncate">@{account.username}</span>
+                                {isSelf && (
+                                  <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-semibold inline-block">
+                                    Bạn
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-800 font-medium whitespace-nowrap">
+                            {account.displayName}
+                          </td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">
                             {account.role === "admin" ? (
-                              <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-                                <Shield className="w-3.5 h-3.5" />
-                              </div>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                                <Shield className="w-3 h-3" />
+                                Admin
+                              </span>
                             ) : (
-                              <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs">
-                                {account.displayName.charAt(0).toUpperCase()}
-                              </div>
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                                Nhân viên
+                              </span>
                             )}
-                            <div>
-                              <span className="font-semibold text-slate-900 font-mono">@{account.username}</span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap ${
+                                  account.permissions.canDelete
+                                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                                    : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                                }`}
+                              >
+                                {account.permissions.canDelete ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                                Xóa dữ liệu
+                              </span>
+
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap ${
+                                  account.permissions.canBackup
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                                }`}
+                              >
+                                {account.permissions.canBackup ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                                Sao lưu
+                              </span>
+
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border whitespace-nowrap ${
+                                  account.permissions.canViewAccessHistory
+                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                                }`}
+                              >
+                                {account.permissions.canViewAccessHistory ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                                Xem lịch sử
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                onClick={() => handleOpenEdit(account)}
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2.5 text-xs text-slate-700 border-slate-200 hover:bg-slate-100 rounded-[var(--radius-control)]"
+                              >
+                                <Pencil className="w-3.5 h-3.5 mr-1 text-slate-500" />
+                                Sửa & Quyền
+                              </Button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isSelf}
+                                    className="h-8 px-2 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 rounded-[var(--radius-control)] disabled:opacity-40"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Xóa tài khoản người dùng?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Bạn có chắc muốn xóa tài khoản <strong>@{account.username}</strong> ({account.displayName})? Hành động này không thể hoàn tác.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="h-10">Hủy</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteUser(account)}
+                                      className="h-10 bg-rose-600 hover:bg-rose-700 text-white"
+                                    >
+                                      Xóa tài khoản
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Card view for mobile screens */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {filteredUsers.map((account) => {
+                  const isSelf = user?.id === account.id
+                  return (
+                    <div key={account.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {account.role === "admin" ? (
+                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+                              <Shield className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
+                              {account.displayName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 text-sm truncate">{account.displayName}</p>
+                            <p className="text-xs font-mono text-slate-500">
+                              @{account.username}
                               {isSelf && (
-                                <span className="ml-2 text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-semibold">
+                                <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-800 px-1 py-0.2 rounded font-semibold">
                                   Bạn
                                 </span>
                               )}
-                            </div>
+                            </p>
                           </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-800 font-medium">
-                          {account.displayName}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {account.role === "admin" ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                              <Shield className="w-3 h-3" />
-                              Admin
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                              Nhân viên
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="flex flex-wrap gap-1.5">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
-                                account.permissions.canDelete
-                                  ? "bg-rose-50 text-rose-700 border-rose-200"
-                                  : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                              }`}
-                            >
-                              {account.permissions.canDelete ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                              Xóa dữ liệu
-                            </span>
+                        </div>
+                        {account.role === "admin" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 shrink-0">
+                            <Shield className="w-3 h-3" />
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                            Nhân viên
+                          </span>
+                        )}
+                      </div>
 
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
-                                account.permissions.canBackup
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                              }`}
-                            >
-                              {account.permissions.canBackup ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                              Sao lưu
-                            </span>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
+                            account.permissions.canDelete
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                              : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                          }`}
+                        >
+                          {account.permissions.canDelete ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          Xóa dữ liệu
+                        </span>
 
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
-                                account.permissions.canViewAccessHistory
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                              }`}
-                            >
-                              {account.permissions.canViewAccessHistory ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                              Xem lịch sử
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
+                            account.permissions.canBackup
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                          }`}
+                        >
+                          {account.permissions.canBackup ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          Sao lưu
+                        </span>
+
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${
+                            account.permissions.canViewAccessHistory
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                          }`}
+                        >
+                          {account.permissions.canViewAccessHistory ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          Xem lịch sử
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          onClick={() => handleOpenEdit(account)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 h-9 text-xs text-slate-700 border-slate-200 hover:bg-slate-100 rounded-[var(--radius-control)]"
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-1 text-slate-500" />
+                          Sửa & Phân quyền
+                        </Button>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
                             <Button
-                              onClick={() => handleOpenEdit(account)}
                               variant="outline"
                               size="sm"
-                              className="h-8 px-2.5 text-xs text-slate-700 border-slate-200 hover:bg-slate-100 rounded-[var(--radius-control)]"
+                              disabled={isSelf}
+                              className="h-9 px-3 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 rounded-[var(--radius-control)] disabled:opacity-40"
                             >
-                              <Pencil className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                              Sửa & Quyền
+                              <Trash2 className="w-3.5 h-3.5 mr-1" />
+                              Xóa
                             </Button>
-
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isSelf}
-                                  className="h-8 px-2 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 rounded-[var(--radius-control)] disabled:opacity-40"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Xóa tài khoản người dùng?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Bạn có chắc muốn xóa tài khoản <strong>@{account.username}</strong> ({account.displayName})? Hành động này không thể hoàn tác.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel className="h-10">Hủy</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteUser(account)}
-                                    className="h-10 bg-rose-600 hover:bg-rose-700 text-white"
-                                  >
-                                    Xóa tài khoản
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Xóa tài khoản người dùng?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Bạn có chắc muốn xóa tài khoản <strong>@{account.username}</strong> ({account.displayName})? Hành động này không thể hoàn tác.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="h-10">Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteUser(account)}
+                                className="h-10 bg-rose-600 hover:bg-rose-700 text-white"
+                              >
+                                Xóa tài khoản
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
         </div>
 
         {/* Dialog Form Thêm / Sửa Tài khoản & Phân quyền */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="max-w-md p-5 rounded-[var(--radius-container)]">
-            <DialogHeader>
+          <DialogContent className="w-[95vw] sm:max-w-lg p-5 sm:p-6 rounded-[var(--radius-container)] gap-4">
+            <DialogHeader className="border-b pb-3">
               <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 {editingUser ? <Pencil className="w-5 h-5 text-blue-600" /> : <UserPlus className="w-5 h-5 text-blue-600" />}
                 {editingUser ? `Chỉnh sửa tài khoản @${editingUser.username}` : "Tạo tài khoản mới"}
@@ -554,117 +679,121 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmitForm} className="space-y-4 py-2">
+            <form onSubmit={handleSubmitForm} className="space-y-4 pt-1">
               {formError && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-medium">
                   {formError}
                 </div>
               )}
 
-              <div>
-                <Label htmlFor="modal-username" className="text-xs font-semibold text-slate-700">Tên Đăng Nhập</Label>
-                <Input
-                  id="modal-username"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="ví dụ: nyan, quan..."
-                  disabled={!!editingUser}
-                  className="mt-1 h-10 text-sm font-mono"
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="modal-username" className="text-xs font-semibold text-slate-700">Tên Đăng Nhập</Label>
+                  <Input
+                    id="modal-username"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    placeholder="ví dụ: nyan, quan..."
+                    disabled={!!editingUser}
+                    className="mt-1 h-10 text-sm font-mono"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="modal-displayName" className="text-xs font-semibold text-slate-700">Tên Hiển Thị</Label>
+                  <Input
+                    id="modal-displayName"
+                    value={formData.displayName}
+                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                    placeholder="ví dụ: Nguyễn Văn A..."
+                    className="mt-1 h-10 text-sm"
+                    required
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="modal-displayName" className="text-xs font-semibold text-slate-700">Tên Hiển Thị</Label>
-                <Input
-                  id="modal-displayName"
-                  value={formData.displayName}
-                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                  placeholder="ví dụ: Nguyễn Văn A..."
-                  className="mt-1 h-10 text-sm"
-                  required
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="modal-password" className="text-xs font-semibold text-slate-700">
+                    {editingUser ? "Mật khẩu mới (Để trống giữ nguyên)" : "Mật khẩu"}
+                  </Label>
+                  <Input
+                    id="modal-password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="mt-1 h-10 text-sm"
+                    required={!editingUser}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="modal-password" className="text-xs font-semibold text-slate-700">
-                  {editingUser ? "Mật khẩu mới (Để trống nếu giữ nguyên)" : "Mật khẩu"}
-                </Label>
-                <Input
-                  id="modal-password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="••••••••"
-                  className="mt-1 h-10 text-sm"
-                  required={!editingUser}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="modal-role" className="text-xs font-semibold text-slate-700">Vai Trò Hệ Thống</Label>
-                <select
-                  id="modal-role"
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as "admin" | "staff" })}
-                  className="mt-1 w-full h-10 px-3 bg-white border border-slate-200 rounded-[var(--radius-control)] text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                >
-                  <option value="staff">Nhân viên (Staff - Quyền hạn chế)</option>
-                  <option value="admin">Quản trị viên (Admin - Quyền đầy đủ)</option>
-                </select>
+                <div>
+                  <Label htmlFor="modal-role" className="text-xs font-semibold text-slate-700">Vai Trò Hệ Thống</Label>
+                  <select
+                    id="modal-role"
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as "admin" | "staff" })}
+                    className="mt-1 w-full h-10 px-3 bg-white border border-slate-200 rounded-[var(--radius-control)] text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="staff">Nhân viên (Staff)</option>
+                    <option value="admin">Quản trị viên (Admin)</option>
+                  </select>
+                </div>
               </div>
 
               {/* Phân quyền nâng cao */}
-              <div className="pt-2 border-t border-slate-100 space-y-2.5">
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 block">
                   Cấu hình phân quyền bổ sung
                 </Label>
 
-                <label className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <label className="flex items-start gap-3 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer ui-transition">
                   <input
                     type="checkbox"
                     checked={formData.canDelete}
                     onChange={(e) => setFormData({ ...formData, canDelete: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500"
                   />
                   <div>
-                    <p className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                      <KeyRound className="w-3.5 h-3.5 text-rose-500" />
+                    <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                       Quyền xóa dữ liệu
                     </p>
-                    <p className="text-[11px] text-slate-500">Cho phép thực hiện thao tác xóa đơn hàng, khách hàng, xe</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Cho phép thực hiện thao tác xóa đơn hàng, khách hàng, xe</p>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <label className="flex items-start gap-3 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer ui-transition">
                   <input
                     type="checkbox"
                     checked={formData.canBackup}
                     onChange={(e) => setFormData({ ...formData, canBackup: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500"
                   />
                   <div>
-                    <p className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                      <Database className="w-3.5 h-3.5 text-emerald-600" />
+                    <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <Database className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       Quyền sao lưu dữ liệu
                     </p>
-                    <p className="text-[11px] text-slate-500">Cho phép tạo và tải file sao lưu dữ liệu hệ thống</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Cho phép tạo và tải file sao lưu dữ liệu hệ thống</p>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-2.5 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <label className="flex items-start gap-3 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer ui-transition">
                   <input
                     type="checkbox"
                     checked={formData.canViewAccessHistory}
                     onChange={(e) => setFormData({ ...formData, canViewAccessHistory: e.target.checked })}
-                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500"
                   />
                   <div>
-                    <p className="text-xs font-semibold text-slate-800 flex items-center gap-1">
-                      <History className="w-3.5 h-3.5 text-blue-600" />
+                    <p className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                       Quyền xem lịch sử hoạt động
                     </p>
-                    <p className="text-[11px] text-slate-500">Cho phép truy cập nhật ký hoạt động hệ thống</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Cho phép truy cập nhật ký hoạt động hệ thống</p>
                   </div>
                 </label>
               </div>
