@@ -245,6 +245,7 @@ export default function OrdersPage() {
     startDate: "",
     endDate: "",
     deposit: "0",
+    notes: "",
     commissionHome: "",
     homeName: "",
     rentalTerm: "short" as RentalTerm,
@@ -581,7 +582,7 @@ export default function OrdersPage() {
       const dividedCommission = Math.round(totalCommission / targetVehicles.length)
 
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
-      const termPayload = buildRentalTermPayload(formData.rentalTerm, "")
+      const termPayload = buildRentalTermPayload(formData.rentalTerm, formData.notes ? formData.notes.trim() : "")
 
       const insertPayloads = targetVehicles.map((vehicle) => {
         const totalPrice = totalDays * vehicle.pricePerDay
@@ -646,7 +647,7 @@ export default function OrdersPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", commissionHome: "", homeName: "", rentalTerm: "short" })
+    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", notes: "", commissionHome: "", homeName: "", rentalTerm: "short" })
     setIsNewCustomer(true)
     setNewCustomerName("")
     setNewCustomerPhone("")
@@ -1407,6 +1408,16 @@ export default function OrdersPage() {
                       required
                     />
                       </EntityFormField>
+
+                  <EntityFormField label="Ghi chú" hint="Nhập thông tin giao xe, yêu cầu đặc biệt của khách...">
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="VD: Trả xe 14h-15h 31/8, giảm 5% tổng đơn, đã cọc 100k..."
+                      className={cn(entityFormInputClass, "min-h-20 resize-y")}
+                    />
+                  </EntityFormField>
 
                   <div className="flex items-center space-x-2 pt-2">
                     <input

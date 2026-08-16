@@ -58,6 +58,8 @@ import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
+import { Textarea } from "@/components/ui/textarea"
+import { buildRentalTermPayload } from "@/lib/rental-term"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
 
@@ -104,6 +106,7 @@ export default function DashboardPage() {
     startDate: "",
     endDate: "",
     deposit: "0",
+    notes: "",
     commissionHome: "",
     homeName: "",
   })
@@ -153,7 +156,7 @@ export default function DashboardPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", commissionHome: "", homeName: "" })
+    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", notes: "", commissionHome: "", homeName: "" })
     setIsNewCustomer(true)
     setNewCustomerName("")
     setNewCustomerPhone("")
@@ -286,7 +289,7 @@ export default function DashboardPage() {
           totalPrice,
           deposit: dividedDeposit,
           extraFees: 0,
-          notes: "",
+          notes: formData.notes ? formData.notes.trim() : "",
           revenue: 0,
           status: "pending",
           created_at: now,
@@ -1608,6 +1611,18 @@ export default function DashboardPage() {
                       className={cn(entityFormInputClass, "font-mono")}
                       required
                     />
+                    </EntityFormField>
+                  </div>
+
+                  <div className="space-y-1">
+                    <EntityFormField label="Ghi chú">
+                      <Textarea
+                        id="notes"
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        placeholder="VD: Trả xe 14h-15h 31/8, giảm 5% tổng đơn, đã cọc 100k..."
+                        className={cn(entityFormInputClass, "min-h-20 resize-y")}
+                      />
                     </EntityFormField>
                   </div>
 
