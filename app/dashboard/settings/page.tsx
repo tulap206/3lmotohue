@@ -398,25 +398,26 @@ export default function SettingsPage() {
           { label: "Sao lưu khôi phục" },
         ]}
         actions={
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <>
             {user?.role === "admin" && (
               <Button
                 onClick={() => setIsAccountsModalOpen(true)}
-                className="h-11 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
+                className="h-11 shrink-0 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
               >
                 <Users className="w-4 h-4" />
                 Tài khoản
               </Button>
             )}
             <Button
+              type="button"
               onClick={() => setIsAboutOpen(true)}
               variant="outline"
-              className="h-11 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] font-medium gap-2 px-4"
+              className="h-11 shrink-0 bg-white hover:bg-slate-50 text-slate-800 border-slate-300 rounded-[var(--radius-control)] font-semibold gap-2 px-4"
             >
               <Info className="w-4 h-4" />
               Giới thiệu
             </Button>
-          </div>
+          </>
         }
       />
       <UserAccountsModal

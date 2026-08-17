@@ -123,12 +123,12 @@ export function ModuleSubpageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4",
+        "flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between",
         sticky &&
           "sticky top-0 z-30 -mx-4 px-4 lg:-mx-8 lg:px-8 py-4 bg-slate-50/95 backdrop-blur-md border-b border-slate-200"
       )}
     >
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav className="flex flex-wrap items-center gap-1.5 text-meta mb-1.5">
             {breadcrumbs.map((crumb, i) => (
@@ -149,10 +149,10 @@ export function ModuleSubpageHeader({
           </nav>
         )}
         <h1 className="text-title">{title}</h1>
-        {subtitle && <p className="text-meta mt-1">{subtitle}</p>}
+        {subtitle && <p className="text-meta mt-1 text-pretty">{subtitle}</p>}
       </div>
       {actions && (
-        <div className="flex flex-col sm:flex-row flex-wrap gap-2 shrink-0 w-full sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">
+        <div className="flex flex-row flex-wrap items-center gap-2 shrink-0">
           {actions}
         </div>
       )}
