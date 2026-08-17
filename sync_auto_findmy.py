@@ -28,6 +28,21 @@ VEHICLE_MAP = {
     "9E7D79CB-A60B-4FE5-9866-E909FE3E90C5": "73G1-316.77"
 }
 
+def save_account_session(acc):
+    d = acc.to_json()
+    if isinstance(d, dict) and "login" in d and "data" in d["login"]:
+        login_data = d["login"]["data"]
+        clean_data = {}
+        for k, v in login_data.items():
+            if isinstance(v, (str, int, float, bool, dict, list)) or v is None:
+                clean_data[k] = v
+            else:
+                clean_data[k] = str(v)
+        d["login"]["data"] = clean_data
+    ACCOUNT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(ACCOUNT_FILE, "w", encoding="utf-8") as f:
+        f.write(json.dumps(d, indent=2))
+
 async def auto_sync_findmy_locations():
     anisette = LocalAnisetteProvider()
     account = AsyncAppleAccount(anisette)
@@ -39,7 +54,7 @@ async def auto_sync_findmy_locations():
                 account = AsyncAppleAccount.from_json(f.read(), anisette)
             print("🔑 Đã khôi phục phiên đăng nhập Apple ID thành công!")
         except Exception as e:
-            print("⚠️ Không thể đọc phiên đăng nhập cũ:", e)
+            print("⚠️ Phiên đăng nhập cũ đã hết hạn, cần đăng nhập lại:", e)
 
     if account.login_state != findmy.reports.LoginState.LOGGED_IN:
         print("\n🔐 CẦN ĐĂNG NHẬP APPLE ID ĐỂ TẢI VỊ TRÍ TỰ ĐỘNG TỪ APPLE SERVER:")
@@ -49,17 +64,31 @@ async def auto_sync_findmy_locations():
         state = await account.login(apple_id, password)
         if state == findmy.reports.LoginState.REQUIRE_2FA:
             methods = await account.get_2fa_methods()
-            print(f"📱 Cần xác thực 2FA. Đang gửi mã xác thực...")
-            sms_method = methods[0]
-            await account.sms_2fa_request(sms_method)
-            code = input("👉 Nhập mã xác thực 6 số gửi về điện thoại: ").strip()
-            await account.sms_2fa_submit(sms_method, code)
+            print(f"📱 Cần xác thực 2FA. Đang xử lý mã xác thực...")
+            method = methods[0]
+            
+            if isinstance(method, findmy.reports.TrustedDeviceSecondFactorMethod):
+                print("📩 Mã xác thực 6 số đã được gửi tới thiết bị Apple (iPhone/iPad/Mac).")
+                await account.td_2fa_request(method)
+                code = input("👉 Nhập mã xác thực 6 số hiển thị trên màn hình: ").strip()
+                await account.td_2fa_submit(method, code)
+            elif isinstance(method, findmy.reports.SmsSecondFactorMethod):
+                print("📱 Mã xác thực SMS đang được gửi tới số điện thoại của bạn.")
+                await account.sms_2fa_request(method)
+                code = input("👉 Nhập mã xác thực 6 số từ SMS: ").strip()
+                await account.sms_2fa_submit(method, code)
+            else:
+                code = input("👉 Nhập mã xác thực 6 số: ").strip()
+                try:
+                    await account.td_2fa_submit(method, code)
+                except Exception:
+                    await account.sms_2fa_submit(method, code)
 
-        # Save session for future automatic runs
-        ACCOUNT_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(ACCOUNT_FILE, "w", encoding="utf-8") as f:
-            f.write(account.to_json())
-        print("✅ Đã lưu phiên đăng nhập Apple ID! Lần sau sẽ tự động 100% không cần nhập lại.")
+        try:
+            save_account_session(account)
+            print("✅ Đã lưu phiên đăng nhập Apple ID! Lần sau sẽ tự động 100% không cần nhập lại.")
+        except Exception as save_err:
+            print("⚠️ Không thể lưu file phiên đăng nhập:", save_err)
 
     # Load 18 UGreen tag keypairs
     json_files = sorted(glob.glob(str(ACCESSORIES_DIR / "*.json")))
@@ -101,7 +130,7 @@ async def auto_sync_findmy_locations():
             "licensePlate": plate,
             "lat": latest_report.latitude,
             "lng": latest_report.longitude,
-            "address": "", # API sẽ tự động reverse geocode ra số nhà, tên đường
+            "address": "", # Server API sẽ tự động dịch ra Số nhà, Tên đường, Phường
             "timestamp": latest_report.timestamp.strftime("%Y-%m-%dT%H:%M:%SZ")
         }
 
