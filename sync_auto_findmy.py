@@ -56,40 +56,49 @@ async def auto_sync_findmy_locations():
         except Exception as e:
             print("⚠️ Phiên đăng nhập cũ đã hết hạn, cần đăng nhập lại:", e)
 
-    if account.login_state != findmy.reports.LoginState.LOGGED_IN:
-        print("\n🔐 CẦN ĐĂNG NHẬP APPLE ID ĐỂ TẢI VỊ TRÍ TỰ ĐỘNG TỪ APPLE SERVER:")
+    while account.login_state != findmy.reports.LoginState.LOGGED_IN:
+        print("\n🔐 ĐĂNG NHẬP APPLE ID ĐỂ TẢI VỊ TRÍ TỰ ĐỘNG TỪ APPLE SERVER:")
         apple_id = input("👉 Nhập Apple ID (Email): ").strip()
         password = input("👉 Nhập Mật khẩu Apple ID: ").strip()
         
-        state = await account.login(apple_id, password)
-        if state == findmy.reports.LoginState.REQUIRE_2FA:
-            methods = await account.get_2fa_methods()
-            print(f"📱 Cần xác thực 2FA. Đang xử lý mã xác thực...")
-            method = methods[0]
-            
-            if isinstance(method, findmy.reports.TrustedDeviceSecondFactorMethod):
-                print("📩 Mã xác thực 6 số đã được gửi tới thiết bị Apple (iPhone/iPad/Mac).")
-                await account.td_2fa_request()
-                code = input("👉 Nhập mã xác thực 6 số hiển thị trên màn hình: ").strip()
-                await account.td_2fa_submit(code)
-            elif isinstance(method, findmy.reports.SmsSecondFactorMethod):
-                print("📱 Mã xác thực SMS đang được gửi tới số điện thoại của bạn.")
-                phone_id = getattr(method, 'id', 0)
-                await account.sms_2fa_request(phone_id)
-                code = input("👉 Nhập mã xác thực 6 số từ SMS: ").strip()
-                await account.sms_2fa_submit(phone_id, code)
-            else:
-                code = input("👉 Nhập mã xác thực 6 số: ").strip()
-                try:
-                    await account.td_2fa_submit(code)
-                except Exception:
-                    await account.sms_2fa_submit(0, code)
-
         try:
-            save_account_session(account)
-            print("✅ Đã lưu phiên đăng nhập Apple ID! Lần sau sẽ tự động 100% không cần nhập lại.")
-        except Exception as save_err:
-            print("⚠️ Không thể lưu file phiên đăng nhập:", save_err)
+            state = await account.login(apple_id, password)
+            if state == findmy.reports.LoginState.REQUIRE_2FA:
+                methods = await account.get_2fa_methods()
+                print(f"📱 Cần xác thực 2FA. Đang xử lý mã xác thực...")
+                method = methods[0]
+                
+                if isinstance(method, findmy.reports.TrustedDeviceSecondFactorMethod):
+                    print("📩 Mã xác thực 6 số đã được gửi tới thiết bị Apple (iPhone/iPad/Mac).")
+                    await account.td_2fa_request()
+                    code = input("👉 Nhập mã xác thực 6 số hiển thị trên màn hình: ").strip()
+                    await account.td_2fa_submit(code)
+                elif isinstance(method, findmy.reports.SmsSecondFactorMethod):
+                    print("📱 Mã xác thực SMS đang được gửi tới số điện thoại của bạn.")
+                    phone_id = getattr(method, 'id', 0)
+                    await account.sms_2fa_request(phone_id)
+                    code = input("👉 Nhập mã xác thực 6 số từ SMS: ").strip()
+                    await account.sms_2fa_submit(phone_id, code)
+                else:
+                    code = input("👉 Nhập mã xác thực 6 số: ").strip()
+                    try:
+                        await account.td_2fa_submit(code)
+                    except Exception:
+                        await account.sms_2fa_submit(0, code)
+
+            try:
+                save_account_session(account)
+                print("✅ Đã lưu phiên đăng nhập Apple ID! Lần sau sẽ tự động 100% không cần nhập lại.")
+            except Exception as save_err:
+                print("⚠️ Không thể lưu file phiên đăng nhập:", save_err)
+
+        except findmy.errors.InvalidCredentialsError:
+            print("❌ Sai Email Apple ID hoặc Mật khẩu không chính xác! Vui lòng thử nhập lại kỹ càng.")
+        except Exception as err:
+            print(f"❌ Lỗi đăng nhập ({type(err).__name__}): {err}")
+            retry = input("🔁 Bạn có muốn thử đăng nhập lại không? (y/n): ").strip().lower()
+            if retry != 'y':
+                return
 
     # Load 18 UGreen tag keypairs
     json_files = sorted(glob.glob(str(ACCESSORIES_DIR / "*.json")))
