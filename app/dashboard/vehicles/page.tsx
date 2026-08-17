@@ -1198,15 +1198,6 @@ export default function VehiclesPage() {
                                       )}
                                     </div>
                                   </button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    onClick={() => openEditLocationDialog(vehicle)}
-                                    className="h-6 w-6 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-md transition-colors shrink-0 self-start"
-                                    title="Chỉnh sửa vị trí xe"
-                                  >
-                                    <Pencil className="w-3 h-3" />
-                                  </Button>
                                 </div>
                               )
                             })()}
