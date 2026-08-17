@@ -1154,8 +1154,8 @@ export default function VehiclesPage() {
                                     className="flex items-center gap-1.5 text-left hover:text-blue-600 transition min-w-0"
                                     title={locationStr ? "Bấm để xem vị trí xe trên bản đồ" : "Chưa có vị trí xe"}
                                   >
-                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0", locationStr ? "text-blue-600 animate-pulse" : "text-slate-400")} />
-                                    <span className={cn("text-xs truncate max-w-[130px]", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2" : "text-slate-400 italic")}>
+                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? "text-blue-600 animate-pulse" : "text-slate-400")} />
+                                    <span className={cn("text-xs line-clamp-3 max-w-[220px] whitespace-normal leading-tight text-left", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2 hover:text-blue-800" : "text-slate-400 italic")}>
                                       {locationStr || "chưa cập nhật"}
                                     </span>
                                   </button>
