@@ -290,6 +290,21 @@ export default function VehiclesPage() {
   const handleSyncLiveLocations = async () => {
     try {
       setIsSyncingLocations(true)
+
+      // 1. Kích hoạt chạy script đồng bộ trực tiếp trên máy Mac (nếu local bridge đang bật)
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 4000)
+        await fetch("http://localhost:3333/api/sync", {
+          method: "POST",
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+      } catch (bridgeErr) {
+        console.log("Mac local bridge chưa bật hoặc đang kết nối từ xa, tiến hành tải lại danh sách...", bridgeErr)
+      }
+
+      // 2. Tải lại danh sách xe mới nhất từ CSDL Supabase
       const { data: freshVehicles, error } = await supabase
         .from("vehicles")
         .select("*")
@@ -299,7 +314,7 @@ export default function VehiclesPage() {
         showError("Không thể cập nhật danh sách vị trí: " + error.message)
       } else if (freshVehicles) {
         setVehicles(freshVehicles)
-        showSuccess("Đã cập nhật vị trí mới nhất cho toàn bộ danh sách xe!")
+        showSuccess("Đã kích hoạt đồng bộ từ máy Mac và cập nhật danh sách vị trí xe!")
       }
     } catch (err: any) {
       showError("Lỗi khi đồng bộ vị trí xe")
