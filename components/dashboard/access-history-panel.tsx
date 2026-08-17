@@ -66,7 +66,7 @@ const MODULE_CONFIG: Record<
     title: "Lịch sử truy cập",
     description: "Theo dõi hoạt động phân hệ cho thuê",
     scopeLabel: "Cho thuê xe",
-    hideModuleFilter: false,
+    hideModuleFilter: true,
   },
   sales: {
     accent: "blue",
@@ -199,7 +199,21 @@ function normalizeLog(log: AccessLogRecord): AccessLogRecord {
 
 function getModuleLabel(mod: string) {
   const lower = mod.toLowerCase()
-  if (lower === "rental" || lower.includes("thuê xe") || lower.includes("đơn thuê") || lower.includes("khách thuê") || lower.includes("quản lý xe")) return "Cho thuê xe"
+  if (
+    lower === "rental" ||
+    lower.includes("thuê xe") ||
+    lower.includes("đơn thuê") ||
+    lower.includes("khách thuê") ||
+    lower.includes("quản lý xe") ||
+    lower.includes("quản lý khách hàng") ||
+    lower.includes("bảo trì") ||
+    lower.includes("báo cáo") ||
+    lower.includes("lịch sử") ||
+    lower.includes("thu/chi") ||
+    lower.includes("thu chi")
+  ) {
+    return "Cho thuê xe"
+  }
   if (lower === "sales" || lower.includes("mua bán") || lower.includes("xe máy") || lower.includes("khách hàng")) return "Mua bán xe"
   if (lower === "pawnshop" || lower.includes("cầm đồ") || lower.includes("đồ cầm") || lower.includes("khách cầm") || lower.includes("đơn cầm")) return "Cầm đồ"
   if (lower === "loan" || lower.includes("cho vay") || lower.includes("khách vay") || lower.includes("đơn vay")) return "Cho vay"
@@ -322,7 +336,12 @@ export function AccessHistoryPanel({
   const normalizedLogs = useMemo(() => {
     const baseLogs = logs.map(normalizeLog)
     if (hideModuleFilter && scopeLabel) {
-      return baseLogs.filter(log => getModuleLabel(log.module) === scopeLabel)
+      return baseLogs.filter((log) => {
+        const label = getModuleLabel(log.module)
+        if (label === scopeLabel) return true
+        // Trang cho thuê đã gắn phân hệ: vẫn giữ log đăng nhập / cài đặt của cùng app
+        return scopeLabel === "Cho thuê xe" && label === "Cài đặt hệ thống"
+      })
     }
     return baseLogs
   }, [logs, hideModuleFilter, scopeLabel])
@@ -571,7 +590,7 @@ export function AccessHistoryPanel({
           {filteredLogs.length === 0 ? (
             <div className="flex h-32 flex-col items-center justify-center text-center px-4">
               <p className="text-title text-slate-600">Không có dữ liệu lịch sử</p>
-              <p className="text-meta mt-2 max-w-sm">Thử đổi từ khóa hoặc bộ lọc tài khoản / phân hệ / hành động.</p>
+              <p className="text-meta mt-2 max-w-sm">Thử đổi từ khóa hoặc bộ lọc tài khoản / hành động.</p>
             </div>
           ) : (
             <div className={layout === "page" ? "md:h-full md:overflow-y-auto" : ""}>
