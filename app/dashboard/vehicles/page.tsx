@@ -1872,7 +1872,9 @@ export default function VehiclesPage() {
         const lng = locInfo.lng
         const mapQuery = lat && lng ? `${lat},${lng}` : encodeURIComponent(locationStr || selectedMapVehicle.name)
         const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
-        const embedUrl = `https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`
+        const embedUrl = lat && lng
+          ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.006},${lat - 0.004},${lng + 0.006},${lat + 0.004}&layer=mapnik&marker=${lat},${lng}`
+          : `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`
 
         return (
           <Dialog open={!!selectedMapVehicle} onOpenChange={(open) => !open && setSelectedMapVehicle(null)}>
