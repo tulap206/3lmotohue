@@ -15,7 +15,11 @@ echo "=============================="
 # Bước 1: Tạo cert nếu chưa có
 if [ ! -f ~/.mitmproxy/mitmproxy-ca-cert.pem ]; then
     echo "⏳ Tạo mitmproxy certificate..."
-    timeout 5 mitmdump -p $MITM_PORT --quiet 2>/dev/null || true
+    /opt/homebrew/bin/mitmdump -p $MITM_PORT --quiet &
+    MITM_PID=$!
+    sleep 4
+    kill $MITM_PID 2>/dev/null || true
+    wait $MITM_PID 2>/dev/null || true
 fi
 
 # Bước 2: Trust cert vào System keychain
@@ -79,7 +83,12 @@ echo ""
 pkill -HUP searchpartyuseragent 2>/dev/null || true
 
 # Chạy mitmdump 60 giây
-timeout 60 mitmdump -s $ADDON -p $MITM_PORT 2>&1 || true
+/opt/homebrew/bin/mitmdump -s $ADDON -p $MITM_PORT 2>&1 &
+MITM_PID=$!
+echo "🔄 Đang đợi 60 giây để capture traffic..."
+sleep 60
+kill $MITM_PID 2>/dev/null || true
+wait $MITM_PID 2>/dev/null || true
 
 # Bước 6: Gỡ proxy
 networksetup -setwebproxystate "$NETWORK_SERVICE" off
