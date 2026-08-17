@@ -52,7 +52,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History, MapPin, Save } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History, MapPin, Save, RefreshCw } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 
 export interface VehicleLocationInfo {
@@ -285,6 +285,28 @@ export default function VehiclesPage() {
   const [selectedMapVehicle, setSelectedMapVehicle] = useState<Vehicle | null>(null)
   const [locationInput, setLocationInput] = useState("")
   const [savingLocation, setSavingLocation] = useState(false)
+  const [isSyncingLocations, setIsSyncingLocations] = useState(false)
+
+  const handleSyncLiveLocations = async () => {
+    try {
+      setIsSyncingLocations(true)
+      const { data: freshVehicles, error } = await supabase
+        .from("vehicles")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        showError("Không thể cập nhật danh sách vị trí: " + error.message)
+      } else if (freshVehicles) {
+        setVehicles(freshVehicles)
+        showSuccess("Đã cập nhật vị trí mới nhất cho toàn bộ danh sách xe!")
+      }
+    } catch (err: any) {
+      showError("Lỗi khi đồng bộ vị trí xe")
+    } finally {
+      setIsSyncingLocations(false)
+    }
+  }
 
   const openEditLocationDialog = (vehicle: Vehicle) => {
     setEditingLocationVehicle(vehicle)
@@ -813,6 +835,17 @@ export default function VehiclesPage() {
         ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 bg-white rounded-[var(--radius-control)] h-11 font-semibold text-body transition-colors"
+              onClick={handleSyncLiveLocations}
+              disabled={isSyncingLocations}
+              title="Bấm để đồng bộ dữ liệu vị trí xe mới nhất"
+            >
+              <RefreshCw className={cn("w-4 h-4 mr-2 text-blue-600", isSyncingLocations && "animate-spin")} />
+              {isSyncingLocations ? "Đang đồng bộ..." : "Cập nhật vị trí"}
+            </Button>
             <Button
               className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
               onClick={() => setIsAddDialogOpen(true)}
