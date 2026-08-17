@@ -1839,12 +1839,17 @@ export default function VehiclesPage() {
 
       {/* History Dialog */}
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-        <EntityFormDialogContent accent="blue" maxWidth="2xl">
-          <EntityFormHeader
-            title="Lịch sử xe"
-            description={historyVehicle ? `${historyVehicle.name} - ${historyVehicle.licensePlate}` : "Hoạt động cho thuê và bảo trì"}
-          />
-          <div className="max-h-[450px] overflow-y-auto pr-2 py-4 my-2 scrollbar-thin">
+        <DialogContent
+          className="flex flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl max-h-[min(90dvh,calc(100dvh-1rem))]"
+        >
+          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600" />
+          <div className="shrink-0 px-4 pt-6 sm:px-6 sm:pt-7 pr-14">
+            <EntityFormHeader
+              title="Lịch sử xe"
+              description={historyVehicle ? `${historyVehicle.name} - ${historyVehicle.licensePlate}` : "Hoạt động cho thuê và bảo trì"}
+            />
+          </div>
+          <div className="min-h-0 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] touch-pan-y px-4 sm:px-6 pb-2 max-h-[min(28rem,calc(90dvh-12rem))]">
             {historyVehicle && (
               <div className="space-y-4">
                 {getVehicleHistory(historyVehicle.id).length === 0 ? (
@@ -1863,13 +1868,13 @@ export default function VehiclesPage() {
                             log.type === "return" ? "bg-emerald-500" : "bg-amber-500"
                           }`} />
                           <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] text-sm font-medium ${historyTypeConfig[log.type].className}`}>
                                 {historyTypeConfig[log.type].label}
                               </span>
                               <span className="text-sm text-muted-foreground">{log.datetime}</span>
                             </div>
-                            <p className="text-sm text-card-foreground">{log.description}</p>
+                            <p className="text-sm text-card-foreground break-words">{log.description}</p>
                           </div>
                         </div>
                       ))}
@@ -1879,12 +1884,12 @@ export default function VehiclesPage() {
               </div>
             )}
           </div>
-          <div className="flex justify-end pt-4 border-t border-slate-100 mt-2">
-            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="rounded-xl border-slate-200">
+          <div className="shrink-0 flex justify-end px-4 sm:px-6 py-4 border-t border-slate-100">
+            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="h-11 rounded-[var(--radius-control)] border-slate-200">
               Đóng
             </Button>
           </div>
-        </EntityFormDialogContent>
+        </DialogContent>
       </Dialog>
 
       {/* Lightbox Modal */}
