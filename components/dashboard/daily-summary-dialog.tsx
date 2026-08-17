@@ -1,21 +1,21 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import {
-  CalendarCheck,
   Download,
   Loader2,
   Calendar,
   Bike,
 } from "lucide-react"
-import { toPng } from "html-to-image"
+import { toBlob } from "html-to-image"
 import { formatDisplayDate, parseDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
+import { showError, showSuccess, showInfo } from "@/lib/toast-utils"
 
 interface DailySummaryDialogProps {
   isOpen: boolean
@@ -40,6 +40,100 @@ function formatPrice(value: number) {
     style: "currency",
     currency: "VND",
   }).format(value || 0)
+}
+
+function OrderMobileCards({
+  orders,
+  emptyText,
+}: {
+  orders: any[]
+  emptyText: string
+}) {
+  if (orders.length === 0) {
+    return <p className="md:hidden py-4 text-center text-meta text-slate-500">{emptyText}</p>
+  }
+
+  return (
+    <div className="md:hidden space-y-2">
+      {orders.map((order, idx) => {
+        const statusLabel =
+          order.status === "completed"
+            ? "Hoàn thành"
+            : order.status === "active"
+              ? "Đang thuê"
+              : order.status === "pending"
+                ? "Chờ giao"
+                : order.status
+        return (
+          <article
+            key={order.id || idx}
+            className="rounded-[var(--radius-container)] border border-slate-200 bg-white p-3 space-y-2"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-meta text-slate-400 font-mono">#{idx + 1}</p>
+                <p className="text-body font-semibold text-slate-900 break-words">
+                  {order.customerName || "Khách lẻ"}
+                </p>
+              </div>
+              <span
+                className={cn(
+                  "shrink-0 inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] text-meta font-semibold",
+                  order.status === "completed"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : order.status === "active"
+                      ? "bg-blue-50 text-blue-800 border border-blue-200"
+                      : "bg-amber-50 text-amber-800 border border-amber-200"
+                )}
+              >
+                {statusLabel}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-body text-slate-800">{order.vehicleName || "Xe thuê"}</span>
+              {order.licensePlate && (
+                <span className="px-1.5 py-0.5 bg-slate-900 text-white rounded text-meta font-mono font-bold">
+                  {order.licensePlate}
+                </span>
+              )}
+            </div>
+            <p className="text-meta text-slate-500">
+              {order.startDate || "—"} → {order.endDate || "—"}
+            </p>
+            <p className="text-body font-semibold text-slate-900 money text-right">
+              {formatPrice(order.revenue || order.totalPrice || 0)}
+            </p>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
+async function saveReportPng(blob: Blob, filename: string): Promise<"shared" | "downloaded" | "cancelled"> {
+  const file = new File([blob], filename, { type: "image/png" })
+  try {
+    if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Báo cáo tổng kết ngày" })
+      return "shared"
+    }
+  } catch (err) {
+    if ((err as Error).name === "AbortError") return "cancelled"
+  }
+
+  const url = URL.createObjectURL(blob)
+  try {
+    const link = document.createElement("a")
+    link.href = url
+    link.download = filename
+    link.rel = "noopener"
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } finally {
+    window.setTimeout(() => URL.revokeObjectURL(url), 8000)
+  }
+  return "downloaded"
 }
 
 function getVehicleImageUrl(vehicle: any): string | null {
@@ -77,6 +171,14 @@ export function DailySummaryDialog({
 
   const [selectedDate, setSelectedDate] = useState<string>(todayStr)
   const [isExporting, setIsExporting] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const printAreaRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   // Formatted date string for display (e.g. 14/08/2026)
   const formattedSelectedDate = useMemo(() => {
@@ -169,34 +271,63 @@ export function DailySummaryDialog({
     })
   }, [vehicleStats.available])
 
-  const handleDownloadImage = async () => {
-    const printArea = document.getElementById("daily-summary-print-area")
-    if (!printArea) return
+  const captureReportBlob = async (skipImages: boolean) => {
+    const printArea = printAreaRef.current
+    if (!printArea) throw new Error("Không tìm thấy nội dung báo cáo")
 
+    return toBlob(printArea, {
+      quality: 0.95,
+      pixelRatio: window.innerWidth < 768 ? 1.5 : 2,
+      backgroundColor: "#ffffff",
+      cacheBust: true,
+      skipFonts: true,
+      filter: (node) => {
+        if (node instanceof HTMLElement && node.classList.contains("print:hidden")) return false
+        if (skipImages && node instanceof HTMLImageElement) return false
+        return true
+      },
+    })
+  }
+
+  const handleDownloadImage = async () => {
+    if (isExporting) return
     setIsExporting(true)
     try {
-      await new Promise((res) => setTimeout(res, 120))
+      await new Promise((res) => setTimeout(res, 80))
+      let blob: Blob | null = null
+      try {
+        blob = await Promise.race([
+          captureReportBlob(false),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("timeout")), 18000)
+          ),
+        ])
+      } catch {
+        blob = await captureReportBlob(true)
+      }
 
-      const dataUrl = await toPng(printArea, {
-        quality: 0.98,
-        pixelRatio: 2, // High resolution (retina 2x)
-        backgroundColor: "#ffffff",
-        filter: (node) => {
-          if (node instanceof HTMLElement && node.classList.contains("print:hidden")) {
-            return false
-          }
-          return true
-        },
-      })
+      if (!blob) throw new Error("Không tạo được ảnh")
 
-      const link = document.createElement("a")
       const fileDate = formattedSelectedDate.replace(/\//g, "-")
-      link.download = `Bao-Cao-Ngay-${fileDate}.png`
-      link.href = dataUrl
-      link.click()
+      const filename = `Bao-Cao-Ngay-${fileDate}.png`
+      const result = await saveReportPng(blob, filename)
+
+      if (result === "cancelled") {
+        showInfo("Đã hủy chia sẻ ảnh báo cáo")
+        return
+      }
+
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(URL.createObjectURL(blob))
+
+      if (result === "shared") {
+        showSuccess("Đã chia sẻ ảnh báo cáo")
+      } else {
+        showSuccess("Đã tạo ảnh báo cáo", "Nếu chưa thấy file, giữ ảnh bên dưới để lưu vào máy.")
+      }
     } catch (err) {
       console.error("Error exporting image:", err)
-      alert("⚠️ Lỗi tạo hình ảnh. Vui lòng thử lại!")
+      showError("Không tạo được ảnh báo cáo", "Thử lại hoặc chụp màn hình cửa sổ này.")
     } finally {
       setIsExporting(false)
     }
@@ -204,12 +335,16 @@ export function DailySummaryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-5xl max-w-[98vw] w-full max-h-[96vh] overflow-y-auto bg-slate-50 p-0 rounded-xl sm:rounded-2xl border-slate-200 shadow-xl">
+      <DialogContent className="sm:max-w-5xl w-[min(100vw-0.75rem,64rem)] max-w-[min(100vw-0.75rem,64rem)] max-h-[min(96dvh,calc(100dvh-0.75rem))] overflow-x-hidden overflow-y-auto bg-slate-50 p-0 rounded-xl sm:rounded-2xl border-slate-200 shadow-xl min-w-0">
         {/* Printable Canvas Section */}
-        <div id="daily-summary-print-area" className="p-3.5 sm:p-7 space-y-4 sm:space-y-5 bg-white rounded-t-xl sm:rounded-t-2xl">
+        <div
+          id="daily-summary-print-area"
+          ref={printAreaRef}
+          className="p-3.5 sm:p-7 space-y-4 sm:space-y-5 bg-white rounded-t-xl sm:rounded-t-2xl min-w-0 max-w-full overflow-x-hidden"
+        >
           
           {/* Light & Clean Header Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 pr-6 sm:pr-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 pr-10 sm:pr-8 min-w-0">
             <div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-5 sm:h-6 bg-red-500 rounded-full shrink-0" />
@@ -253,84 +388,89 @@ export function DailySummaryDialog({
           </div>
 
           {/* Light Minimalist KPI Summary Cards (2x2 grid on mobile) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3.5 min-w-0">
             {/* Card 1: Doanh Thu - Red Money Highlight */}
-            <div className="bg-red-50/40 border border-red-200/80 rounded-xl p-2.5 sm:p-4">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-red-800 uppercase tracking-wider block truncate">
-                Doanh Thu Thực Thu
+            <div className="min-w-0 bg-red-50/40 border border-red-200/80 rounded-xl p-2.5 sm:p-4">
+              <span className="text-meta font-semibold text-red-800 uppercase tracking-wider block leading-tight">
+                Doanh thu thực thu
               </span>
               <div className="mt-1 sm:mt-1.5">
-                <span className="text-sm sm:text-2xl font-bold text-red-600 font-mono block truncate">
+                <span className="text-sm sm:text-2xl font-bold text-red-600 money block break-words leading-tight">
                   {formatPrice(dailyRevenue)}
                 </span>
               </div>
-              <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-slate-500 font-normal truncate">
+              <div className="mt-0.5 sm:mt-1 text-meta text-slate-500 font-normal">
                 {completedOrders.length} đơn hoàn thành
               </div>
             </div>
 
             {/* Card 2: Đơn Giao Trong Ngày */}
-            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-2.5 sm:p-4">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-600 uppercase tracking-wider block truncate">
-                Đơn Giao Xe
+            <div className="min-w-0 bg-slate-50/70 border border-slate-200/80 rounded-xl p-2.5 sm:p-4">
+              <span className="text-meta font-semibold text-slate-600 uppercase tracking-wider block leading-tight">
+                Đơn giao xe
               </span>
-              <div className="mt-1 sm:mt-1.5 flex items-baseline gap-1">
+              <div className="mt-1 sm:mt-1.5 flex items-baseline gap-1 flex-wrap">
                 <span className="text-base sm:text-2xl font-bold text-slate-900">
                   {dispatchedOrders.length}
                 </span>
-                <span className="text-[10px] sm:text-xs text-slate-500 font-medium truncate">đơn ({dispatchedVehiclesCount} xe)</span>
+                <span className="text-meta text-slate-500 font-medium">đơn ({dispatchedVehiclesCount} xe)</span>
               </div>
-              <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-slate-500 font-normal truncate">
+              <div className="mt-0.5 sm:mt-1 text-meta text-slate-500 font-normal">
                 Bàn giao cho khách
               </div>
             </div>
 
             {/* Card 3: Đơn Nhận xe trong ngày */}
-            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-2.5 sm:p-4">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-600 uppercase tracking-wider block truncate">
-                Đơn Nhận Xe
+            <div className="min-w-0 bg-slate-50/70 border border-slate-200/80 rounded-xl p-2.5 sm:p-4">
+              <span className="text-meta font-semibold text-slate-600 uppercase tracking-wider block leading-tight">
+                Đơn nhận xe
               </span>
-              <div className="mt-1 sm:mt-1.5 flex items-baseline gap-1">
+              <div className="mt-1 sm:mt-1.5 flex items-baseline gap-1 flex-wrap">
                 <span className="text-base sm:text-2xl font-bold text-slate-900">
                   {completedOrders.length}
                 </span>
-                <span className="text-[10px] sm:text-xs text-slate-500 font-medium truncate">đơn ({completedVehiclesCount} xe)</span>
+                <span className="text-meta text-slate-500 font-medium">đơn ({completedVehiclesCount} xe)</span>
               </div>
-              <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-slate-500 font-normal truncate">
+              <div className="mt-0.5 sm:mt-1 text-meta text-slate-500 font-normal">
                 Trả xe hoàn thành
               </div>
             </div>
 
             {/* Card 4: Xe Sẵn Sàng */}
-            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-2.5 sm:p-4">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-600 uppercase tracking-wider block truncate">
-                Xe Sẵn Sàng
+            <div className="min-w-0 bg-slate-50/70 border border-slate-200/80 rounded-xl p-2.5 sm:p-4">
+              <span className="text-meta font-semibold text-slate-600 uppercase tracking-wider block leading-tight">
+                Xe sẵn sàng
               </span>
-              <div className="mt-1 sm:mt-1.5 flex items-baseline gap-1">
+              <div className="mt-1 sm:mt-1.5 flex items-baseline gap-1 flex-wrap">
                 <span className="text-base sm:text-2xl font-bold text-slate-900">
                   {vehicleStats.available.length}
                 </span>
-                <span className="text-[10px] sm:text-xs text-slate-500 font-medium">xe</span>
+                <span className="text-meta text-slate-500 font-medium">xe</span>
               </div>
-              <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
-                {availableVision.length} Vision • {availableAB.length} AB • {availableOthers.length} Khác
+              <div className="mt-0.5 sm:mt-1 text-meta text-slate-500 font-medium leading-snug">
+                {availableVision.length} Vision · {availableAB.length} AB · {availableOthers.length} khác
               </div>
             </div>
           </div>
 
           {/* BẢNG 1: Đơn giao xe trong ngày */}
           <div className="space-y-1.5 sm:space-y-2">
-            <div className="flex items-center justify-between pt-1">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                1. Danh Sách Đơn Giao Xe Trong Ngày ({formattedSelectedDate})
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between pt-1 min-w-0">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-start gap-1.5 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                <span className="text-pretty">1. Đơn giao xe trong ngày ({formattedSelectedDate})</span>
               </h3>
-              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium shrink-0">
+              <span className="text-meta text-slate-500 font-medium pl-3 sm:pl-0 shrink-0">
                 Tổng: <strong className="text-slate-900 font-semibold">{dispatchedOrders.length}</strong> đơn ({dispatchedVehiclesCount} xe)
               </span>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-2xs">
+            <OrderMobileCards
+              orders={dispatchedOrders}
+              emptyText="Không có đơn giao xe nào trong ngày này."
+            />
+
+            <div className="hidden md:block overflow-x-auto max-w-full border border-slate-200/80 rounded-xl bg-white shadow-2xs">
               <table className="w-full min-w-[540px] text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -425,17 +565,22 @@ export function DailySummaryDialog({
 
           {/* BẢNG 2: Đơn hoàn thành nhận lại xe trong ngày */}
           <div className="space-y-1.5 sm:space-y-2 pt-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                2. Danh Sách Đơn Hoàn Thành & Nhận Lại Xe Trong Ngày ({formattedSelectedDate})
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between min-w-0">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-start gap-1.5 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
+                <span className="text-pretty">2. Đơn hoàn thành và nhận lại xe ({formattedSelectedDate})</span>
               </h3>
-              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium shrink-0">
+              <span className="text-meta text-slate-500 font-medium pl-3 sm:pl-0 shrink-0">
                 Tổng: <strong className="text-slate-900 font-semibold">{completedOrders.length}</strong> đơn ({completedVehiclesCount} xe)
               </span>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-2xs">
+            <OrderMobileCards
+              orders={completedOrders}
+              emptyText="Không có đơn hoàn thành nhận lại xe nào trong ngày này."
+            />
+
+            <div className="hidden md:block overflow-x-auto max-w-full border border-slate-200/80 rounded-xl bg-white shadow-2xs">
               <table className="w-full min-w-[540px] text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -684,23 +829,36 @@ export function DailySummaryDialog({
         <div className="bg-slate-100/90 p-2.5 sm:px-6 sm:py-3.5 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 print:hidden rounded-b-xl sm:rounded-b-2xl">
           <Button
             onClick={onClose}
-            className="w-full sm:w-auto bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs h-10 sm:h-9 px-4 rounded-lg shadow-2xs"
+            className="w-full sm:w-auto bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs h-11 sm:h-9 px-4 rounded-lg shadow-2xs"
           >
-            Đóng Cửa Sổ
+            Đóng cửa sổ
           </Button>
           <Button
             onClick={handleDownloadImage}
             disabled={isExporting}
-            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 !text-white font-semibold text-xs h-10 sm:h-9 px-4 rounded-lg shadow-2xs transition"
+            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 !text-white font-semibold text-xs h-11 sm:h-9 px-4 rounded-lg shadow-2xs transition"
           >
             {isExporting ? (
               <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
             ) : (
               <Download className="w-3.5 h-3.5 mr-1.5" />
             )}
-            {isExporting ? "Đang tạo ảnh..." : "Tải Ảnh Báo Cáo"}
+            {isExporting ? "Đang tạo ảnh..." : "Tải ảnh báo cáo"}
           </Button>
         </div>
+
+        {previewUrl && (
+          <div className="print:hidden border-t border-slate-200 bg-white p-3 sm:p-4 space-y-2 rounded-b-xl">
+            <p className="text-meta text-slate-600">
+              Ảnh đã tạo. Trên điện thoại: giữ vào ảnh rồi chọn Lưu ảnh.
+            </p>
+            <img
+              src={previewUrl}
+              alt="Ảnh báo cáo tổng kết ngày"
+              className="w-full max-h-[40vh] object-contain rounded-[var(--radius-control)] border border-slate-200 bg-slate-50"
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
