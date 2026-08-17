@@ -286,65 +286,71 @@ export function DashboardSidebar({ children }: SidebarProps) {
       </div>
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="bg-white rounded-[var(--radius-container)] max-w-md border-slate-200">
-          <DialogHeader>
+        <DialogContent className="flex flex-col gap-0 overflow-hidden bg-white p-0 rounded-[var(--radius-container)] border-slate-200 max-w-md max-h-[min(90dvh,calc(100dvh-1rem))]">
+          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600" />
+          <DialogHeader className="shrink-0 space-y-0 px-4 pt-5 pb-3 sm:px-5 text-left">
             <DialogTitle className="text-title">Thông tin cá nhân</DialogTitle>
-            <DialogDescription className="text-meta">Quản lý tài khoản của bạn</DialogDescription>
+            <DialogDescription className="text-meta mt-0.5">Tài khoản đang đăng nhập</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
-            <div className="text-center">
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="sr-only"
-                onChange={handleAvatarChange}
-              />
+          <div className="px-4 sm:px-5 pb-4 space-y-3">
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              onChange={handleAvatarChange}
+            />
+            <div className="flex items-center gap-3 rounded-[var(--radius-container)] border border-slate-200/80 bg-slate-50/80 p-2.5">
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                className="relative mx-auto mb-3 block rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
                 title="Thay ảnh đại diện"
               >
-                <Avatar className="h-16 w-16">
+                <Avatar className="h-14 w-14">
                   {user?.avatarUrl && (
                     <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover" />
                   )}
-                  <AvatarFallback className="bg-blue-600 text-white text-xl font-semibold uppercase">
+                  <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold uppercase">
                     {user?.displayName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-blue-600 text-white shadow-sm">
-                  <Camera className="h-3.5 w-3.5" />
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white">
+                  <Camera className="h-3 w-3" />
                 </span>
               </button>
-              <p className="text-meta text-slate-500 mb-2">
-                {uploadingAvatar ? "Đang tải ảnh..." : "Nhấn vào ảnh để thay ảnh đại diện"}
-              </p>
-              {avatarMessage && (
-                <p
-                  className={cn(
-                    "text-meta mb-2",
-                    avatarMessage.type === "success" ? "text-emerald-700" : "text-rose-700"
-                  )}
-                >
-                  {avatarMessage.text}
+              <div className="min-w-0 flex-1">
+                <p className="text-title truncate leading-tight">{user?.displayName}</p>
+                <p className="text-meta truncate mt-0.5">{user?.username}</p>
+                <p className="text-meta text-slate-500 mt-0.5">
+                  {uploadingAvatar ? "Đang tải ảnh..." : "Chạm ảnh để đổi đại diện"}
                 </p>
-              )}
-              <h3 className="text-title">{user?.displayName}</h3>
-              <p className="text-meta mt-1">{user?.username}</p>
-              <p className="text-meta">{user?.role === "admin" ? "Quyền: Admin" : "Quyền: Nhân viên"}</p>
+              </div>
+              <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] border border-slate-200 bg-white text-meta font-semibold text-slate-700">
+                {user?.role === "admin" ? "Admin" : "Nhân viên"}
+              </span>
             </div>
 
-            <div className="border-t border-slate-100 pt-5 space-y-4">
-              <h4 className="text-body font-semibold text-slate-800">Đổi mật khẩu</h4>
+            {avatarMessage && (
+              <p
+                className={cn(
+                  "text-meta",
+                  avatarMessage.type === "success" ? "text-emerald-700" : "text-rose-700"
+                )}
+              >
+                {avatarMessage.text}
+              </p>
+            )}
+
+            <div className="space-y-2.5">
+              <h4 className="text-label text-slate-800">Đổi mật khẩu</h4>
 
               {passwordMessage && (
                 <div
                   className={cn(
-                    "p-3 rounded-[var(--radius-control)] text-body",
+                    "px-3 py-2 rounded-[var(--radius-control)] text-meta",
                     passwordMessage.type === "success"
                       ? "bg-emerald-50 text-emerald-700"
                       : "bg-rose-50 text-rose-700"
@@ -354,58 +360,64 @@ export function DashboardSidebar({ children }: SidebarProps) {
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div>
                   <Label className="text-label">Mật khẩu cũ</Label>
                   <Input
                     type="password"
-                    placeholder="Nhập mật khẩu cũ"
+                    autoComplete="current-password"
+                    placeholder="Mật khẩu hiện tại"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    className="mt-1.5 h-11 rounded-[var(--radius-control)]"
+                    className="mt-1 h-11 text-base rounded-[var(--radius-control)] border-slate-200"
                   />
                 </div>
-                <div>
-                  <Label className="text-label">Mật khẩu mới</Label>
-                  <Input
-                    type="password"
-                    placeholder="Nhập mật khẩu mới"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1.5 h-11 rounded-[var(--radius-control)]"
-                  />
-                </div>
-                <div>
-                  <Label className="text-label">Xác nhận mật khẩu</Label>
-                  <Input
-                    type="password"
-                    placeholder="Xác nhận mật khẩu mới"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="mt-1.5 h-11 rounded-[var(--radius-control)]"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-label">Mật khẩu mới</Label>
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="Mật khẩu mới"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="mt-1 h-11 text-base rounded-[var(--radius-control)] border-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-label">Xác nhận</Label>
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="Nhập lại"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="mt-1 h-11 text-base rounded-[var(--radius-control)] border-slate-200"
+                    />
+                  </div>
                 </div>
               </div>
+            </div>
 
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
+              <Button
+                onClick={() => {
+                  setIsProfileOpen(false)
+                  handleLogout()
+                }}
+                variant="outline"
+                className="h-11 text-rose-600 border-rose-200 hover:bg-rose-50 rounded-[var(--radius-control)] font-semibold"
+              >
+                Đăng xuất
+              </Button>
               <Button
                 onClick={handleChangePassword}
                 disabled={changingPassword}
-                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-[var(--radius-control)] font-semibold"
+                className="h-11 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-semibold [&_svg]:!text-white"
               >
-                {changingPassword ? "Đang xử lý..." : "Đổi mật khẩu"}
+                {changingPassword ? "Đang lưu..." : "Lưu mật khẩu"}
               </Button>
             </div>
-
-            <Button
-              onClick={() => {
-                setIsProfileOpen(false)
-                handleLogout()
-              }}
-              variant="outline"
-              className="w-full h-11 text-rose-600 border-rose-200 hover:bg-rose-50 rounded-[var(--radius-control)]"
-            >
-              Đăng xuất
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
