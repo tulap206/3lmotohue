@@ -222,13 +222,22 @@ function getModuleLabel(mod: string) {
 }
 
 function getActionLabel(act: string) {
-  const lower = act.toLowerCase()
+  const lower = act.toLowerCase().trim()
   if (lower.includes("đăng nhập") || lower === "login") return "Đăng nhập"
   if (lower.includes("đăng xuất") || lower === "logout") return "Đăng xuất"
   if (lower.includes("thêm") || lower.includes("tạo") || lower === "insert" || lower === "create") return "Thêm mới"
   if (lower.includes("sửa") || lower.includes("cập nhật") || lower === "edit" || lower === "update") return "Chỉnh sửa"
   if (lower.includes("xóa") || lower.includes("xoá") || lower === "delete" || lower === "remove") return "Xóa"
+  if (lower.includes("sao lưu")) return "Sao lưu dữ liệu"
+  if (lower.includes("khôi phục")) return "Khôi phục dữ liệu"
+  if (lower.includes("gửi thông báo") || lower.includes("thông báo")) return "Gửi thông báo"
+  if (lower === "xem" || lower.includes("xem chi tiết")) return "Xem"
+  if (lower.includes("truy cập")) return "Truy cập"
   return act
+}
+
+function isNoiseActionLabel(label: string) {
+  return /^(test|testing|debug)$/i.test(label.trim())
 }
 
 function formatCompactDate(dateString: string) {
@@ -382,9 +391,10 @@ export function AccessHistoryPanel({
     if (filterModule !== "all") {
       filteredForAction = normalizedLogs.filter((log) => getModuleLabel(log.module) === filterModule)
     }
-    const rawActions = Array.from(new Set(filteredForAction.map((log) => getActionLabel(log.action)))).filter(Boolean)
+    const rawActions = Array.from(new Set(filteredForAction.map((log) => getActionLabel(log.action))))
+      .filter((action) => Boolean(action) && !isNoiseActionLabel(action))
 
-    const priority = ["Đăng nhập", "Đăng xuất", "Thêm mới", "Chỉnh sửa", "Xóa"]
+    const priority = ["Đăng nhập", "Đăng xuất", "Thêm mới", "Chỉnh sửa", "Xóa", "Xem", "Truy cập", "Sao lưu dữ liệu", "Gửi thông báo"]
     return priority.filter((p) => rawActions.includes(p)).concat(rawActions.filter((a) => !priority.includes(a)))
   }, [normalizedLogs, filterModule])
 
