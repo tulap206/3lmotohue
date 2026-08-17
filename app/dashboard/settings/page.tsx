@@ -7,8 +7,9 @@ import { logger } from "@/lib/logger"
 import { BackupRestorePanel } from "@/components/dashboard/backup-restore-panel"
 import { ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
 import { UserAccountsModal } from "@/components/dashboard/user-accounts-modal"
+import { AboutSoftwareDialog } from "@/components/dashboard/about-software-dialog"
 import { Button } from "@/components/ui/button"
-import { Users } from "lucide-react"
+import { Info, Users } from "lucide-react"
 
 interface BackupData {
   timestamp: string
@@ -31,6 +32,7 @@ export default function SettingsPage() {
   const [backupFiles, setBackupFiles] = useState<BackupFile[]>([])
   const [filesLoading, setFilesLoading] = useState(true)
   const [isAccountsModalOpen, setIsAccountsModalOpen] = useState(false)
+  const [isAboutOpen, setIsAboutOpen] = useState(false)
 
   // Load backup files on mount
   useEffect(() => {
@@ -396,21 +398,32 @@ export default function SettingsPage() {
           { label: "Sao lưu khôi phục" },
         ]}
         actions={
-          user?.role === "admin" ? (
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            {user?.role === "admin" && (
+              <Button
+                onClick={() => setIsAccountsModalOpen(true)}
+                className="h-11 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
+              >
+                <Users className="w-4 h-4" />
+                Tài khoản
+              </Button>
+            )}
             <Button
-              onClick={() => setIsAccountsModalOpen(true)}
-              className="h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm"
+              onClick={() => setIsAboutOpen(true)}
+              variant="outline"
+              className="h-11 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] font-medium gap-2 px-4"
             >
-              <Users className="w-4 h-4" />
-              Tài khoản
+              <Info className="w-4 h-4" />
+              Giới thiệu
             </Button>
-          ) : undefined
+          </div>
         }
       />
       <UserAccountsModal
         open={isAccountsModalOpen}
         onOpenChange={setIsAccountsModalOpen}
       />
+      <AboutSoftwareDialog open={isAboutOpen} onOpenChange={setIsAboutOpen} />
       <BackupRestorePanel
         accent="blue"
         moduleName="Phân hệ cho thuê xe"
