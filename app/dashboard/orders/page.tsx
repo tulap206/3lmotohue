@@ -102,6 +102,7 @@ interface RentalOrder {
   commissionHome?: number
   homeName?: string
   rentalTerm?: "short" | "long"
+  received_at?: string
 }
 
 interface Customer {
@@ -933,6 +934,10 @@ export default function OrdersPage() {
       if (error && /rentalTerm/i.test(error.message || "")) {
         const { rentalTerm: _omit, ...withoutCol } = updatePayload
         ;({ error } = await supabase.from('rentals').update(withoutCol).eq('id', editingOrder.id))
+      }
+      if (error && /received_at/i.test(error.message || "")) {
+        const { received_at: _omitReceived, ...withoutReceived } = updatePayload
+        ;({ error } = await supabase.from('rentals').update(withoutReceived).eq('id', editingOrder.id))
       }
 
       if (error) {
