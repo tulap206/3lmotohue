@@ -68,6 +68,12 @@ import {
   buildRentalTermPayload,
 } from "@/lib/rental-term"
 
+const WEB_BOOKING_NOTE_RE = /đặt trực tuyến từ website|\[source:web\]/i
+
+function isWebBookingOrder(notes?: string | null): boolean {
+  return WEB_BOOKING_NOTE_RE.test(stripRentalTermFromNotes(notes))
+}
+
 interface RentalOrder {
   id: string
   customerId: string
@@ -1646,6 +1652,9 @@ export default function OrdersPage() {
                               >
                                 {order.customerName}
                               </button>
+                              {isWebBookingOrder(order.notes) && (
+                                <p className="text-meta text-blue-600 mt-0.5">(đặt từ Web)</p>
+                              )}
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex flex-col gap-1.5">
@@ -1736,6 +1745,9 @@ export default function OrdersPage() {
                       <div className="flex justify-between items-start gap-2">
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-800 truncate">{order.customerName}</p>
+                          {isWebBookingOrder(order.notes) && (
+                            <p className="text-meta text-blue-600">(đặt từ Web)</p>
+                          )}
                           <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                             <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
                             <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase">

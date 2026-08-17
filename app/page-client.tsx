@@ -255,7 +255,7 @@ export default function LandingPage() {
         totalPrice,
         deposit: 0,
         extraFees: 0,
-        notes: "Khách đặt trực tuyến từ website",
+        notes: "[source:web] Khách đặt trực tuyến từ website",
         revenue: 0,
         status: "pending",
       })
