@@ -108,6 +108,36 @@ export function buildVehicleNotesWithLocation(existingNotes: string | undefined,
   return cleanNotes ? `${cleanNotes}\n[location:${locStr}]` : `[location:${locStr}]`
 }
 
+export function formatRelativeTime(dateString?: string): string {
+  if (!dateString) return ""
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return ""
+  
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+  if (diffInSeconds <= 0 || diffInSeconds < 60) {
+    return "(vừa xong)"
+  }
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) {
+    return `(${diffInMinutes} phút trước)`
+  }
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) {
+    return `(${diffInHours} giờ trước)`
+  }
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 30) {
+    return `(${diffInDays} ngày trước)`
+  }
+  const diffInMonths = Math.floor(diffInDays / 30)
+  if (diffInMonths < 12) {
+    return `(${diffInMonths} tháng trước)`
+  }
+  const diffInYears = Math.floor(diffInMonths / 12)
+  return `(${diffInYears} năm trước)`
+}
+
 type VehicleStatus = "available" | "rented" | "maintenance" | "pending"
 type HistoryType = "rent" | "return" | "maintenance"
 
@@ -186,6 +216,7 @@ interface Vehicle {
   documentImages: string[]
   category?: "car" | "bike"
   created_at?: string
+  updated_at?: string
 }
 
 const historyTypeConfig: Record<HistoryType, { label: string; className: string }> = {
@@ -1147,23 +1178,31 @@ export default function VehiclesPage() {
                             {(() => {
                               const locInfo = extractVehicleLocation(vehicle.notes)
                               const locationStr = locInfo.location
+                              const relativeTime = formatRelativeTime(locInfo.updatedAt || (vehicle as any).updated_at || vehicle.created_at)
                               return (
                                 <div className="flex items-center gap-1.5 group">
                                   <button
                                     onClick={() => setSelectedMapVehicle(vehicle)}
-                                    className="flex items-center gap-1.5 text-left hover:text-blue-600 transition min-w-0"
-                                    title={locationStr ? "Bấm để xem vị trí xe trên bản đồ" : "Chưa có vị trí xe"}
+                                    className="flex items-start gap-1.5 text-left hover:text-blue-600 transition min-w-0"
+                                    title={locationStr ? `Bấm để xem vị trí xe trên bản đồ ${relativeTime}` : "Chưa có vị trí xe"}
                                   >
                                     <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? "text-blue-600 animate-pulse" : "text-slate-400")} />
-                                    <span className={cn("text-xs line-clamp-3 max-w-[220px] whitespace-normal leading-tight text-left", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2 hover:text-blue-800" : "text-slate-400 italic")}>
-                                      {locationStr || "chưa cập nhật"}
-                                    </span>
+                                    <div className="flex flex-col">
+                                      <span className={cn("text-xs line-clamp-3 max-w-[220px] whitespace-normal leading-tight text-left", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2 hover:text-blue-800" : "text-slate-400 italic")}>
+                                        {locationStr || "chưa cập nhật"}
+                                      </span>
+                                      {locationStr && relativeTime && (
+                                        <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                                          {relativeTime}
+                                        </span>
+                                      )}
+                                    </div>
                                   </button>
                                   <Button
                                     variant="ghost"
                                     size="icon-sm"
                                     onClick={() => openEditLocationDialog(vehicle)}
-                                    className="h-6 w-6 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-md transition-colors shrink-0"
+                                    className="h-6 w-6 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-md transition-colors shrink-0 self-start"
                                     title="Chỉnh sửa vị trí xe"
                                   >
                                     <Pencil className="w-3 h-3" />
