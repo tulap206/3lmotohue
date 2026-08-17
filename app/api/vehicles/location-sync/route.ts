@@ -9,13 +9,29 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
 
 function extractVehicleLocation(notes?: string) {
-  if (!notes) return { location: "", cleanNotes: "" }
+  if (!notes) return { location: "", cleanNotes: "", updatedAt: "" }
   const match = notes.match(/\[location:(.*?)\]/i)
   if (match) {
+    const raw = match[1].trim()
     const cleanNotes = notes.replace(/\[location:(.*?)\]/gi, "").trim()
-    return { location: match[1].trim(), cleanNotes }
+    let updatedAt = ""
+    if (raw.includes("|")) {
+      const parts = raw.split("|")
+      updatedAt = parts[2] || ""
+    }
+    return { location: raw, cleanNotes, updatedAt }
   }
-  return { location: "", cleanNotes: notes }
+  return { location: "", cleanNotes: notes, updatedAt: "" }
+}
+
+function isNewerTimestamp(incomingTs?: string, existingTs?: string): boolean {
+  if (!existingTs) return true
+  if (!incomingTs) return true
+  const incomingDate = new Date(incomingTs)
+  const existingDate = new Date(existingTs)
+  if (isNaN(incomingDate.getTime())) return true
+  if (isNaN(existingDate.getTime())) return true
+  return incomingDate.getTime() > existingDate.getTime()
 }
 
 export async function POST(req: Request) {
@@ -33,13 +49,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: fetchErr.message }, { status: 500 })
     }
 
-    const results = []
+    const results: any[] = []
+    const latestItemsByVehicleId = new Map<string, any>()
 
     for (const item of items) {
-      const { vehicleId, licensePlate, lat, lng, address = "", timestamp = new Date().toISOString() } = item
+      const { vehicleId, licensePlate, lat, lng, timestamp = new Date().toISOString() } = item
       if (!lat || !lng) continue
 
-      // Match vehicle by vehicleId or licensePlate
       const targetPlate = licensePlate ? String(licensePlate).toLowerCase().replace(/[^a-z0-9]/g, '') : ""
       
       const vehicle = vehicles.find((v) => {
@@ -56,7 +72,24 @@ export async function POST(req: Request) {
         continue
       }
 
-      const cleanNotes = extractVehicleLocation(vehicle.notes).cleanNotes
+      const existingCandidate = latestItemsByVehicleId.get(vehicle.id)
+      if (!existingCandidate || isNewerTimestamp(timestamp, existingCandidate.timestamp)) {
+        latestItemsByVehicleId.set(vehicle.id, { ...item, timestamp, vehicle })
+      }
+    }
+
+    for (const [vId, candidate] of latestItemsByVehicleId.entries()) {
+      const vehicle = candidate.vehicle
+      const { lat, lng, address = "", timestamp } = candidate
+      const existingLoc = extractVehicleLocation(vehicle.notes)
+
+      // Skip update if DB already has a newer location timestamp
+      if (!isNewerTimestamp(timestamp, existingLoc.updatedAt)) {
+        results.push({ vehicleId: vehicle.id, licensePlate: vehicle.licensePlate, status: "skipped_older", reason: "Existing location is newer" })
+        continue
+      }
+
+      const cleanNotes = existingLoc.cleanNotes
       const locAddress = address || `${lat}, ${lng}`
       const formattedLoc = `${lat},${lng}|${locAddress}|${timestamp}`
       const newNotes = cleanNotes ? `${cleanNotes}\n[location:${formattedLoc}]` : `[location:${formattedLoc}]`
@@ -73,7 +106,12 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, updatedCount: results.filter(r => r.status === 'success').length, results })
+    return NextResponse.json({
+      success: true,
+      updatedCount: results.filter(r => r.status === 'success').length,
+      skippedCount: results.filter(r => r.status === 'skipped_older').length,
+      results
+    })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 })
   }

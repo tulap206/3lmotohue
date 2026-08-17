@@ -26,27 +26,35 @@ def sync_locations():
         print("⚠️ Chưa cài đặt thư viện findmy / requests. Đang tự động cài đặt...")
         os.system("pip3 install findmy requests")
 
-    payload_items = []
-
+    payload_by_plate = {}
     for filepath in json_files:
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
             
             identifier = data.get("identifier", "")
-            name = data.get("name", "UGreen Tag")
+            license_plate = VEHICLE_MAP.get(identifier, data.get("name"))
             
-            # Map tag/identifier to location update
-            payload_items.append({
-                "licensePlate": name,
-                "lat": 16.463713,
-                "lng": 107.590866,
-                "address": "TP. Huế, Thừa Thiên Huế",
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-            })
+            # Read last location timestamp from JSON or current time
+            loc_time = data.get("last_location", {}).get("timestamp") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+            if license_plate:
+                candidate = {
+                    "licensePlate": license_plate,
+                    "lat": data.get("last_location", {}).get("latitude", 16.463713),
+                    "lng": data.get("last_location", {}).get("longitude", 107.590866),
+                    "address": data.get("last_location", {}).get("address", "TP. Huế"),
+                    "timestamp": loc_time
+                }
+                
+                # 📌 Nếu 1 xe lắp 2 thẻ định vị: ưu tiên lấy thẻ có thời gian mới nhất (còn sống)
+                existing = payload_by_plate.get(license_plate)
+                if not existing or str(candidate["timestamp"]) > str(existing["timestamp"]):
+                    payload_by_plate[license_plate] = candidate
         except Exception as e:
             print(f"⚠️ Lỗi đọc tệp {filepath}: {e}")
 
+    payload_items = list(payload_by_plate.values())
     if not payload_items:
         return
 
