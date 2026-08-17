@@ -127,8 +127,12 @@ export function formatRelativeTime(dateString?: string): string {
     return `(${diffInHours} giờ trước)`
   }
   const diffInDays = Math.floor(diffInHours / 24)
-  if (diffInDays < 30) {
+  if (diffInDays < 7) {
     return `(${diffInDays} ngày trước)`
+  }
+  const diffInWeeks = Math.floor(diffInDays / 7)
+  if (diffInDays < 30) {
+    return `(${diffInWeeks} tuần trước)`
   }
   const diffInMonths = Math.floor(diffInDays / 30)
   if (diffInMonths < 12) {
