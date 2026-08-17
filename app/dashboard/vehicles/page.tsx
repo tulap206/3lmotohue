@@ -1279,57 +1279,88 @@ export default function VehiclesPage() {
                     </tbody>
                   </table>
                 }
-                mobile={paginatedVehicles.map((vehicle) => (
-                  <ModuleMobileCard key={vehicle.id}>
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <VehicleThumb src={vehicle.vehicleImages?.[0]} name={vehicle.name} />
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <button
-                            type="button"
-                            className="font-semibold text-slate-800 text-body hover:text-blue-700 hover:underline text-left truncate"
-                            onClick={() => openDetailDialog(vehicle)}
-                          >
-                            {vehicle.name}
-                          </button>
-                          <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
+                mobile={paginatedVehicles.map((vehicle) => {
+                  const locInfo = extractVehicleLocation(vehicle.notes)
+                  const locationStr = locInfo.location
+                  const relativeTime = formatRelativeTime(locInfo.updatedAt || (vehicle as any).updated_at || vehicle.created_at)
+
+                  return (
+                    <ModuleMobileCard key={vehicle.id}>
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <VehicleThumb src={vehicle.vehicleImages?.[0]} name={vehicle.name} />
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <button
+                              type="button"
+                              className="font-semibold text-slate-800 text-body hover:text-blue-700 hover:underline text-left truncate"
+                              onClick={() => openDetailDialog(vehicle)}
+                            >
+                              {vehicle.name}
+                            </button>
+                            <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
+                          </div>
+                        </div>
+                        <span className={cn(vehicleStatusBadgeClass, "shrink-0", rentalVehicleStatusBadgeClass(vehicle.status))}>
+                          {getRentalVehicleStatusLabel(vehicle.status)}
+                        </span>
+                      </div>
+
+                      {/* 📍 Mobile Live Location block with 1-tap map launcher */}
+                      <div className="mt-2.5 pt-2 border-t border-slate-100">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMapVehicle(vehicle)}
+                          className="flex items-start gap-2 text-left hover:bg-blue-50/60 transition w-full bg-slate-50 p-2.5 rounded-xl border border-slate-100/80 active:scale-[0.99]"
+                        >
+                          <MapPin className={cn("w-4 h-4 shrink-0 mt-0.5 self-start", locationStr ? "text-blue-600 animate-pulse" : "text-slate-400")} />
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-1 w-full">
+                              <span className="text-[11px] font-semibold text-slate-500">Vị trí xe hiện tại:</span>
+                              {locationStr && relativeTime && (
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  {relativeTime}
+                                </span>
+                              )}
+                            </div>
+                            <span className={cn("text-xs leading-tight text-left break-words mt-0.5", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2" : "text-slate-400 italic")}>
+                              {locationStr || "chưa cập nhật"}
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm mt-2.5 pt-2 border-t border-slate-100/50">
+                        <span className="font-semibold text-slate-900 tabular-nums money">{formatPrice(vehicle.pricePerDay)}/ngày</span>
+                        <div className="flex gap-1 items-center">
+                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
+                            <Clock className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)} title="Chi tiết">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)} title="Chỉnh sửa">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          {user?.role === "admin" && (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                              onClick={() => {
+                                if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${vehicle.name} (${vehicle.licensePlate})?`)) {
+                                  handleDeleteVehicle(vehicle.id)
+                                }
+                              }}
+                              title="Xóa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
-                      <span className={cn(vehicleStatusBadgeClass, "shrink-0", rentalVehicleStatusBadgeClass(vehicle.status))}>
-                        {getRentalVehicleStatusLabel(vehicle.status)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-slate-100/50">
-                      <span className="font-semibold text-slate-900 tabular-nums money">{formatPrice(vehicle.pricePerDay)}/ngày</span>
-                      <div className="flex gap-1 items-center">
-                        <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
-                          <Clock className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)} title="Chi tiết">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)} title="Chỉnh sửa">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        {user?.permissions.canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                            onClick={() => {
-                              if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${vehicle.name} (${vehicle.licensePlate})?`)) {
-                                handleDeleteVehicle(vehicle.id)
-                              }
-                            }}
-                            title="Xóa"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </ModuleMobileCard>
-                ))}
+                    </ModuleMobileCard>
+                  )
+                })}
               />
               <ModulePagination
                 page={currentPage}
