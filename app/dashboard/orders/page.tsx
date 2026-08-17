@@ -1689,7 +1689,7 @@ export default function OrdersPage() {
                             </td>
                             <td className="py-3.5 px-4 text-right font-mono text-sm whitespace-nowrap">
                               {order.revenue > 0 ? (
-                                <span className="font-bold money tabular-nums text-emerald-700">
+                                <span className="font-bold money tabular-nums text-rose-600">
                                   {order.revenue.toLocaleString("vi-VN")} đ
                                 </span>
                               ) : (
