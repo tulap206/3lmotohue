@@ -6,6 +6,7 @@ import asyncio
 import urllib.request
 from pathlib import Path
 
+import findmy
 from findmy import KeyPair
 from findmy.reports import AsyncAppleAccount, LocalAnisetteProvider
 
