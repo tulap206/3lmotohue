@@ -346,21 +346,28 @@ export function AccessHistoryPanel({
     return baseLogs
   }, [logs, hideModuleFilter, scopeLabel])
 
-  // Danh sách tài khoản hiện hành của dự án, lấy từ dbUsers (nếu có) kết hợp với log thực tế
+  // Chỉ lấy tài khoản đang có trong dự án (auth_users), không lấy username cũ từ log
   const accounts = useMemo(() => {
-    const fromDb = dbUsers.map((u) => u.username).filter(Boolean);
-    const fromLogs = normalizedLogs.map((log) => log.username).filter(Boolean);
-    const combined = Array.from(new Set([...fromDb, ...fromLogs]))
-      .filter((username) => username.toLowerCase() !== "system");
-    
-    // Đảm bảo admin luôn ở đầu
-    const sorted = combined.sort((a, b) => {
-      if (a.toLowerCase() === "admin") return -1;
-      if (b.toLowerCase() === "admin") return 1;
-      return a.localeCompare(b);
-    });
-    return sorted;
-  }, [normalizedLogs, dbUsers])
+    const seen = new Set<string>()
+    const fromDb = dbUsers
+      .map((u) => {
+        const username = String(u.username || "").trim()
+        const displayName = String(u.displayName || u.displayname || username).trim()
+        return { username, displayName }
+      })
+      .filter((u) => {
+        const key = u.username.toLowerCase()
+        if (!u.username || key === "system" || seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+
+    return fromDb.sort((a, b) => {
+      if (a.username.toLowerCase() === "admin") return -1
+      if (b.username.toLowerCase() === "admin") return 1
+      return a.username.localeCompare(b.username)
+    })
+  }, [dbUsers])
 
   // Danh sách các phân hệ chuẩn hóa tiếng Việt
   const modules = useMemo(() => {
@@ -522,8 +529,10 @@ export function AccessHistoryPanel({
               <SelectContent className="rounded-lg">
                 <SelectItem value="all">Tất cả</SelectItem>
                 {accounts.map((account) => (
-                  <SelectItem key={account} value={account}>
-                    {account}
+                  <SelectItem key={account.username} value={account.username}>
+                    {account.displayName && account.displayName !== account.username
+                      ? `${account.displayName} (${account.username})`
+                      : account.username}
                   </SelectItem>
                 ))}
               </SelectContent>

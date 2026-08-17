@@ -15,16 +15,28 @@ async function verifyAdmin(request: NextRequest) {
   return decoded
 }
 
+async function verifyUserListViewer(request: NextRequest) {
+  const token = request.cookies.get('3l_moto_session')?.value
+  if (!token) return null
+
+  const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+  const decoded = await verifyJWT(token, secret)
+  if (!decoded) return null
+  if (decoded.role === 'admin' || decoded.permissions?.canViewAccessHistory) return decoded
+  return null
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const adminUser = await verifyAdmin(request)
-    if (!adminUser) {
+    const viewer = await verifyUserListViewer(request)
+    if (!viewer) {
       return NextResponse.json({ error: 'Không có quyền truy cập' }, { status: 403 })
     }
 
+    const isAdmin = viewer.role === 'admin'
     const { data: users, error } = await supabase
       .from('auth_users')
-      .select('*')
+      .select(isAdmin ? '*' : 'id, username, displayname, role')
       .order('username')
 
     if (error) throw error
