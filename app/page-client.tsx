@@ -99,6 +99,13 @@ const PROCESS_STEPS = [
   },
 ]
 
+function getVehicleThumbSrc(vehicle: { vehicleImages?: unknown }): string | undefined {
+  const images = vehicle.vehicleImages
+  if (!Array.isArray(images) || images.length === 0) return undefined
+  const first = images[0]
+  return typeof first === "string" && first.trim() ? first : undefined
+}
+
 export default function LandingPage() {
   const [formData, setFormData] = useState({
     name: "",
@@ -965,17 +972,30 @@ export default function LandingPage() {
                   <div className="divide-y divide-slate-100">
                     {availableVehicles.map((vehicle) => {
                       const priceTotal = totalDays * vehicle.pricePerDay
+                      const thumbSrc = getVehicleThumbSrc(vehicle)
                       return (
                         <div
                           key={vehicle.id}
                           className="flex flex-col gap-4 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="flex size-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-blue-600 shrink-0">
-                              <Bike className="size-6" />
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                              {thumbSrc ? (
+                                <Image
+                                  src={thumbSrc}
+                                  alt={vehicle.name}
+                                  fill
+                                  className="object-cover"
+                                  sizes="64px"
+                                />
+                              ) : (
+                                <div className="flex size-full items-center justify-center text-blue-600">
+                                  <Bike className="size-6" />
+                                </div>
+                              )}
                             </div>
-                            <div>
-                              <h4 className="font-bold text-slate-900">{vehicle.name}</h4>
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-slate-900 truncate">{vehicle.name}</h4>
                               <p className="mt-1 text-xs text-slate-500">
                                 Màu xe: <span className="font-semibold text-slate-700">{vehicle.color || "Ngẫu nhiên"}</span>
                               </p>
