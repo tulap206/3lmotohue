@@ -34,6 +34,35 @@ function isNewerTimestamp(incomingTs?: string, existingTs?: string): boolean {
   return incomingDate.getTime() > existingDate.getTime()
 }
 
+async function getDetailedReverseGeocode(lat: number, lng: number, inputAddress?: string): Promise<string> {
+  const cleanInput = (inputAddress || "").trim()
+  const lower = cleanInput.toLowerCase()
+  if (cleanInput && cleanInput.length > 15 && !["tp. huế", "thừa thiên huế", "tp huế", "huế", "tp. huế, thừa thiên huế"].includes(lower)) {
+    return cleanInput
+  }
+
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=vi`, {
+      headers: { "User-Agent": "3lmotohue-location-service/1.0" }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const display = data.display_name || ""
+      if (display) {
+        const parts = display.split(",").map((s: string) => s.trim())
+        const cleanParts = parts.filter((p: string) => !/^\d{5,6}$/.test(p) && p !== "Việt Nam")
+        if (cleanParts.length > 0) {
+          return cleanParts.slice(0, 3).join(", ")
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Reverse geocode error:", err)
+  }
+
+  return cleanInput || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+}
+
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
@@ -90,7 +119,7 @@ export async function POST(req: Request) {
       }
 
       const cleanNotes = existingLoc.cleanNotes
-      const locAddress = address || `${lat}, ${lng}`
+      const locAddress = await getDetailedReverseGeocode(lat, lng, address)
       const formattedLoc = `${lat},${lng}|${locAddress}|${timestamp}`
       const newNotes = cleanNotes ? `${cleanNotes}\n[location:${formattedLoc}]` : `[location:${formattedLoc}]`
 
