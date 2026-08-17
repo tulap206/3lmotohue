@@ -1875,10 +1875,41 @@ export default function VehiclesPage() {
         const lat = locInfo.lat
         const lng = locInfo.lng
         const mapQuery = lat && lng ? `${lat},${lng}` : encodeURIComponent(locationStr || selectedMapVehicle.name)
+        const mapSrcDoc = lat && lng ? `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body, #map { height: 100%; width: 100%; margin: 0; padding: 0; background: #f8fafc; }
+    .custom-popup { font-family: system-ui, -apple-system, sans-serif; padding: 2px; }
+    .vehicle-title { font-weight: 700; font-size: 13px; color: #0f172a; }
+    .vehicle-plate { font-size: 11px; font-weight: 700; color: #2563eb; font-family: monospace; margin: 2px 0; }
+    .vehicle-addr { font-size: 11px; color: #475569; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    var lat = ${lat};
+    var lng = ${lng};
+    var map = L.map('map', { zoomControl: true }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+    var marker = L.marker([lat, lng]).addTo(map);
+    marker.bindPopup('<div class="custom-popup"><div class="vehicle-title">${selectedMapVehicle.name.replace(/'/g, "\\'")}</div><div class="vehicle-plate">${selectedMapVehicle.licensePlate}</div><div class="vehicle-addr">${(locationStr || "").replace(/'/g, "\\'")}</div></div>').openPopup();
+  </script>
+</body>
+</html>
+` : undefined
+
         const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
-        const embedUrl = lat && lng
-          ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.006},${lat - 0.004},${lng + 0.006},${lat + 0.004}&layer=mapnik&marker=${lat},${lng}`
-          : `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+        const embedUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`
 
         return (
           <Dialog open={!!selectedMapVehicle} onOpenChange={(open) => !open && setSelectedMapVehicle(null)}>
@@ -1926,7 +1957,8 @@ export default function VehiclesPage() {
                       scrolling="no"
                       marginHeight={0}
                       marginWidth={0}
-                      src={embedUrl}
+                      srcDoc={mapSrcDoc}
+                      src={!mapSrcDoc ? embedUrl : undefined}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs space-y-2">
