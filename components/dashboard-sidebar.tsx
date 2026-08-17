@@ -18,6 +18,7 @@ import {
   Wrench,
   X,
   Camera,
+  Info,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState } from "react"
@@ -25,6 +26,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AboutSoftwareDialog } from "@/components/dashboard/about-software-dialog"
 
 interface SidebarProps {
   children: React.ReactNode
@@ -51,6 +53,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
   const { user, logout, updateUser } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isAboutOpen, setIsAboutOpen] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const [oldPassword, setOldPassword] = useState("")
@@ -212,6 +215,18 @@ export function DashboardSidebar({ children }: SidebarProps) {
             <span className="transition-transform duration-200 group-hover/item:translate-x-0.5">Cài đặt</span>
           </Link>
         )}
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsAboutOpen(true)
+            setMobileOpen(false)
+          }}
+          className="flex items-center gap-3 h-11 px-3 w-full rounded-[var(--radius-control)] ui-transition text-body font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
+        >
+          <Info className="w-5 h-5 shrink-0 opacity-70" />
+          <span>Giới thiệu</span>
+        </button>
 
         {user && (
           <button
@@ -421,6 +436,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
           </div>
         </DialogContent>
       </Dialog>
+      <AboutSoftwareDialog open={isAboutOpen} onOpenChange={setIsAboutOpen} />
     </div>
   )
 }

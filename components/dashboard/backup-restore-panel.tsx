@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { CardContent } from "@/components/ui/card"
 import {
@@ -163,6 +163,7 @@ export function BackupRestorePanel({
   onRestoreFile,
   onDeleteFile,
   onRefresh,
+  headerExtra,
 }: {
   accent: BackupAccent
   moduleName: string
@@ -180,6 +181,7 @@ export function BackupRestorePanel({
   onRestoreFile: (url: string, name: string) => void
   onDeleteFile?: (name: string) => void
   onRefresh: () => void
+  headerExtra?: ReactNode
 }) {
   const uploadRef = useRef<HTMLInputElement>(null)
   const [page, setPage] = useState(1)
@@ -322,12 +324,14 @@ export function BackupRestorePanel({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
           <div className="lg:col-span-8 rounded-[var(--radius-container)] border border-slate-200/80 bg-white overflow-hidden">
-            <div className="px-4 sm:px-5 py-4 border-b border-slate-100 bg-slate-50/40">
-              <p className="text-title">Thao tác</p>
-              <p className="text-meta mt-0.5">
-                {moduleName} · {scopeLabel}
-              </p>
-            </div>
+            <div className="px-4 sm:px-5 py-4 border-b border-slate-100 bg-slate-50/40 flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-title">Thao tác</p>
+                <p className="text-meta mt-0.5">
+                  {moduleName} · {scopeLabel}
+                </p>
+              </div>
+              {headerExtra}
             <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-3">
               <Button
                 type="button"
