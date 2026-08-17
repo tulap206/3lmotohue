@@ -57,7 +57,7 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, DollarSign, Sparkles, Bike, Bell } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, DollarSign, Sparkles, Bike, Bell, Unlink } from "lucide-react"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { QUY79_BUSINESS } from "@/lib/business-info"
 import {
@@ -69,9 +69,14 @@ import {
 } from "@/lib/rental-term"
 
 const WEB_BOOKING_NOTE_RE = /đặt trực tuyến từ website|\[source:web\]/i
+const UNASSIGNED_VEHICLE_ID = "00000000-0000-0000-0000-000000000000"
 
 function isWebBookingOrder(notes?: string | null): boolean {
   return WEB_BOOKING_NOTE_RE.test(stripRentalTermFromNotes(notes))
+}
+
+function isUnassignedVehicle(order: { vehicleId?: string; licensePlate?: string }) {
+  return order.licensePlate === "CHỜ GÁN XE" || !order.vehicleId || order.vehicleId === UNASSIGNED_VEHICLE_ID
 }
 
 interface RentalOrder {
@@ -696,7 +701,7 @@ export default function OrdersPage() {
 
   // Handle deliver order (Giao xe) or open AssignVehicleModal if unassigned
   const handleDeliverOrderClick = (order: RentalOrder) => {
-    if (order.licensePlate === "CHỜ GÁN XE" || order.vehicleId === "00000000-0000-0000-0000-000000000000") {
+    if (isUnassignedVehicle(order)) {
       setAssigningOrder(order)
       setSelectedVehiclesForAssignList([])
       setAssignVehicleSearch("")
@@ -721,7 +726,7 @@ export default function OrdersPage() {
       const customerPendingOrders = orders.filter(o => 
         o.customerId === assigningOrder.customerId && 
         o.status === "pending" && 
-        (o.vehicleId === "00000000-0000-0000-0000-000000000000" || o.licensePlate === "CHỜ GÁN XE")
+        isUnassignedVehicle(o)
       )
 
       // Pair each selected vehicle with a pending order
@@ -817,7 +822,26 @@ export default function OrdersPage() {
       name: editingOrder.customerName,
     }
 
-    let vehicle = vehicles.find((v) => v.id === editFormData.vehicleId)
+    const previousVehicleId = editingOrder.vehicleId
+    const isUnassigning = editFormData.vehicleId === UNASSIGNED_VEHICLE_ID
+    let vehicle = isUnassigning
+      ? {
+          id: UNASSIGNED_VEHICLE_ID,
+          name: "Chưa gán xe",
+          licensePlate: "CHỜ GÁN XE",
+          pricePerDay: editingOrder.pricePerDay || 0,
+          color: "",
+          status: "available" as const,
+          current_km: 0,
+          purchasePrice: 0,
+          notes: "",
+          vehicleImages: [] as string[],
+          documentImages: [] as string[],
+          totalRentalDays: 0,
+          totalRevenue: 0,
+          profit: 0,
+        }
+      : vehicles.find((v) => v.id === editFormData.vehicleId)
     if (!vehicle) {
       vehicle = {
         id: editFormData.vehicleId || editingOrder.vehicleId,
@@ -875,7 +899,9 @@ export default function OrdersPage() {
       }
       
       const termPayload = buildRentalTermPayload(editFormData.rentalTerm, editFormData.notes.trim())
-      const updatePayload = {
+      const nextStatus: RentalOrder["status"] =
+        isUnassigning && editFormData.status === "active" ? "pending" : editFormData.status
+      const updatePayload: Record<string, unknown> = {
           customerId: customer.id,
           customerName: customer.name,
           vehicleId: vehicle.id,
@@ -889,12 +915,15 @@ export default function OrdersPage() {
           deposit: newDeposit,
           extraFees: newExtraFees,
           notes: termPayload.notes,
-          status: editFormData.status,
+          status: nextStatus,
           revenue: newRevenue,
           commissionHome: newCommissionHome,
           homeName: newHomeName,
           rentalTerm: termPayload.rentalTerm,
         }
+      if (isUnassigning) {
+        updatePayload.received_at = null
+      }
 
       let { error } = await supabase
         .from('rentals')
@@ -928,16 +957,50 @@ export default function OrdersPage() {
         deposit: newDeposit,
         extraFees: newExtraFees,
         notes: termPayload.notes,
-        status: editFormData.status,
+        status: nextStatus,
         revenue: newRevenue,
         commissionHome: newCommissionHome,
         homeName: newHomeName,
         rentalTerm: editFormData.rentalTerm,
+        received_at: isUnassigning ? undefined : editingOrder.received_at,
       }
 
       setOrders(orders.map((o) => (o.id === editingOrder.id ? updatedOrder : o)))
+
+      const previousStillUsed = orders.some(
+        (o) =>
+          o.id !== editingOrder.id &&
+          o.vehicleId === previousVehicleId &&
+          (o.status === "active" || o.status === "pending") &&
+          !isUnassignedVehicle(o)
+      )
+      setVehicles((prev) =>
+        prev.map((v) => {
+          if (
+            previousVehicleId &&
+            previousVehicleId !== UNASSIGNED_VEHICLE_ID &&
+            v.id === previousVehicleId &&
+            previousVehicleId !== vehicle.id &&
+            !previousStillUsed
+          ) {
+            return { ...v, status: "available" as Vehicle["status"] }
+          }
+          if (vehicle.id !== UNASSIGNED_VEHICLE_ID && v.id === vehicle.id) {
+            return {
+              ...v,
+              status: (nextStatus === "active" ? "rented" : nextStatus === "pending" ? "pending" : v.status) as Vehicle["status"],
+            }
+          }
+          return v
+        })
+      )
+
       if (user) logger.editRental(user.username, user.displayName, customer.name, vehicle.name)
-      showSuccess(`Đã lưu thay đổi cho đơn thuê ${editingOrder.customerName} thành công!`)
+      showSuccess(
+        isUnassigning
+          ? `Đã huỷ gán xe cho đơn thuê ${editingOrder.customerName}. Đơn chuyển về chờ giao xe.`
+          : `Đã lưu thay đổi cho đơn thuê ${editingOrder.customerName} thành công!`
+      )
       setIsEditDialogOpen(false)
       setEditingOrder(null)
     } catch (error) {
@@ -2137,15 +2200,19 @@ export default function OrdersPage() {
             <EntityFormField label="Xe thuê">
               <Select
                 value={editFormData.vehicleId}
-                onValueChange={(value) => setEditFormData({ ...editFormData, vehicleId: value })}
+                onValueChange={(value) => {
+                  const next = { ...editFormData, vehicleId: value }
+                  if (value === UNASSIGNED_VEHICLE_ID && editFormData.status === "active") {
+                    next.status = "pending"
+                  }
+                  setEditFormData(next)
+                }}
               >
                 <SelectTrigger className={entityFormInputClass}>
                   <SelectValue placeholder="Chọn xe" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
-                  {(editFormData.vehicleId === "00000000-0000-0000-0000-000000000000" || editingOrder?.vehicleId === "00000000-0000-0000-0000-000000000000") && (
-                    <SelectItem value="00000000-0000-0000-0000-000000000000">Chưa gán xe</SelectItem>
-                  )}
+                  <SelectItem value={UNASSIGNED_VEHICLE_ID}>Chưa gán xe</SelectItem>
                   {vehicles
                     .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
                     .map((vehicle) => (
@@ -2155,6 +2222,31 @@ export default function OrdersPage() {
                     ))}
                 </SelectContent>
               </Select>
+              {editingOrder &&
+                !isUnassignedVehicle(editingOrder) &&
+                editFormData.vehicleId !== UNASSIGNED_VEHICLE_ID &&
+                (editFormData.status === "pending" || editFormData.status === "active") && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-2 h-11 w-full text-body font-semibold rounded-[var(--radius-control)] border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                    onClick={() =>
+                      setEditFormData({
+                        ...editFormData,
+                        vehicleId: UNASSIGNED_VEHICLE_ID,
+                        status: editFormData.status === "active" ? "pending" : editFormData.status,
+                      })
+                    }
+                  >
+                    <Unlink className="w-4 h-4 mr-2" />
+                    Huỷ gán xe
+                  </Button>
+                )}
+              {editFormData.vehicleId === UNASSIGNED_VEHICLE_ID && (
+                <p className="text-meta text-slate-500 mt-1.5">
+                  Đơn sẽ ở trạng thái chờ giao xe. Gán xe lại khi bàn giao.
+                </p>
+              )}
             </EntityFormField>
 
             <div className="grid grid-cols-2 gap-4">
