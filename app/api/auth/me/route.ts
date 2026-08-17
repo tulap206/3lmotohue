@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyJWT } from '@/lib/auth-jwt'
+import { getUserAvatarPublicUrl } from '@/lib/user-avatar'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,9 @@ export async function GET(request: NextRequest) {
 
     // Return verified user session details
     const { exp, ...userData } = decoded
+    if (userData.id && !userData.avatarUrl) {
+      userData.avatarUrl = getUserAvatarPublicUrl(userData.id)
+    }
     return NextResponse.json({ authenticated: true, user: userData })
   } catch (error) {
     console.error('API /api/auth/me error:', error)

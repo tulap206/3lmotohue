@@ -11,6 +11,7 @@ export interface User {
   username: string
   displayName: string
   role: UserRole
+  avatarUrl?: string
   permissions: {
     canDelete: boolean
     canBackup?: boolean
@@ -35,6 +36,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
+  updateUser: (partial: Partial<User>) => void
   addAccessLog: (action: string, module: string, details: string) => void
   accessLogs: AccessLog[]
 }
@@ -219,8 +221,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("3l_moto_user")
   }
 
+  const updateUser = (partial: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...partial }
+      localStorage.setItem("3l_moto_user", JSON.stringify(next))
+      return next
+    })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, addAccessLog, accessLogs }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser, addAccessLog, accessLogs }}>
       {children}
     </AuthContext.Provider>
   )

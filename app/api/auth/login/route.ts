@@ -4,6 +4,7 @@ import { signJWT } from '@/lib/auth-jwt'
 import { hashPassword, generateSalt } from '@/lib/auth-crypto'
 import { checkLoginAttempts, recordFailedLogin, resetLoginAttempts } from '@/lib/auth-guard'
 import { logger } from '@/lib/logger'
+import { getUserAvatarPublicUrl } from '@/lib/user-avatar'
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
       username: userRecord.username,
       displayName: userRecord.displayname,
       role: userRecord.role,
+      avatarUrl: getUserAvatarPublicUrl(userRecord.id, userRecord.updated_at || Date.now()),
       permissions: {
         canAccessDashboard: userRecord.role === 'admin' || userRecord.can_access_rental !== false,
         canAccessVehicles: userRecord.role === 'admin' || userRecord.can_access_sales !== false,

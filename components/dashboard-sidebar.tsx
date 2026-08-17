@@ -17,12 +17,14 @@ import {
   Users,
   Wrench,
   X,
+  Camera,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface SidebarProps {
   children: React.ReactNode
@@ -46,19 +48,48 @@ function isNavActive(pathname: string, href: string) {
 export function DashboardSidebar({ children }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordMessage, setPasswordMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [changingPassword, setChangingPassword] = useState(false)
+  const [avatarMessage, setAvatarMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   const handleLogout = () => {
     logout()
     router.push("/login")
+  }
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+
+    try {
+      setAvatarMessage(null)
+      setUploadingAvatar(true)
+      const body = new FormData()
+      body.append("avatar", file)
+      const res = await fetch("/api/auth/profile-avatar", { method: "POST", body })
+      const data = await res.json()
+      if (!res.ok) {
+        setAvatarMessage({ type: "error", text: data.error || "Không đổi được ảnh đại diện" })
+        return
+      }
+      if (data.user) updateUser(data.user)
+      setAvatarMessage({ type: "success", text: "Đã cập nhật ảnh đại diện" })
+    } catch (error) {
+      console.error("Avatar upload error:", error)
+      setAvatarMessage({ type: "error", text: "Không đổi được ảnh đại diện" })
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   const handleChangePassword = async () => {
@@ -188,9 +219,12 @@ export function DashboardSidebar({ children }: SidebarProps) {
             onClick={() => setIsProfileOpen(true)}
             className="w-full flex items-center gap-3 h-12 px-3 rounded-[var(--radius-control)] hover:bg-slate-800/50 ui-transition text-left"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white text-label font-semibold uppercase shrink-0">
-              {user.displayName.charAt(0)}
-            </span>
+            <Avatar className="h-9 w-9 shrink-0">
+              {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover" />}
+              <AvatarFallback className="bg-blue-600 text-white text-label font-semibold uppercase">
+                {user.displayName.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
             <span className="min-w-0 flex-1">
               <span className="block text-body font-semibold text-slate-200 truncate">{user.displayName}</span>
               <span className="block text-meta text-slate-400 truncate">{user.role === "admin" ? "Admin" : "Nhân viên"}</span>
@@ -260,11 +294,45 @@ export function DashboardSidebar({ children }: SidebarProps) {
 
           <div className="space-y-6">
             <div className="text-center">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 mx-auto mb-3">
-                <span className="text-white text-xl font-semibold uppercase">
-                  {user?.displayName.charAt(0)}
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                onChange={handleAvatarChange}
+              />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="relative mx-auto mb-3 block rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                title="Thay ảnh đại diện"
+              >
+                <Avatar className="h-16 w-16">
+                  {user?.avatarUrl && (
+                    <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover" />
+                  )}
+                  <AvatarFallback className="bg-blue-600 text-white text-xl font-semibold uppercase">
+                    {user?.displayName.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-blue-600 text-white shadow-sm">
+                  <Camera className="h-3.5 w-3.5" />
                 </span>
-              </div>
+              </button>
+              <p className="text-meta text-slate-500 mb-2">
+                {uploadingAvatar ? "Đang tải ảnh..." : "Nhấn vào ảnh để thay ảnh đại diện"}
+              </p>
+              {avatarMessage && (
+                <p
+                  className={cn(
+                    "text-meta mb-2",
+                    avatarMessage.type === "success" ? "text-emerald-700" : "text-rose-700"
+                  )}
+                >
+                  {avatarMessage.text}
+                </p>
+              )}
               <h3 className="text-title">{user?.displayName}</h3>
               <p className="text-meta mt-1">{user?.username}</p>
               <p className="text-meta">{user?.role === "admin" ? "Quyền: Admin" : "Quyền: Nhân viên"}</p>
