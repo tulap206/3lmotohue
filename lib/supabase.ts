@@ -392,6 +392,35 @@ export const fetchTransactions = async () => {
   return data || []
 }
 
+export const fetchUserDisplayNames = async (): Promise<Record<string, string>> => {
+  const { data, error } = await supabase
+    .from('auth_users')
+    .select('username, displayname')
+
+  if (error) {
+    console.error('Error fetching user display names:', error)
+    return {}
+  }
+
+  const map: Record<string, string> = {}
+  for (const row of data || []) {
+    const username = String(row.username || "").trim()
+    if (!username) continue
+    const displayName = String(row.displayname || "").trim()
+    map[username.toLowerCase()] = displayName || username
+  }
+  return map
+}
+
+export function getUserDisplayName(
+  username: string | null | undefined,
+  displayNames: Record<string, string>
+) {
+  const key = String(username || "").trim()
+  if (!key) return "—"
+  return displayNames[key.toLowerCase()] || key
+}
+
 export const insertTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
   console.log("📝 [insertTransaction] Attempting to insert:", transaction)
   

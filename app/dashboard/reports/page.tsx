@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { supabase, fetchTransactions, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
+import { supabase, fetchTransactions, fetchUserDisplayNames, getUserDisplayName, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows, type CommissionHomeRow } from "@/lib/commission-home"
@@ -67,6 +67,7 @@ export default function ReportsPage() {
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [userDisplayNames, setUserDisplayNames] = useState<Record<string, string>>({})
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
@@ -94,8 +95,9 @@ export default function ReportsPage() {
 
   const loadTransactions = async (resetPage = true) => {
     try {
-      const data = await fetchTransactions()
+      const [data, displayNames] = await Promise.all([fetchTransactions(), fetchUserDisplayNames()])
       setTransactions(data)
+      setUserDisplayNames(displayNames)
       if (resetPage) setCurrentPage(1) // Reset to first page only when requested
       console.log("✅ Loaded transactions from Supabase:", data.length)
     } catch (error) {
@@ -144,7 +146,8 @@ export default function ReportsPage() {
     const query = searchQuery.toLowerCase()
     return (
       tx.description.toLowerCase().includes(query) ||
-      tx.user.toLowerCase().includes(query) ||
+      getUserDisplayName(tx.user, userDisplayNames).toLowerCase().includes(query) ||
+      (tx.user || "").toLowerCase().includes(query) ||
       tx.amount.toString().includes(query) ||
       tx.type.toLowerCase().includes(query)
     )
@@ -1160,7 +1163,7 @@ export default function ReportsPage() {
                           }`}>
                             {tx.type === "income" ? "+" : "-"}{tx.amount.toLocaleString("vi-VN")}đ
                           </td>
-                          <td className="py-3 px-4 text-slate-500">{tx.user}</td>
+                          <td className="py-3 px-4 text-slate-500">{getUserDisplayName(tx.user, userDisplayNames)}</td>
                           {user?.role === "admin" && (
                             <td className="py-3 px-4 text-center">
                               <div className="flex gap-1 justify-center">
@@ -1219,7 +1222,7 @@ export default function ReportsPage() {
                       <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-rose-600"}`}>
                         {tx.type === "income" ? "+" : "-"}{tx.amount.toLocaleString("vi-VN")}đ
                       </span>
-                      <span className="text-meta text-slate-500">bởi {tx.user}</span>
+                      <span className="text-meta text-slate-500">bởi {getUserDisplayName(tx.user, userDisplayNames)}</span>
                     </div>
                     {user?.role === "admin" && (
                       <div className="flex justify-end gap-3 mt-2 pt-2 border-t border-slate-100/50">

@@ -45,7 +45,7 @@ import {
   EntityFormField,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
-import { fetchVehicles, fetchRentals, fetchTransactions, fetchCustomers, insertCustomer, insertTransaction, deleteTransaction, updateTransaction, supabase } from "@/lib/supabase"
+import { fetchVehicles, fetchRentals, fetchTransactions, fetchCustomers, fetchUserDisplayNames, getUserDisplayName, insertCustomer, insertTransaction, deleteTransaction, updateTransaction, supabase } from "@/lib/supabase"
 import { uploadImage } from "@/lib/storage"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -418,6 +418,7 @@ export default function DashboardPage() {
   // Reports & Transactions States
   const [monthlyRevenue, setMonthlyRevenue] = useState<{ month: string; revenue: number }[]>([])
   const [transactions, setTransactions] = useState<any[]>([])
+  const [userDisplayNames, setUserDisplayNames] = useState<Record<string, string>>({})
   const [txSearchQuery, setTxSearchQuery] = useState("")
   const [txCurrentPage, setTxCurrentPage] = useState(1)
   const [isAddTxOpen, setIsAddTxOpen] = useState(false)
@@ -454,7 +455,13 @@ export default function DashboardPage() {
       setOrders(rentals)
       const transactions = isDemoAccount ? [] : (await fetchTransactions()) || []
       const customersData = isDemoAccount ? [] : (await fetchCustomers()) || []
+      const displayNames = isDemoAccount ? {} : await fetchUserDisplayNames()
+      if (user?.username) {
+        const key = user.username.toLowerCase()
+        displayNames[key] = user.displayName || displayNames[key] || user.username
+      }
       setCustomers(customersData)
+      setUserDisplayNames(displayNames)
 
       // Calculate stats
       const completedRentals = rentals.filter((r: any) => r.status === 'completed')
@@ -725,14 +732,15 @@ export default function DashboardPage() {
         if (!query) return true
 
         const matchDescription = (tx.description || "").toLowerCase().includes(query)
-        const matchUser = (tx.user || "").toLowerCase().includes(query)
+        const matchUser = getUserDisplayName(tx.user, userDisplayNames).toLowerCase().includes(query) ||
+          (tx.user || "").toLowerCase().includes(query)
         const matchAmount = String(tx.amount || "").includes(query)
         const matchType = (tx.type === "income" ? "thu" : "chi").includes(query)
 
         return matchDescription || matchUser || matchAmount || matchType
       })
       .sort((a, b) => new Date(b.timestamp || b.created_at || 0).getTime() - new Date(a.timestamp || a.created_at || 0).getTime())
-  }, [transactions, txSearchQuery])
+  }, [transactions, txSearchQuery, userDisplayNames])
 
   const txTotalPages = Math.max(1, Math.ceil(filteredTransactions.length / txItemsPerPage))
   const txSafePage = Math.min(txCurrentPage, txTotalPages)
@@ -1148,7 +1156,7 @@ export default function DashboardPage() {
                             }`}>
                               {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
                             </td>
-                            <td className="py-3 px-4 text-slate-500">{tx.user}</td>
+                            <td className="py-3 px-4 text-slate-500">{getUserDisplayName(tx.user, userDisplayNames)}</td>
                             {user?.role === "admin" && (
                               <td className="py-3 px-4 text-center">
                                 <div className="flex gap-1 justify-center">
@@ -1207,7 +1215,7 @@ export default function DashboardPage() {
                         <span className={`font-bold tabular-nums ${tx.type === "income" ? "text-emerald-700" : "text-rose-600"}`}>
                           {tx.type === "income" ? "+" : "-"}{formatPrice(tx.amount)}
                         </span>
-                        <span className="text-meta text-slate-500">bởi {tx.user}</span>
+                        <span className="text-meta text-slate-500">bởi {getUserDisplayName(tx.user, userDisplayNames)}</span>
                       </div>
                       {user?.role === "admin" && (
                         <div className="flex justify-end gap-3 mt-2 pt-2 border-t border-slate-100/50">
