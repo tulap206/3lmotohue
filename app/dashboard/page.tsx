@@ -883,39 +883,40 @@ export default function DashboardPage() {
         title={
           <>
             Tổng quan{" "}
-            <span className="text-blue-600 font-semibold">Cho thuê xe · 3L Moto</span>
+            <span className="hidden sm:inline text-blue-600 font-semibold">Cho thuê xe · 3L Moto</span>
           </>
         }
         subtitle="Vận hành đội xe và theo dõi hiệu suất kinh doanh"
         actions={
-          <div className="flex items-center gap-2.5">
+          <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:items-center md:gap-2.5">
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="col-span-2 md:col-span-1 bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="sm:hidden">Tạo đơn</span>
+              <span className="hidden sm:inline">Tạo đơn thuê mới</span>
+            </Button>
             <Button
               onClick={() => setIsDailyNotificationOpen(true)}
               variant="outline"
-              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3.5 ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
+              className="min-w-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3 ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
             >
-              <Bell className="w-4 h-4 mr-1.5 text-amber-500" />
-              Thông báo
+              <Bell className="w-4 h-4 mr-1.5 shrink-0 text-amber-500" />
+              <span className="truncate">Thông báo</span>
               {dailyNotifyBadgeCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none">
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none shrink-0">
                   {dailyNotifyBadgeCount}
                 </span>
               )}
             </Button>
             <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Tạo đơn thuê mới
-            </Button>
-            <Button
               onClick={() => setIsDailySummaryOpen(true)}
               variant="outline"
-              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:text-blue-600 hover:border-slate-400"
+              className="min-w-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3 ui-transition [&_svg]:text-blue-600 hover:border-slate-400"
             >
-              <CalendarCheck className="w-4 h-4 mr-2 text-blue-600" />
-              Tổng ngày
+              <CalendarCheck className="w-4 h-4 mr-1.5 shrink-0 text-blue-600" />
+              <span className="truncate">Tổng ngày</span>
             </Button>
           </div>
         }

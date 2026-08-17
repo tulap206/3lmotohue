@@ -80,8 +80,8 @@ export function ModuleBrandHeader({
           "sticky top-0 z-30 -mx-4 px-4 lg:-mx-8 lg:px-8 py-4 bg-slate-50/95 backdrop-blur-md"
       )}
     >
-      <div className="min-w-0">
-        <h1 className="text-display">
+      <div className="min-w-0 w-full md:w-auto">
+        <h1 className="text-display text-pretty">
           {title ?? (
             <>
               Tổng quan{" "}
@@ -91,10 +91,10 @@ export function ModuleBrandHeader({
             </>
           )}
         </h1>
-        <p className="text-meta mt-1.5">{subtitle}</p>
+        <p className="text-meta mt-1.5 text-pretty">{subtitle}</p>
       </div>
       {(actions || badge) && (
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto [&>*]:w-full sm:[&>*]:w-auto">
+        <div className="flex flex-col gap-2 w-full min-w-0 md:w-auto md:items-end">
           {badge}
           {actions}
         </div>
@@ -273,8 +273,8 @@ export function ModuleKpiCard({
             </div>
             <div
               className={cn(
-                "font-semibold text-slate-800 tracking-tight money leading-none min-w-0 whitespace-nowrap",
-                "text-[1.05rem] sm:text-lg xl:text-xl",
+                "font-semibold text-slate-800 tracking-tight money leading-tight min-w-0 break-words",
+                "text-[1.05rem] sm:text-lg xl:text-xl sm:whitespace-nowrap",
                 valueClassName
               )}
               title={valueTitle}
