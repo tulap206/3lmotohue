@@ -441,16 +441,6 @@ export default function SettingsPage() {
         onRestoreFile={handleRestoreFromFile}
         onDeleteFile={handleDeleteBackup}
         onRefresh={loadBackupFiles}
-        headerExtra={
-          <Button
-            type="button"
-            onClick={() => setIsAboutOpen(true)}
-            className="h-11 shrink-0 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
-          >
-            <Info className="w-4 h-4" />
-            Giới thiệu
-          </Button>
-        }
       />
     </ModulePageShell>
   )
