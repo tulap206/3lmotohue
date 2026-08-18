@@ -6,7 +6,7 @@ import { verifyJWT } from '@/lib/auth-jwt'
 const ipRequestMap = new Map<string, { count: number; resetAt: number }>()
 
 const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
-  '/api/telegram':     { max: 10,  windowMs: 60_000  },  // 10 req / minute
+  '/api/telegram':     { max: 60,  windowMs: 60_000  },  // 60 req / minute
   '/api/visitor-log':  { max: 5,   windowMs: 60_000  },  // 5 req / minute
   '/api/backup':       { max: 3,   windowMs: 300_000 },  // 3 req / 5 minutes
   '/login':            { max: 15,  windowMs: 300_000 },  // 15 attempts / 5 minutes

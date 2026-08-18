@@ -1,11 +1,36 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { verifyJWT } from "@/lib/auth-jwt"
+import { sendTelegramNotification } from "@/lib/telegram-notify"
 
-// API route handler for Telegram notifications
-export async function POST(req: Request) {
+function jwtSecret() {
+  return process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "fallback-secret-key-3lmoto"
+}
+
+function configuredInternalSecrets() {
+  return [
+    process.env.INTERNAL_API_SECRET,
+    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET,
+  ]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+}
+
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const headerSecret = req.headers.get("x-internal-secret")?.trim()
+  if (headerSecret && configuredInternalSecrets().includes(headerSecret)) {
+    return true
+  }
+
+  const sessionToken = req.cookies.get("3l_moto_session")?.value
+  if (!sessionToken) return false
+
+  const decoded = await verifyJWT(sessionToken, jwtSecret())
+  return Boolean(decoded)
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const internalSecret = req.headers.get("x-internal-secret")
-    const expectedSecret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET
-    if (!expectedSecret || internalSecret !== expectedSecret) {
+    if (!(await isAuthorized(req))) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 })
     }
 
@@ -13,7 +38,6 @@ export async function POST(req: Request) {
     const token = process.env.TELEGRAM_BOT_TOKEN?.trim()
     const chatId = process.env.TELEGRAM_CHAT_ID?.trim()
 
-    // Log the API call to database at the very beginning for debugging environment variables
     try {
       const { supabase } = await import("@/lib/supabase")
       await supabase.from("access_logs").insert([{
@@ -28,71 +52,28 @@ export async function POST(req: Request) {
       console.error("❌ Failed to log telegram API call to DB:", logErr)
     }
 
-    if (!token || !chatId) {
-      console.warn("⚠️ Telegram configuration missing. Notification skipped.")
+    const result = await sendTelegramNotification(event, details)
+    if (!result.ok) {
       try {
         const { supabase } = await import("@/lib/supabase")
         await supabase.from("access_logs").insert([{
           username: "system_telegram_error",
           displayname: "Hệ thống Telegram Lỗi",
-          action: "Thiếu cấu hình",
+          action: result.error === "Telegram configurations not set." ? "Thiếu cấu hình" : "Lỗi Telegram",
           module: "Telegram",
-          details: `Thiếu biến cấu hình trên Vercel. Token: ${!!token} | ChatID: ${!!chatId}`,
+          details: result.error || "Unknown error",
           timestamp: new Date().toISOString(),
         }])
       } catch (e) {}
-      return NextResponse.json({ message: "Telegram configurations not set." }, { status: 400 })
-    }
-
-    // HTML escape helper
-    const escapeHtml = (text: string) => {
-      if (!text) return ""
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-    }
-
-    // Escape event and details for safe HTML parsing
-    const safeEvent = escapeHtml(event)
-    // Convert bold markdown syntax (*bold*) to HTML bold (<b>bold</b>) after escaping
-    const safeDetails = escapeHtml(details).replace(/\*(.*?)\*/g, "<b>$1</b>")
-
-    const message = `🔔 <b>THÔNG BÁO HỆ THỐNG 3LMOTO</b>\n──────────────────\n📌 <b>Sự kiện:</b> ${safeEvent}\n📝 <b>Chi tiết:</b> ${safeDetails}\n⏰ <b>Thời gian:</b> ${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}\n──────────────────`
-
-    const url = `https://api.telegram.org/bot${token}/sendMessage`
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      }),
-    })
-
-    const data = await response.json()
-    if (!data.ok) {
-      console.error("❌ Telegram Bot API Error:", data.description)
-      // Log the API error details to DB
-      try {
-        const { supabase } = await import("@/lib/supabase")
-        await supabase.from("access_logs").insert([{
-          username: "system_telegram_error",
-          displayname: "Hệ thống Telegram Lỗi",
-          action: "Lỗi Telegram",
-          module: "Telegram",
-          details: `Lỗi: ${data.description} | Token: ${token ? token.substring(0, 8) + "..." : "N/A"}`,
-          timestamp: new Date().toISOString(),
-        }])
-      } catch (e) {}
-      return NextResponse.json({ error: data.description }, { status: 400 })
+      return NextResponse.json(
+        { error: result.error || "Failed to send Telegram notification" },
+        { status: 400 }
+      )
     }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error("❌ Failed to send Telegram notification:", error)
-    // Log the exception to DB
     try {
       const { supabase } = await import("@/lib/supabase")
       await supabase.from("access_logs").insert([{

@@ -51,23 +51,12 @@ export async function recordFailedLogin(username: string, ip: string): Promise<n
         last_attempt: new Date().toISOString()
       })
       
-    // Send Telegram alert if account is locked
     if (lockedUntil) {
-      const expectedSecret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      
-      // Attempt internal direct POST call or trigger Telegram API route
-      await fetch(`${appUrl}/api/telegram`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-internal-secret': expectedSecret || ''
-        },
-        body: JSON.stringify({
-          event: '🚨 CẢNH BÁO BẢO MẬT',
-          details: `Tài khoản *${username}* bị TẠM KHÓA ${LOCKOUT_MINUTES} phút do nhập sai mật khẩu quá 5 lần.\nIP: ${ip}\nThiết bị: Hệ thống tự động`
-        }),
-      }).catch(err => console.error('Telegram lockout alert error:', err))
+      const { sendTelegramNotification } = await import('./telegram-notify')
+      await sendTelegramNotification(
+        '🚨 CẢNH BÁO BẢO MẬT',
+        `Tài khoản *${username}* bị TẠM KHÓA ${LOCKOUT_MINUTES} phút do nhập sai mật khẩu quá 5 lần.\nIP: ${ip}\nThiết bị: Hệ thống tự động`
+      ).catch(err => console.error('Telegram lockout alert error:', err))
     }
     
     return count

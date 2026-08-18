@@ -88,14 +88,12 @@ export const logger = {
         ip_address: ipAddress,
         timestamp: new Date().toISOString(),
       }])
-      // Trigger Telegram notification via Next.js API Route (independent of DB logs)
+      // Browser posts with the session cookie so /api/telegram can authorize without a public secret.
       if (typeof window !== 'undefined') {
         fetch('/api/telegram', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || ''
-          },
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             event: `${action} - Phân hệ: ${module}`,
             details: `Người thực hiện: *${displayName}* (${username})\nNội dung: ${details}\nThiết bị: ${deviceStr}`,

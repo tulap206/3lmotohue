@@ -119,6 +119,11 @@ export async function POST(request: NextRequest) {
     // Log login activity
     try {
       await logger.log(userData.username, userData.displayName, 'Đăng nhập', 'Hệ thống', `${userData.displayName} đăng nhập thành công (Secure System)`)
+      const { sendTelegramNotification } = await import('@/lib/telegram-notify')
+      await sendTelegramNotification(
+        'Đăng nhập - Phân hệ: Hệ thống',
+        `Người thực hiện: *${userData.displayName}* (${userData.username})\nNội dung: ${userData.displayName} đăng nhập thành công (Secure System)`
+      )
     } catch (e) {}
 
     return response
