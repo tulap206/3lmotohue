@@ -34,13 +34,15 @@ export function formatQuy79BankLineFull(): string {
   return `${bank.name} ${bank.branch} - ${bank.accountNumber} - ${bank.accountHolder}`;
 }
 
+export const STATIC_PAYMENT_QR_SRC = "/qr-bidv-le-quoc-loc.png"
+
 /** VietQR động: gắn số tiền + nội dung theo đơn thuê. */
 export function getVietQrImageUrl(opts?: { amount?: number; addInfo?: string; template?: "qr_only" | "compact" | "compact2" }) {
   const { bank } = QUY79_BUSINESS
   const template = opts?.template ?? "compact2"
   const params = new URLSearchParams()
   if (opts?.amount && opts.amount > 0) params.set("amount", String(Math.round(opts.amount)))
-  if (opts?.addInfo) params.set("addInfo", opts.addInfo)
+  if (opts?.addInfo) params.set("addInfo", opts.addInfo.slice(0, 50))
   params.set("accountName", bank.accountHolderLatin)
   return `https://img.vietqr.io/image/${bank.vietQrCode}-${bank.accountNumber}-${template}.png?${params.toString()}`
 }

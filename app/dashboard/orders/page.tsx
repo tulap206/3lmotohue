@@ -56,7 +56,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload } from "lucide-react"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
-import { QUY79_BUSINESS, getVietQrImageUrl } from "@/lib/business-info"
+import { QUY79_BUSINESS, getVietQrImageUrl, STATIC_PAYMENT_QR_SRC } from "@/lib/business-info"
 import {
   type RentalTerm,
   getRentalTerm,
@@ -2231,10 +2231,15 @@ export default function OrdersPage() {
                       <img
                         src={getVietQrImageUrl({
                           amount: payable,
-                          addInfo: `TT 3L MOTO ${o.rentalCode || o.id}`,
+                          addInfo: `TT 3L MOTO ${o.rentalCode || o.id.slice(0, 8)}`,
                         })}
                         alt="VietQR BIDV Lê Quốc Lộc"
+                        referrerPolicy="no-referrer"
                         className="h-full w-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = STATIC_PAYMENT_QR_SRC
+                        }}
                       />
                     </div>
                     <div className="min-w-0 text-center sm:text-left">
