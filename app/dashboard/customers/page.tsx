@@ -13,7 +13,10 @@ import {
   rentalFilterInputClass,
   getRentalCustomerStatusLabel,
   rentalCustomerStatusBadgeClass,
+  getRentalOrderStatusLabel,
+  rentalOrderStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
+import { formatDisplayDate } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 import {
   EntityFormDialogContent,
@@ -57,56 +60,54 @@ interface Customer {
 }
 
 // Image upload button component
-const ImageUploadButton = ({ 
-  label, 
+const ImageUploadButton = ({
+  label,
   onImageSelected,
-  preview
-}: { 
+  preview,
+  onPickStart,
+}: {
   label: string
   onImageSelected: (base64: string) => void
   preview?: string
+  onPickStart?: () => void
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 min-w-0">
       <p className="text-label">{label}</p>
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="w-full border-2 border-dashed border-slate-300 rounded-[var(--radius-control)] p-5 hover:border-blue-400 hover:bg-blue-50 transition flex flex-col items-center justify-center gap-2 cursor-pointer"
+      <div
+        className={cn(
+          "relative aspect-[4/3] overflow-hidden rounded-[var(--radius-control)] ui-transition",
+          preview
+            ? "border border-slate-200"
+            : "border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/50"
+        )}
       >
-        <div className="bg-blue-50 p-3 rounded-[var(--radius-badge)]">
-          <Upload className="w-5 h-5 text-blue-600" />
-        </div>
-        <div className="text-center">
-          <p className="text-body font-medium text-slate-700">Thêm ảnh</p>
-          <p className="text-meta">JPG, PNG, GIF</p>
-        </div>
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) {
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={preview} alt={label} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-1 px-2">
+            <Upload className="h-5 w-5 text-slate-400" />
+            <span className="text-meta text-center">Thêm ảnh</span>
+          </div>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+          onClick={() => onPickStart?.()}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ""
+            if (!file) return
             const reader = new FileReader()
             reader.onload = (event) => {
-              const base64 = event.target?.result as string
-              onImageSelected(base64)
+              onImageSelected(event.target?.result as string)
             }
             reader.readAsDataURL(file)
-          }
-        }}
-      />
-      {preview && (
-        <div className="relative w-fit">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded-[var(--radius-control)] border border-slate-200" />
-        </div>
-      )}
+          }}
+        />
+      </div>
     </div>
   )
 }
@@ -121,6 +122,26 @@ function formatCustomerIdCard(idcard?: string | null): string {
   const raw = (idcard || "").trim()
   if (!raw) return "—"
   return raw.replace(/^CCCD_/i, "")
+}
+
+function CustomerStat({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string
+  value: string
+  tone?: "default" | "emerald"
+}) {
+  return (
+    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-w-0 flex flex-col justify-center">
+      <p className="text-label text-slate-500">{label}</p>
+      <p className={cn(
+        "text-body font-semibold tabular-nums mt-0.5 leading-snug break-words",
+        tone === "emerald" ? "text-emerald-700 money" : "text-slate-900"
+      )}>{value}</p>
+    </div>
+  )
 }
 
 function CustomerAvatar({ src, name }: { src?: string; name: string }) {
@@ -152,6 +173,7 @@ export default function CustomersPage() {
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null)
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null)
+  const pickingFileRef = useRef(false)
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -166,6 +188,17 @@ export default function CustomersPage() {
 
 
   const [filterStatus, setFilterStatus] = useState("all")
+
+  const keepDialogOpenWhilePickingFile = (event: { preventDefault: () => void }) => {
+    if (pickingFileRef.current) event.preventDefault()
+  }
+
+  const markPickingFile = () => {
+    pickingFileRef.current = true
+    window.setTimeout(() => {
+      pickingFileRef.current = false
+    }, 1500)
+  }
 
   const filteredCustomers = useMemo(() => {
     const filtered = customers.filter(
@@ -536,7 +569,7 @@ export default function CustomersPage() {
       name: customer.name,
       phone: customer.phone,
       address: customer.address,
-      idcard: customer.idcard,
+      idcard: formatCustomerIdCard(customer.idcard) === "—" ? "" : formatCustomerIdCard(customer.idcard),
       customerphoto: customer.customerphoto || [],
       cccdfront: customer.cccdfront || [],
       cccdback: customer.cccdback || [],
@@ -647,21 +680,39 @@ export default function CustomersPage() {
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <EntityFormDialogContent accent="blue" maxWidth="2xl">
+            <EntityFormDialogContent
+              accent="blue"
+              maxWidth="2xl"
+              onPointerDownOutside={keepDialogOpenWhilePickingFile}
+              onFocusOutside={keepDialogOpenWhilePickingFile}
+              onInteractOutside={keepDialogOpenWhilePickingFile}
+            >
               <EntityFormHeader
                 title={editingCustomer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}
-                description={editingCustomer ? "Cập nhật thông tin khách hàng" : "Nhập thông tin khách hàng mới"}
+                description={editingCustomer ? "Cập nhật liên hệ, CCCD và ảnh giấy tờ" : "Nhập liên hệ, CCCD và ảnh giấy tờ"}
               />
               <form onSubmit={handleSubmit}>
                 <EntityFormBody>
-                  <EntityFormSection title="Thông tin khách" description="Thông tin liên hệ và định danh">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                    <CustomerAvatar src={formData.customerphoto?.[0]} name={formData.name.trim() || "K"} />
+                    <div className="min-w-0">
+                      <p className="text-title truncate">{formData.name.trim() || "Khách chưa đặt tên"}</p>
+                      <p className="text-meta">
+                        {formData.phone.trim() || "Chưa số điện thoại"}
+                        {formData.address.trim() ? ` · ${formData.address.trim()}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <EntityFormSection title="Thông tin khách" description="Liên hệ và định danh">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <EntityFormField label="Họ và tên" required>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="VD: Nguyễn Văn A"
+                          placeholder="Nguyễn Văn A"
+                          autoComplete="name"
                           className={entityFormInputClass}
                           required
                         />
@@ -669,20 +720,24 @@ export default function CustomersPage() {
                       <EntityFormField label="Số điện thoại" required>
                         <Input
                           id="phone"
+                          type="tel"
+                          inputMode="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="VD: 0901234567"
-                          className={entityFormInputClass}
+                          placeholder="0901234567"
+                          autoComplete="tel"
+                          className={cn(entityFormInputClass, "tabular-nums")}
                           required
                         />
                       </EntityFormField>
-                      <EntityFormField label="Số CCCD/CMND" required>
+                      <EntityFormField label="Số CCCD / CMND" required>
                         <Input
                           id="idcard"
+                          inputMode="numeric"
                           value={formData.idcard}
-                          onChange={(e) => setFormData({ ...formData, idcard: e.target.value })}
-                          placeholder="VD: 079123456789"
-                          className={entityFormInputClass}
+                          onChange={(e) => setFormData({ ...formData, idcard: e.target.value.replace(/^CCCD_/i, "") })}
+                          placeholder="079123456789"
+                          className={cn(entityFormInputClass, "font-mono")}
                           required
                         />
                       </EntityFormField>
@@ -691,7 +746,8 @@ export default function CustomersPage() {
                           id="address"
                           value={formData.address}
                           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          placeholder="VD: 123 Nguyễn Huệ, Q.1, TP.HCM"
+                          placeholder="Tây Lộc, TP. Huế"
+                          autoComplete="street-address"
                           className={entityFormInputClass}
                           required
                         />
@@ -700,30 +756,35 @@ export default function CustomersPage() {
                   </EntityFormSection>
 
                   <EntityFormSection title="Ảnh tài liệu" description="Tùy chọn — CCCD, GPLX, ảnh khách">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <ImageUploadButton
-                        label="Ảnh khách hàng"
+                        label="Ảnh khách"
                         preview={formData.customerphoto?.[0]}
+                        onPickStart={markPickingFile}
                         onImageSelected={(base64) => setFormData({ ...formData, customerphoto: base64 ? [base64] : [] })}
                       />
                       <ImageUploadButton
-                        label="Ảnh CCCD mặt trước"
+                        label="CCCD mặt trước"
                         preview={formData.cccdfront?.[0]}
+                        onPickStart={markPickingFile}
                         onImageSelected={(base64) => setFormData({ ...formData, cccdfront: base64 ? [base64] : [] })}
                       />
                       <ImageUploadButton
-                        label="Ảnh CCCD mặt sau"
+                        label="CCCD mặt sau"
                         preview={formData.cccdback?.[0]}
+                        onPickStart={markPickingFile}
                         onImageSelected={(base64) => setFormData({ ...formData, cccdback: base64 ? [base64] : [] })}
                       />
                       <ImageUploadButton
-                        label="Ảnh GPLX mặt trước"
+                        label="GPLX mặt trước"
                         preview={formData.licensefront?.[0]}
+                        onPickStart={markPickingFile}
                         onImageSelected={(base64) => setFormData({ ...formData, licensefront: base64 ? [base64] : [] })}
                       />
                       <ImageUploadButton
-                        label="Ảnh GPLX mặt sau"
+                        label="GPLX mặt sau"
                         preview={formData.licenseback?.[0]}
+                        onPickStart={markPickingFile}
                         onImageSelected={(base64) => setFormData({ ...formData, licenseback: base64 ? [base64] : [] })}
                       />
                     </div>
@@ -996,63 +1057,80 @@ export default function CustomersPage() {
 
       {/* #12 Customer rental history dialog */}
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-        <EntityFormDialogContent accent="blue" maxWidth="2xl">
+        <EntityFormDialogContent accent="blue" maxWidth="xl">
           <EntityFormHeader
-            title={`Lịch sử thuê — ${historyCustomer?.name ?? ""}`}
-            description="Tất cả các đơn thuê xe của khách hàng này"
+            title={historyCustomer ? `Lịch sử thuê` : "Lịch sử thuê"}
+            description={
+              historyCustomer
+                ? `${historyCustomer.name} · ${historyCustomer.phone || "Chưa SĐT"}`
+                : "Tất cả đơn thuê của khách"
+            }
           />
           {historyCustomer && (() => {
             const cRentals = rentals.filter(r => r.customerId === historyCustomer.id)
               .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
+            const completedCount = cRentals.filter(r => r.status === "completed").length
             const totalRev = cRentals.filter(r => r.status === "completed").reduce((s: number, r: any) => s + (r.revenue || r.totalPrice || 0), 0)
-            const totalSpend = cRentals.reduce((s: number, r: any) => s + (r.totalPrice || 0), 0)
             return (
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-slate-50 rounded-xl p-3 text-center">
-                    <p className="text-sm text-slate-500">Tổng đơn</p>
-                    <p className="text-lg font-extrabold text-slate-800">{cRentals.length}</p>
-                  </div>
-                  <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                    <p className="text-sm text-emerald-600">Đã hoàn thành</p>
-                    <p className="text-lg font-extrabold text-emerald-700">{cRentals.filter(r => r.status === "completed").length}</p>
-                  </div>
-                  <div className="bg-blue-50 rounded-xl p-3 text-center">
-                    <p className="text-meta text-slate-500">Tổng doanh thu</p>
-                    <p className="text-sm font-extrabold text-emerald-700 money tabular-nums">{totalRev.toLocaleString("vi-VN")}đ</p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <CustomerStat label="Tổng đơn" value={`${cRentals.length}`} />
+                  <CustomerStat label="Đã hoàn thành" value={`${completedCount}`} tone="emerald" />
+                  <div className="col-span-2 sm:col-span-1">
+                    <CustomerStat label="Tổng doanh thu" value={`${totalRev.toLocaleString("vi-VN")} đ`} tone="emerald" />
                   </div>
                 </div>
                 {cRentals.length === 0 ? (
-                  <p className="text-center text-slate-400 py-8 text-sm">Khách hàng chưa có đơn thuê nào</p>
+                  <ModuleEmptyState
+                    title="Chưa có đơn thuê"
+                    description="Khách này chưa có đơn thuê xe trong hệ thống."
+                  />
                 ) : (
-                  <div className="divide-y divide-slate-100">
-                    {cRentals.map(r => {
-                      const statusColor = r.status === "completed" ? "text-emerald-700 bg-emerald-50 border-emerald-100" : r.status === "cancelled" ? "text-slate-500 bg-slate-50 border-slate-100" : r.status === "active" ? "text-blue-700 bg-blue-50 border-blue-100" : "text-amber-700 bg-amber-50 border-amber-100"
-                      const statusLabel = { pending: "Chờ giao", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }[r.status as string] || r.status
-                      return (
-                        <div key={r.id} className="py-3 space-y-1.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-semibold text-slate-800 text-sm">{r.vehicleName}</p>
-                              <p className="text-sm text-slate-400 font-mono">{r.licensePlate}</p>
-                            </div>
-                            <span className={`text-sm font-semibold px-2 py-0.5 rounded-[var(--radius-badge)] border shrink-0 ${statusColor}`}>{statusLabel}</span>
+                  <ol className="space-y-2">
+                    {cRentals.map(r => (
+                      <li
+                        key={r.id}
+                        className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 space-y-1.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-body font-semibold text-slate-800 truncate">{r.vehicleName}</p>
+                            <p className="text-meta font-mono">{r.licensePlate}</p>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-slate-500">
-                            <Calendar className="w-3 h-3 shrink-0" />
-                            <span>{r.startDate} → {r.endDate} · {r.totalDays} ngày</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-slate-500">{(r.pricePerDay || 0).toLocaleString("vi-VN")}đ/ngày · Cọc {(r.deposit || 0).toLocaleString("vi-VN")}đ</span>
-                            <span className={`font-bold tabular-nums ${r.status === "completed" ? "text-emerald-600" : "text-slate-600"}`}>
-                              {r.status === "completed" ? `+${(r.revenue || r.totalPrice || 0).toLocaleString("vi-VN")}đ` : `${(r.totalPrice || 0).toLocaleString("vi-VN")}đ`}
-                            </span>
-                          </div>
+                          <span className={cn(customerStatusBadgeClass, rentalOrderStatusBadgeClass(r.status), "shrink-0")}>
+                            {getRentalOrderStatusLabel(r.status)}
+                          </span>
                         </div>
-                      )
-                    })}
-                  </div>
+                        <p className="text-meta flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                          {formatDisplayDate(r.startDate)} → {formatDisplayDate(r.endDate)} · {r.totalDays} ngày
+                        </p>
+                        <div className="flex items-end justify-between gap-2">
+                          <span className="text-meta">
+                            {(r.pricePerDay || 0).toLocaleString("vi-VN")} đ/ngày · Cọc {(r.deposit || 0).toLocaleString("vi-VN")} đ
+                          </span>
+                          <span className={cn(
+                            "text-body font-semibold money tabular-nums shrink-0",
+                            r.status === "completed" ? "text-emerald-700" : "text-slate-900"
+                          )}>
+                            {r.status === "completed"
+                              ? `+${(r.revenue || r.totalPrice || 0).toLocaleString("vi-VN")} đ`
+                              : `${(r.totalPrice || 0).toLocaleString("vi-VN")} đ`}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
                 )}
+                <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-2 flex justify-end border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsHistoryDialogOpen(false)}
+                    className="h-11 w-full sm:w-auto rounded-[var(--radius-control)] border-slate-200"
+                  >
+                    Đóng
+                  </Button>
+                </div>
               </div>
             )
           })()}
@@ -1063,7 +1141,7 @@ export default function CustomersPage() {
         setIsDetailDialogOpen(open)
         if (!open) setViewingCustomer(null)
       }}>
-        <EntityFormDialogContent accent="blue" maxWidth="lg">
+        <EntityFormDialogContent accent="blue" maxWidth="xl">
           {viewingCustomer && (() => {
             const cust = viewingCustomer
             const custRentals = rentals
@@ -1077,70 +1155,55 @@ export default function CustomersPage() {
             ]
             return (
               <>
-                <EntityFormHeader
-                  title="Chi tiết khách hàng"
-                  description={getRentalCustomerStatusLabel(cust.status)}
-                />
-                <div className="p-4 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="shrink-0">
-                      {cust.customerphoto && cust.customerphoto.length > 0 ? (
-                        <img
-                          src={cust.customerphoto[0]}
-                          alt="Ảnh khách"
-                          className="w-20 h-20 rounded-xl object-cover border border-slate-200 shadow-sm"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center">
-                          <User className="w-8 h-8 text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-lg font-extrabold text-slate-900">{cust.name}</p>
-                      <p className="text-sm text-slate-500 flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="font-medium text-slate-700">{cust.phone || "Chưa có SĐT"}</span>
-                      </p>
-                      {cust.address && (
-                        <p className="text-sm text-slate-500 flex items-start gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                          {cust.address}
-                        </p>
-                      )}
-                      <div className="pt-1">
-                        <span className={cn(
-                          customerStatusBadgeClass,
-                          rentalCustomerStatusBadgeClass(cust.status)
-                        )}>
-                          {getRentalCustomerStatusLabel(cust.status)}
-                        </span>
+                <div className="flex items-start gap-3 sm:gap-4 mb-5">
+                  <div className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] shrink-0 overflow-hidden rounded-[var(--radius-control)] border border-slate-200 bg-slate-50">
+                    {cust.customerphoto?.[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={cust.customerphoto[0]} alt={cust.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <User className="h-7 w-7 text-slate-300" />
                       </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 pr-6">
+                    <h2 className="text-title text-pretty">{cust.name}</h2>
+                    <p className="text-meta mt-0.5 flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      {cust.phone || "Chưa có SĐT"}
+                    </p>
+                    {cust.address && (
+                      <p className="text-meta mt-0.5 flex items-start gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                        <span>{cust.address}</span>
+                      </p>
+                    )}
+                    <div className="mt-2">
+                      <span className={cn(customerStatusBadgeClass, rentalCustomerStatusBadgeClass(cust.status))}>
+                        {getRentalCustomerStatusLabel(cust.status)}
+                      </span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Số CCCD / CMND</p>
-                      <p className="text-sm font-bold text-slate-800 font-mono">{formatCustomerIdCard(cust.idcard)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Tổng lần thuê</p>
-                      <p className="text-lg font-extrabold text-slate-800">{cust.totalrentals || custRentals.length} lượt</p>
-                    </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <CustomerStat label="Số CCCD / CMND" value={formatCustomerIdCard(cust.idcard)} />
+                    <CustomerStat label="Tổng lần thuê" value={`${cust.totalrentals || custRentals.length} lượt`} />
                   </div>
 
                   {docImages.length > 0 && (
                     <div>
-                      <p className="text-meta text-slate-500 mb-2">Ảnh tài liệu</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <p className="text-label text-slate-500 mb-2">Ảnh tài liệu</p>
+                      <div className="grid grid-cols-2 gap-2">
                         {docImages.map((img) => (
-                          <div key={img.label}>
-                            <p className="text-sm font-medium text-slate-400 mb-1">{img.label}</p>
+                          <div key={img.label} className="min-w-0">
+                            <p className="text-meta mb-1">{img.label}</p>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={img.src}
                               alt={img.label}
-                              className="w-full rounded-xl border border-slate-200 shadow-sm object-cover aspect-video"
+                              className="w-full rounded-[var(--radius-control)] border border-slate-200 object-cover aspect-video"
                             />
                           </div>
                         ))}
@@ -1150,28 +1213,34 @@ export default function CustomersPage() {
 
                   {custRentals.length > 0 && (
                     <div>
-                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
-                      <div className="space-y-1.5">
+                      <p className="text-label text-slate-500 mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-2">
                         {custRentals.slice(0, 4).map((r) => (
-                          <div key={r.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
-                            <span className="font-bold text-slate-700 truncate">{r.vehicleName}</span>
-                            <span className="text-slate-400 font-mono shrink-0">{r.licensePlate}</span>
-                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
-                              {(r.totalPrice || 0).toLocaleString("vi-VN")}đ
-                            </span>
+                          <div
+                            key={r.id}
+                            className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-body font-semibold text-slate-800 truncate">{r.vehicleName}</p>
+                              <p className="text-meta font-mono">{r.licensePlate}</p>
+                            </div>
+                            <p className="text-body font-semibold money tabular-nums text-slate-900 shrink-0">
+                              {(r.totalPrice || 0).toLocaleString("vi-VN")} đ
+                            </p>
                           </div>
                         ))}
                         {custRentals.length > 4 && (
-                          <p className="text-sm text-slate-400 text-center">+{custRentals.length - 4} đơn khác</p>
+                          <p className="text-meta text-center">+{custRentals.length - 4} đơn khác</p>
                         )}
                       </div>
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-2 flex flex-col-reverse sm:flex-row gap-2 border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
                     <Button
+                      type="button"
                       variant="outline"
-                      className="flex-1 h-11 text-body"
+                      className="h-11 flex-1 text-body border-slate-200"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         setHistoryCustomer(cust)
@@ -1182,7 +1251,8 @@ export default function CustomersPage() {
                       Xem lịch sử
                     </Button>
                     <Button
-                      className="flex-1 h-11 text-body bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white [&_svg]:!text-white"
+                      type="button"
+                      className="h-11 flex-1 text-body bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white [&_svg]:!text-white"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         handleEdit(cust)
