@@ -47,6 +47,21 @@ import {
 import { cn } from "@/lib/utils"
 import { formatDisplayDate } from "@/lib/format-date"
 
+function VehicleThumb({ src, name }: { src?: string; name: string }) {
+  return (
+    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[var(--radius-badge)] border border-slate-200 bg-slate-50">
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <Car className="h-5 w-5 text-slate-300" />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function parseVehicleDisplayNotes(notes?: string) {
   if (!notes) return { location: "", cleanNotes: "" }
   const match = notes.match(/\[location:(.*?)\]/i)
@@ -286,13 +301,16 @@ export default function MaintenancePage() {
                             {(currentPage - 1) * itemsPerPage + index + 1}
                           </td>
                           <td className="py-3.5 px-4">
-                            <button
-                              type="button"
-                              className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left"
-                              onClick={() => openDetailDialog(vehicle)}
-                            >
-                              {vehicle.name}
-                            </button>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <VehicleThumb src={vehicle.vehicleImages?.[0]} name={vehicle.name} />
+                              <button
+                                type="button"
+                                className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left truncate"
+                                onClick={() => openDetailDialog(vehicle)}
+                              >
+                                {vehicle.name}
+                              </button>
+                            </div>
                           </td>
                           <td className="py-3.5 px-4">
                             <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase">
@@ -356,15 +374,18 @@ export default function MaintenancePage() {
                 return (
                   <ModuleMobileCard key={vehicle.id}>
                     <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <button
-                          type="button"
-                          className="font-semibold text-slate-800 hover:text-slate-700 hover:underline text-left"
-                          onClick={() => openDetailDialog(vehicle)}
-                        >
-                          {vehicle.name}
-                        </button>
-                        <p className="text-sm text-slate-500 font-mono">{vehicle.licensePlate}</p>
+                      <div className="flex items-start gap-3 min-w-0">
+                        <VehicleThumb src={vehicle.vehicleImages?.[0]} name={vehicle.name} />
+                        <div className="min-w-0">
+                          <button
+                            type="button"
+                            className="font-semibold text-slate-800 hover:text-slate-700 hover:underline text-left truncate"
+                            onClick={() => openDetailDialog(vehicle)}
+                          >
+                            {vehicle.name}
+                          </button>
+                          <p className="text-sm text-slate-500 font-mono">{vehicle.licensePlate}</p>
+                        </div>
                       </div>
                       <span className={cn(
                         maintenanceBadgeClass,
