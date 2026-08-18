@@ -332,6 +332,7 @@ export function BackupRestorePanel({
                 </p>
               </div>
               {headerExtra}
+            </div>
             <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-3">
               <Button
                 type="button"
