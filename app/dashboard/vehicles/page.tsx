@@ -335,9 +335,9 @@ function VehicleStat({
           ? "text-rose-700"
           : "text-slate-900"
   return (
-    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-h-[4.25rem] flex flex-col justify-center">
+    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-w-0 flex flex-col justify-center">
       <p className="text-label text-slate-500">{label}</p>
-      <p className={cn("text-title money tabular-nums mt-0.5 leading-tight", valueClass)}>{value}</p>
+      <p className={cn("text-body font-semibold money tabular-nums mt-0.5 leading-snug break-words", valueClass)}>{value}</p>
       {hint && <p className="text-meta mt-0.5">{hint}</p>}
     </div>
   )
@@ -1637,20 +1637,6 @@ export default function VehiclesPage() {
                         className={cn(entityFormInputClass, "font-mono")}
                       />
                     </EntityFormField>
-                    <EntityFormField label="Phân loại xe">
-                      <Select
-                        value={editingVehicle.category || "bike"}
-                        onValueChange={(value: "car" | "bike") => setEditingVehicle({ ...editingVehicle, category: value })}
-                      >
-                        <SelectTrigger className={entityFormSelectClass}>
-                          <SelectValue placeholder="Phân loại" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
-                          <SelectItem value="bike">Xe máy</SelectItem>
-                          <SelectItem value="car">Ô tô</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </EntityFormField>
                     <EntityFormField label="Trạng thái">
                       <Select
                         value={editingVehicle.status}
@@ -1825,7 +1811,7 @@ export default function VehiclesPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2">
                     <VehicleStat label="Giá thuê / ngày" value={formatPrice(v.pricePerDay)} />
                     <VehicleStat label="Giá mua" value={formatPrice(v.purchasePrice)} tone="amber" />
                     <VehicleStat label="Tổng thu" value={formatPrice(totalRevenue)} tone="emerald" />
@@ -1834,15 +1820,12 @@ export default function VehiclesPage() {
                       value={`${profit >= 0 ? "+" : ""}${formatPrice(profit)}`}
                       tone={profit >= 0 ? "emerald" : "rose"}
                     />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <VehicleStat label="Số KM hiện tại" value={`${(v.current_km || 0).toLocaleString("vi-VN")} km`} />
                     <VehicleStat label="Ngày đã cho thuê" value={`${v.totalRentalDays || 0} ngày`} />
-                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-h-[4.25rem] flex flex-col justify-center">
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-w-0 flex flex-col justify-center">
                       <p className="text-label text-slate-500">Lấp đầy 30 ngày</p>
                       <p className={cn(
-                        "text-title tabular-nums mt-0.5 leading-tight",
+                        "text-body font-semibold tabular-nums mt-0.5 leading-snug",
                         u30.pct >= 70 ? "text-emerald-700" : u30.pct >= 40 ? "text-amber-800" : "text-slate-900"
                       )}>{u30.pct}%</p>
                       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
