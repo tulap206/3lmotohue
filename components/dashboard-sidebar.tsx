@@ -21,10 +21,15 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  EntityFormDialogContent,
+  EntityFormHeader,
+  EntityFormField,
+  entityFormInputClass,
+} from "@/components/dashboard/entity-form-dialog"
 
 interface SidebarProps {
   children: React.ReactNode
@@ -286,140 +291,131 @@ export function DashboardSidebar({ children }: SidebarProps) {
       </div>
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="flex flex-col gap-0 overflow-hidden bg-white p-0 rounded-[var(--radius-container)] border-slate-200 max-w-md max-h-[min(90dvh,calc(100dvh-1rem))]">
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600" />
-          <DialogHeader className="shrink-0 space-y-0 px-4 pt-5 pb-3 sm:px-5 text-left">
-            <DialogTitle className="text-title">Thông tin cá nhân</DialogTitle>
-            <DialogDescription className="text-meta mt-0.5">Tài khoản đang đăng nhập</DialogDescription>
-          </DialogHeader>
-
-          <div className="px-4 sm:px-5 pb-4 space-y-3">
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="sr-only"
-              onChange={handleAvatarChange}
-            />
-            <div className="flex items-center gap-3 rounded-[var(--radius-container)] border border-slate-200/80 bg-slate-50/80 p-2.5">
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={uploadingAvatar}
-                className="relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
-                title="Thay ảnh đại diện"
-              >
-                <Avatar className="h-14 w-14">
-                  {user?.avatarUrl && (
-                    <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover" />
-                  )}
-                  <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold uppercase">
-                    {user?.displayName.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white">
-                  <Camera className="h-3 w-3" />
-                </span>
-              </button>
-              <div className="min-w-0 flex-1">
-                <p className="text-title truncate leading-tight">{user?.displayName}</p>
-                <p className="text-meta truncate mt-0.5">{user?.username}</p>
-                <p className="text-meta text-slate-500 mt-0.5">
-                  {uploadingAvatar ? "Đang tải ảnh..." : "Chạm ảnh để đổi đại diện"}
-                </p>
-              </div>
-              <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] border border-slate-200 bg-white text-meta font-semibold text-slate-700">
+        <EntityFormDialogContent accent="blue" maxWidth="md">
+          <EntityFormHeader
+            title="Thông tin cá nhân"
+            description="Tài khoản đang đăng nhập"
+          />
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            onChange={handleAvatarChange}
+          />
+          <div className="flex items-start gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60"
+              title="Thay ảnh đại diện"
+            >
+              <Avatar className="h-14 w-14 sm:h-16 sm:w-16">
+                {user?.avatarUrl && (
+                  <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover" />
+                )}
+                <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold uppercase">
+                  {user?.displayName.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white">
+                <Camera className="h-3.5 w-3.5" />
+              </span>
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="text-title truncate">{user?.displayName}</p>
+              <p className="text-meta truncate mt-0.5">{user?.username}</p>
+              <span className="mt-1.5 inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] border border-slate-200 bg-white text-meta font-semibold text-slate-700">
                 {user?.role === "admin" ? "Admin" : "Nhân viên"}
               </span>
-            </div>
-
-            {avatarMessage && (
-              <p
-                className={cn(
-                  "text-meta",
-                  avatarMessage.type === "success" ? "text-emerald-700" : "text-rose-700"
-                )}
-              >
-                {avatarMessage.text}
+              <p className="text-meta text-slate-500 mt-1.5">
+                {uploadingAvatar ? "Đang tải ảnh..." : "Chạm ảnh để đổi đại diện"}
               </p>
-            )}
-
-            <div className="space-y-2.5">
-              <h4 className="text-label text-slate-800">Đổi mật khẩu</h4>
-
-              {passwordMessage && (
-                <div
-                  className={cn(
-                    "px-3 py-2 rounded-[var(--radius-control)] text-meta",
-                    passwordMessage.type === "success"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-rose-50 text-rose-700"
-                  )}
-                >
-                  {passwordMessage.text}
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-label">Mật khẩu cũ</Label>
-                  <Input
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="Mật khẩu hiện tại"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    className="mt-1 h-11 text-base rounded-[var(--radius-control)] border-slate-200"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-label">Mật khẩu mới</Label>
-                    <Input
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder="Mật khẩu mới"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="mt-1 h-11 text-base rounded-[var(--radius-control)] border-slate-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-label">Xác nhận</Label>
-                    <Input
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder="Nhập lại"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="mt-1 h-11 text-base rounded-[var(--radius-control)] border-slate-200"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pt-0.5">
-              <Button
-                onClick={() => {
-                  setIsProfileOpen(false)
-                  handleLogout()
-                }}
-                variant="outline"
-                className="h-11 text-rose-600 border-rose-200 hover:bg-rose-50 rounded-[var(--radius-control)] font-semibold"
-              >
-                Đăng xuất
-              </Button>
-              <Button
-                onClick={handleChangePassword}
-                disabled={changingPassword}
-                className="h-11 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-semibold [&_svg]:!text-white"
-              >
-                {changingPassword ? "Đang lưu..." : "Lưu mật khẩu"}
-              </Button>
             </div>
           </div>
-        </DialogContent>
+
+          {avatarMessage && (
+            <p
+              className={cn(
+                "text-meta mt-2",
+                avatarMessage.type === "success" ? "text-emerald-700" : "text-rose-700"
+              )}
+            >
+              {avatarMessage.text}
+            </p>
+          )}
+
+          <div className="mt-5 space-y-3">
+            <p className="text-label text-slate-800">Đổi mật khẩu</p>
+
+            {passwordMessage && (
+              <div
+                className={cn(
+                  "px-3 py-2 rounded-[var(--radius-control)] text-meta",
+                  passwordMessage.type === "success"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-rose-50 text-rose-700"
+                )}
+              >
+                {passwordMessage.text}
+              </div>
+            )}
+
+            <EntityFormField label="Mật khẩu cũ">
+              <Input
+                type="password"
+                autoComplete="current-password"
+                placeholder="Mật khẩu hiện tại"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className={entityFormInputClass}
+              />
+            </EntityFormField>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <EntityFormField label="Mật khẩu mới">
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Mật khẩu mới"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className={entityFormInputClass}
+                />
+              </EntityFormField>
+              <EntityFormField label="Xác nhận">
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Nhập lại"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={entityFormInputClass}
+                />
+              </EntityFormField>
+            </div>
+          </div>
+
+          <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-5 flex flex-col-reverse sm:flex-row gap-2 border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
+            <Button
+              onClick={() => {
+                setIsProfileOpen(false)
+                handleLogout()
+              }}
+              variant="outline"
+              className="h-11 w-full sm:flex-1 text-rose-600 border-rose-200 hover:bg-rose-50 rounded-[var(--radius-control)] font-semibold"
+            >
+              Đăng xuất
+            </Button>
+            <Button
+              onClick={handleChangePassword}
+              disabled={changingPassword}
+              className="h-11 w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-semibold [&_svg]:!text-white"
+            >
+              {changingPassword ? "Đang lưu..." : "Lưu mật khẩu"}
+            </Button>
+          </div>
+        </EntityFormDialogContent>
       </Dialog>
     </div>
   )
