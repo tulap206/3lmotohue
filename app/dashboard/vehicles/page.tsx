@@ -616,7 +616,7 @@ export default function VehiclesPage() {
           licensePlate: newVehicle.licensePlate,
           color: newVehicle.color,
           pricePerDay: parseMoneyInput(newVehicle.pricePerDay),
-          current_km: parseInt(newVehicle.current_km) || 0,
+          current_km: parseMoneyInput(newVehicle.current_km),
           purchasePrice: parseMoneyInput(newVehicle.purchasePrice),
           notes: newVehicle.notes,
           status: newVehicle.status,
@@ -1009,7 +1009,7 @@ export default function VehiclesPage() {
         >
           <EntityFormHeader
             title="Thêm xe mới"
-            description="Nhập thông tin xe mới vào hệ thống"
+            description="Nhập xe vào đội cho thuê — giá, ảnh và trạng thái"
           />
           <form
             onSubmit={(e) => {
@@ -1018,30 +1018,50 @@ export default function VehiclesPage() {
             }}
           >
             <EntityFormBody>
-              <EntityFormSection title="Thông tin xe" description="Thông tin cơ bản và giá thuê">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <EntityFormField label="Loại xe" hint="Tên hoặc model của xe" required>
+              <div className="flex items-center gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                <VehicleThumb
+                  src={
+                    normalizeImageList(newVehicle.vehicleImages)[0]
+                      ? imagePreviewSrc(normalizeImageList(newVehicle.vehicleImages)[0])
+                      : undefined
+                  }
+                  name={newVehicle.name || "Xe mới"}
+                />
+                <div className="min-w-0">
+                  <p className="text-title truncate">{newVehicle.name.trim() || "Xe chưa đặt tên"}</p>
+                  <p className="text-meta font-mono tracking-wide">
+                    {newVehicle.licensePlate.trim() || "Chưa biển số"}
+                    {newVehicle.color.trim() ? ` · ${newVehicle.color.trim()}` : ""}
+                  </p>
+                </div>
+              </div>
+
+              <EntityFormSection title="Xe" description="Tên, biển số và tình trạng khi nhập">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <EntityFormField label="Loại xe" hint="VD: Honda Vision, AB Trắng Đỏ" required>
                     <Input
                       id="name"
-                      placeholder="VD: Honda Vision"
+                      placeholder="Honda Vision"
+                      autoComplete="off"
                       value={newVehicle.name}
                       onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
                       className={entityFormInputClass}
                     />
                   </EntityFormField>
-                  <EntityFormField label="Biển số" hint="Biển số xe định danh" required>
+                  <EntityFormField label="Biển số" required>
                     <Input
                       id="licensePlate"
-                      placeholder="VD: 75AA-12345"
+                      placeholder="75AA-123.45"
+                      autoComplete="off"
                       value={newVehicle.licensePlate}
                       onChange={(e) => setNewVehicle({ ...newVehicle, licensePlate: e.target.value })}
-                      className={entityFormInputClass}
+                      className={cn(entityFormInputClass, "font-mono")}
                     />
                   </EntityFormField>
                   <EntityFormField label="Màu xe">
                     <Input
                       id="color"
-                      placeholder="VD: Đen, Trắng, Đỏ"
+                      placeholder="Đen, trắng, đỏ"
                       value={newVehicle.color}
                       onChange={(e) => setNewVehicle({ ...newVehicle, color: e.target.value })}
                       className={entityFormInputClass}
@@ -1050,52 +1070,16 @@ export default function VehiclesPage() {
                   <EntityFormField label="Số KM hiện tại">
                     <Input
                       id="current_km"
-                      type="number"
-                      placeholder="VD: 15000"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="15.000"
                       value={newVehicle.current_km}
-                      onChange={(e) => setNewVehicle({ ...newVehicle, current_km: e.target.value })}
-                      className={entityFormInputClass}
+                      onChange={(e) => setNewVehicle({
+                        ...newVehicle,
+                        current_km: formatMoneyInput(e.target.value),
+                      })}
+                      className={cn(entityFormInputClass, "money tabular-nums")}
                     />
-                  </EntityFormField>
-                  <EntityFormField label="Giá thuê (VND/ngày)" required>
-                    <Input
-                      id="price"
-                      type="text"
-                      placeholder="VD: 300.000"
-                      value={newVehicle.pricePerDay}
-                      onChange={(e) => {
-                        const formatted = formatMoneyInput(e.target.value)
-                        setNewVehicle({ ...newVehicle, pricePerDay: formatted })
-                      }}
-                      className={cn(entityFormInputClass, "font-mono")}
-                    />
-                  </EntityFormField>
-                  <EntityFormField label="Giá mua xe (VND)">
-                    <Input
-                      id="purchasePrice"
-                      type="text"
-                      placeholder="VD: 50.000.000"
-                      value={newVehicle.purchasePrice}
-                      onChange={(e) => {
-                        const formatted = formatMoneyInput(e.target.value)
-                        setNewVehicle({ ...newVehicle, purchasePrice: formatted })
-                      }}
-                      className={cn(entityFormInputClass, "font-mono")}
-                    />
-                  </EntityFormField>
-                  <EntityFormField label="Phân loại xe">
-                    <Select
-                      value={newVehicle.category}
-                      onValueChange={(value: "car" | "bike") => setNewVehicle({ ...newVehicle, category: value })}
-                    >
-                      <SelectTrigger className={entityFormSelectClass}>
-                        <SelectValue placeholder="Phân loại" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
-                        <SelectItem value="bike">Xe máy</SelectItem>
-                        <SelectItem value="car">Ô tô</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </EntityFormField>
                   <EntityFormField label="Trạng thái">
                     <Select
@@ -1105,7 +1089,7 @@ export default function VehiclesPage() {
                       <SelectTrigger className={entityFormSelectClass}>
                         <SelectValue placeholder="Chọn trạng thái" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
+                      <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
                         <SelectItem value="available">Sẵn sàng</SelectItem>
                         <SelectItem value="pending">Chờ giao</SelectItem>
                         <SelectItem value="rented">Đang thuê</SelectItem>
@@ -1114,10 +1098,44 @@ export default function VehiclesPage() {
                     </Select>
                   </EntityFormField>
                 </div>
-                <EntityFormField label="Ghi chú" hint="Thông tin bổ sung về xe">
+              </EntityFormSection>
+
+              <EntityFormSection title="Giá" description="Tự thêm dấu chấm phần nghìn khi nhập">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <EntityFormField label="Giá thuê / ngày" required>
+                    <Input
+                      id="price"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="130.000"
+                      value={newVehicle.pricePerDay}
+                      onChange={(e) => {
+                        setNewVehicle({ ...newVehicle, pricePerDay: formatMoneyInput(e.target.value) })
+                      }}
+                      className={cn(entityFormInputClass, "money tabular-nums")}
+                    />
+                  </EntityFormField>
+                  <EntityFormField label="Giá mua xe">
+                    <Input
+                      id="purchasePrice"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="32.500.000"
+                      value={newVehicle.purchasePrice}
+                      onChange={(e) => {
+                        setNewVehicle({ ...newVehicle, purchasePrice: formatMoneyInput(e.target.value) })
+                      }}
+                      className={cn(entityFormInputClass, "money tabular-nums")}
+                    />
+                  </EntityFormField>
+                </div>
+              </EntityFormSection>
+
+              <EntityFormSection title="Ảnh & ghi chú" description="Ảnh xe, giấy tờ; vị trí GPS lưu riêng sau này">
+                <EntityFormField label="Ghi chú">
                   <Textarea
                     id="notes"
-                    placeholder="Nhập ghi chú về xe..."
+                    placeholder="Nguồn xe, tình trạng máy..."
                     value={newVehicle.notes}
                     onChange={(e) => setNewVehicle({ ...newVehicle, notes: e.target.value })}
                     className={cn(entityFormInputClass, "min-h-[80px] h-auto py-2.5")}
@@ -1135,7 +1153,7 @@ export default function VehiclesPage() {
                         <img
                           src={imagePreviewSrc(img)}
                           alt={`Xe ${index + 1}`}
-                          className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                          className="w-full h-full object-cover"
                         />
                         <button
                           type="button"
@@ -1164,7 +1182,7 @@ export default function VehiclesPage() {
                         <img
                           src={imagePreviewSrc(img)}
                           alt={`Giấy tờ ${index + 1}`}
-                          className="w-full h-full object-cover cursor-pointer hover:opacity-90"
+                          className="w-full h-full object-cover"
                         />
                         <button
                           type="button"
