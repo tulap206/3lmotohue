@@ -52,7 +52,7 @@ export const SOFTWARE_ABOUT = {
   productName: "3L Moto",
   productLine: "Phần mềm quản lý vận hành cho thuê xe mô tô",
   author: "Phan Lê Tự Lập",
-  email: "phanletulao@gmail.com",
+  email: "phanletulap@gmail.com",
   phone: "0967611112",
   phoneDisplay: "0967 611 112",
 } as const
