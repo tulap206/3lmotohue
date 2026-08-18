@@ -425,7 +425,8 @@ export default function OrdersPage() {
 
   // Unassigned vehicle booking states
   const [unassignedQuantity, setUnassignedQuantity] = useState("1")
-  const [unassignedPricePerDay, setUnassignedPricePerDay] = useState("150.000")
+  const [unassignedPricePerDay, setUnassignedPricePerDay] = useState("120.000")
+  const [deferVehicleAssign, setDeferVehicleAssign] = useState(false)
   const [assigningOrder, setAssigningOrder] = useState<RentalOrder | null>(null)
   const [assignVehicleSearch, setAssignVehicleSearch] = useState("")
   const [selectedVehiclesForAssignList, setSelectedVehiclesForAssignList] = useState<Vehicle[]>([])
@@ -450,6 +451,9 @@ export default function OrdersPage() {
       setVehicleSearch("")
       setShowCustomerDropdown(false)
       setShowVehicleDropdown(false)
+      setDeferVehicleAssign(false)
+      setUnassignedQuantity("1")
+      setUnassignedPricePerDay("120.000")
     }
   }, [isDialogOpen])
 
@@ -641,8 +645,12 @@ export default function OrdersPage() {
     e.preventDefault()
 
     const selectedVehicles = vehicles.filter((v) => formData.vehicleIds.includes(v.id))
-    const isUnassigned = selectedVehicles.length === 0
-    const unassignedPriceVal = parseMoneyInput(unassignedPricePerDay) || 150000
+    if (!deferVehicleAssign && selectedVehicles.length === 0) {
+      showWarning("Chọn xe thuê hoặc tích “Chưa chọn gán xe”.")
+      return
+    }
+    const isUnassigned = deferVehicleAssign || selectedVehicles.length === 0
+    const unassignedPriceVal = parseMoneyInput(unassignedPricePerDay) || 120000
 
     const quantity = isUnassigned ? Math.max(1, parseInt(unassignedQuantity, 10) || 1) : selectedVehicles.length
 
@@ -810,6 +818,9 @@ export default function OrdersPage() {
     setNewCustomerPhoto(null)
     setNewCustomerCCCDFront(null)
     setHasCommission(false)
+    setUnassignedQuantity("1")
+    setUnassignedPricePerDay("120.000")
+    setDeferVehicleAssign(false)
     setIsDialogOpen(false)
   }
 
@@ -1394,7 +1405,9 @@ export default function OrdersPage() {
                     <p className="text-meta truncate">
                       {formData.vehicleIds.length > 0
                         ? `${formData.vehicleIds.length} xe`
-                        : "Chưa gán xe"}
+                        : deferVehicleAssign
+                          ? "Chưa gán xe"
+                          : "Chưa chọn xe"}
                       {formData.startDate && formData.endDate
                         ? ` · ${formData.startDate} → ${formData.endDate}`
                         : ""}
@@ -1554,48 +1567,64 @@ export default function OrdersPage() {
                       <Input
                         placeholder="Tên xe hoặc biển số"
                         value={vehicleSearch}
+                        disabled={deferVehicleAssign}
                         onChange={(e) => {
                           setVehicleSearch(e.target.value)
                           setShowVehicleDropdown(true)
                         }}
-                        onFocus={() => setShowVehicleDropdown(true)}
+                        onFocus={() => {
+                          if (!deferVehicleAssign) setShowVehicleDropdown(true)
+                        }}
                         className={entityFormInputClass}
                       />
                     </EntityFormField>
 
-                    {formData.vehicleIds.length === 0 && (
-                      <div className="rounded-[var(--radius-control)] border border-amber-200 bg-amber-50/80 p-3 space-y-3">
-                        <p className="text-meta text-amber-900">
-                          Để trống xe — đơn ở trạng thái chờ giao. Gán xe khi bàn giao.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <EntityFormField label="Số lượng xe">
-                            <Input
-                              type="number"
-                              inputMode="numeric"
-                              min={1}
-                              max={20}
-                              value={unassignedQuantity}
-                              onChange={(e) => setUnassignedQuantity(e.target.value)}
-                              placeholder="1"
-                              className={cn(entityFormInputClass, "font-bold bg-white")}
-                            />
-                          </EntityFormField>
-                          <EntityFormField label="Đơn giá / xe / ngày">
-                            <Input
-                              type="text"
-                              inputMode="numeric"
-                              value={unassignedPricePerDay}
-                              onChange={(e) => setUnassignedPricePerDay(formatMoneyInput(e.target.value))}
-                              placeholder="150.000"
-                              className={cn(entityFormInputClass, "font-mono bg-white")}
-                            />
-                          </EntityFormField>
-                        </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={deferVehicleAssign}
+                        onChange={(e) => {
+                          const checked = e.target.checked
+                          setDeferVehicleAssign(checked)
+                          if (checked) {
+                            setFormData((prev) => ({ ...prev, vehicleIds: [] }))
+                            setVehicleSearch("")
+                            setShowVehicleDropdown(false)
+                          }
+                        }}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      />
+                      <span className="text-body font-semibold text-slate-700">Chưa chọn gán xe</span>
+                    </label>
+
+                    {deferVehicleAssign && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <EntityFormField label="Số lượng xe">
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={20}
+                            value={unassignedQuantity}
+                            onChange={(e) => setUnassignedQuantity(e.target.value)}
+                            placeholder="1"
+                            className={cn(entityFormInputClass, "font-bold")}
+                          />
+                        </EntityFormField>
+                        <EntityFormField label="Đơn giá / xe / ngày">
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            value={unassignedPricePerDay}
+                            onChange={(e) => setUnassignedPricePerDay(formatMoneyInput(e.target.value))}
+                            placeholder="120.000"
+                            className={cn(entityFormInputClass, "font-mono")}
+                          />
+                        </EntityFormField>
                       </div>
                     )}
 
-                    {showVehicleDropdown && (
+                    {showVehicleDropdown && !deferVehicleAssign && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
                         <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
@@ -1606,6 +1635,7 @@ export default function OrdersPage() {
                               <div
                                 key={vehicle.id}
                                 onClick={() => {
+                                  setDeferVehicleAssign(false)
                                   setFormData(prev => ({
                                     ...prev,
                                     vehicleIds: [...prev.vehicleIds, vehicle.id]
