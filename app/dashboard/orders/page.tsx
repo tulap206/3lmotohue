@@ -54,7 +54,7 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload } from "lucide-react"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { QUY79_BUSINESS, getVietQrImageUrl } from "@/lib/business-info"
 import {
@@ -76,6 +76,16 @@ function isUnassignedVehicle(order: { vehicleId?: string; licensePlate?: string 
   return order.licensePlate === "CHỜ GÁN XE" || !order.vehicleId || order.vehicleId === UNASSIGNED_VEHICLE_ID
 }
 
+function parseVehicleDisplayNotes(notes?: string) {
+  if (!notes) return { location: "", cleanNotes: "" }
+  const match = notes.match(/\[location:(.*?)\]/i)
+  if (!match) return { location: "", cleanNotes: notes }
+  const raw = match[1].trim()
+  const cleanNotes = notes.replace(/\[location:(.*?)\]/gi, "").trim()
+  const location = raw.includes("|") ? (raw.split("|")[1] || raw.split("|")[0]) : raw
+  return { location, cleanNotes }
+}
+
 function OrderStat({
   label,
   value,
@@ -83,7 +93,7 @@ function OrderStat({
 }: {
   label: string
   value: string
-  tone?: "default" | "emerald" | "amber" | "muted"
+  tone?: "default" | "emerald" | "amber" | "muted" | "rose"
 }) {
   return (
     <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-w-0 flex flex-col justify-center">
@@ -92,7 +102,8 @@ function OrderStat({
         className={cn(
           "text-body font-semibold tabular-nums mt-0.5 leading-snug break-words",
           tone === "emerald" && "text-emerald-700 money",
-          tone === "amber" && "text-amber-700 money",
+          tone === "amber" && "text-amber-800 money",
+          tone === "rose" && "text-rose-700 money",
           tone === "muted" && "text-slate-400",
           tone === "default" && "text-slate-900"
         )}
@@ -2501,7 +2512,7 @@ export default function OrdersPage() {
       <Dialog open={!!viewingCustomer} onOpenChange={(open) => {
         if (!open && !lightboxImage) setViewingCustomer(null)
       }}>
-        <EntityFormDialogContent accent="blue" maxWidth="lg">
+        <EntityFormDialogContent accent="blue" maxWidth="xl">
           {viewingCustomer && (() => {
             const cust = viewingCustomer
             const custRentals = orders
@@ -2515,71 +2526,66 @@ export default function OrdersPage() {
             ]
             return (
               <>
-                <EntityFormHeader
-                  title="Chi tiết khách hàng"
-                  description={getRentalCustomerStatusLabel(cust.status)}
-                />
-                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                  <div className="flex items-start gap-4">
-                    <div className="shrink-0">
-                      {cust.customerphoto && cust.customerphoto.length > 0 ? (
-                        <img
-                          src={cust.customerphoto[0]}
-                          alt="Ảnh khách"
-                          className="w-20 h-20 rounded-xl object-cover border border-slate-200 shadow-sm cursor-pointer"
-                          onClick={() => setLightboxImage(cust.customerphoto![0])}
-                        />
-                      ) : (
-                        <div className="w-20 h-20 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center">
-                          <User className="w-8 h-8 text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-lg font-extrabold text-slate-900">{cust.name}</p>
-                      <p className="text-sm text-slate-500 flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="font-medium text-slate-700">{cust.phone || "Chưa có SĐT"}</span>
-                      </p>
-                      {cust.address && (
-                        <p className="text-sm text-slate-500 flex items-start gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                          {cust.address}
-                        </p>
-                      )}
-                      <div className="pt-1">
-                        <span className={cn(orderStatusBadgeClass, rentalCustomerStatusBadgeClass(cust.status))}>
-                          {getRentalCustomerStatusLabel(cust.status)}
-                        </span>
+                <div className="flex items-start gap-3 sm:gap-4 mb-5">
+                  <button
+                    type="button"
+                    className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] shrink-0 overflow-hidden rounded-[var(--radius-control)] border border-slate-200 bg-slate-50"
+                    onClick={() => cust.customerphoto?.[0] && setLightboxImage(cust.customerphoto[0])}
+                  >
+                    {cust.customerphoto?.[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={cust.customerphoto[0]} alt={cust.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <User className="h-7 w-7 text-slate-300" />
                       </div>
+                    )}
+                  </button>
+                  <div className="min-w-0 flex-1 pr-6">
+                    <h2 className="text-title text-pretty">{cust.name}</h2>
+                    <p className="text-meta mt-0.5 flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      {cust.phone || "Chưa có SĐT"}
+                    </p>
+                    {cust.address && (
+                      <p className="text-meta mt-0.5 flex items-start gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                        <span>{cust.address}</span>
+                      </p>
+                    )}
+                    <div className="mt-2">
+                      <span className={cn(orderStatusBadgeClass, rentalCustomerStatusBadgeClass(cust.status))}>
+                        {getRentalCustomerStatusLabel(cust.status)}
+                      </span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Số CCCD / CMND</p>
-                      <p className="text-sm font-bold text-slate-800 font-mono">{(cust.idcard || "").replace(/^CCCD_/i, "") || "—"}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Tổng lần thuê</p>
-                      <p className="text-lg font-extrabold text-slate-800">{cust.totalrentals || custRentals.length} lượt</p>
-                    </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <OrderStat label="Số CCCD / CMND" value={(cust.idcard || "").replace(/^CCCD_/i, "") || "—"} />
+                    <OrderStat label="Tổng lần thuê" value={`${cust.totalrentals || custRentals.length} lượt`} />
                   </div>
 
                   {docImages.length > 0 && (
                     <div>
-                      <p className="text-meta text-slate-500 mb-2">Ảnh tài liệu</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <p className="text-label text-slate-500 mb-2">Ảnh tài liệu</p>
+                      <div className="grid grid-cols-2 gap-2">
                         {docImages.map((img) => (
-                          <div key={img.label}>
-                            <p className="text-sm font-medium text-slate-400 mb-1">{img.label}</p>
+                          <button
+                            key={img.label}
+                            type="button"
+                            className="min-w-0 text-left"
+                            onClick={() => setLightboxImage(img.src)}
+                          >
+                            <p className="text-meta mb-1">{img.label}</p>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={img.src}
                               alt={img.label}
-                              className="w-full rounded-xl border border-slate-200 shadow-sm object-cover aspect-video cursor-pointer"
-                              onClick={() => setLightboxImage(img.src)}
+                              className="w-full rounded-[var(--radius-control)] border border-slate-200 object-cover aspect-video"
                             />
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -2587,28 +2593,38 @@ export default function OrdersPage() {
 
                   {custRentals.length > 0 && (
                     <div>
-                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
-                      <div className="space-y-1.5">
+                      <p className="text-label text-slate-500 mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-2">
                         {custRentals.slice(0, 4).map((r) => (
-                          <div key={r.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
-                            <span className="font-bold text-slate-700 truncate">{r.vehicleName}</span>
-                            <span className="text-slate-400 font-mono shrink-0">{r.licensePlate}</span>
-                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
-                              {(r.totalPrice || 0).toLocaleString("vi-VN")}đ
-                            </span>
-                          </div>
+                          <button
+                            key={r.id}
+                            type="button"
+                            className="flex w-full items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 text-left ui-transition hover:border-blue-200 hover:bg-blue-50/40"
+                            onClick={() => {
+                              setViewingCustomer(null)
+                              setViewingOrder(r)
+                            }}
+                          >
+                            <div className="min-w-0">
+                              <p className="text-body font-semibold text-slate-800 truncate">{r.vehicleName}</p>
+                              <p className="text-meta font-mono">{r.licensePlate}</p>
+                            </div>
+                            <p className="text-body font-semibold money tabular-nums text-slate-900 shrink-0">
+                              {(r.totalPrice || 0).toLocaleString("vi-VN")} đ
+                            </p>
+                          </button>
                         ))}
                         {custRentals.length > 4 && (
-                          <p className="text-sm text-slate-400 text-center">+{custRentals.length - 4} đơn khác</p>
+                          <p className="text-meta text-center">+{custRentals.length - 4} đơn khác</p>
                         )}
                       </div>
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-2 flex justify-end border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 text-sm"
+                      className="h-11 w-full sm:w-auto rounded-[var(--radius-control)] border-slate-200"
                       onClick={() => setViewingCustomer(null)}
                     >
                       Đóng
@@ -2625,7 +2641,7 @@ export default function OrdersPage() {
       <Dialog open={!!viewingVehicle} onOpenChange={(open) => {
         if (!open && !lightboxImage) setViewingVehicle(null)
       }}>
-        <EntityFormDialogContent accent="blue" maxWidth="lg">
+        <EntityFormDialogContent accent="blue" maxWidth="xl">
           {viewingVehicle && (() => {
             const v = viewingVehicle
             const vId = v.id
@@ -2660,99 +2676,117 @@ export default function OrdersPage() {
               .filter((o) => o.vehicleId === vId)
               .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
               .slice(0, 4)
+            const loc = parseVehicleDisplayNotes(v.notes)
+            const photo = (v.vehicleImages || []).find((img) => typeof img === "string") as string | undefined
 
             return (
               <>
-                <EntityFormHeader
-                  title={v.name}
-                  description={`${v.licensePlate || "Chưa biển"}${v.color ? ` · ${v.color}` : ""}`}
-                />
-                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                  <div className="flex items-center justify-between">
-                    <span className={cn(
-                      orderStatusBadgeClass,
-                      rentalVehicleStatusBadgeClass(v.status)
-                    )}>
-                      {getRentalVehicleStatusLabel(v.status)}
-                    </span>
-                    {v.category && (
-                      <span className="text-sm text-slate-500">
-                        Phân loại: <span className="font-medium text-slate-800">{v.category === "car" ? "Ô tô" : "Xe máy"}</span>
-                      </span>
+                <div className="flex items-start gap-3 sm:gap-4 mb-5">
+                  <button
+                    type="button"
+                    className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] shrink-0 overflow-hidden rounded-[var(--radius-control)] border border-slate-200 bg-slate-50"
+                    onClick={() => photo && setLightboxImage(photo)}
+                  >
+                    {photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photo} alt={v.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Car className="h-7 w-7 text-slate-300" />
+                      </div>
                     )}
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Giá thuê/ngày</p>
-                      <p className="text-sm font-extrabold text-blue-700 tabular-nums">{formatPrice(v.pricePerDay)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Giá mua</p>
-                      <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(v.purchasePrice)}</p>
-                    </div>
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500">Tổng thu</p>
-                      <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{formatPrice(totalRevenue)}</p>
-                    </div>
-                    <div className={cn(
-                      "border rounded-xl p-3",
-                      profit >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
-                    )}>
-                      <p className={cn(
-                        "text-meta",
-                        profit >= 0 ? "text-emerald-600" : "text-blue-600"
-                      )}>Lợi nhuận</p>
-                      <p className={cn(
-                        "text-sm font-extrabold tabular-nums",
-                        profit >= 0 ? "text-emerald-700" : "text-blue-600"
-                      )}>
-                        {profit >= 0 ? "+" : ""}{formatPrice(profit)}
-                      </p>
+                  </button>
+                  <div className="min-w-0 flex-1 pr-6">
+                    <h2 className="text-title text-pretty">{v.name}</h2>
+                    <p className="text-meta mt-0.5 font-mono tracking-wide">
+                      {v.licensePlate || "Chưa biển"}
+                      {v.color ? ` · ${v.color}` : ""}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className={cn(orderStatusBadgeClass, rentalVehicleStatusBadgeClass(v.status))}>
+                        {getRentalVehicleStatusLabel(v.status)}
+                      </span>
+                      {v.category && (
+                        <span className="inline-flex items-center rounded-[var(--radius-badge)] border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-label text-slate-600">
+                          {v.category === "car" ? "Ô tô" : "Xe máy"}
+                        </span>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Số KM hiện tại</p>
-                      <p className="text-sm font-bold text-slate-800">{(v.current_km || 0).toLocaleString("vi-VN")} km</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Ngày đã cho thuê</p>
-                      <p className="text-sm font-bold text-slate-800">{v.totalRentalDays || 0} ngày</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Lấp đầy 30 ngày</p>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <OrderStat label="Giá thuê / ngày" value={formatPrice(v.pricePerDay)} />
+                    <OrderStat label="Giá mua" value={formatPrice(v.purchasePrice)} tone="amber" />
+                    <OrderStat label="Tổng thu" value={formatPrice(totalRevenue)} tone="emerald" />
+                    <OrderStat
+                      label="Lợi nhuận"
+                      value={`${profit >= 0 ? "+" : ""}${formatPrice(profit)}`}
+                      tone={profit >= 0 ? "emerald" : "rose"}
+                    />
+                    <OrderStat label="Số KM hiện tại" value={`${(v.current_km || 0).toLocaleString("vi-VN")} km`} />
+                    <OrderStat label="Ngày đã cho thuê" value={`${v.totalRentalDays || 0} ngày`} />
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-w-0 flex flex-col justify-center">
+                      <p className="text-label text-slate-500">Lấp đầy 30 ngày</p>
                       <p className={cn(
-                        "text-sm font-extrabold tabular-nums",
-                        u30.pct >= 70 ? "text-emerald-600" : u30.pct >= 40 ? "text-amber-600" : "text-blue-500"
+                        "text-body font-semibold tabular-nums mt-0.5 leading-snug",
+                        u30.pct >= 70 ? "text-emerald-700" : u30.pct >= 40 ? "text-amber-800" : "text-slate-900"
                       )}>{u30.pct}%</p>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className={cn("h-full rounded-full", u30.pct >= 70 ? "bg-emerald-500" : u30.pct >= 40 ? "bg-amber-500" : "bg-blue-500")}
+                          style={{ width: `${Math.min(100, u30.pct)}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Tổng đơn thuê</p>
-                      <p className="text-sm font-bold text-slate-800">{totalRentalCount} đơn</p>
-                    </div>
+                    <OrderStat label="Tổng đơn thuê" value={`${totalRentalCount} đơn`} />
                   </div>
 
-                  {v.notes && v.notes.trim() && (
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
-                      <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
+                  {loc.location && (
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/80 px-3 py-3">
+                      <p className="text-label text-slate-500 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                        Vị trí hiện tại
+                      </p>
+                      <p className="text-body text-slate-800 mt-1">{loc.location}</p>
+                    </div>
+                  )}
+
+                  {loc.cleanNotes && (
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-3">
+                      <p className="text-label text-slate-500 mb-1">Ghi chú</p>
+                      <p className="text-body text-slate-700 whitespace-pre-line">{loc.cleanNotes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
-                      <div className="space-y-1.5">
+                      <p className="text-label text-slate-500 mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-2">
                         {recentOrders.map((o) => (
-                          <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
-                            <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
-                            <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
-                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
-                              {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
-                            </span>
-                          </div>
+                          <button
+                            key={o.id}
+                            type="button"
+                            className="flex w-full items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 text-left ui-transition hover:border-blue-200 hover:bg-blue-50/40"
+                            onClick={() => {
+                              setViewingVehicle(null)
+                              setViewingOrder(o)
+                            }}
+                          >
+                            <div className="min-w-0">
+                              <p className="text-body font-semibold text-slate-800 truncate">{o.customerName}</p>
+                              <p className="text-meta">{formatDisplayDate(o.startDate)} → {formatDisplayDate(o.endDate)}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-body money tabular-nums text-slate-900">
+                                {(o.totalPrice || 0).toLocaleString("vi-VN")} đ
+                              </p>
+                              <span className={cn(orderStatusBadgeClass, rentalOrderStatusBadgeClass(o.status), "mt-1")}>
+                                {getRentalOrderStatusLabel(o.status)}
+                              </span>
+                            </div>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -2762,38 +2796,36 @@ export default function OrdersPage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-meta text-slate-500 mb-2">Ảnh xe</p>
-                          <div className="grid grid-cols-3 gap-2">
+                          <p className="text-label text-slate-500 mb-2">Ảnh xe</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {v.vehicleImages.map((img, index) => (
-                              <div
+                              <button
                                 key={index}
-                                className="aspect-square rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-all"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setLightboxImage(img)
-                                }}
+                                type="button"
+                                className="aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 hover:opacity-90 ui-transition"
+                                onClick={() => setLightboxImage(img)}
                               >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={img} alt={`Xe ${index + 1}`} className="w-full h-full object-cover" />
-                              </div>
+                              </button>
                             ))}
                           </div>
                         </div>
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-meta text-slate-500 mb-2">Ảnh giấy tờ</p>
-                          <div className="grid grid-cols-3 gap-2">
+                          <p className="text-label text-slate-500 mb-2">Ảnh giấy tờ</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {v.documentImages.map((img, index) => (
-                              <div
+                              <button
                                 key={index}
-                                className="aspect-square rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-all"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setLightboxImage(img)
-                                }}
+                                type="button"
+                                className="aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 hover:opacity-90 ui-transition"
+                                onClick={() => setLightboxImage(img)}
                               >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={img} alt={`Giấy tờ ${index + 1}`} className="w-full h-full object-cover" />
-                              </div>
+                              </button>
                             ))}
                           </div>
                         </div>
@@ -2801,10 +2833,10 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-2 flex justify-end border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 text-sm"
+                      className="h-11 w-full sm:w-auto rounded-[var(--radius-control)] border-slate-200"
                       onClick={() => setViewingVehicle(null)}
                     >
                       Đóng
