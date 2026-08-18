@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Mail, Phone, ExternalLink } from "lucide-react"
 import { Dialog, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -25,10 +26,22 @@ export function AboutSoftwareDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <EntityFormDialogContent accent="blue" maxWidth="md">
         <p className="text-label text-blue-700">Giới thiệu</p>
-        <DialogTitle className="text-title mt-1 pr-8 text-pretty">{SOFTWARE_ABOUT.productName}</DialogTitle>
-        <DialogDescription className="text-meta mt-1.5 text-pretty">
-          {SOFTWARE_ABOUT.productLine}
-        </DialogDescription>
+        <div className="mt-3 flex flex-col items-center text-center">
+          <div className="relative h-24 w-24 sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-[0_8px_24px_-8px_rgba(15,23,42,0.18)]">
+            <Image
+              src="/logo.jpg"
+              alt={`${SOFTWARE_ABOUT.productName} logo`}
+              fill
+              sizes="112px"
+              className="object-contain"
+              priority
+            />
+          </div>
+          <DialogTitle className="text-title mt-3 text-pretty">{SOFTWARE_ABOUT.productName}</DialogTitle>
+          <DialogDescription className="text-meta mt-1 max-w-[22rem] text-pretty">
+            {SOFTWARE_ABOUT.productLine}
+          </DialogDescription>
+        </div>
 
         <p className="text-body text-slate-600 leading-relaxed mt-4">
           Bản quyền thuộc tác giả. Sao chép, chỉnh sửa hoặc phân phối khi chưa được phép đều không hợp lệ.
