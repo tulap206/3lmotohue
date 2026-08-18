@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -92,6 +92,17 @@ export function DailyNotificationModal({
       todayStr: todayFormatted,
     }
   }, [orders])
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (overdueOrders.length > 0) {
+      setActiveTab("overdue")
+    } else if (upcomingPendingOrders.length > 0) {
+      setActiveTab("upcoming")
+    } else {
+      setActiveTab("overdue")
+    }
+  }, [isOpen, overdueOrders.length, upcomingPendingOrders.length])
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
