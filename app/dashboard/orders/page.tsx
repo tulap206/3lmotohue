@@ -14,7 +14,6 @@ import { uploadImage } from "@/lib/storage"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
@@ -39,8 +38,6 @@ import {
   EntityFormSection,
   EntityFormFooter,
   EntityFormToggle,
-  EntityFormInfoBox,
-  EntityFormTip,
   EntityFormField,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
@@ -57,7 +54,7 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, ImageIcon, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, DollarSign, Sparkles, Bike, Bell, Unlink } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload } from "lucide-react"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { QUY79_BUSINESS } from "@/lib/business-info"
 import {
@@ -77,6 +74,91 @@ function isWebBookingOrder(notes?: string | null): boolean {
 
 function isUnassignedVehicle(order: { vehicleId?: string; licensePlate?: string }) {
   return order.licensePlate === "CHỜ GÁN XE" || !order.vehicleId || order.vehicleId === UNASSIGNED_VEHICLE_ID
+}
+
+function OrderStat({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string
+  value: string
+  tone?: "default" | "emerald" | "amber" | "muted"
+}) {
+  return (
+    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-w-0 flex flex-col justify-center">
+      <p className="text-label text-slate-500">{label}</p>
+      <p
+        className={cn(
+          "text-body font-semibold tabular-nums mt-0.5 leading-snug break-words",
+          tone === "emerald" && "text-emerald-700 money",
+          tone === "amber" && "text-amber-700 money",
+          tone === "muted" && "text-slate-400",
+          tone === "default" && "text-slate-900"
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function FilePickTile({
+  label,
+  file,
+  onFile,
+  onPickStart,
+}: {
+  label: string
+  file: File | null
+  onFile: (file: File | null) => void
+  onPickStart?: () => void
+}) {
+  const [preview, setPreview] = useState<string | null>(null)
+  useEffect(() => {
+    if (!file || !file.type.startsWith("image/")) {
+      setPreview(null)
+      return
+    }
+    const url = URL.createObjectURL(file)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  return (
+    <div className="space-y-1.5 min-w-0">
+      <p className="text-label">{label}</p>
+      <div
+        className={cn(
+          "relative aspect-[4/3] overflow-hidden rounded-[var(--radius-control)] ui-transition",
+          preview
+            ? "border border-slate-200"
+            : "border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/50"
+        )}
+      >
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={preview} alt={label} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-1 px-2">
+            <Upload className="h-5 w-5 text-slate-400" />
+            <span className="text-meta text-center">{file ? file.name : "Thêm ảnh"}</span>
+          </div>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+          onClick={() => onPickStart?.()}
+          onChange={(e) => {
+            const next = e.target.files?.[0] || null
+            e.target.value = ""
+            onFile(next)
+          }}
+        />
+      </div>
+    </div>
+  )
 }
 
 interface RentalOrder {
@@ -308,6 +390,16 @@ export default function OrdersPage() {
   // #9 Server-side search
   const [serverSearchOrders, setServerSearchOrders] = useState<RentalOrder[] | null>(null)
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const pickingFileRef = useRef(false)
+  const keepDialogOpenWhilePickingFile = (event: { preventDefault: () => void }) => {
+    if (pickingFileRef.current) event.preventDefault()
+  }
+  const markPickingFile = () => {
+    pickingFileRef.current = true
+    window.setTimeout(() => {
+      pickingFileRef.current = false
+    }, 1500)
+  }
 
   // #4 Late fee dialog
   const [isLateFeeOpen, setIsLateFeeOpen] = useState(false)
@@ -1265,14 +1357,41 @@ export default function OrdersPage() {
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <EntityFormDialogContent accent="blue">
+          <EntityFormDialogContent
+            accent="blue"
+            maxWidth="2xl"
+            onPointerDownOutside={keepDialogOpenWhilePickingFile}
+            onFocusOutside={keepDialogOpenWhilePickingFile}
+            onInteractOutside={keepDialogOpenWhilePickingFile}
+          >
             <EntityFormHeader
               title="Tạo đơn thuê mới"
-              description="Nhập thông tin đơn thuê xe"
+              description="Khách, xe và thời hạn thuê"
             />
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit}>
               <EntityFormBody>
-                <EntityFormSection title="1. Thông tin khách thuê" description="Chọn khách hàng hiện có hoặc thêm khách mới để tạo đơn thuê">
+                <div className="flex items-center gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                  <div className="h-11 w-11 shrink-0 rounded-[var(--radius-badge)] bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                    <Bike className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-title truncate">
+                      {isNewCustomer
+                        ? (newCustomerName.trim() || "Khách mới")
+                        : (customerSearch.trim() || "Chưa chọn khách")}
+                    </p>
+                    <p className="text-meta truncate">
+                      {formData.vehicleIds.length > 0
+                        ? `${formData.vehicleIds.length} xe`
+                        : "Chưa gán xe"}
+                      {formData.startDate && formData.endDate
+                        ? ` · ${formData.startDate} → ${formData.endDate}`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <EntityFormSection title="Khách thuê" description="Khách cũ hoặc hồ sơ mới">
                   <EntityFormToggle
                     value={isNewCustomer ? "new" : "existing"}
                     onChange={(val) => setIsNewCustomer(val === "new")}
@@ -1284,9 +1403,9 @@ export default function OrdersPage() {
 
                   {!isNewCustomer ? (
                     <div className="space-y-2 relative">
-                      <EntityFormField label="Tìm kiếm khách hàng">
+                      <EntityFormField label="Tìm khách hàng" required>
                         <Input
-                          placeholder="Nhập tên, số điện thoại hoặc ID khách..."
+                          placeholder="Tên hoặc số điện thoại"
                           value={customerSearch}
                           onChange={(e) => {
                             setCustomerSearch(e.target.value)
@@ -1303,19 +1422,20 @@ export default function OrdersPage() {
                           <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
                           <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
                             {filteredCustomersForSelect.length === 0 ? (
-                              <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng nào</div>
+                              <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng</div>
                             ) : (
                               filteredCustomersForSelect.map((customer) => (
                                 <div
                                   key={customer.id}
                                   onClick={() => {
                                     setFormData(prev => ({ ...prev, customerId: customer.id }))
-                                    setCustomerSearch(`${customer.name} (${customer.phone || 'Không có SĐT'})`)
+                                    setCustomerSearch(`${customer.name} (${customer.phone || "Không SĐT"})`)
                                     setShowCustomerDropdown(false)
                                   }}
-                                  className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                  className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer ui-transition border-b border-slate-50 last:border-0"
                                 >
-                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-sm text-slate-400">({customer.id})</span>
+                                  <span className="font-semibold">{customer.name}</span>
+                                  {customer.phone ? ` · ${customer.phone}` : ""}
                                 </div>
                               ))
                             )}
@@ -1326,81 +1446,90 @@ export default function OrdersPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <EntityFormInfoBox>
-                        <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
-                      </EntityFormInfoBox>
-                      <EntityFormField label="Tên khách hàng" hint="Họ và tên đầy đủ của khách" required>
-                        <Input
-                          placeholder="VD: Nguyễn Văn A"
-                          value={newCustomerName}
-                          onChange={(e) => setNewCustomerName(e.target.value)}
-                          className={entityFormInputClass}
-                          required={isNewCustomer}
+                      <p className="text-meta">Điền * để tạo hồ sơ khách cùng lúc với đơn.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <EntityFormField label="Họ và tên" required>
+                          <Input
+                            placeholder="Nguyễn Văn A"
+                            autoComplete="name"
+                            value={newCustomerName}
+                            onChange={(e) => setNewCustomerName(e.target.value)}
+                            className={entityFormInputClass}
+                            required={isNewCustomer}
+                          />
+                        </EntityFormField>
+                        <EntityFormField label="Số điện thoại" required>
+                          <Input
+                            type="tel"
+                            inputMode="tel"
+                            placeholder="0901234567"
+                            autoComplete="tel"
+                            value={newCustomerPhone}
+                            onChange={(e) => setNewCustomerPhone(e.target.value)}
+                            className={cn(entityFormInputClass, "tabular-nums")}
+                            required={isNewCustomer}
+                          />
+                        </EntityFormField>
+                        <EntityFormField label="Địa chỉ" required>
+                          <Input
+                            placeholder="Tây Lộc, TP. Huế"
+                            autoComplete="street-address"
+                            value={newCustomerAddress}
+                            onChange={(e) => setNewCustomerAddress(e.target.value)}
+                            className={entityFormInputClass}
+                            required={isNewCustomer}
+                          />
+                        </EntityFormField>
+                        <EntityFormField label="Số CCCD / CMND">
+                          <Input
+                            inputMode="numeric"
+                            placeholder="079123456789"
+                            value={newCustomerCCCD}
+                            onChange={(e) => setNewCustomerCCCD(e.target.value.replace(/^CCCD_/i, ""))}
+                            className={cn(entityFormInputClass, "font-mono")}
+                          />
+                        </EntityFormField>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <FilePickTile
+                          label="Ảnh khách"
+                          file={newCustomerPhoto}
+                          onFile={setNewCustomerPhoto}
+                          onPickStart={markPickingFile}
                         />
-                      </EntityFormField>
-                      <EntityFormField label="Số điện thoại" hint="Dùng để liên lạc với khách hàng" required>
-                        <Input
-                          placeholder="VD: 0912345678"
-                          value={newCustomerPhone}
-                          onChange={(e) => setNewCustomerPhone(e.target.value)}
-                          className={entityFormInputClass}
-                          required={isNewCustomer}
+                        <FilePickTile
+                          label="CCCD mặt trước"
+                          file={newCustomerCCCDFront}
+                          onFile={setNewCustomerCCCDFront}
+                          onPickStart={markPickingFile}
                         />
-                      </EntityFormField>
-                      <EntityFormField label="Địa chỉ khách" hint="Địa chỉ cư trú của khách" required>
-                        <Input
-                          placeholder="VD: 123 Nguyễn Huệ, Huế"
-                          value={newCustomerAddress}
-                          onChange={(e) => setNewCustomerAddress(e.target.value)}
-                          className={entityFormInputClass}
-                          required={isNewCustomer}
-                        />
-                      </EntityFormField>
-                      <EntityFormField label="Số CCCD khách (tùy chọn)" hint="Số chứng minh thư hoặc CCCD">
-                        <Input
-                          placeholder="VD: 046200012345"
-                          value={newCustomerCCCD}
-                          onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className={entityFormInputClass}
-                        />
-                      </EntityFormField>
-                      <EntityFormField label="Ảnh CCCD (tùy chọn)" hint="Ảnh mặt trước chứng minh thư hoặc CCCD">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
-                          className={cn(entityFormInputClass, "p-1")}
-                        />
-                      </EntityFormField>
+                      </div>
                     </div>
                   )}
                 </EntityFormSection>
 
-                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng hoặc để trống để gán xe sau">
+                <EntityFormSection title="Xe thuê" description="Chọn xe sẵn sàng hoặc để trống, gán lúc giao">
                   <div className="space-y-3 relative">
-                    <p className="text-label">Chọn xe thuê <span className="text-slate-400 font-normal text-xs">(Có thể để trống để gán khi giao xe)</span></p>
-                    
-                    {/* Selected vehicles badges */}
                     {formData.vehicleIds.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-100 rounded-xl">
+                      <div className="flex flex-wrap gap-1.5">
                         {formData.vehicleIds.map((vId) => {
                           const vObj = vehicles.find(v => v.id === vId)
                           if (!vObj) return null
                           return (
-                            <span 
-                              key={vId} 
-                              className="inline-flex items-center gap-1.5 text-meta font-semibold px-2.5 py-1 rounded-[var(--radius-badge)] bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
+                            <span
+                              key={vId}
+                              className="inline-flex items-center gap-1.5 text-meta font-semibold px-2.5 py-1 rounded-[var(--radius-badge)] bg-blue-50 text-blue-700 border border-blue-100"
                             >
-                              <span>{vObj.name} ({vObj.licensePlate})</span>
-                              <button 
-                                type="button" 
+                              <span className="truncate max-w-[12rem]">{vObj.name} · {vObj.licensePlate}</span>
+                              <button
+                                type="button"
                                 onClick={() => {
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    vehicleIds: prev.vehicleIds.filter(id => id !== vId) 
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    vehicleIds: prev.vehicleIds.filter(id => id !== vId)
                                   }))
                                 }}
-                                className="hover:bg-blue-100 rounded p-0.5 text-blue-500 hover:text-blue-700 transition"
+                                className="hover:bg-blue-100 rounded p-0.5 text-blue-500 hover:text-blue-700 ui-transition"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -1410,31 +1539,29 @@ export default function OrdersPage() {
                       </div>
                     )}
 
-                    <p className="text-meta">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
-                    <Input
-                      placeholder="VD: Wave Alpha hoặc 75F1-12345... (hoặc để trống)"
-                      value={vehicleSearch}
-                      onChange={(e) => {
-                        setVehicleSearch(e.target.value)
-                        setShowVehicleDropdown(true)
-                      }}
-                      onFocus={() => setShowVehicleDropdown(true)}
-                      className={entityFormInputClass}
-                    />
+                    <EntityFormField label="Tìm xe">
+                      <Input
+                        placeholder="Tên xe hoặc biển số"
+                        value={vehicleSearch}
+                        onChange={(e) => {
+                          setVehicleSearch(e.target.value)
+                          setShowVehicleDropdown(true)
+                        }}
+                        onFocus={() => setShowVehicleDropdown(true)}
+                        className={entityFormInputClass}
+                      />
+                    </EntityFormField>
 
                     {formData.vehicleIds.length === 0 && (
-                      <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-3">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-amber-900">
-                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                          Đang để trống xe — Đơn tạo sẽ ở trạng thái "Chờ giao xe"
-                        </div>
-                        <p className="text-[11px] text-amber-800 leading-relaxed">
-                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn các chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
+                      <div className="rounded-[var(--radius-control)] border border-amber-200 bg-amber-50/80 p-3 space-y-3">
+                        <p className="text-meta text-amber-900">
+                          Để trống xe — đơn ở trạng thái chờ giao. Gán xe khi bàn giao.
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                          <EntityFormField label="Số lượng xe đặt trước" hint="Số lượng xe khách muốn đặt">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <EntityFormField label="Số lượng xe">
                             <Input
                               type="number"
+                              inputMode="numeric"
                               min={1}
                               max={20}
                               value={unassignedQuantity}
@@ -1443,40 +1570,44 @@ export default function OrdersPage() {
                               className={cn(entityFormInputClass, "font-bold bg-white")}
                             />
                           </EntityFormField>
-                          <EntityFormField label="Đơn giá dự kiến / xe (VND/ngày)" hint="Tính tiền cọc & tổng tiền">
+                          <EntityFormField label="Đơn giá / xe / ngày">
                             <Input
                               type="text"
+                              inputMode="numeric"
                               value={unassignedPricePerDay}
                               onChange={(e) => setUnassignedPricePerDay(formatMoneyInput(e.target.value))}
-                              placeholder="VD: 150.000"
+                              placeholder="150.000"
                               className={cn(entityFormInputClass, "font-mono bg-white")}
                             />
                           </EntityFormField>
                         </div>
                       </div>
                     )}
-                    
+
                     {showVehicleDropdown && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
-                        <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+                        <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
                           {filteredVehiclesForSelect.length === 0 ? (
-                            <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy xe nào khả dụng</div>
+                            <div className="p-3 text-sm text-slate-500 text-center">Không có xe khả dụng</div>
                           ) : (
                             filteredVehiclesForSelect.map((vehicle) => (
                               <div
                                 key={vehicle.id}
                                 onClick={() => {
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    vehicleIds: [...prev.vehicleIds, vehicle.id] 
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    vehicleIds: [...prev.vehicleIds, vehicle.id]
                                   }))
                                   setVehicleSearch("")
                                   setShowVehicleDropdown(false)
                                 }}
-                                className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer ui-transition border-b border-slate-50 last:border-0"
                               >
-                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-sm bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-sm text-slate-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
+                                <span className="font-semibold">{vehicle.name}</span>
+                                {" · "}
+                                <span className="font-mono">{vehicle.licensePlate}</span>
+                                <span className="text-slate-500"> · {vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày</span>
                               </div>
                             ))
                           )}
@@ -1486,20 +1617,20 @@ export default function OrdersPage() {
                   </div>
                 </EntityFormSection>
 
-                <EntityFormSection title="3. Chi tiết hợp đồng thuê" description="Nhập loại thuê, ngày thuê, thời hạn và tiền đặt cọc">
+                <EntityFormSection title="Hợp đồng" description="Loại thuê, ngày và tiền cọc">
                   <EntityFormField label="Loại thuê" required>
                     <EntityFormToggle
                       value={formData.rentalTerm}
                       onChange={(val) => setFormData({ ...formData, rentalTerm: val as RentalTerm })}
                       options={[
-                        { value: "short", label: "Thuê ngắn hạn" },
-                        { value: "long", label: "Thuê dài hạn" },
+                        { value: "short", label: "Ngắn hạn" },
+                        { value: "long", label: "Dài hạn" },
                       ]}
                     />
                   </EntityFormField>
-                  <div className="grid grid-cols-2 gap-4">
-                    <EntityFormField label="Ngày bắt đầu" hint="Ngày khách nhận xe" required>
-                        <Input
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <EntityFormField label="Ngày bắt đầu" required>
+                      <Input
                         id="startDate"
                         type="date"
                         value={formData.startDate}
@@ -1507,9 +1638,9 @@ export default function OrdersPage() {
                         className={entityFormInputClass}
                         required
                       />
-                      </EntityFormField>
-                    <EntityFormField label="Ngày kết thúc" hint="Ngày khách trả xe" required>
-                        <Input
+                    </EntityFormField>
+                    <EntityFormField label="Ngày kết thúc" required>
+                      <Input
                         id="endDate"
                         type="date"
                         value={formData.endDate}
@@ -1517,35 +1648,36 @@ export default function OrdersPage() {
                         className={entityFormInputClass}
                         required
                       />
-                      </EntityFormField>
+                    </EntityFormField>
                   </div>
 
-                  <EntityFormField label="Tiền đặt cọc" hint="Tiền cọc để bảo vệ xe (thường 30-50% giá thuê)" required>
-                        <Input
+                  <EntityFormField label="Tiền đặt cọc" required>
+                    <Input
                       id="deposit"
                       type="text"
+                      inputMode="numeric"
                       value={formData.deposit}
                       onChange={(e) => {
                         const formatted = formatMoneyInput(e.target.value)
                         setFormData({ ...formData, deposit: formatted })
                       }}
-                      placeholder="VD: 500.000"
+                      placeholder="500.000"
                       className={cn(entityFormInputClass, "font-mono")}
                       required
                     />
-                      </EntityFormField>
+                  </EntityFormField>
 
-                  <EntityFormField label="Ghi chú" hint="Nhập thông tin giao xe, yêu cầu đặc biệt của khách...">
+                  <EntityFormField label="Ghi chú">
                     <Textarea
                       id="notes"
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="VD: Trả xe 14h-15h 31/8, giảm 5% tổng đơn, đã cọc 100k..."
-                      className={cn(entityFormInputClass, "min-h-20 resize-y")}
+                      placeholder="Giờ trả xe, giảm giá, đã cọc..."
+                      className={cn(entityFormInputClass, "min-h-16 resize-y")}
                     />
                   </EntityFormField>
 
-                  <div className="flex items-center space-x-2 pt-2">
+                  <label className="flex items-center gap-2 pt-1 cursor-pointer">
                     <input
                       id="hasCommission"
                       type="checkbox"
@@ -1553,31 +1685,32 @@ export default function OrdersPage() {
                       onChange={(e) => setHasCommission(e.target.checked)}
                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                     />
-                    <Label htmlFor="hasCommission" className="text-slate-700 text-sm font-semibold cursor-pointer">Chia hoa hồng</Label>
-                  </div>
+                    <span className="text-body font-semibold text-slate-700">Chia hoa hồng</span>
+                  </label>
 
                   {hasCommission && (
-                    <div className="grid grid-cols-1 gap-3 pt-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
-                      <EntityFormField label="Tên Home" hint="Tên đơn vị/người chia hoa hồng">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-[var(--radius-control)] border border-amber-100 bg-amber-50 p-3">
+                      <EntityFormField label="Tên Home">
                         <Input
                           id="homeName"
                           type="text"
                           value={formData.homeName}
                           onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
-                          placeholder="VD: Home ABC"
+                          placeholder="Home ABC"
                           className={entityFormInputClass}
                         />
                       </EntityFormField>
-                      <EntityFormField label="Chia hoa hồng cho Home (VND/ngày)" hint="Tiền hoa hồng/ngày cho đơn vị (VD: 20.000đ/ngày)">
+                      <EntityFormField label="Hoa hồng / ngày">
                         <Input
                           id="commissionHome"
                           type="text"
+                          inputMode="numeric"
                           value={formData.commissionHome}
                           onChange={(e) => {
                             const formatted = formatMoneyInput(e.target.value)
                             setFormData({ ...formData, commissionHome: formatted })
                           }}
-                          placeholder="VD: 20.000"
+                          placeholder="20.000"
                           className={cn(entityFormInputClass, "font-mono")}
                         />
                       </EntityFormField>
@@ -1920,13 +2053,14 @@ export default function OrdersPage() {
             const term = getRentalTerm(o)
             const notesClean = stripRentalTermFromNotes(o.notes)
             const commissionTotal = (o.commissionHome || 0) * (o.totalDays || 0)
+            const payable = o.totalPrice + (o.extraFees || 0)
             return (
               <>
                 <EntityFormHeader
-                  title={`Chi tiết đơn: ${o.rentalCode || o.id.slice(0, 8)}`}
-                  description={`${formatDisplayDate(o.startDate)} → ${formatDisplayDate(o.endDate)} · ${o.totalDays} ngày`}
+                  title="Chi tiết đơn"
+                  description={`${o.rentalCode || o.id.slice(0, 8)} · ${formatDisplayDate(o.startDate)} → ${formatDisplayDate(o.endDate)} · ${o.totalDays} ngày`}
                 />
-                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={cn(orderStatusBadgeClass, rentalOrderStatusBadgeClass(o.status, overdue))}>
                       {getRentalOrderStatusLabel(o.status, overdue)}
@@ -1950,154 +2084,129 @@ export default function OrdersPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Tổng tiền thuê</p>
-                      <p className="text-lg font-extrabold text-slate-900 money tabular-nums">{formatPrice(o.totalPrice + (o.extraFees || 0))}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Tiền cọc</p>
-                      <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(o.deposit)}</p>
-                    </div>
-                    <div className={cn(
-                      "border rounded-xl p-3",
-                      o.status === "completed"
-                        ? "bg-emerald-50 border-emerald-100"
-                        : o.status === "cancelled"
-                          ? "bg-amber-50 border-amber-100"
-                          : "bg-slate-50 border-slate-100"
-                    )}>
-                      <p className={cn(
-                        "text-meta",
-                        o.status === "completed" ? "text-emerald-600"
-                          : o.status === "cancelled" ? "text-amber-600"
-                          : "text-slate-500"
-                      )}>Doanh thu</p>
-                      <p className={cn(
-                        "text-sm font-extrabold tabular-nums",
-                        o.status === "completed" ? "text-emerald-700"
-                          : o.status === "cancelled" ? "text-amber-700"
-                          : "text-slate-400"
-                      )}>
-                        {o.status === "pending" || o.status === "active"
-                          ? "Chưa chốt"
-                          : formatPrice(o.revenue || 0)}
-                      </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <OrderStat label="Tổng tiền thuê" value={formatPrice(payable)} />
+                    <OrderStat
+                      label="Tiền cọc"
+                      value={formatPrice(o.deposit)}
+                      tone={o.deposit > 0 ? "emerald" : "amber"}
+                    />
+                    <div className="col-span-2 sm:col-span-1">
+                      <OrderStat
+                        label="Doanh thu"
+                        value={o.status === "pending" || o.status === "active" ? "Chưa chốt" : formatPrice(o.revenue || 0)}
+                        tone={
+                          o.status === "completed" ? "emerald"
+                            : o.status === "cancelled" ? "amber"
+                            : "muted"
+                        }
+                      />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div
-                      className="bg-slate-50 border border-slate-100 rounded-xl p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      className="flex items-center justify-between gap-2 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 text-left ui-transition hover:border-blue-200 hover:bg-blue-50/40"
                       onClick={() => {
                         setViewingOrder(null)
                         openCustomerDetail(o.customerId)
                       }}
                     >
-                      <p className="text-meta text-slate-500 mb-1">Khách hàng</p>
-                      <p className="font-bold text-slate-900">{o.customerName}</p>
-                      <p className="text-sm text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
-                    </div>
-                    <div
-                      className="bg-slate-50 border border-slate-100 rounded-xl p-3 cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                      <div className="min-w-0">
+                        <p className="text-label text-slate-500">Khách hàng</p>
+                        <p className="text-body font-semibold text-slate-900 truncate">{o.customerName}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 shrink-0 text-slate-400" />
+                    </button>
+                    <button
+                      type="button"
+                      className="flex items-center justify-between gap-2 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 text-left ui-transition hover:border-blue-200 hover:bg-blue-50/40"
                       onClick={() => {
                         setViewingOrder(null)
                         openVehicleDetail(o.vehicleId)
                       }}
                     >
-                      <p className="text-meta text-slate-500 mb-1">Xe thuê</p>
-                      <p className="font-bold text-slate-900">{o.vehicleName}</p>
-                      <p className="text-sm font-mono text-slate-500">{o.licensePlate || "Chưa biển"}</p>
-                      <p className="text-sm text-blue-500 mt-0.5 underline decoration-dashed">Nhấn để xem chi tiết</p>
-                    </div>
+                      <div className="min-w-0">
+                        <p className="text-label text-slate-500">Xe thuê</p>
+                        <p className="text-body font-semibold text-slate-900 truncate">{o.vehicleName}</p>
+                        <p className="text-meta font-mono">{o.licensePlate || "Chưa biển"}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 shrink-0 text-slate-400" />
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Nhận xe</p>
-                      <p className="text-sm font-bold text-slate-800">{formatDisplayDate(o.startDate)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Trả xe</p>
-                      <p className="text-sm font-bold text-slate-800">{formatDisplayDate(o.endDate)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Số ngày</p>
-                      <p className="text-sm font-bold text-slate-800">{o.totalDays} ngày</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Giá/ngày</p>
-                      <p className="text-sm font-bold text-slate-800 tabular-nums">{formatPrice(o.pricePerDay)}</p>
-                    </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <OrderStat label="Nhận xe" value={formatDisplayDate(o.startDate)} />
+                    <OrderStat label="Trả xe" value={formatDisplayDate(o.endDate)} />
+                    <OrderStat label="Số ngày" value={`${o.totalDays} ngày`} />
+                    <OrderStat label="Giá/ngày" value={formatPrice(o.pricePerDay)} />
                     {o.extraFees > 0 && (
-                      <div className="bg-amber-50 border border-amber-100 rounded-[var(--radius-control)] p-3">
-                        <p className="text-meta text-amber-700 mb-0.5">Phí phát sinh</p>
-                        <p className="text-sm font-bold text-amber-700 money tabular-nums">{formatPrice(o.extraFees)}</p>
-                      </div>
+                      <OrderStat label="Phí phát sinh" value={formatPrice(o.extraFees)} tone="amber" />
                     )}
                     {commissionTotal > 0 && (
-                      <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                        <p className="text-meta text-slate-500 mb-0.5">HH Home{o.homeName ? ` · ${o.homeName}` : ""}</p>
-                        <p className="text-sm font-bold text-slate-900 money tabular-nums">{formatPrice(commissionTotal)}</p>
-                      </div>
+                      <OrderStat
+                        label={o.homeName ? `HH · ${o.homeName}` : "Hoa hồng Home"}
+                        value={formatPrice(commissionTotal)}
+                      />
                     )}
                   </div>
 
                   {notesClean && (
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
-                      <p className="text-sm text-slate-700 whitespace-pre-line">{notesClean}</p>
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5">
+                      <p className="text-label text-slate-500 mb-1">Ghi chú</p>
+                      <p className="text-body text-slate-700 whitespace-pre-line">{notesClean}</p>
                     </div>
                   )}
 
                   {(o.status === "completed" || o.status === "cancelled") && (
-                    <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 overflow-hidden">
                       <div className="bg-slate-50 px-3 py-2">
-                        <p className="text-sm font-bold text-slate-700">Chi tiết tài chính</p>
+                        <p className="text-label font-semibold text-slate-700">Chi tiết tài chính</p>
                       </div>
                       <div className="p-3 space-y-1.5">
                         {o.status === "completed" ? (
                           <>
-                            <div className="flex justify-between text-sm">
+                            <div className="flex justify-between gap-3 text-body">
                               <span className="text-slate-500">Tiền thuê xe</span>
-                              <span className="font-bold text-emerald-600 tabular-nums">+{formatPrice(o.totalPrice)}</span>
+                              <span className="font-semibold text-emerald-600 tabular-nums shrink-0">+{formatPrice(o.totalPrice)}</span>
                             </div>
                             {o.extraFees > 0 && (
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between gap-3 text-body">
                                 <span className="text-slate-500">Phí phát sinh</span>
-                                <span className="font-bold text-emerald-600 tabular-nums">+{formatPrice(o.extraFees)}</span>
+                                <span className="font-semibold text-emerald-600 tabular-nums shrink-0">+{formatPrice(o.extraFees)}</span>
                               </div>
                             )}
                             {commissionTotal > 0 && (
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between gap-3 text-body">
                                 <span className="text-slate-500">Hoa hồng Home</span>
-                                <span className="font-bold text-rose-600 tabular-nums">-{formatPrice(commissionTotal)}</span>
+                                <span className="font-semibold text-rose-600 tabular-nums shrink-0">-{formatPrice(commissionTotal)}</span>
                               </div>
                             )}
-                            <div className="flex justify-between text-sm">
+                            <div className="flex justify-between gap-3 text-body">
                               <span className="text-slate-500">Trả cọc khách</span>
-                              <span className="font-medium text-slate-400 tabular-nums">-{formatPrice(o.deposit)}</span>
+                              <span className="font-medium text-slate-400 tabular-nums shrink-0">-{formatPrice(o.deposit)}</span>
                             </div>
-                            <div className="flex justify-between text-sm pt-2 border-t border-slate-100">
-                              <span className="font-bold text-slate-800">Doanh thu thực nhận</span>
-                              <span className="font-extrabold text-emerald-700 tabular-nums">{formatPrice(o.revenue || 0)}</span>
+                            <div className="flex justify-between gap-3 text-body pt-2 border-t border-slate-100">
+                              <span className="font-semibold text-slate-800">Doanh thu thực nhận</span>
+                              <span className="font-semibold text-emerald-700 money tabular-nums shrink-0">{formatPrice(o.revenue || 0)}</span>
                             </div>
                           </>
                         ) : (
                           <>
-                            <div className="flex justify-between text-sm">
+                            <div className="flex justify-between gap-3 text-body">
                               <span className="text-slate-500">Khách hủy — mất cọc</span>
-                              <span className="font-bold text-amber-600 tabular-nums">+{formatPrice(o.deposit)}</span>
+                              <span className="font-semibold text-amber-600 tabular-nums shrink-0">+{formatPrice(o.deposit)}</span>
                             </div>
                             {o.extraFees > 0 && (
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between gap-3 text-body">
                                 <span className="text-slate-500">Phí phát sinh</span>
-                                <span className="font-bold text-amber-600 tabular-nums">+{formatPrice(o.extraFees)}</span>
+                                <span className="font-semibold text-amber-600 tabular-nums shrink-0">+{formatPrice(o.extraFees)}</span>
                               </div>
                             )}
-                            <div className="flex justify-between text-sm pt-2 border-t border-slate-100">
-                              <span className="font-bold text-slate-800">Doanh thu</span>
-                              <span className="font-extrabold text-amber-700 tabular-nums">{formatPrice(o.revenue || 0)}</span>
+                            <div className="flex justify-between gap-3 text-body pt-2 border-t border-slate-100">
+                              <span className="font-semibold text-slate-800">Doanh thu</span>
+                              <span className="font-semibold text-amber-700 money tabular-nums shrink-0">{formatPrice(o.revenue || 0)}</span>
                             </div>
                           </>
                         )}
@@ -2105,62 +2214,33 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  <div className="bg-slate-900 text-white rounded-[var(--radius-container)] p-4 flex flex-col items-center gap-2">
-                    <div className="flex items-center justify-between w-full border-b border-slate-800 pb-2">
-                      <span className="text-meta bg-blue-600 text-white font-bold px-2 py-0.5 rounded-[var(--radius-badge)]">
-                        QR SHB
-                      </span>
-                      <span className="text-sm text-slate-400">{QUY79_BUSINESS.hotline}</span>
-                    </div>
-                    <div className="w-36 h-36 bg-white p-1.5 rounded-lg overflow-hidden shadow-md">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50 px-3 py-3">
+                    <div className="mx-auto sm:mx-0 h-28 w-28 shrink-0 overflow-hidden rounded-lg bg-white p-1.5 border border-slate-200">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`https://img.vietqr.io/image/SHB-${QUY79_BUSINESS.bank.accountNumber}-qr_only.png?amount=${o.totalPrice + (o.extraFees || 0)}&addInfo=${encodeURIComponent(`TT 3L MOTO ${o.rentalCode || o.id}`)}&accountName=${encodeURIComponent(QUY79_BUSINESS.bank.accountHolderLatin)}`}
+                        src={`https://img.vietqr.io/image/SHB-${QUY79_BUSINESS.bank.accountNumber}-qr_only.png?amount=${payable}&addInfo=${encodeURIComponent(`TT 3L MOTO ${o.rentalCode || o.id}`)}&accountName=${encodeURIComponent(QUY79_BUSINESS.bank.accountHolderLatin)}`}
                         alt="VietQR"
-                        className="w-full h-full object-contain"
+                        className="h-full w-full object-contain"
                       />
                     </div>
-                    <p className="font-bold text-blue-400 text-sm tabular-nums">{formatPrice(o.totalPrice + (o.extraFees || 0))}</p>
-                    <p className="text-sm text-slate-400 text-center">Quét QR để thanh toán cọc / tất toán</p>
+                    <div className="min-w-0 text-center sm:text-left">
+                      <p className="text-label text-slate-500">QR SHB · cọc / tất toán</p>
+                      <p className="text-body font-semibold money tabular-nums text-slate-900">{formatPrice(payable)}</p>
+                      <p className="text-meta mt-0.5">{QUY79_BUSINESS.hotline}</p>
+                    </div>
                   </div>
 
-                  <div className="flex gap-2 pt-1 flex-wrap">
-                    {o.status === "pending" && (
-                      <>
-                        <Button
-                          className="flex-1 h-11 text-body bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
-                          onClick={() => {
-                            updateOrderStatus(o.id, "active")
-                            setViewingOrder(null)
-                          }}
-                        >
-                          Xác nhận giao xe
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1 h-11 text-body rounded-[var(--radius-control)]"
-                          onClick={() => {
-                            updateOrderStatus(o.id, "cancelled")
-                            setViewingOrder(null)
-                          }}
-                        >
-                          Hủy đơn
-                        </Button>
-                      </>
-                    )}
-                    {(o.status === "active" || overdue) && o.status !== "completed" && o.status !== "cancelled" && (
-                      <Button
-                        className="flex-1 h-11 text-body bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
-                        onClick={() => {
-                          setViewingOrder(null)
-                          openCompleteWithLateFee(o.id)
-                        }}
-                      >
-                        Hoàn thành đơn
-                      </Button>
-                    )}
+                  <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-2 flex flex-col-reverse sm:flex-row gap-2 border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
                     <Button
                       variant="outline"
-                      className="flex-1 h-11 text-body rounded-[var(--radius-control)]"
+                      className="h-11 w-full sm:w-auto rounded-[var(--radius-control)] border-slate-200"
+                      onClick={() => setViewingOrder(null)}
+                    >
+                      Đóng
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-11 w-full sm:flex-1 rounded-[var(--radius-control)]"
                       onClick={() => {
                         setViewingOrder(null)
                         openEditDialog(o)
@@ -2169,13 +2249,40 @@ export default function OrdersPage() {
                       <Pencil className="w-4 h-4 mr-1.5" />
                       Chỉnh sửa
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="h-11 text-body px-3 rounded-[var(--radius-control)]"
-                      onClick={() => setViewingOrder(null)}
-                    >
-                      Đóng
-                    </Button>
+                    {o.status === "pending" && (
+                      <>
+                        <Button
+                          variant="outline"
+                          className="h-11 w-full sm:flex-1 rounded-[var(--radius-control)]"
+                          onClick={() => {
+                            updateOrderStatus(o.id, "cancelled")
+                            setViewingOrder(null)
+                          }}
+                        >
+                          Hủy đơn
+                        </Button>
+                        <Button
+                          className="h-11 w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
+                          onClick={() => {
+                            updateOrderStatus(o.id, "active")
+                            setViewingOrder(null)
+                          }}
+                        >
+                          Giao xe
+                        </Button>
+                      </>
+                    )}
+                    {(o.status === "active" || overdue) && o.status !== "completed" && o.status !== "cancelled" && (
+                      <Button
+                        className="h-11 w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
+                        onClick={() => {
+                          setViewingOrder(null)
+                          openCompleteWithLateFee(o.id)
+                        }}
+                      >
+                        Hoàn thành
+                      </Button>
+                    )}
                   </div>
                 </div>
               </>
@@ -2188,22 +2295,24 @@ export default function OrdersPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <EntityFormDialogContent accent="blue" maxWidth="2xl">
           <EntityFormHeader
-            title={`Sửa đơn thuê ${editingOrder?.id ?? ""}`}
-            description="Chỉnh sửa thông tin đơn thuê"
+            title="Sửa đơn thuê"
+            description={`${editingOrder?.rentalCode || editingOrder?.id?.slice(0, 8) || ""} · ${editingOrder?.customerName || ""}`}
           />
           <form onSubmit={handleEditSubmit}>
             <EntityFormBody>
+            <EntityFormSection title="Thông tin đơn" description="Loại thuê, xe và thời hạn">
             <EntityFormField label="Loại thuê">
               <EntityFormToggle
                 value={editFormData.rentalTerm}
                 onChange={(val) => setEditFormData({ ...editFormData, rentalTerm: val as RentalTerm })}
                 options={[
-                  { value: "short", label: "Thuê ngắn hạn" },
-                  { value: "long", label: "Thuê dài hạn" },
+                  { value: "short", label: "Ngắn hạn" },
+                  { value: "long", label: "Dài hạn" },
                 ]}
               />
             </EntityFormField>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <EntityFormField label="Khách hàng">
               <Input
                 value={editingOrder?.customerName || ""}
@@ -2232,7 +2341,7 @@ export default function OrdersPage() {
                     .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
                     .map((vehicle) => (
                       <SelectItem key={vehicle.id} value={vehicle.id}>
-                        {vehicle.name} - {vehicle.licensePlate}
+                        {vehicle.name} – {vehicle.licensePlate}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -2241,10 +2350,9 @@ export default function OrdersPage() {
                 !isUnassignedVehicle(editingOrder) &&
                 editFormData.vehicleId !== UNASSIGNED_VEHICLE_ID &&
                 (editFormData.status === "pending" || editFormData.status === "active") && (
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    className="mt-2 h-11 w-full text-body font-semibold rounded-[var(--radius-control)] border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                    className="mt-1.5 inline-flex items-center gap-1 text-meta text-rose-600 hover:text-rose-700"
                     onClick={() =>
                       setEditFormData({
                         ...editFormData,
@@ -2253,18 +2361,19 @@ export default function OrdersPage() {
                       })
                     }
                   >
-                    <Unlink className="w-4 h-4 mr-2" />
+                    <Unlink className="w-3.5 h-3.5" />
                     Huỷ gán xe
-                  </Button>
+                  </button>
                 )}
               {editFormData.vehicleId === UNASSIGNED_VEHICLE_ID && (
                 <p className="text-meta text-slate-500 mt-1.5">
-                  Đơn sẽ ở trạng thái chờ giao xe. Gán xe lại khi bàn giao.
+                  Đơn chờ giao xe. Gán xe lại khi bàn giao.
                 </p>
               )}
             </EntityFormField>
+            </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <EntityFormField label="Ngày bắt đầu">
               <Input
                   id="edit-startDate"
@@ -2286,11 +2395,15 @@ export default function OrdersPage() {
                 />
             </EntityFormField>
             </div>
+            </EntityFormSection>
 
-            <EntityFormField label="Tiền đặt cọc (VND)">
+            <EntityFormSection title="Tài chính" description="Cọc, phí phát sinh và hoa hồng">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <EntityFormField label="Tiền đặt cọc">
               <Input
                 id="edit-deposit"
                 type="text"
+                inputMode="numeric"
                 value={editFormData.deposit}
                 onChange={(e) => {
                   const formatted = formatMoneyInput(e.target.value)
@@ -2301,10 +2414,11 @@ export default function OrdersPage() {
               />
             </EntityFormField>
 
-            <EntityFormField label="Phí phát sinh (VND)">
+            <EntityFormField label="Phí phát sinh">
               <Input
                 id="edit-extraFees"
                 type="text"
+                inputMode="numeric"
                 value={editFormData.extraFees}
                 onChange={(e) => {
                   const formatted = formatMoneyInput(e.target.value)
@@ -2314,28 +2428,27 @@ export default function OrdersPage() {
                 placeholder="0"
               />
             </EntityFormField>
-
-            <div className="grid grid-cols-2 gap-4">
-              <EntityFormField label="Tên Home (Homestay giới thiệu)">
+              <EntityFormField label="Tên Home">
               <Input
                   id="edit-homeName"
                   type="text"
                   value={editFormData.homeName}
                   onChange={(e) => setEditFormData({ ...editFormData, homeName: e.target.value })}
-                  placeholder="VD: Home ABC"
+                  placeholder="Home ABC"
                   className={entityFormInputClass}
                 />
             </EntityFormField>
-              <EntityFormField label="Chia hoa hồng cho Home (VND/ngày)">
+              <EntityFormField label="Hoa hồng / ngày">
               <Input
                   id="edit-commissionHome"
                   type="text"
+                  inputMode="numeric"
                   value={editFormData.commissionHome}
                   onChange={(e) => {
                     const formatted = formatMoneyInput(e.target.value)
                     setEditFormData({ ...editFormData, commissionHome: formatted })
                   }}
-                  placeholder="VD: 20.000"
+                  placeholder="20.000"
                   className={cn(entityFormInputClass, "font-mono")}
                 />
             </EntityFormField>
@@ -2346,8 +2459,8 @@ export default function OrdersPage() {
                 id="edit-notes"
                 value={editFormData.notes}
                 onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-                className={cn(entityFormInputClass, "min-h-20 resize-y")}
-                placeholder="Nhập ghi chú cho đơn thuê..."
+                className={cn(entityFormInputClass, "min-h-16 resize-y")}
+                placeholder="Ghi chú đơn thuê..."
               />
             </EntityFormField>
 
@@ -2367,6 +2480,7 @@ export default function OrdersPage() {
                 </SelectContent>
               </Select>
             </EntityFormField>
+            </EntityFormSection>
 
             </EntityFormBody>
             <EntityFormFooter
