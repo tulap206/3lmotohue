@@ -1350,12 +1350,12 @@ export default function VehiclesPage() {
                                 <div className="flex items-center gap-1.5 group">
                                   <button
                                     onClick={() => setSelectedMapVehicle(vehicle)}
-                                    className="flex items-start gap-1.5 text-left hover:text-blue-600 transition min-w-0"
+                                    className="flex items-start gap-1.5 text-left hover:text-slate-700 transition min-w-0"
                                     title={locationStr ? `Bấm để xem vị trí xe trên bản đồ ${relativeTime}` : "Chưa có vị trí xe"}
                                   >
-                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? "text-blue-600 animate-pulse" : "text-slate-400")} />
+                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? "text-slate-500" : "text-slate-400")} />
                                     <div className="flex flex-col">
-                                      <span className={cn("text-xs line-clamp-3 max-w-[220px] whitespace-normal leading-tight text-left", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2 hover:text-blue-800" : "text-slate-400 italic")}>
+                                      <span className={cn("text-xs line-clamp-3 max-w-[220px] whitespace-normal leading-tight text-left", locationStr ? "text-slate-900 font-semibold underline decoration-slate-300 underline-offset-2 hover:text-slate-700" : "text-slate-400 italic")}>
                                         {locationStr || "chưa cập nhật"}
                                       </span>
                                       {locationStr && relativeTime && (
@@ -1475,7 +1475,7 @@ export default function VehiclesPage() {
                           onClick={() => setSelectedMapVehicle(vehicle)}
                           className="flex items-start gap-2 text-left hover:bg-blue-50/60 transition w-full bg-slate-50 p-2.5 rounded-xl border border-slate-100/80 active:scale-[0.99]"
                         >
-                          <MapPin className={cn("w-4 h-4 shrink-0 mt-0.5 self-start", locationStr ? "text-blue-600 animate-pulse" : "text-slate-400")} />
+                          <MapPin className={cn("w-4 h-4 shrink-0 mt-0.5 self-start", locationStr ? "text-slate-500" : "text-slate-400")} />
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-1 w-full">
                               <span className="text-[11px] font-semibold text-slate-500">Vị trí xe hiện tại:</span>
@@ -1485,7 +1485,7 @@ export default function VehiclesPage() {
                                 </span>
                               )}
                             </div>
-                            <span className={cn("text-xs leading-tight text-left break-words mt-0.5", locationStr ? "text-blue-700 font-semibold underline decoration-blue-200 underline-offset-2" : "text-slate-400 italic")}>
+                            <span className={cn("text-xs leading-tight text-left break-words mt-0.5", locationStr ? "text-slate-900 font-semibold underline decoration-slate-300 underline-offset-2" : "text-slate-400 italic")}>
                               {locationStr || "chưa cập nhật"}
                             </span>
                           </div>
