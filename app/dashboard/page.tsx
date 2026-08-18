@@ -22,8 +22,9 @@ import {
   Search,
   X,
   CalendarCheck,
-  Sparkles,
   Bell,
+  Bike,
+  Upload,
 } from "lucide-react"
 import { DailySummaryDialog } from "@/components/dashboard/daily-summary-dialog"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
@@ -47,15 +48,7 @@ import {
 } from "@/components/dashboard/entity-form-dialog"
 import { fetchVehicles, fetchRentals, fetchTransactions, fetchCustomers, fetchUserDisplayNames, getUserDisplayName, insertCustomer, insertTransaction, deleteTransaction, updateTransaction, supabase } from "@/lib/supabase"
 import { uploadImage } from "@/lib/storage"
-import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, parseDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
@@ -248,6 +241,16 @@ export default function DashboardPage() {
 
   const [unassignedQuantity, setUnassignedQuantity] = useState("1")
   const [unassignedPricePerDay, setUnassignedPricePerDay] = useState("150.000")
+  const pickingFileRef = useRef(false)
+  const keepDialogOpenWhilePickingFile = (event: { preventDefault: () => void }) => {
+    if (pickingFileRef.current) event.preventDefault()
+  }
+  const markPickingFile = () => {
+    pickingFileRef.current = true
+    window.setTimeout(() => {
+      pickingFileRef.current = false
+    }, 1500)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1256,69 +1259,86 @@ export default function DashboardPage() {
       </div>
 
       <Dialog open={isAddTxOpen} onOpenChange={setIsAddTxOpen}>
-        <EntityFormDialogContent accent="blue" maxWidth="md">
+        <EntityFormDialogContent accent={txFormData.type === "income" ? "emerald" : "red"} maxWidth="lg">
           <EntityFormHeader
             title="Thêm khoản thu/chi"
-            description="Nhập thông tin khoản thu hoặc chi"
+            description="Khoản ngoài đơn thuê — vận hành hoặc vốn"
           />
           <form onSubmit={handleAddTx}>
             <EntityFormBody>
+              <div className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-title truncate">{txFormData.description.trim() || "Khoản mới"}</p>
+                  <p className="text-meta">
+                    {txFormData.type === "income" ? "Thu" : "Chi"}
+                    {" · "}
+                    {txFormData.isCapital ? "Vốn / tài sản" : "Vận hành"}
+                  </p>
+                </div>
+                <p className={cn(
+                  "text-body font-semibold money tabular-nums shrink-0",
+                  txFormData.type === "income" ? "text-emerald-700" : "text-rose-700"
+                )}>
+                  {txFormData.amount ? `${txFormData.type === "income" ? "+" : "-"}${txFormData.amount} đ` : "—"}
+                </p>
+              </div>
               <EntityFormField label="Loại">
-                <Select value={txFormData.type} onValueChange={(val) => setTxFormData({ ...txFormData, type: val as "income" | "expense" })}>
-                  <SelectTrigger className={entityFormInputClass}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="income">Thu</SelectItem>
-                    <SelectItem value="expense">Chi</SelectItem>
-                  </SelectContent>
-                </Select>
+                <EntityFormToggle
+                  value={txFormData.type}
+                  onChange={(val) => setTxFormData({ ...txFormData, type: val as "income" | "expense" })}
+                  options={[
+                    { value: "income", label: "Thu" },
+                    { value: "expense", label: "Chi" },
+                  ]}
+                />
               </EntityFormField>
-              <EntityFormField label="Phân loại khoản" hint="Ví dụ vốn: góp vốn, mua xe, mũ, định vị. Không làm lệch doanh thu/lợi nhuận.">
-                <Select
+              <EntityFormField label="Phân loại">
+                <EntityFormToggle
                   value={txFormData.isCapital ? "capital" : "operating"}
-                  onValueChange={(val) => setTxFormData({ ...txFormData, isCapital: val === "capital" })}
-                >
-                  <SelectTrigger className={entityFormInputClass}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
-                    <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(val) => setTxFormData({ ...txFormData, isCapital: val === "capital" })}
+                  options={[
+                    { value: "operating", label: "Vận hành" },
+                    { value: "capital", label: "Vốn" },
+                  ]}
+                />
+                <p className="text-meta mt-1.5">
+                  {txFormData.isCapital ? "Không tính vào lợi nhuận (góp vốn, mua xe, tài sản)." : "Tính vào lợi nhuận vận hành."}
+                </p>
               </EntityFormField>
-              <EntityFormField label="Mô tả">
+              <EntityFormField label="Mô tả" required>
                 <Input
-                  placeholder="Nhập mô tả (ví dụ: mua định vị, sửa xe)"
+                  placeholder="Sửa xe, mua định vị..."
                   value={txFormData.description}
                   onChange={(e) => setTxFormData({ ...txFormData, description: e.target.value })}
                   className={entityFormInputClass}
                 />
               </EntityFormField>
-               <EntityFormField label="Ngày giao dịch">
-                <Input
-                   type="date"
-                   value={txFormData.timestamp}
-                   onChange={(e) => setTxFormData({ ...txFormData, timestamp: e.target.value })}
-                   className={entityFormInputClass}
-                 />
-              </EntityFormField>
-               <EntityFormField label="Số tiền (VND)">
-                <Input
-                   type="text"
-                   placeholder="Nhập số tiền (VD: 1.000.000)"
-                   value={txFormData.amount}
-                   onChange={(e) => {
-                     const formatted = formatMoneyInput(e.target.value)
-                     setTxFormData({ ...txFormData, amount: formatted })
-                   }}
-                   className="border-slate-300 rounded-lg font-mono"
-                 />
-              </EntityFormField>
-             </EntityFormBody>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <EntityFormField label="Ngày giao dịch">
+                  <Input
+                    type="date"
+                    value={txFormData.timestamp}
+                    onChange={(e) => setTxFormData({ ...txFormData, timestamp: e.target.value })}
+                    className={entityFormInputClass}
+                  />
+                </EntityFormField>
+                <EntityFormField label="Số tiền" required>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="1.000.000"
+                    value={txFormData.amount}
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setTxFormData({ ...txFormData, amount: formatted })
+                    }}
+                    className={cn(entityFormInputClass, "font-mono")}
+                  />
+                </EntityFormField>
+              </div>
+            </EntityFormBody>
             <EntityFormFooter
-              accent="blue"
+              accent={txFormData.type === "income" ? "emerald" : "red"}
               onCancel={() => setIsAddTxOpen(false)}
               submitLabel="Thêm"
             />
@@ -1365,69 +1385,86 @@ export default function DashboardPage() {
 
       {/* ── Transaction Edit Dialog ── */}
       <Dialog open={isEditTxOpen} onOpenChange={setIsEditTxOpen}>
-        <EntityFormDialogContent accent="blue" maxWidth="md">
+        <EntityFormDialogContent accent={txEditFormData.type === "income" ? "emerald" : "red"} maxWidth="lg">
           <EntityFormHeader
             title="Sửa khoản thu/chi"
-            description="Cập nhật thông tin khoản thu/chi"
+            description="Cập nhật loại, ngày và số tiền"
           />
           <form onSubmit={(e) => { e.preventDefault(); handleConfirmEditTx(); }}>
             <EntityFormBody>
-            <EntityFormField label="Loại">
-                <Select value={txEditFormData.type} onValueChange={(val) => setTxEditFormData({...txEditFormData, type: val as "income" | "expense"})}>
-                <SelectTrigger className={entityFormInputClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="income">Thu</SelectItem>
-                  <SelectItem value="expense">Chi</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-title truncate">{txEditFormData.description.trim() || "Chưa có mô tả"}</p>
+                  <p className="text-meta">
+                    {txEditFormData.type === "income" ? "Thu" : "Chi"}
+                    {" · "}
+                    {txEditFormData.isCapital ? "Vốn / tài sản" : "Vận hành"}
+                  </p>
+                </div>
+                <p className={cn(
+                  "text-body font-semibold money tabular-nums shrink-0",
+                  txEditFormData.type === "income" ? "text-emerald-700" : "text-rose-700"
+                )}>
+                  {txEditFormData.amount ? `${txEditFormData.type === "income" ? "+" : "-"}${txEditFormData.amount} đ` : "—"}
+                </p>
+              </div>
+              <EntityFormField label="Loại">
+                <EntityFormToggle
+                  value={txEditFormData.type}
+                  onChange={(val) => setTxEditFormData({ ...txEditFormData, type: val as "income" | "expense" })}
+                  options={[
+                    { value: "income", label: "Thu" },
+                    { value: "expense", label: "Chi" },
+                  ]}
+                />
               </EntityFormField>
-            <EntityFormField label="Phân loại khoản">
-                <Select
-                value={txEditFormData.isCapital ? "capital" : "operating"}
-                onValueChange={(val) => setTxEditFormData({ ...txEditFormData, isCapital: val === "capital" })}
-              >
-                <SelectTrigger className={entityFormInputClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
-                  <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
-                </SelectContent>
-              </Select>
+              <EntityFormField label="Phân loại">
+                <EntityFormToggle
+                  value={txEditFormData.isCapital ? "capital" : "operating"}
+                  onChange={(val) => setTxEditFormData({ ...txEditFormData, isCapital: val === "capital" })}
+                  options={[
+                    { value: "operating", label: "Vận hành" },
+                    { value: "capital", label: "Vốn" },
+                  ]}
+                />
+                <p className="text-meta mt-1.5">
+                  {txEditFormData.isCapital ? "Không tính vào lợi nhuận (góp vốn, mua xe, tài sản)." : "Tính vào lợi nhuận vận hành."}
+                </p>
               </EntityFormField>
-            <EntityFormField label="Mô tả">
+              <EntityFormField label="Mô tả" required>
                 <Input
-                placeholder="Nhập mô tả"
-                value={txEditFormData.description}
-                onChange={(e) => setTxEditFormData({...txEditFormData, description: e.target.value})}
-                className={entityFormInputClass}
-              />
+                  placeholder="Sửa xe, mua định vị..."
+                  value={txEditFormData.description}
+                  onChange={(e) => setTxEditFormData({...txEditFormData, description: e.target.value})}
+                  className={entityFormInputClass}
+                />
               </EntityFormField>
-            <EntityFormField label="Ngày giao dịch">
-                <Input
-                type="date"
-                value={txEditFormData.timestamp}
-                onChange={(e) => setTxEditFormData({ ...txEditFormData, timestamp: e.target.value })}
-                className={entityFormInputClass}
-              />
-              </EntityFormField>
-            <EntityFormField label="Số tiền (VND)">
-                <Input
-                type="text"
-                placeholder="Nhập số tiền (VD: 1.000.000)"
-                value={txEditFormData.amount}
-                onChange={(e) => {
-                  const formatted = formatMoneyInput(e.target.value)
-                  setTxEditFormData({...txEditFormData, amount: formatted})
-                }}
-                className="border-slate-300 rounded-lg font-mono"
-              />
-              </EntityFormField>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <EntityFormField label="Ngày giao dịch">
+                  <Input
+                    type="date"
+                    value={txEditFormData.timestamp}
+                    onChange={(e) => setTxEditFormData({ ...txEditFormData, timestamp: e.target.value })}
+                    className={entityFormInputClass}
+                  />
+                </EntityFormField>
+                <EntityFormField label="Số tiền" required>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="1.000.000"
+                    value={txEditFormData.amount}
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setTxEditFormData({...txEditFormData, amount: formatted})
+                    }}
+                    className={cn(entityFormInputClass, "font-mono")}
+                  />
+                </EntityFormField>
+              </div>
             </EntityFormBody>
             <EntityFormFooter
-              accent="blue"
+              accent={txEditFormData.type === "income" ? "emerald" : "red"}
               onCancel={() => setIsEditTxOpen(false)}
               submitLabel="Cập nhật"
             />
@@ -1437,14 +1474,41 @@ export default function DashboardPage() {
 
       {/* ── Create Order Dialog ── */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <EntityFormDialogContent accent="blue">
+        <EntityFormDialogContent
+          accent="blue"
+          maxWidth="2xl"
+          onPointerDownOutside={keepDialogOpenWhilePickingFile}
+          onFocusOutside={keepDialogOpenWhilePickingFile}
+          onInteractOutside={keepDialogOpenWhilePickingFile}
+        >
           <EntityFormHeader
             title="Tạo đơn thuê mới"
-            description="Nhập thông tin đơn thuê xe"
+            description="Khách, xe và thời hạn thuê"
           />
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit}>
             <EntityFormBody>
-              <EntityFormSection title="1. Thông tin khách thuê" description="Chọn khách hàng hiện có hoặc thêm khách mới để tạo đơn thuê">
+              <div className="flex items-center gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                <div className="h-11 w-11 shrink-0 rounded-[var(--radius-badge)] bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                  <Bike className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-title truncate">
+                    {isNewCustomer
+                      ? (newCustomerName.trim() || "Khách mới")
+                      : (customerSearch.trim() || "Chưa chọn khách")}
+                  </p>
+                  <p className="text-meta truncate">
+                    {formData.vehicleIds.length > 0
+                      ? `${formData.vehicleIds.length} xe`
+                      : "Chưa gán xe"}
+                    {formData.startDate && formData.endDate
+                      ? ` · ${formData.startDate} → ${formData.endDate}`
+                      : ""}
+                  </p>
+                </div>
+              </div>
+
+              <EntityFormSection title="Khách thuê" description="Khách cũ hoặc hồ sơ mới">
                 <EntityFormToggle
                   value={isNewCustomer ? "new" : "existing"}
                   onChange={(val) => setIsNewCustomer(val === "new")}
@@ -1456,9 +1520,9 @@ export default function DashboardPage() {
 
                 {!isNewCustomer ? (
                     <div className="space-y-2 relative">
-                      <EntityFormField label="Tìm kiếm khách hàng">
+                      <EntityFormField label="Tìm khách hàng" required>
                         <Input
-                          placeholder="Nhập tên, số điện thoại hoặc ID khách..."
+                          placeholder="Tên hoặc số điện thoại"
                           value={customerSearch}
                           onChange={(e) => {
                             setCustomerSearch(e.target.value)
@@ -1475,19 +1539,20 @@ export default function DashboardPage() {
                           <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
                           <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
                             {filteredCustomersForSelect.length === 0 ? (
-                              <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng nào</div>
+                              <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng</div>
                             ) : (
                               filteredCustomersForSelect.map((customer) => (
                                 <div
                                   key={customer.id}
                                   onClick={() => {
                                     setFormData(prev => ({ ...prev, customerId: customer.id }))
-                                    setCustomerSearch(`${customer.name} (${customer.phone || 'Không có SĐT'})`)
+                                    setCustomerSearch(`${customer.name} (${customer.phone || "Không SĐT"})`)
                                     setShowCustomerDropdown(false)
                                   }}
-                                  className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                  className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer ui-transition border-b border-slate-50 last:border-0"
                                 >
-                                  <span className="font-semibold">{customer.name}</span> {customer.phone ? `- ${customer.phone}` : ''} <span className="text-sm text-slate-400">({customer.id})</span>
+                                  <span className="font-semibold">{customer.name}</span>
+                                  {customer.phone ? ` · ${customer.phone}` : ""}
                                 </div>
                               ))
                             )}
@@ -1498,89 +1563,105 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <EntityFormInfoBox>
-                        <strong>Khách mới:</strong> Điền đầy đủ thông tin bắt buộc (*) để tạo hồ sơ khách hàng
-                      </EntityFormInfoBox>
-                      <EntityFormField label="Tên khách hàng" hint="Họ và tên đầy đủ của khách" required>
-                        <Input
-                          placeholder="VD: Nguyễn Văn A"
-                          value={newCustomerName}
-                          onChange={(e) => setNewCustomerName(e.target.value)}
-                          className={entityFormInputClass}
-                          required={isNewCustomer}
-                        />
-                      </EntityFormField>
-                      <div className="space-y-1">
+                      <p className="text-meta">Điền * để tạo hồ sơ khách cùng lúc với đơn.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <EntityFormField label="Họ và tên" required>
+                          <Input
+                            placeholder="Nguyễn Văn A"
+                            autoComplete="name"
+                            value={newCustomerName}
+                            onChange={(e) => setNewCustomerName(e.target.value)}
+                            className={entityFormInputClass}
+                            required={isNewCustomer}
+                          />
+                        </EntityFormField>
                         <EntityFormField label="Số điện thoại" required>
                           <Input
-                          placeholder="Nhập số điện thoại..."
-                          value={newCustomerPhone}
-                          onChange={(e) => setNewCustomerPhone(e.target.value)}
-                          className={entityFormInputClass}
-                          required={isNewCustomer}
-                        />
+                            type="tel"
+                            inputMode="tel"
+                            placeholder="0901234567"
+                            autoComplete="tel"
+                            value={newCustomerPhone}
+                            onChange={(e) => setNewCustomerPhone(e.target.value)}
+                            className={cn(entityFormInputClass, "tabular-nums")}
+                            required={isNewCustomer}
+                          />
+                        </EntityFormField>
+                        <EntityFormField label="Địa chỉ" required>
+                          <Input
+                            placeholder="Tây Lộc, TP. Huế"
+                            autoComplete="street-address"
+                            value={newCustomerAddress}
+                            onChange={(e) => setNewCustomerAddress(e.target.value)}
+                            className={entityFormInputClass}
+                            required={isNewCustomer}
+                          />
+                        </EntityFormField>
+                        <EntityFormField label="Số CCCD / CMND">
+                          <Input
+                            inputMode="numeric"
+                            placeholder="079123456789"
+                            value={newCustomerCCCD}
+                            onChange={(e) => setNewCustomerCCCD(e.target.value.replace(/^CCCD_/i, ""))}
+                            className={cn(entityFormInputClass, "font-mono")}
+                          />
                         </EntityFormField>
                       </div>
-                      <div className="space-y-1">
-                        <EntityFormField label="Địa chỉ khách" required>
-                          <Input
-                          placeholder="Nhập địa chỉ..."
-                          value={newCustomerAddress}
-                          onChange={(e) => setNewCustomerAddress(e.target.value)}
-                          className={entityFormInputClass}
-                          required={isNewCustomer}
-                        />
-                        </EntityFormField>
-                      </div>
-                      <div className="space-y-1">
-                        <EntityFormField label="Số CCCD khách (tùy chọn)">
-                          <Input
-                          placeholder="Nhập số CCCD..."
-                          value={newCustomerCCCD}
-                          onChange={(e) => setNewCustomerCCCD(e.target.value)}
-                          className={entityFormInputClass}
-                        />
-                        </EntityFormField>
-                      </div>
-                      <div className="space-y-1">
-                        <EntityFormField label="Ảnh CCCD (tùy chọn)">
-                          <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setNewCustomerCCCDFront(e.target.files?.[0] || null)}
-                          className={cn(entityFormInputClass, "p-1")}
-                        />
-                        </EntityFormField>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: "Ảnh khách", file: newCustomerPhoto, set: setNewCustomerPhoto },
+                          { label: "CCCD mặt trước", file: newCustomerCCCDFront, set: setNewCustomerCCCDFront },
+                        ].map((slot) => (
+                          <div key={slot.label} className="space-y-1.5 min-w-0">
+                            <p className="text-label">{slot.label}</p>
+                            <div className={cn(
+                              "relative aspect-[4/3] overflow-hidden rounded-[var(--radius-control)]",
+                              slot.file ? "border border-slate-200" : "border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/50"
+                            )}>
+                              <div className="flex h-full flex-col items-center justify-center gap-1 px-2">
+                                <Upload className="h-5 w-5 text-slate-400" />
+                                <span className="text-meta text-center truncate w-full px-1">{slot.file ? slot.file.name : "Thêm ảnh"}</span>
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                                onClick={markPickingFile}
+                                onChange={(e) => {
+                                  slot.set(e.target.files?.[0] || null)
+                                  e.target.value = ""
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
                 </EntityFormSection>
 
-                <EntityFormSection title="2. Thông tin xe thuê" description="Chọn xe trong danh sách xe sẵn sàng hoặc để trống để gán xe sau">
+                <EntityFormSection title="Xe thuê" description="Chọn xe sẵn sàng hoặc để trống, gán lúc giao">
                   <div className="space-y-3 relative">
-                    <p className="text-label">Chọn xe thuê <span className="text-slate-400 font-normal text-xs">(Có thể để trống để gán khi giao xe)</span></p>
-                    
-                    {/* Selected vehicles badges */}
                     {formData.vehicleIds.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 border border-slate-100 rounded-xl">
+                      <div className="flex flex-wrap gap-1.5">
                         {formData.vehicleIds.map((vId) => {
                           const vObj = vehicles.find(v => v.id === vId)
                           if (!vObj) return null
                           return (
-                            <span 
-                              key={vId} 
-                              className="inline-flex items-center gap-1.5 text-meta font-semibold px-2.5 py-1 rounded-[var(--radius-badge)] bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
+                            <span
+                              key={vId}
+                              className="inline-flex items-center gap-1.5 text-meta font-semibold px-2.5 py-1 rounded-[var(--radius-badge)] bg-blue-50 text-blue-700 border border-blue-100"
                             >
-                              <span>{vObj.name} ({vObj.licensePlate})</span>
-                              <button 
-                                type="button" 
+                              <span className="truncate max-w-[12rem]">{vObj.name} · {vObj.licensePlate}</span>
+                              <button
+                                type="button"
                                 onClick={() => {
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    vehicleIds: prev.vehicleIds.filter(id => id !== vId) 
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    vehicleIds: prev.vehicleIds.filter(id => id !== vId)
                                   }))
                                 }}
-                                className="hover:bg-blue-100 rounded p-0.5 text-blue-500 hover:text-blue-700 transition"
+                                className="hover:bg-blue-100 rounded p-0.5 text-blue-500 hover:text-blue-700 ui-transition"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -1590,31 +1671,29 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    <p className="text-meta">Tìm theo tên xe hoặc biển số (có thể chọn nhiều xe cùng lúc)</p>
-                    <Input
-                      placeholder="VD: Wave Alpha hoặc 75F1-12345... (hoặc để trống)"
-                      value={vehicleSearch}
-                      onChange={(e) => {
-                        setVehicleSearch(e.target.value)
-                        setShowVehicleDropdown(true)
-                      }}
-                      onFocus={() => setShowVehicleDropdown(true)}
-                      className={entityFormInputClass}
-                    />
+                    <EntityFormField label="Tìm xe">
+                      <Input
+                        placeholder="Tên xe hoặc biển số"
+                        value={vehicleSearch}
+                        onChange={(e) => {
+                          setVehicleSearch(e.target.value)
+                          setShowVehicleDropdown(true)
+                        }}
+                        onFocus={() => setShowVehicleDropdown(true)}
+                        className={entityFormInputClass}
+                      />
+                    </EntityFormField>
 
                     {formData.vehicleIds.length === 0 && (
-                      <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-3">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-amber-900">
-                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                          Đang để trống xe — Đơn tạo sẽ ở trạng thái "Chờ giao xe"
-                        </div>
-                        <p className="text-[11px] text-amber-800 leading-relaxed">
-                          Khi đến ngày bàn giao cho khách, bạn chỉ cần bấm nút <strong>"Giao xe"</strong> trong quản lý đơn để chọn các chiếc xe đang rảnh tại bãi và tự động gán vào đơn.
+                      <div className="rounded-[var(--radius-control)] border border-amber-200 bg-amber-50/80 p-3 space-y-3">
+                        <p className="text-meta text-amber-900">
+                          Để trống xe — đơn ở trạng thái chờ giao. Gán xe khi bàn giao.
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                          <EntityFormField label="Số lượng xe đặt trước" hint="Số lượng xe khách muốn đặt">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <EntityFormField label="Số lượng xe">
                             <Input
                               type="number"
+                              inputMode="numeric"
                               min={1}
                               max={20}
                               value={unassignedQuantity}
@@ -1623,40 +1702,44 @@ export default function DashboardPage() {
                               className={cn(entityFormInputClass, "font-bold bg-white")}
                             />
                           </EntityFormField>
-                          <EntityFormField label="Đơn giá dự kiến / xe (VND/ngày)" hint="Tính tiền cọc & tổng tiền">
+                          <EntityFormField label="Đơn giá / xe / ngày">
                             <Input
                               type="text"
+                              inputMode="numeric"
                               value={unassignedPricePerDay}
                               onChange={(e) => setUnassignedPricePerDay(formatMoneyInput(e.target.value))}
-                              placeholder="VD: 150.000"
+                              placeholder="150.000"
                               className={cn(entityFormInputClass, "font-mono bg-white")}
                             />
                           </EntityFormField>
                         </div>
                       </div>
                     )}
-                    
+
                     {showVehicleDropdown && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
-                        <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+                        <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
                           {filteredVehiclesForSelect.length === 0 ? (
-                            <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy xe nào khả dụng</div>
+                            <div className="p-3 text-sm text-slate-500 text-center">Không có xe khả dụng</div>
                           ) : (
                             filteredVehiclesForSelect.map((vehicle) => (
                               <div
                                 key={vehicle.id}
                                 onClick={() => {
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    vehicleIds: [...prev.vehicleIds, vehicle.id] 
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    vehicleIds: [...prev.vehicleIds, vehicle.id]
                                   }))
                                   setVehicleSearch("")
                                   setShowVehicleDropdown(false)
                                 }}
-                                className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer ui-transition border-b border-slate-50 last:border-0"
                               >
-                                <span className="font-semibold">{vehicle.name}</span> - <span className="text-sm bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono font-semibold">{vehicle.licensePlate}</span> <span className="text-sm text-slate-500">({vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày)</span>
+                                <span className="font-semibold">{vehicle.name}</span>
+                                {" · "}
+                                <span className="font-mono">{vehicle.licensePlate}</span>
+                                <span className="text-slate-500"> · {vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày</span>
                               </div>
                             ))
                           )}
@@ -1666,11 +1749,10 @@ export default function DashboardPage() {
                   </div>
                 </EntityFormSection>
 
-                <EntityFormSection title="3. Chi tiết hợp đồng thuê" description="Nhập ngày thuê, thời hạn và tiền đặt cọc">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <EntityFormField label="Ngày bắt đầu">
-                        <Input
+                <EntityFormSection title="Hợp đồng" description="Ngày thuê và tiền cọc">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <EntityFormField label="Ngày bắt đầu" required>
+                      <Input
                         id="startDate"
                         type="date"
                         value={formData.startDate}
@@ -1678,11 +1760,9 @@ export default function DashboardPage() {
                         className={entityFormInputClass}
                         required
                       />
-                      </EntityFormField>
-                    </div>
-                    <div className="space-y-1">
-                      <EntityFormField label="Ngày kết thúc">
-                        <Input
+                    </EntityFormField>
+                    <EntityFormField label="Ngày kết thúc" required>
+                      <Input
                         id="endDate"
                         type="date"
                         value={formData.endDate}
@@ -1690,40 +1770,36 @@ export default function DashboardPage() {
                         className={entityFormInputClass}
                         required
                       />
-                      </EntityFormField>
-                    </div>
+                    </EntityFormField>
                   </div>
 
-                  <div className="space-y-1">
-                    <EntityFormField label="Tiền đặt cọc (VND)">
-                      <Input
+                  <EntityFormField label="Tiền đặt cọc" required>
+                    <Input
                       id="deposit"
                       type="text"
+                      inputMode="numeric"
                       value={formData.deposit}
                       onChange={(e) => {
                         const formatted = formatMoneyInput(e.target.value)
                         setFormData({ ...formData, deposit: formatted })
                       }}
-                      placeholder="VD: 500.000"
+                      placeholder="500.000"
                       className={cn(entityFormInputClass, "font-mono")}
                       required
                     />
-                    </EntityFormField>
-                  </div>
+                  </EntityFormField>
 
-                  <div className="space-y-1">
-                    <EntityFormField label="Ghi chú">
-                      <Textarea
-                        id="notes"
-                        value={formData.notes}
-                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        placeholder="VD: Trả xe 14h-15h 31/8, giảm 5% tổng đơn, đã cọc 100k..."
-                        className={cn(entityFormInputClass, "min-h-20 resize-y")}
-                      />
-                    </EntityFormField>
-                  </div>
+                  <EntityFormField label="Ghi chú">
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Giờ trả xe, giảm giá, đã cọc..."
+                      className={cn(entityFormInputClass, "min-h-16 resize-y")}
+                    />
+                  </EntityFormField>
 
-                  <div className="flex items-center space-x-2 pt-2">
+                  <label className="flex items-center gap-2 pt-1 cursor-pointer">
                     <input
                       id="hasCommission"
                       type="checkbox"
@@ -1731,38 +1807,35 @@ export default function DashboardPage() {
                       onChange={(e) => setHasCommission(e.target.checked)}
                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                     />
-                    <Label htmlFor="hasCommission" className="text-slate-700 text-sm font-semibold cursor-pointer">Chia hoa hồng</Label>
-                  </div>
+                    <span className="text-body font-semibold text-slate-700">Chia hoa hồng</span>
+                  </label>
 
                   {hasCommission && (
-                    <div className="grid grid-cols-1 gap-3 pt-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
-                      <div className="space-y-1">
-                        <EntityFormField label="Tên Home">
-                          <Input
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-[var(--radius-control)] border border-amber-100 bg-amber-50 p-3">
+                      <EntityFormField label="Tên Home">
+                        <Input
                           id="homeName"
                           type="text"
                           value={formData.homeName}
                           onChange={(e) => setFormData({ ...formData, homeName: e.target.value })}
-                          placeholder="VD: Home ABC"
+                          placeholder="Home ABC"
                           className={entityFormInputClass}
                         />
-                        </EntityFormField>
-                      </div>
-                      <div className="space-y-1">
-                        <EntityFormField label="Chia hoa hồng cho Home (VND/ngày)">
-                          <Input
+                      </EntityFormField>
+                      <EntityFormField label="Hoa hồng / ngày">
+                        <Input
                           id="commissionHome"
                           type="text"
+                          inputMode="numeric"
                           value={formData.commissionHome}
                           onChange={(e) => {
                             const formatted = formatMoneyInput(e.target.value)
                             setFormData({ ...formData, commissionHome: formatted })
                           }}
-                          placeholder="VD: 20.000"
+                          placeholder="20.000"
                           className={cn(entityFormInputClass, "font-mono")}
                         />
-                        </EntityFormField>
-                      </div>
+                      </EntityFormField>
                     </div>
                   )}
                 </EntityFormSection>
