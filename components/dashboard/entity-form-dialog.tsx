@@ -39,9 +39,9 @@ export const EntityFormDialogContent = React.forwardRef<
     className?: string
     children: React.ReactNode
     maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl"
-  }
+  } & Omit<React.ComponentPropsWithoutRef<typeof DialogContent>, "children">
 >(function EntityFormDialogContent(
-  { accent = "red", className, children, maxWidth = "xl" },
+  { accent = "red", className, children, maxWidth = "xl", ...props },
   ref
 ) {
   const maxW =
@@ -60,6 +60,7 @@ export const EntityFormDialogContent = React.forwardRef<
   return (
     <DialogContent
       ref={ref}
+      {...props}
       className={cn(
         "block border-slate-200 rounded-[var(--radius-container)] max-h-[min(90dvh,calc(100dvh-1rem))] overflow-y-auto overscroll-contain bg-white p-0 gap-0",
         maxW,
@@ -157,10 +158,10 @@ export function EntityFormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-label">
+      <p className="text-label">
         {label}
         {required && <span className="text-rose-500"> *</span>}
-      </label>
+      </p>
       {hint && <p className="text-meta">{hint}</p>}
       {children}
     </div>

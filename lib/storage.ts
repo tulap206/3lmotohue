@@ -13,7 +13,8 @@ export async function uploadImage(
   folder: string
 ): Promise<string | null> {
   try {
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name}`
+    const safeName = (file.name || "image.jpg").replace(/[^\w.\-]+/g, "_")
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${safeName}`
     const filePath = `${folder}/${fileName}`
 
     console.log(`📸 Uploading to ${bucket}/${filePath}`)
@@ -23,11 +24,12 @@ export async function uploadImage(
       .upload(filePath, file, {
         cacheControl: "3600",
         upsert: false,
+        contentType: file.type || "image/jpeg",
       })
 
     if (error) {
       console.error("Upload error:", error)
-      return null
+      throw new Error(error.message || "Không tải được ảnh lên máy chủ")
     }
 
     // Get public URL
@@ -39,7 +41,7 @@ export async function uploadImage(
     return data.publicUrl
   } catch (error) {
     console.error("Upload exception:", error)
-    return null
+    throw error instanceof Error ? error : new Error("Không tải được ảnh lên máy chủ")
   }
 }
 
@@ -56,6 +58,10 @@ export async function uploadMultipleImages(
   for (const file of files) {
     const url = await uploadImage(file, bucket, folder)
     if (url) urls.push(url)
+  }
+
+  if (files.length > 0 && urls.length === 0) {
+    throw new Error("Không tải được ảnh lên máy chủ")
   }
 
   return urls

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { showError, showWarning, showSuccess } from "@/lib/toast-utils"
 import { createPortal } from "react-dom"
 import { useAuth } from "@/contexts/auth-context"
@@ -251,6 +251,59 @@ function VehicleThumb({ src, name }: { src?: string; name: string }) {
   )
 }
 
+function isFileLike(value: unknown): value is File {
+  return typeof File !== "undefined" && value instanceof File
+}
+
+function normalizeImageList(value: unknown): Array<string | File> {
+  if (Array.isArray(value)) {
+    return value.filter((item) => (typeof item === "string" && item.length > 0) || isFileLike(item))
+  }
+  if (typeof value === "string" && value.trim()) {
+    const trimmed = value.trim()
+    if (trimmed.startsWith("[")) {
+      try {
+        return normalizeImageList(JSON.parse(trimmed))
+      } catch {
+        return [trimmed]
+      }
+    }
+    return [trimmed]
+  }
+  return []
+}
+
+function imagePreviewSrc(img: string | File) {
+  return isFileLike(img) ? URL.createObjectURL(img) : img
+}
+
+function ImageAddTile({
+  onFiles,
+  onPickStart,
+}: {
+  onFiles: (files: File[]) => void
+  onPickStart?: () => void
+}) {
+  return (
+    <div className="relative aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-colors overflow-hidden">
+      <Upload className="w-6 h-6 text-slate-400 pointer-events-none" />
+      <span className="text-meta mt-1 pointer-events-none">Thêm ảnh</span>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+        onClick={() => onPickStart?.()}
+        onChange={(e) => {
+          const files = e.target.files
+          if (files?.length) onFiles(Array.from(files))
+          e.target.value = ""
+        }}
+      />
+    </div>
+  )
+}
+
 export default function VehiclesPage() {
   const { user, addAccessLog } = useAuth()
   const { vehicles, setVehicles, orders, setOrders, isLoading } = useRentalData()
@@ -265,6 +318,7 @@ export default function VehiclesPage() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
   const [viewingVehicle, setViewingVehicle] = useState<Vehicle | null>(null)
   const [historyVehicle, setHistoryVehicle] = useState<Vehicle | null>(null)
+  const pickingFileRef = useRef(false)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const [newVehicle, setNewVehicle] = useState({
     name: "",
@@ -502,7 +556,7 @@ export default function VehiclesPage() {
         if (newVehicle.vehicleImages.length > 0) {
           console.log("Uploading vehicle images...")
           vehicleImageUrls = await uploadMultipleImages(
-            newVehicle.vehicleImages,
+            newVehicle.vehicleImages.filter(isFileLike),
             "vehicles",
             "vehicle-images"
           )
@@ -511,7 +565,7 @@ export default function VehiclesPage() {
         if (newVehicle.documentImages.length > 0) {
           console.log("📄 Uploading document images...")
           documentImageUrls = await uploadMultipleImages(
-            newVehicle.documentImages,
+            newVehicle.documentImages.filter(isFileLike),
             "vehicles",
             "document-images"
           )
@@ -565,32 +619,54 @@ export default function VehiclesPage() {
       }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'vehicle' | 'document', isEdit: boolean = false) => {
-    const files = e.target.files
-    if (files) {
-      const fileArray = Array.from(files)
-      if (isEdit && editingVehicle) {
-        if (type === 'vehicle') {
-          setEditingVehicle({ ...editingVehicle, vehicleImages: [...(editingVehicle.vehicleImages as any), ...fileArray] as any })
-        } else {
-          setEditingVehicle({ ...editingVehicle, documentImages: [...(editingVehicle.documentImages as any), ...fileArray] as any })
+  const keepDialogOpenWhilePickingFile = (event: { preventDefault: () => void }) => {
+    if (pickingFileRef.current) event.preventDefault()
+  }
+
+  const markPickingFile = () => {
+    pickingFileRef.current = true
+    window.setTimeout(() => {
+      pickingFileRef.current = false
+    }, 1500)
+  }
+
+  const handleImageFiles = (files: File[], type: "vehicle" | "document", isEdit: boolean = false) => {
+    if (!files.length) return
+    if (isEdit) {
+      setEditingVehicle((prev) => {
+        if (!prev) return prev
+        if (type === "vehicle") {
+          return {
+            ...prev,
+            vehicleImages: [...normalizeImageList(prev.vehicleImages), ...files] as any,
+          }
         }
-      } else {
-        if (type === 'vehicle') {
-          setNewVehicle(prev => ({ ...prev, vehicleImages: [...prev.vehicleImages, ...fileArray] }))
-        } else {
-          setNewVehicle(prev => ({ ...prev, documentImages: [...prev.documentImages, ...fileArray] }))
+        return {
+          ...prev,
+          documentImages: [...normalizeImageList(prev.documentImages), ...files] as any,
         }
-      }
+      })
+      return
+    }
+    if (type === "vehicle") {
+      setNewVehicle((prev) => ({
+        ...prev,
+        vehicleImages: [...normalizeImageList(prev.vehicleImages), ...files] as File[],
+      }))
+    } else {
+      setNewVehicle((prev) => ({
+        ...prev,
+        documentImages: [...normalizeImageList(prev.documentImages), ...files] as File[],
+      }))
     }
   }
 
   const removeImage = (index: number, type: 'vehicle' | 'document', isEdit: boolean = false) => {
     if (isEdit && editingVehicle) {
       if (type === 'vehicle') {
-        setEditingVehicle({ ...editingVehicle, vehicleImages: editingVehicle.vehicleImages.filter((_, i) => i !== index) })
+        setEditingVehicle({ ...editingVehicle, vehicleImages: normalizeImageList(editingVehicle.vehicleImages).filter((_, i) => i !== index) as any })
       } else {
-        setEditingVehicle({ ...editingVehicle, documentImages: editingVehicle.documentImages.filter((_, i) => i !== index) })
+        setEditingVehicle({ ...editingVehicle, documentImages: normalizeImageList(editingVehicle.documentImages).filter((_, i) => i !== index) as any })
       }
     } else {
       if (type === 'vehicle') {
@@ -605,11 +681,15 @@ export default function VehiclesPage() {
     if (editingVehicle) {
       try {
         // Separate existing URL strings from new File objects
-        const existingVehicleImages = (editingVehicle.vehicleImages || []).filter((img: any) => typeof img === 'string') as string[]
-        const newVehicleImageFiles = (editingVehicle.vehicleImages || []).filter((img: any) => img instanceof File) as unknown as File[]
+        const existingVehicleImages = normalizeImageList(editingVehicle.vehicleImages).filter(
+          (img) => typeof img === "string"
+        ) as string[]
+        const newVehicleImageFiles = normalizeImageList(editingVehicle.vehicleImages).filter(isFileLike)
 
-        const existingDocumentImages = (editingVehicle.documentImages || []).filter((img: any) => typeof img === 'string') as string[]
-        const newDocumentImageFiles = (editingVehicle.documentImages || []).filter((img: any) => img instanceof File) as unknown as File[]
+        const existingDocumentImages = normalizeImageList(editingVehicle.documentImages).filter(
+          (img) => typeof img === "string"
+        ) as string[]
+        const newDocumentImageFiles = normalizeImageList(editingVehicle.documentImages).filter(isFileLike)
 
         // Upload new images if any
         let newVehicleImageUrls: string[] = []
@@ -701,6 +781,8 @@ export default function VehiclesPage() {
   const openEditDialog = (vehicle: Vehicle) => {
     setEditingVehicle({
       ...vehicle,
+      vehicleImages: normalizeImageList(vehicle.vehicleImages) as any,
+      documentImages: normalizeImageList(vehicle.documentImages) as any,
       pricePerDay: vehicle.pricePerDay?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || '' as any,
       purchasePrice: vehicle.purchasePrice?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || '' as any
     })
@@ -877,7 +959,13 @@ export default function VehiclesPage() {
           setIsAddDialogOpen(open)
         }
       }}>
-        <EntityFormDialogContent accent="blue" maxWidth="2xl">
+        <EntityFormDialogContent
+          accent="blue"
+          maxWidth="2xl"
+          onPointerDownOutside={keepDialogOpenWhilePickingFile}
+          onFocusOutside={keepDialogOpenWhilePickingFile}
+          onInteractOutside={keepDialogOpenWhilePickingFile}
+        >
           <EntityFormHeader
             title="Thêm xe mới"
             description="Nhập thông tin xe mới vào hệ thống"
@@ -997,14 +1085,14 @@ export default function VehiclesPage() {
 
                 <EntityFormField label="Ảnh xe">
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {newVehicle.vehicleImages.map((img, index) => (
+                    {normalizeImageList(newVehicle.vehicleImages).map((img, index) => (
                       <div
                         key={index}
                         className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={img instanceof File ? URL.createObjectURL(img) : img}
+                          src={imagePreviewSrc(img)}
                           alt={`Xe ${index + 1}`}
                           className="w-full h-full object-cover cursor-pointer hover:opacity-90"
                         />
@@ -1017,30 +1105,23 @@ export default function VehiclesPage() {
                         </button>
                       </div>
                     ))}
-                    <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                      <Upload className="w-6 h-6 text-slate-400" />
-                      <span className="text-meta mt-1">Thêm ảnh</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(e, "vehicle")}
-                      />
-                    </label>
+                    <ImageAddTile
+                      onPickStart={markPickingFile}
+                      onFiles={(files) => handleImageFiles(files, "vehicle")}
+                    />
                   </div>
                 </EntityFormField>
 
                 <EntityFormField label="Ảnh giấy tờ xe">
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {newVehicle.documentImages.map((img, index) => (
+                    {normalizeImageList(newVehicle.documentImages).map((img, index) => (
                       <div
                         key={index}
                         className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={img instanceof File ? URL.createObjectURL(img) : img}
+                          src={imagePreviewSrc(img)}
                           alt={`Giấy tờ ${index + 1}`}
                           className="w-full h-full object-cover cursor-pointer hover:opacity-90"
                         />
@@ -1053,17 +1134,10 @@ export default function VehiclesPage() {
                         </button>
                       </div>
                     ))}
-                    <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                      <Upload className="w-6 h-6 text-slate-400" />
-                      <span className="text-meta mt-1">Thêm ảnh</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(e, "document")}
-                      />
-                    </label>
+                    <ImageAddTile
+                      onPickStart={markPickingFile}
+                      onFiles={(files) => handleImageFiles(files, "document")}
+                    />
                   </div>
                 </EntityFormField>
               </EntityFormSection>
@@ -1430,7 +1504,13 @@ export default function VehiclesPage() {
           setIsEditDialogOpen(open)
         }
       }}>
-        <EntityFormDialogContent accent="blue" maxWidth="2xl">
+        <EntityFormDialogContent
+          accent="blue"
+          maxWidth="2xl"
+          onPointerDownOutside={keepDialogOpenWhilePickingFile}
+          onFocusOutside={keepDialogOpenWhilePickingFile}
+          onInteractOutside={keepDialogOpenWhilePickingFile}
+        >
           <EntityFormHeader
             title="Chỉnh sửa thông tin xe"
             description="Cập nhật thông tin xe trong hệ thống"
@@ -1544,17 +1624,17 @@ export default function VehiclesPage() {
 
                   <EntityFormField label="Ảnh xe">
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {editingVehicle.vehicleImages.map((img, index) => (
+                      {normalizeImageList(editingVehicle.vehicleImages).map((img, index) => (
                         <div
                           key={index}
                           className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
+                            src={imagePreviewSrc(img)}
                             alt={`Xe ${index + 1}`}
                             className="w-full h-full object-cover cursor-pointer hover:opacity-90"
-                            onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
+                            onClick={() => setLightboxImage(imagePreviewSrc(img))}
                           />
                           <button
                             type="button"
@@ -1565,33 +1645,26 @@ export default function VehiclesPage() {
                           </button>
                         </div>
                       ))}
-                      <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                        <Upload className="w-6 h-6 text-slate-400" />
-                        <span className="text-meta mt-1">Thêm ảnh</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(e, "vehicle", true)}
-                        />
-                      </label>
+                      <ImageAddTile
+                        onPickStart={markPickingFile}
+                        onFiles={(files) => handleImageFiles(files, "vehicle", true)}
+                      />
                     </div>
                   </EntityFormField>
 
                   <EntityFormField label="Ảnh giấy tờ xe">
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {editingVehicle.documentImages.map((img, index) => (
+                      {normalizeImageList(editingVehicle.documentImages).map((img, index) => (
                         <div
                           key={index}
                           className="relative aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 group"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={(img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string)}
+                            src={imagePreviewSrc(img)}
                             alt={`Giấy tờ ${index + 1}`}
                             className="w-full h-full object-cover cursor-pointer hover:opacity-90"
-                            onClick={() => setLightboxImage((img as any) instanceof File ? URL.createObjectURL((img as any)) : (img as string))}
+                            onClick={() => setLightboxImage(imagePreviewSrc(img))}
                           />
                           <button
                             type="button"
@@ -1602,17 +1675,10 @@ export default function VehiclesPage() {
                           </button>
                         </div>
                       ))}
-                      <label className="aspect-square rounded-[var(--radius-control)] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                        <Upload className="w-6 h-6 text-slate-400" />
-                        <span className="text-meta mt-1">Thêm ảnh</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(e, "document", true)}
-                        />
-                      </label>
+                      <ImageAddTile
+                        onPickStart={markPickingFile}
+                        onFiles={(files) => handleImageFiles(files, "document", true)}
+                      />
                     </div>
                   </EntityFormField>
                 </EntityFormSection>

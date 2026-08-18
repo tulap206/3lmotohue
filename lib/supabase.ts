@@ -139,9 +139,11 @@ export const fetchVehicles = async () => {
         }
       }
     }
-    return {
+      return {
       ...vehicle,
       status: status as any,
+      vehicleImages: Array.isArray(vehicle.vehicleImages) ? vehicle.vehicleImages : [],
+      documentImages: Array.isArray(vehicle.documentImages) ? vehicle.documentImages : [],
       totalRentalDays: vehicle.totalRentalDays ?? 0,
       totalRevenue: vehicle.totalRevenue ?? 0,
       profit: vehicle.profit ?? 0,
