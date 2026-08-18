@@ -22,9 +22,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import {
   EntityFormDialogContent,
-  EntityFormHeader,
 } from "@/components/dashboard/entity-form-dialog"
-import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp, ImageIcon, Eye } from "lucide-react"
+import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp, ImageIcon, Eye, Car, MapPin } from "lucide-react"
 import { toast } from "sonner"
 import {
   ModulePageShell,
@@ -42,9 +41,48 @@ import {
   rentalFilterInputClass,
   getRentalVehicleStatusLabel,
   rentalVehicleStatusBadgeClass,
+  getRentalOrderStatusLabel,
+  rentalOrderStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
 import { formatDisplayDate } from "@/lib/format-date"
+
+function parseVehicleDisplayNotes(notes?: string) {
+  if (!notes) return { location: "", cleanNotes: "" }
+  const match = notes.match(/\[location:(.*?)\]/i)
+  if (!match) return { location: "", cleanNotes: notes }
+  const raw = match[1].trim()
+  const cleanNotes = notes.replace(/\[location:(.*?)\]/gi, "").trim()
+  const location = raw.includes("|") ? (raw.split("|")[1] || raw.split("|")[0]) : raw
+  return { location, cleanNotes }
+}
+
+function MaintStat({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string
+  value: string
+  tone?: "default" | "amber" | "rose" | "emerald"
+}) {
+  return (
+    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-w-0 flex flex-col justify-center">
+      <p className="text-label text-slate-500">{label}</p>
+      <p
+        className={cn(
+          "text-body font-semibold tabular-nums mt-0.5 leading-snug break-words",
+          tone === "amber" && "text-amber-800",
+          tone === "rose" && "text-rose-700",
+          tone === "emerald" && "text-emerald-700",
+          tone === "default" && "text-slate-900"
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
 
 export default function MaintenancePage() {
   const { user } = useAuth()
@@ -386,89 +424,131 @@ export default function MaintenancePage() {
 
       {/* Vehicle Detail Dialog */}
       <Dialog open={!!viewingVehicle} onOpenChange={(open) => !open && setViewingVehicle(null)}>
-        <EntityFormDialogContent accent="blue" maxWidth="lg">
+        <EntityFormDialogContent accent="amber" maxWidth="xl">
           {viewingVehicle && (() => {
             const v = viewingVehicle
             const mntKm = Math.floor(v.current_km / 1000) * 1000
             const overKm = v.current_km - mntKm
+            const nextKm = mntKm + 1000
             const vOrders = orders.filter((o) => o.vehicleId === v.id)
             const recentOrders = [...vOrders]
               .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
               .slice(0, 4)
+            const loc = parseVehicleDisplayNotes(v.notes)
+            const photo = (v.vehicleImages || []).find((img) => typeof img === "string") as string | undefined
+            const overduePct = Math.min(100, Math.round((overKm / 1000) * 100))
 
             return (
               <>
-                <EntityFormHeader
-                  title={v.name}
-                  description={`${v.licensePlate || "Chưa biển"}${v.color ? ` · ${v.color}` : ""}`}
-                />
-                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                  <div className="flex items-center justify-between">
-                    <span className={cn(maintenanceBadgeClass, rentalVehicleStatusBadgeClass(v.status))}>
-                      {getRentalVehicleStatusLabel(v.status)}
-                    </span>
-                    <span className={cn(
-                      maintenanceBadgeClass,
-                      "gap-1",
-                      overKm >= 300
-                        ? "bg-rose-50 text-rose-700 border-rose-100"
-                        : "bg-amber-50 text-amber-700 border-amber-100"
-                    )}>
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      Quá hạn +{overKm.toLocaleString("vi-VN")} km
-                    </span>
+                <div className="flex items-start gap-3 sm:gap-4 mb-5">
+                  <div className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] shrink-0 overflow-hidden rounded-[var(--radius-control)] border border-slate-200 bg-slate-50">
+                    {photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photo} alt={v.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Car className="h-7 w-7 text-slate-300" />
+                      </div>
+                    )}
                   </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">KM hiện tại</p>
-                      <p className="text-sm font-extrabold text-slate-900 tabular-nums">{v.current_km.toLocaleString("vi-VN")} km</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Mốc bảo trì</p>
-                      <p className="text-sm font-extrabold text-slate-900 tabular-nums">{mntKm.toLocaleString("vi-VN")} km</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Giá thuê/ngày</p>
-                      <p className="text-sm font-extrabold text-slate-900 money tabular-nums">{formatPrice(v.pricePerDay)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500">Tổng đơn</p>
-                      <p className="text-sm font-extrabold text-slate-800">{vOrders.length} đơn</p>
+                  <div className="min-w-0 flex-1 pr-6">
+                    <h2 className="text-title text-pretty">{v.name}</h2>
+                    <p className="text-meta mt-0.5 font-mono tracking-wide">
+                      {v.licensePlate || "Chưa biển"}
+                      {v.color ? ` · ${v.color}` : ""}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className={cn(maintenanceBadgeClass, rentalVehicleStatusBadgeClass(v.status))}>
+                        {getRentalVehicleStatusLabel(v.status)}
+                      </span>
+                      <span className={cn(
+                        maintenanceBadgeClass,
+                        "gap-1",
+                        overKm >= 300
+                          ? "bg-rose-50 text-rose-700 border-rose-100"
+                          : "bg-amber-50 text-amber-700 border-amber-100"
+                      )}>
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Quá hạn +{overKm.toLocaleString("vi-VN")} km
+                      </span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Giá mua</p>
-                      <p className="text-sm font-bold text-slate-800 tabular-nums">{formatPrice(v.purchasePrice)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Lần BT gần nhất</p>
-                      <p className="text-sm font-bold text-slate-800 tabular-nums">
-                        {(v.last_maintenance_km ?? 0).toLocaleString("vi-VN")} km
+                <div className="space-y-4">
+                  <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-3">
+                    <div className="flex items-end justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-label text-slate-500">Tiến độ chu kỳ 1.000 km</p>
+                        <p className="text-body font-semibold tabular-nums text-slate-900 mt-0.5">
+                          {v.current_km.toLocaleString("vi-VN")} → mốc {nextKm.toLocaleString("vi-VN")} km
+                        </p>
+                      </div>
+                      <p className={cn(
+                        "text-body font-semibold tabular-nums shrink-0",
+                        overKm >= 300 ? "text-rose-700" : "text-amber-800"
+                      )}>
+                        +{overKm.toLocaleString("vi-VN")} km
                       </p>
                     </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className={cn("h-full rounded-full", overKm >= 300 ? "bg-rose-500" : "bg-amber-500")}
+                        style={{ width: `${overduePct}%` }}
+                      />
+                    </div>
                   </div>
 
-                  {v.notes && v.notes.trim() && (
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
-                      <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <MaintStat label="KM hiện tại" value={`${v.current_km.toLocaleString("vi-VN")} km`} />
+                    <MaintStat label="Mốc bảo trì" value={`${mntKm.toLocaleString("vi-VN")} km`} />
+                    <MaintStat
+                      label="Lần BT gần nhất"
+                      value={`${(v.last_maintenance_km ?? 0).toLocaleString("vi-VN")} km`}
+                    />
+                    <MaintStat label="Tổng đơn" value={`${vOrders.length} đơn`} />
+                    <MaintStat label="Giá thuê / ngày" value={formatPrice(v.pricePerDay)} />
+                    <MaintStat label="Giá mua" value={formatPrice(v.purchasePrice)} tone="amber" />
+                  </div>
+
+                  {loc.location && (
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/80 px-3 py-3">
+                      <p className="text-label text-slate-500 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                        Vị trí hiện tại
+                      </p>
+                      <p className="text-body text-slate-800 mt-1">{loc.location}</p>
+                    </div>
+                  )}
+
+                  {loc.cleanNotes && (
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-3">
+                      <p className="text-label text-slate-500 mb-1">Ghi chú</p>
+                      <p className="text-body text-slate-700 whitespace-pre-line">{loc.cleanNotes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
-                      <div className="space-y-1.5">
+                      <p className="text-label text-slate-500 mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-2">
                         {recentOrders.map((o) => (
-                          <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
-                            <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
-                            <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
-                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
-                              {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
-                            </span>
+                          <div
+                            key={o.id}
+                            className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-body font-semibold text-slate-800 truncate">{o.customerName}</p>
+                              <p className="text-meta">{formatDisplayDate(o.startDate)} → {formatDisplayDate(o.endDate)}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-body money tabular-nums text-slate-900">
+                                {(o.totalPrice || 0).toLocaleString("vi-VN")} đ
+                              </p>
+                              <span className={cn(maintenanceBadgeClass, rentalOrderStatusBadgeClass(o.status), "mt-1")}>
+                                {getRentalOrderStatusLabel(o.status)}
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -479,10 +559,11 @@ export default function MaintenancePage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-meta text-slate-500 mb-2">Ảnh xe</p>
-                          <div className="grid grid-cols-3 gap-2">
+                          <p className="text-label text-slate-500 mb-2">Ảnh xe</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {v.vehicleImages.map((img, index) => (
-                              <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
+                              <div key={index} className="aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={img} alt={`Xe ${index + 1}`} className="w-full h-full object-cover" />
                               </div>
                             ))}
@@ -491,10 +572,11 @@ export default function MaintenancePage() {
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-meta text-slate-500 mb-2">Ảnh giấy tờ</p>
-                          <div className="grid grid-cols-3 gap-2">
+                          <p className="text-label text-slate-500 mb-2">Ảnh giấy tờ</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {v.documentImages.map((img, index) => (
-                              <div key={index} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
+                              <div key={index} className="aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={img} alt={`Giấy tờ ${index + 1}`} className="w-full h-full object-cover" />
                               </div>
                             ))}
@@ -503,22 +585,22 @@ export default function MaintenancePage() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-slate-400 bg-slate-50 border border-slate-100 p-3 rounded-xl">
+                    <div className="flex items-center gap-2 text-slate-400 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5">
                       <ImageIcon className="w-4 h-4" />
-                      <span className="text-sm">Chưa có ảnh xe / giấy tờ</span>
+                      <span className="text-meta">Chưa có ảnh xe / giấy tờ</span>
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-2 flex flex-col-reverse sm:flex-row gap-2 border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
                     <Button
                       variant="outline"
-                      className="flex-1 h-11 text-body rounded-[var(--radius-control)]"
+                      className="h-11 w-full sm:flex-1 rounded-[var(--radius-control)] border-slate-200"
                       onClick={() => setViewingVehicle(null)}
                     >
                       Đóng
                     </Button>
                     <Button
-                      className="flex-1 h-11 text-body bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
+                      className="h-11 w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)] [&_svg]:!text-white"
                       disabled={maintaining === v.id}
                       onClick={async () => {
                         await handleMaintained(v.id, v.name, v.current_km)
