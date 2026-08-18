@@ -16,6 +16,7 @@ import {
   EntityFormBody,
   EntityFormFooter,
   EntityFormField,
+  EntityFormToggle,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
 import { Input } from "@/components/ui/input"
@@ -786,70 +787,92 @@ export default function ReportsPage() {
 
       {/* Edit Transaction Dialog */}
       <Dialog open={isEditTransactionOpen} onOpenChange={setIsEditTransactionOpen}>
-        <DialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)] max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900">Sửa khoản thu/chi</DialogTitle>
-            <DialogDescription className="text-slate-500">Cập nhật thông tin khoản thu/chi</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); handleConfirmEdit() }} className="space-y-4">
-            <EntityFormField label="Loại">
-              <Select value={editFormData.type} onValueChange={(val) => setEditFormData({...editFormData, type: val as "income" | "expense"})}>
-                <SelectTrigger className={entityFormInputClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="income">Thu</SelectItem>
-                  <SelectItem value="expense">Chi</SelectItem>
-                </SelectContent>
-              </Select>
-            </EntityFormField>
-            <EntityFormField label="Phân loại khoản">
-              <Select
-                value={editFormData.isCapital ? "capital" : "operating"}
-                onValueChange={(val) => setEditFormData({ ...editFormData, isCapital: val === "capital" })}
-              >
-                <SelectTrigger className={entityFormInputClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
-                  <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
-                </SelectContent>
-              </Select>
-            </EntityFormField>
-            <EntityFormField label="Mô tả">
-              <Input
-                placeholder="Nhập mô tả"
-                value={editFormData.description}
-                onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
-                className={entityFormInputClass}
-              />
-            </EntityFormField>
-            <EntityFormField label="Ngày giao dịch">
-              <Input
-                type="date"
-                value={editFormData.timestamp}
-                onChange={(e) => setEditFormData({...editFormData, timestamp: e.target.value})}
-                className={entityFormInputClass}
-              />
-            </EntityFormField>
-            <EntityFormField label="Số tiền (VND)">
-              <Input
-                type="text"
-                placeholder="Nhập số tiền (VD: 1.000.000)"
-                value={editFormData.amount}
-                onChange={(e) => {
-                  const formatted = formatMoneyInput(e.target.value)
-                  setEditFormData({...editFormData, amount: formatted})
-                }}
-                className={cn(entityFormInputClass, "font-mono")}
-              />
-            </EntityFormField>
-            <Button type="submit" className="w-full h-11 bg-blue-600 !text-white hover:bg-blue-700 rounded-[var(--radius-control)]">
-              Cập nhật
-            </Button>
+        <EntityFormDialogContent accent={editFormData.type === "income" ? "emerald" : "red"} maxWidth="lg">
+          <EntityFormHeader
+            title="Sửa khoản thu/chi"
+            description="Cập nhật loại, ngày và số tiền"
+          />
+          <form onSubmit={(e) => { e.preventDefault(); handleConfirmEdit() }}>
+            <EntityFormBody>
+              <div className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-title truncate">{editFormData.description.trim() || "Chưa có mô tả"}</p>
+                  <p className="text-meta">
+                    {editFormData.type === "income" ? "Thu" : "Chi"}
+                    {" · "}
+                    {editFormData.isCapital ? "Vốn / tài sản" : "Vận hành"}
+                  </p>
+                </div>
+                <p className={cn(
+                  "text-body font-semibold money tabular-nums shrink-0",
+                  editFormData.type === "income" ? "text-emerald-700" : "text-rose-700"
+                )}>
+                  {editFormData.amount ? `${editFormData.type === "income" ? "+" : "-"}${editFormData.amount} đ` : "—"}
+                </p>
+              </div>
+
+              <EntityFormField label="Loại">
+                <EntityFormToggle
+                  value={editFormData.type}
+                  onChange={(val) => setEditFormData({ ...editFormData, type: val as "income" | "expense" })}
+                  options={[
+                    { value: "income", label: "Thu" },
+                    { value: "expense", label: "Chi" },
+                  ]}
+                />
+              </EntityFormField>
+              <EntityFormField label="Phân loại">
+                <EntityFormToggle
+                  value={editFormData.isCapital ? "capital" : "operating"}
+                  onChange={(val) => setEditFormData({ ...editFormData, isCapital: val === "capital" })}
+                  options={[
+                    { value: "operating", label: "Vận hành" },
+                    { value: "capital", label: "Vốn" },
+                  ]}
+                />
+                <p className="text-meta mt-1.5">
+                  {editFormData.isCapital ? "Không tính vào lợi nhuận (góp vốn, mua xe, tài sản)." : "Tính vào lợi nhuận vận hành."}
+                </p>
+              </EntityFormField>
+              <EntityFormField label="Mô tả" required>
+                <Input
+                  placeholder="Sửa xe, mua định vị..."
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                  className={entityFormInputClass}
+                />
+              </EntityFormField>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <EntityFormField label="Ngày giao dịch">
+                  <Input
+                    type="date"
+                    value={editFormData.timestamp}
+                    onChange={(e) => setEditFormData({...editFormData, timestamp: e.target.value})}
+                    className={entityFormInputClass}
+                  />
+                </EntityFormField>
+                <EntityFormField label="Số tiền" required>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="1.000.000"
+                    value={editFormData.amount}
+                    onChange={(e) => {
+                      const formatted = formatMoneyInput(e.target.value)
+                      setEditFormData({...editFormData, amount: formatted})
+                    }}
+                    className={cn(entityFormInputClass, "font-mono")}
+                  />
+                </EntityFormField>
+              </div>
+            </EntityFormBody>
+            <EntityFormFooter
+              accent={editFormData.type === "income" ? "emerald" : "red"}
+              onCancel={() => setIsEditTransactionOpen(false)}
+              submitLabel="Cập nhật"
+            />
           </form>
-        </DialogContent>
+        </EntityFormDialogContent>
       </Dialog>
 
       {/* Stats Cards */}
@@ -1016,70 +1039,92 @@ export default function ReportsPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Nhập thu/chi
               </Button>
-              <DialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)] max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-slate-900">Thêm khoản thu/chi</DialogTitle>
-                  <DialogDescription className="text-slate-500">Nhập thông tin khoản thu hoặc chi</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleAddTransaction} className="space-y-4">
-                  <EntityFormField label="Loại">
-                    <Select value={formData.type} onValueChange={(val) => setFormData({...formData, type: val as "income" | "expense"})}>
-                      <SelectTrigger className={entityFormInputClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="income">Thu</SelectItem>
-                        <SelectItem value="expense">Chi</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </EntityFormField>
-                  <EntityFormField label="Phân loại khoản">
-                    <Select
-                      value={formData.isCapital ? "capital" : "operating"}
-                      onValueChange={(val) => setFormData({ ...formData, isCapital: val === "capital" })}
-                    >
-                      <SelectTrigger className={entityFormInputClass}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="operating">Vận hành (tính vào lợi nhuận)</SelectItem>
-                        <SelectItem value="capital">Vốn / mua tài sản (không tính LN)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </EntityFormField>
-                  <EntityFormField label="Mô tả" hint="Ví dụ: mua định vị, sửa xe">
-                    <Input
-                      placeholder="Nhập mô tả"
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className={entityFormInputClass}
-                    />
-                  </EntityFormField>
-                  <EntityFormField label="Ngày giao dịch">
-                    <Input
-                      type="date"
-                      value={formData.timestamp}
-                      onChange={(e) => setFormData({...formData, timestamp: e.target.value})}
-                      className={entityFormInputClass}
-                    />
-                  </EntityFormField>
-                  <EntityFormField label="Số tiền (VND)">
-                    <Input
-                      type="text"
-                      placeholder="Nhập số tiền (VD: 1.000.000)"
-                      value={formData.amount}
-                      onChange={(e) => {
-                        const formatted = formatMoneyInput(e.target.value)
-                        setFormData({...formData, amount: formatted})
-                      }}
-                      className={cn(entityFormInputClass, "font-mono")}
-                    />
-                  </EntityFormField>
-                  <Button type="submit" className="w-full h-11 bg-blue-600 !text-white hover:bg-blue-700 rounded-[var(--radius-control)]">
-                    Thêm
-                  </Button>
+              <EntityFormDialogContent accent={formData.type === "income" ? "emerald" : "red"} maxWidth="lg">
+                <EntityFormHeader
+                  title="Thêm khoản thu/chi"
+                  description="Khoản ngoài đơn thuê — vận hành hoặc vốn"
+                />
+                <form onSubmit={handleAddTransaction}>
+                  <EntityFormBody>
+                    <div className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-title truncate">{formData.description.trim() || "Khoản mới"}</p>
+                        <p className="text-meta">
+                          {formData.type === "income" ? "Thu" : "Chi"}
+                          {" · "}
+                          {formData.isCapital ? "Vốn / tài sản" : "Vận hành"}
+                        </p>
+                      </div>
+                      <p className={cn(
+                        "text-body font-semibold money tabular-nums shrink-0",
+                        formData.type === "income" ? "text-emerald-700" : "text-rose-700"
+                      )}>
+                        {formData.amount ? `${formData.type === "income" ? "+" : "-"}${formData.amount} đ` : "—"}
+                      </p>
+                    </div>
+
+                    <EntityFormField label="Loại">
+                      <EntityFormToggle
+                        value={formData.type}
+                        onChange={(val) => setFormData({ ...formData, type: val as "income" | "expense" })}
+                        options={[
+                          { value: "income", label: "Thu" },
+                          { value: "expense", label: "Chi" },
+                        ]}
+                      />
+                    </EntityFormField>
+                    <EntityFormField label="Phân loại">
+                      <EntityFormToggle
+                        value={formData.isCapital ? "capital" : "operating"}
+                        onChange={(val) => setFormData({ ...formData, isCapital: val === "capital" })}
+                        options={[
+                          { value: "operating", label: "Vận hành" },
+                          { value: "capital", label: "Vốn" },
+                        ]}
+                      />
+                      <p className="text-meta mt-1.5">
+                        {formData.isCapital ? "Không tính vào lợi nhuận (góp vốn, mua xe, tài sản)." : "Tính vào lợi nhuận vận hành."}
+                      </p>
+                    </EntityFormField>
+                    <EntityFormField label="Mô tả" required>
+                      <Input
+                        placeholder="Sửa xe, mua định vị..."
+                        value={formData.description}
+                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        className={entityFormInputClass}
+                      />
+                    </EntityFormField>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <EntityFormField label="Ngày giao dịch">
+                        <Input
+                          type="date"
+                          value={formData.timestamp}
+                          onChange={(e) => setFormData({...formData, timestamp: e.target.value})}
+                          className={entityFormInputClass}
+                        />
+                      </EntityFormField>
+                      <EntityFormField label="Số tiền" required>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="1.000.000"
+                          value={formData.amount}
+                          onChange={(e) => {
+                            const formatted = formatMoneyInput(e.target.value)
+                            setFormData({...formData, amount: formatted})
+                          }}
+                          className={cn(entityFormInputClass, "font-mono")}
+                        />
+                      </EntityFormField>
+                    </div>
+                  </EntityFormBody>
+                  <EntityFormFooter
+                    accent={formData.type === "income" ? "emerald" : "red"}
+                    onCancel={() => setIsAddTransactionOpen(false)}
+                    submitLabel="Thêm"
+                  />
                 </form>
-              </DialogContent>
+              </EntityFormDialogContent>
             </Dialog>
           </div>
 
