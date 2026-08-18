@@ -13,10 +13,12 @@ export const QUY79_BUSINESS = {
   representative: "Dương Phú Lộc",
   operators: "Dương Phú Lộc",
   bank: {
-    name: "SHB",
-    accountNumber: "2222629999",
-    accountHolder: "PHAN LE TU LAP",
-    accountHolderLatin: "PHAN LE TU LAP",
+    name: "BIDV",
+    branch: "CN Huế",
+    vietQrCode: "BIDV",
+    accountNumber: "8839754707",
+    accountHolder: "Lê Quốc Lộc",
+    accountHolderLatin: "LE QUOC LOC",
   },
   facebookUrl: "https://www.facebook.com/3l.moto.hue",
   website: "3lmotohue.com",
@@ -24,12 +26,23 @@ export const QUY79_BUSINESS = {
 
 export function formatQuy79BankLine(): string {
   const { bank } = QUY79_BUSINESS;
-  return `${bank.name} - ${bank.accountNumber}`;
+  return `${bank.name} ${bank.branch} - ${bank.accountNumber}`;
 }
 
 export function formatQuy79BankLineFull(): string {
   const { bank } = QUY79_BUSINESS;
-  return `${bank.name} - ${bank.accountNumber} - ${bank.accountHolder}`;
+  return `${bank.name} ${bank.branch} - ${bank.accountNumber} - ${bank.accountHolder}`;
+}
+
+/** VietQR động: gắn số tiền + nội dung theo đơn thuê. */
+export function getVietQrImageUrl(opts?: { amount?: number; addInfo?: string; template?: "qr_only" | "compact" | "compact2" }) {
+  const { bank } = QUY79_BUSINESS
+  const template = opts?.template ?? "compact2"
+  const params = new URLSearchParams()
+  if (opts?.amount && opts.amount > 0) params.set("amount", String(Math.round(opts.amount)))
+  if (opts?.addInfo) params.set("addInfo", opts.addInfo)
+  params.set("accountName", bank.accountHolderLatin)
+  return `https://img.vietqr.io/image/${bank.vietQrCode}-${bank.accountNumber}-${template}.png?${params.toString()}`
 }
 
 /** Bản quyền phần mềm quản trị 3L Moto */

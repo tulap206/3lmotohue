@@ -56,7 +56,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Plus, Search, Eye, Calendar, User, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload } from "lucide-react"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
-import { QUY79_BUSINESS } from "@/lib/business-info"
+import { QUY79_BUSINESS, getVietQrImageUrl } from "@/lib/business-info"
 import {
   type RentalTerm,
   getRentalTerm,
@@ -2215,18 +2215,23 @@ export default function OrdersPage() {
                   )}
 
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50 px-3 py-3">
-                    <div className="mx-auto sm:mx-0 h-28 w-28 shrink-0 overflow-hidden rounded-lg bg-white p-1.5 border border-slate-200">
+                    <div className="mx-auto sm:mx-0 h-36 w-36 shrink-0 overflow-hidden rounded-lg bg-white p-1.5 border border-slate-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`https://img.vietqr.io/image/SHB-${QUY79_BUSINESS.bank.accountNumber}-qr_only.png?amount=${payable}&addInfo=${encodeURIComponent(`TT 3L MOTO ${o.rentalCode || o.id}`)}&accountName=${encodeURIComponent(QUY79_BUSINESS.bank.accountHolderLatin)}`}
-                        alt="VietQR"
+                        src={getVietQrImageUrl({
+                          amount: payable,
+                          addInfo: `TT 3L MOTO ${o.rentalCode || o.id}`,
+                        })}
+                        alt="VietQR BIDV Lê Quốc Lộc"
                         className="h-full w-full object-contain"
                       />
                     </div>
                     <div className="min-w-0 text-center sm:text-left">
-                      <p className="text-label text-slate-500">QR SHB · cọc / tất toán</p>
-                      <p className="text-body font-semibold money tabular-nums text-slate-900">{formatPrice(payable)}</p>
-                      <p className="text-meta mt-0.5">{QUY79_BUSINESS.hotline}</p>
+                      <p className="text-label text-slate-500">QR thanh toán · cọc / tất toán</p>
+                      <p className="text-body font-semibold text-slate-900">{QUY79_BUSINESS.bank.accountHolder}</p>
+                      <p className="text-body font-mono tabular-nums text-slate-800">{QUY79_BUSINESS.bank.accountNumber}</p>
+                      <p className="text-meta">{QUY79_BUSINESS.bank.name} - {QUY79_BUSINESS.bank.branch}</p>
+                      <p className="text-body font-semibold money tabular-nums text-slate-900 mt-1">{formatPrice(payable)}</p>
                     </div>
                   </div>
 

@@ -63,8 +63,8 @@ export function PrintShopPartyBlock({
             {variant === "sales" ? "Số tài khoản:" : "Tài khoản thanh toán:"}
           </span>{" "}
           {variant === "sales"
-            ? `${QUY79_BUSINESS.bank.accountNumber} - ${QUY79_BUSINESS.bank.name}`
-            : `${QUY79_BUSINESS.bank.name} - ${QUY79_BUSINESS.bank.accountNumber}`}
+            ? `${QUY79_BUSINESS.bank.accountNumber} - ${QUY79_BUSINESS.bank.name} ${QUY79_BUSINESS.bank.branch}`
+            : `${QUY79_BUSINESS.bank.name} ${QUY79_BUSINESS.bank.branch} - ${QUY79_BUSINESS.bank.accountNumber}`}
         </p>
         <p>
           <span className="text-slate-500">Chủ tài khoản:</span> {QUY79_BUSINESS.bank.accountHolder}
