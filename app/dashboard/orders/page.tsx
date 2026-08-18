@@ -379,7 +379,12 @@ export default function OrdersPage() {
       return matchesSearch && matchesStatus && matchesTerm
     })
 
-    // Sort: Overdue -> Active (Renting) -> Pending -> Completed -> Cancelled
+    const dateTime = (value: string | Date | null | undefined) => {
+      const d = parseDisplayDate(value)
+      return d ? d.getTime() : Number.POSITIVE_INFINITY
+    }
+
+    // Quá hạn → đang thuê (gần hết hạn trước) → chờ giao → hoàn thành → huỷ
     return [...filtered].sort((a, b) => {
       const getPriority = (order: RentalOrder) => {
         if (isOrderOverdue(order)) return 1
@@ -394,7 +399,12 @@ export default function OrdersPage() {
       if (priorityA !== priorityB) {
         return priorityA - priorityB
       }
-      // If same priority, sort by creation date descending
+      if (priorityA <= 2) {
+        return dateTime(a.endDate) - dateTime(b.endDate)
+      }
+      if (priorityA === 3) {
+        return dateTime(a.startDate) - dateTime(b.startDate)
+      }
       const timeA = new Date(a.created_at || a.createdAt || 0).getTime()
       const timeB = new Date(b.created_at || b.createdAt || 0).getTime()
       return timeB - timeA
