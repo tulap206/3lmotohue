@@ -15,6 +15,8 @@ import {
   rentalFilterInputClass,
   getRentalVehicleStatusLabel,
   rentalVehicleStatusBadgeClass,
+  getRentalOrderStatusLabel,
+  rentalOrderStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
 import {
@@ -108,6 +110,13 @@ export function buildVehicleNotesWithLocation(existingNotes: string | undefined,
   return cleanNotes ? `${cleanNotes}\n[location:${locStr}]` : `[location:${locStr}]`
 }
 
+export function replaceVehicleCleanNotes(originalNotes: string | undefined, cleanNotes: string): string {
+  const match = originalNotes?.match(/\[location:.*?\]/i)
+  const next = cleanNotes.trim()
+  if (!match) return next
+  return next ? `${next}\n${match[0]}` : match[0]
+}
+
 export function formatRelativeTime(dateString?: string): string {
   if (!dateString) return ""
   const date = new Date(dateString)
@@ -143,7 +152,7 @@ export function formatRelativeTime(dateString?: string): string {
 }
 
 type VehicleStatus = "available" | "rented" | "maintenance" | "pending"
-type HistoryType = "rent" | "return" | "maintenance"
+type HistoryType = "rent" | "handover" | "return" | "maintenance" | "purchase"
 
 // Lightbox component tách riêng để tránh xung đột với Dialog
 function LightboxModal({ imageSrc, onClose }: { imageSrc: string; onClose: () => void }) {
@@ -223,10 +232,12 @@ interface Vehicle {
   updated_at?: string
 }
 
-const historyTypeConfig: Record<HistoryType, { label: string; className: string }> = {
-  rent: { label: "Cho thuê", className: "bg-blue-50 text-blue-600" },
-  return: { label: "Nhận lại xe", className: "bg-emerald-50 text-emerald-600" },
-  maintenance: { label: "Bảo trì", className: "bg-amber-50 text-amber-600" },
+const historyTypeConfig: Record<HistoryType, { label: string; className: string; dot: string }> = {
+  purchase: { label: "Mua xe", className: "bg-slate-50 text-slate-600 border-slate-200", dot: "bg-slate-400" },
+  rent: { label: "Đặt xe", className: "bg-blue-50 text-blue-700 border-blue-100", dot: "bg-blue-500" },
+  handover: { label: "Giao xe", className: "bg-slate-100 text-slate-700 border-slate-200", dot: "bg-slate-500" },
+  return: { label: "Nhận lại", className: "bg-emerald-50 text-emerald-700 border-emerald-100", dot: "bg-emerald-500" },
+  maintenance: { label: "Bảo trì", className: "bg-amber-50 text-amber-800 border-amber-100", dot: "bg-amber-500" },
 }
 
 const vehicleActionBtnClass =
@@ -304,6 +315,34 @@ function ImageAddTile({
   )
 }
 
+function VehicleStat({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string
+  value: string
+  hint?: string
+  tone?: "default" | "amber" | "emerald" | "rose"
+}) {
+  const valueClass =
+    tone === "amber"
+      ? "text-amber-800"
+      : tone === "emerald"
+        ? "text-emerald-700"
+        : tone === "rose"
+          ? "text-rose-700"
+          : "text-slate-900"
+  return (
+    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-h-[4.25rem] flex flex-col justify-center">
+      <p className="text-label text-slate-500">{label}</p>
+      <p className={cn("text-title money tabular-nums mt-0.5 leading-tight", valueClass)}>{value}</p>
+      {hint && <p className="text-meta mt-0.5">{hint}</p>}
+    </div>
+  )
+}
+
 export default function VehiclesPage() {
   const { user, addAccessLog } = useAuth()
   const { vehicles, setVehicles, orders, setOrders, isLoading } = useRentalData()
@@ -319,6 +358,7 @@ export default function VehiclesPage() {
   const [viewingVehicle, setViewingVehicle] = useState<Vehicle | null>(null)
   const [historyVehicle, setHistoryVehicle] = useState<Vehicle | null>(null)
   const pickingFileRef = useRef(false)
+  const editOriginalNotesRef = useRef("")
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const [newVehicle, setNewVehicle] = useState({
     name: "",
@@ -724,7 +764,7 @@ export default function VehiclesPage() {
           pricePerDay: parseMoneyInput(editingVehicle.pricePerDay.toString()),
           current_km: parseInt(editingVehicle.current_km.toString()) || 0,
           purchasePrice: parseMoneyInput(editingVehicle.purchasePrice?.toString() || '0'),
-          notes: editingVehicle.notes,
+          notes: replaceVehicleCleanNotes(editOriginalNotesRef.current, editingVehicle.notes),
           status: editingVehicle.status,
           category: editingVehicle.category,
           vehicleImages: finalVehicleImages,
@@ -779,8 +819,11 @@ export default function VehiclesPage() {
   }
 
   const openEditDialog = (vehicle: Vehicle) => {
+    const loc = extractVehicleLocation(vehicle.notes)
+    editOriginalNotesRef.current = vehicle.notes || ""
     setEditingVehicle({
       ...vehicle,
+      notes: loc.cleanNotes,
       vehicleImages: normalizeImageList(vehicle.vehicleImages) as any,
       documentImages: normalizeImageList(vehicle.documentImages) as any,
       pricePerDay: vehicle.pricePerDay?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') || '' as any,
@@ -819,8 +862,8 @@ export default function VehiclesPage() {
       history.push({
         id: `purchase-${vehicleId}`,
         timestamp: purchaseDate,
-        description: "Mua xe",
-        type: "rent",
+        description: "Nhập xe vào hệ thống",
+        type: "purchase",
         datetime: formatDisplayDateTime(purchaseDate),
       })
     }
@@ -833,30 +876,28 @@ export default function VehiclesPage() {
       history.push({
         id: `book-${rental.id}`,
         timestamp: bookingDate,
-        description: `Đặt xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
+        description: rental.customerName,
         type: "rent",
         datetime: formatDisplayDateTime(bookingDate),
       })
       
-      // Add vehicle receiving (received_at or use startDate)
       if (rental.status === "active" || rental.status === "completed" || rental.status === "cancelled") {
         const receivingDate = rental.received_at ? new Date(rental.received_at) : parseVietnamDate(rental.startDate)
         history.push({
           id: `receive-${rental.id}`,
           timestamp: receivingDate,
-          description: `Nhận lại xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
-          type: "rent",
+          description: rental.customerName,
+          type: "handover",
           datetime: formatDisplayDateTime(receivingDate),
         })
       }
       
-      // Add rental return (completed_at or endDate)
       if (rental.status === "completed" || rental.status === "cancelled") {
         const returnDate = rental.completed_at ? new Date(rental.completed_at) : parseVietnamDate(rental.endDate)
         history.push({
           id: `return-${rental.id}`,
           timestamp: returnDate,
-          description: `Trả xe - ${rental.customerName} (${rental.rentalCode || rental.id})`,
+          description: rental.customerName,
           type: "return",
           datetime: formatDisplayDateTime(returnDate),
         })
@@ -1513,7 +1554,7 @@ export default function VehiclesPage() {
         >
           <EntityFormHeader
             title="Chỉnh sửa thông tin xe"
-            description="Cập nhật thông tin xe trong hệ thống"
+            description={`${editingVehicle?.licensePlate || "Cập nhật biển số, giá thuê và ảnh xe"}`}
           />
           {editingVehicle && (
             <form
@@ -1523,6 +1564,20 @@ export default function VehiclesPage() {
               }}
             >
               <EntityFormBody>
+                <div className="flex items-center gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+                  <VehicleThumb
+                    src={
+                      normalizeImageList(editingVehicle.vehicleImages)[0]
+                        ? imagePreviewSrc(normalizeImageList(editingVehicle.vehicleImages)[0])
+                        : undefined
+                    }
+                    name={editingVehicle.name}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-title truncate">{editingVehicle.name || "Xe chưa đặt tên"}</p>
+                    <p className="text-meta font-mono">{editingVehicle.licensePlate || "Chưa biển"}</p>
+                  </div>
+                </div>
                 <EntityFormSection title="Thông tin xe" description="Cập nhật thông tin cơ bản và giá thuê">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <EntityFormField label="Loại xe" required>
@@ -1613,11 +1668,12 @@ export default function VehiclesPage() {
                       </Select>
                     </EntityFormField>
                   </div>
-                  <EntityFormField label="Ghi chú">
+                  <EntityFormField label="Ghi chú" hint="Vị trí GPS được lưu riêng, không hiện trong ô này">
                     <Textarea
                       id="edit-notes"
                       value={editingVehicle.notes}
                       onChange={(e) => setEditingVehicle({ ...editingVehicle, notes: e.target.value })}
+                      placeholder="Ghi chú vận hành, nguồn xe..."
                       className={cn(entityFormInputClass, "min-h-[80px] h-auto py-2.5")}
                     />
                   </EntityFormField>
@@ -1699,7 +1755,7 @@ export default function VehiclesPage() {
           setIsDetailDialogOpen(open)
         }
       }}>
-        <EntityFormDialogContent accent="blue" maxWidth="lg">
+        <EntityFormDialogContent accent="blue" maxWidth="xl">
           {viewingVehicle && (() => {
             const v = viewingVehicle
             const profit = v.profit ?? 0
@@ -1733,97 +1789,120 @@ export default function VehiclesPage() {
               .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
               .slice(0, 4)
 
+            const loc = extractVehicleLocation(v.notes)
+            const photo = (v.vehicleImages || []).find((img) => typeof img === "string") as string | undefined
+
             return (
               <>
-                <EntityFormHeader
-                  title={v.name}
-                  description={`${v.licensePlate || "Chưa biển"}${v.color ? ` · ${v.color}` : ""}`}
-                />
-                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                  <div className="flex items-center justify-between">
-                    <span className={cn(
-                      vehicleStatusBadgeClass,
-                      rentalVehicleStatusBadgeClass(v.status)
-                    )}>
-                      {getRentalVehicleStatusLabel(v.status)}
-                    </span>
-                    {v.category && (
-                      <span className="text-sm text-slate-500">
-                        Phân loại: <span className="font-medium text-slate-800">{v.category === "car" ? "Ô tô" : "Xe máy"}</span>
-                      </span>
+                <div className="flex items-start gap-3 sm:gap-4 mb-5">
+                  <div className="h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] shrink-0 overflow-hidden rounded-[var(--radius-control)] border border-slate-200 bg-slate-50">
+                    {photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={photo} alt={v.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Car className="h-7 w-7 text-slate-300" />
+                      </div>
                     )}
                   </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Giá thuê/ngày</p>
-                      <p className="text-sm font-extrabold text-slate-900 money tabular-nums">{formatPrice(v.pricePerDay)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Giá mua</p>
-                      <p className="text-sm font-extrabold text-amber-700 tabular-nums">{formatPrice(v.purchasePrice)}</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                      <p className="text-meta text-slate-500">Tổng thu</p>
-                      <p className="text-sm font-extrabold text-emerald-700 tabular-nums">{formatPrice(totalRevenue)}</p>
-                    </div>
-                    <div className={cn(
-                      "border rounded-xl p-3",
-                      profit >= 0 ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
-                    )}>
-                      <p className={cn(
-                        "text-sm font-semibold uppercase",
-                        profit >= 0 ? "text-emerald-600" : "text-slate-500"
-                      )}>Lợi nhuận</p>
-                      <p className={cn(
-                        "text-sm font-extrabold tabular-nums",
-                        profit >= 0 ? "text-emerald-700 money" : "text-slate-900 money"
-                      )}>
-                        {profit >= 0 ? "+" : ""}{formatPrice(profit)}
-                      </p>
+                  <div className="min-w-0 flex-1 pr-6">
+                    <h2 className="text-title text-pretty">{v.name}</h2>
+                    <p className="text-meta mt-0.5 font-mono tracking-wide">
+                      {v.licensePlate || "Chưa biển"}
+                      {v.color ? ` · ${v.color}` : ""}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className={cn(vehicleStatusBadgeClass, rentalVehicleStatusBadgeClass(v.status))}>
+                        {getRentalVehicleStatusLabel(v.status)}
+                      </span>
+                      {v.category && (
+                        <span className="inline-flex items-center rounded-[var(--radius-badge)] border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-label text-slate-600">
+                          {v.category === "car" ? "Ô tô" : "Xe máy"}
+                        </span>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Số KM hiện tại</p>
-                      <p className="text-sm font-bold text-slate-800">{(v.current_km || 0).toLocaleString("vi-VN")} km</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Ngày đã cho thuê</p>
-                      <p className="text-sm font-bold text-slate-800">{v.totalRentalDays || 0} ngày</p>
-                    </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Lấp đầy 30 ngày</p>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <VehicleStat label="Giá thuê / ngày" value={formatPrice(v.pricePerDay)} />
+                    <VehicleStat label="Giá mua" value={formatPrice(v.purchasePrice)} tone="amber" />
+                    <VehicleStat label="Tổng thu" value={formatPrice(totalRevenue)} tone="emerald" />
+                    <VehicleStat
+                      label="Lợi nhuận"
+                      value={`${profit >= 0 ? "+" : ""}${formatPrice(profit)}`}
+                      tone={profit >= 0 ? "emerald" : "rose"}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <VehicleStat label="Số KM hiện tại" value={`${(v.current_km || 0).toLocaleString("vi-VN")} km`} />
+                    <VehicleStat label="Ngày đã cho thuê" value={`${v.totalRentalDays || 0} ngày`} />
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5 min-h-[4.25rem] flex flex-col justify-center">
+                      <p className="text-label text-slate-500">Lấp đầy 30 ngày</p>
                       <p className={cn(
-                        "text-sm font-extrabold tabular-nums",
-                        u30.pct >= 70 ? "text-emerald-600" : u30.pct >= 40 ? "text-amber-600" : "text-blue-500"
+                        "text-title tabular-nums mt-0.5 leading-tight",
+                        u30.pct >= 70 ? "text-emerald-700" : u30.pct >= 40 ? "text-amber-800" : "text-slate-900"
                       )}>{u30.pct}%</p>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className={cn("h-full rounded-full", u30.pct >= 70 ? "bg-emerald-500" : u30.pct >= 40 ? "bg-amber-500" : "bg-blue-500")}
+                          style={{ width: `${Math.min(100, u30.pct)}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-0.5">Tổng đơn thuê</p>
-                      <p className="text-sm font-bold text-slate-800">{totalRentalCount} đơn</p>
-                    </div>
+                    <VehicleStat label="Tổng đơn thuê" value={`${totalRentalCount} đơn`} />
                   </div>
 
-                  {v.notes && v.notes.trim() && (
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <p className="text-meta text-slate-500 mb-1">Ghi chú</p>
-                      <p className="text-sm text-slate-700 whitespace-pre-line">{v.notes}</p>
+                  {loc.location && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDetailDialogOpen(false)
+                        setSelectedMapVehicle(v)
+                      }}
+                      className="w-full text-left rounded-[var(--radius-control)] border border-slate-200 bg-slate-50/80 px-3 py-3 hover:border-blue-200 hover:bg-blue-50/40 ui-transition"
+                    >
+                      <p className="text-label text-slate-500 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                        Vị trí hiện tại
+                      </p>
+                      <p className="text-body text-slate-800 mt-1">{loc.location}</p>
+                      {loc.updatedAt && (
+                        <p className="text-meta mt-1">Cập nhật {formatRelativeTime(loc.updatedAt).replace(/[()]/g, "")}</p>
+                      )}
+                    </button>
+                  )}
+
+                  {loc.cleanNotes && (
+                    <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-3">
+                      <p className="text-label text-slate-500 mb-1">Ghi chú</p>
+                      <p className="text-body text-slate-700 whitespace-pre-line">{loc.cleanNotes}</p>
                     </div>
                   )}
 
                   {recentOrders.length > 0 && (
                     <div>
-                      <p className="text-meta text-slate-500 mb-2">Đơn thuê gần đây</p>
-                      <div className="space-y-1.5">
+                      <p className="text-label text-slate-500 mb-2">Đơn thuê gần đây</p>
+                      <div className="space-y-2">
                         {recentOrders.map((o) => (
-                          <div key={o.id} className="flex items-center justify-between text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 gap-2">
-                            <span className="font-bold text-slate-700 truncate">{o.customerName}</span>
-                            <span className="text-slate-400 shrink-0">{formatDisplayDate(o.startDate)}</span>
-                            <span className="font-bold tabular-nums text-slate-900 money shrink-0">
-                              {(o.totalPrice || 0).toLocaleString("vi-VN")}đ
-                            </span>
+                          <div
+                            key={o.id}
+                            className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-body font-semibold text-slate-800 truncate">{o.customerName}</p>
+                              <p className="text-meta">{formatDisplayDate(o.startDate)} → {formatDisplayDate(o.endDate)}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-body money tabular-nums text-slate-900">
+                                {(o.totalPrice || 0).toLocaleString("vi-VN")} đ
+                              </p>
+                              <span className={cn(vehicleStatusBadgeClass, rentalOrderStatusBadgeClass(o.status), "mt-1")}>
+                                {getRentalOrderStatusLabel(o.status)}
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1834,38 +1913,34 @@ export default function VehiclesPage() {
                     <div className="space-y-3">
                       {v.vehicleImages?.length > 0 && (
                         <div>
-                          <p className="text-meta text-slate-500 mb-2">Ảnh xe</p>
-                          <div className="grid grid-cols-3 gap-2">
+                          <p className="text-label text-slate-500 mb-2">Ảnh xe</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {v.vehicleImages.map((img, index) => (
-                              <div
+                              <button
                                 key={index}
-                                className="aspect-square rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-all"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setLightboxImage(img)
-                                }}
+                                type="button"
+                                className="aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 hover:opacity-90 ui-transition"
+                                onClick={() => setLightboxImage(img)}
                               >
                                 <img src={img} alt={`Xe ${index + 1}`} className="w-full h-full object-cover" />
-                              </div>
+                              </button>
                             ))}
                           </div>
                         </div>
                       )}
                       {v.documentImages?.length > 0 && (
                         <div>
-                          <p className="text-meta text-slate-500 mb-2">Ảnh giấy tờ</p>
-                          <div className="grid grid-cols-3 gap-2">
+                          <p className="text-label text-slate-500 mb-2">Ảnh giấy tờ</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {v.documentImages.map((img, index) => (
-                              <div
+                              <button
                                 key={index}
-                                className="aspect-square rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-all"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setLightboxImage(img)
-                                }}
+                                type="button"
+                                className="aspect-square rounded-[var(--radius-control)] overflow-hidden border border-slate-200 hover:opacity-90 ui-transition"
+                                onClick={() => setLightboxImage(img)}
                               >
                                 <img src={img} alt={`Giấy tờ ${index + 1}`} className="w-full h-full object-cover" />
-                              </div>
+                              </button>
                             ))}
                           </div>
                         </div>
@@ -1873,10 +1948,11 @@ export default function VehiclesPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-1">
+                  <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-2 flex flex-col-reverse sm:flex-row gap-2 border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
                     <Button
+                      type="button"
                       variant="outline"
-                      className="flex-1 h-11 text-body"
+                      className="h-11 flex-1 text-body border-slate-200"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         openHistoryDialog(v)
@@ -1886,7 +1962,8 @@ export default function VehiclesPage() {
                       Xem lịch sử
                     </Button>
                     <Button
-                      className="flex-1 h-11 text-body bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white [&_svg]:!text-white"
+                      type="button"
+                      className="h-11 flex-1 text-body bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white [&_svg]:!text-white"
                       onClick={() => {
                         setIsDetailDialogOpen(false)
                         openEditDialog(v)
@@ -1905,57 +1982,62 @@ export default function VehiclesPage() {
 
       {/* History Dialog */}
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
-        <DialogContent
-          className="flex flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl max-h-[min(90dvh,calc(100dvh-1rem))]"
-        >
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-400 to-blue-600" />
-          <div className="shrink-0 px-4 pt-6 sm:px-6 sm:pt-7 pr-14">
-            <EntityFormHeader
-              title="Lịch sử xe"
-              description={historyVehicle ? `${historyVehicle.name} - ${historyVehicle.licensePlate}` : "Hoạt động cho thuê và bảo trì"}
-            />
-          </div>
-          <div className="min-h-0 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] touch-pan-y px-4 sm:px-6 pb-2 max-h-[min(28rem,calc(90dvh-12rem))]">
-            {historyVehicle && (
-              <div className="space-y-4">
-                {getVehicleHistory(historyVehicle.id).length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p>Chưa có lịch sử hoạt động</p>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
-                    <div className="space-y-4">
-                      {getVehicleHistory(historyVehicle.id).map((log) => (
-                        <div key={log.id} className="relative pl-10">
-                          <div className={`absolute left-2.5 w-3 h-3 rounded-full ${
-                            log.type === "rent" ? "bg-blue-500" :
-                            log.type === "return" ? "bg-emerald-500" : "bg-amber-500"
-                          }`} />
-                          <div className="bg-slate-50 border border-slate-100 rounded-[var(--radius-control)] p-3">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] text-sm font-medium ${historyTypeConfig[log.type].className}`}>
-                                {historyTypeConfig[log.type].label}
-                              </span>
-                              <span className="text-sm text-muted-foreground">{log.datetime}</span>
-                            </div>
-                            <p className="text-sm text-card-foreground break-words">{log.description}</p>
+        <EntityFormDialogContent accent="blue" maxWidth="lg">
+          <EntityFormHeader
+            title="Lịch sử xe"
+            description={
+              historyVehicle
+                ? `${historyVehicle.name} · ${historyVehicle.licensePlate}`
+                : "Hoạt động cho thuê và bảo trì"
+            }
+          />
+          {historyVehicle && (() => {
+            const logs = getVehicleHistory(historyVehicle.id)
+            return logs.length === 0 ? (
+              <ModuleEmptyState
+                title="Chưa có lịch sử"
+                description="Xe này chưa ghi nhận đơn thuê hoặc bảo trì."
+              />
+            ) : (
+              <div className="relative pl-1">
+                <div className="absolute left-[11px] top-2 bottom-2 w-px bg-slate-200" />
+                <ol className="space-y-3">
+                  {logs.map((log) => {
+                    const cfg = historyTypeConfig[log.type]
+                    return (
+                      <li key={log.id} className="relative pl-8">
+                        <span className={cn("absolute left-1.5 top-3 h-2.5 w-2.5 rounded-full ring-4 ring-white", cfg.dot)} />
+                        <div className="rounded-[var(--radius-control)] border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className={cn(
+                              "inline-flex items-center rounded-[var(--radius-badge)] border px-2 py-0.5 text-label font-semibold",
+                              cfg.className
+                            )}>
+                              {cfg.label}
+                            </span>
+                            <time className="text-meta text-right shrink-0 tabular-nums">{log.datetime}</time>
                           </div>
+                          {log.description && (
+                            <p className="text-body text-slate-800 mt-1.5 break-words">{log.description}</p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </li>
+                    )
+                  })}
+                </ol>
               </div>
-            )}
-          </div>
-          <div className="shrink-0 flex justify-end px-4 sm:px-6 py-4 border-t border-slate-100">
-            <Button variant="outline" onClick={() => setIsHistoryDialogOpen(false)} className="h-11 rounded-[var(--radius-control)] border-slate-200">
+            )
+          })()}
+          <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 mt-6 flex justify-end border-t border-slate-100 bg-white/95 px-4 sm:px-6 py-3 backdrop-blur-md">
+            <Button
+              variant="outline"
+              onClick={() => setIsHistoryDialogOpen(false)}
+              className="h-11 w-full sm:w-auto rounded-[var(--radius-control)] border-slate-200"
+            >
               Đóng
             </Button>
           </div>
-        </DialogContent>
+        </EntityFormDialogContent>
       </Dialog>
 
       {/* Lightbox Modal */}

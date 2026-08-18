@@ -62,14 +62,17 @@ export const EntityFormDialogContent = React.forwardRef<
       ref={ref}
       {...props}
       className={cn(
-        "block border-slate-200 rounded-[var(--radius-container)] max-h-[min(90dvh,calc(100dvh-1rem))] overflow-y-auto overscroll-contain bg-white p-0 gap-0",
+        "flex flex-col overflow-hidden border-slate-200 rounded-[var(--radius-container)] bg-white p-0 gap-0",
+        "max-h-[min(92dvh,calc(100dvh-0.75rem))] sm:max-h-[min(90dvh,calc(100dvh-1.25rem))]",
         maxW,
         className
       )}
     >
-      <div className="relative">
-        <div className={cn("absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r", accentMap[accent].stripe)} />
-        <div className="p-4 pt-6 sm:p-6 sm:pt-7">{children}</div>
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className={cn("absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r", accentMap[accent].stripe)} />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] p-4 pt-6 sm:p-6 sm:pt-7">
+          {children}
+        </div>
       </div>
     </DialogContent>
   )
@@ -84,9 +87,9 @@ export function EntityFormHeader({
   description: string
 }) {
   return (
-    <DialogHeader className="mb-5">
-      <DialogTitle className="text-title">{title}</DialogTitle>
-      <DialogDescription className="text-meta">{description}</DialogDescription>
+    <DialogHeader className="mb-4 sm:mb-5 text-left">
+      <DialogTitle className="text-title text-pretty pr-8">{title}</DialogTitle>
+      <DialogDescription className="text-meta text-pretty">{description}</DialogDescription>
     </DialogHeader>
   )
 }
@@ -231,14 +234,14 @@ export function EntityFormFooter({
   disabled?: boolean
 }) {
   return (
-    <DialogFooter className="flex justify-end gap-2 pt-4 mt-6 border-t border-slate-100 sm:justify-end">
-      <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl border-slate-200">
+    <DialogFooter className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 mt-6 px-4 sm:px-6 py-3 border-t border-slate-100 bg-white/95 backdrop-blur-md flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+      <Button type="button" variant="outline" onClick={onCancel} className="h-11 w-full sm:w-auto rounded-[var(--radius-control)] border-slate-200">
         {cancelLabel}
       </Button>
       <Button
         type="submit"
         disabled={loading || disabled}
-        className={cn("rounded-xl font-semibold", accentMap[accent].btn)}
+        className={cn("h-11 w-full sm:w-auto rounded-[var(--radius-control)] font-semibold", accentMap[accent].btn)}
       >
         {loading ? "Đang xử lý..." : submitLabel}
       </Button>
