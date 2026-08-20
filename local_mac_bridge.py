@@ -4,7 +4,7 @@ import subprocess
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 PORT = 3333
-MAC_SCRIPT_PATH = os.path.expanduser("~/Desktop/Code/3lmotohue/sync_mac_findmy.py")
+SYNC_BINARY_PATH = os.path.expanduser("~/findmy-sync-service/sync_findmy_live")
 
 class MacSyncBridgeHandler(BaseHTTPRequestHandler):
     def _set_cors_headers(self):
@@ -28,8 +28,8 @@ class MacSyncBridgeHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         print("⚡ Nhận yêu cầu kích hoạt đồng bộ từ Web Button...")
         try:
-            # Run sync_mac_findmy.py script
-            result = subprocess.run(["python3", MAC_SCRIPT_PATH], capture_output=True, text=True, timeout=15)
+            # Run native sync_findmy_live binary
+            result = subprocess.run([SYNC_BINARY_PATH], capture_output=True, text=True, timeout=25)
             output = result.stdout + "\n" + result.stderr
             print(" Output:", output)
             

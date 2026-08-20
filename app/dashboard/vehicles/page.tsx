@@ -388,7 +388,7 @@ export default function VehiclesPage() {
       // 1. Kích hoạt chạy script đồng bộ trực tiếp trên máy Mac (nếu local bridge đang bật)
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 4000)
+        const timeoutId = setTimeout(() => controller.abort(), 18000)
         await fetch("http://localhost:3333/api/sync", {
           method: "POST",
           signal: controller.signal,
