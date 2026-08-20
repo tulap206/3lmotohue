@@ -216,7 +216,7 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
             AXUIElementCopyAttributeValue(elem, kAXDescriptionAttribute as CFString, &descRef)
             let desc = descRef as? String ?? ""
             
-            if (role == "AXStaticText" || role == "AXGroup") && !desc.isEmpty && (desc.contains("75") || desc.contains("74") || desc.contains("73") || desc.contains("92") || desc.contains("59")) && !desc.contains("Mốc bản đồ") {
+            if (role == "AXStaticText" || role == "AXGroup") && !desc.isEmpty && (desc.contains("75") || desc.contains("74") || desc.contains("73") || desc.contains("92") || desc.contains("59")) && !desc.contains("Mốc bản đồ") && !desc.lowercased().contains("(lỗi)") && !desc.lowercased().contains("(loi)") {
                 allRawTexts.insert(desc)
             }
             var childrenRef: AnyObject?
@@ -274,6 +274,7 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
     var vehicleMap: [String: ParsedVehicle] = [:]
     
     for text in allRawTexts {
+        if text.lowercased().contains("(lỗi)") || text.lowercased().contains("(loi)") { continue }
         let nsString = text as NSString
         let matches = plateRegex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
         guard let match = matches.first else { continue }
