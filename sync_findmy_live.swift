@@ -67,6 +67,7 @@ let HUE_COORDINATES: [String: (lat: Double, lng: Double)] = [
 
 // Vị trí nhìn thấy lần cuối cho từng biển số xe
 let KNOWN_LAST_AREAS: [String: String] = [
+    "75G1-160.66": "Nguyễn Trãi, P. Phú Xuân, TP. Huế",
     "75AA-444.39": "P. Vỹ Dạ, Thành Phố Huế",
     "75E1-291.84": "1 Nguyễn Thái Học, P. Thuận Hóa, TP. Huế",
     "75AA-631.70": "48 Tố Hữu, P. Vỹ Dạ, TP. Huế",
@@ -148,26 +149,26 @@ func parseTimeToISO(_ timeAgo: String) -> String {
     let now = Date()
     let lower = timeAgo.lowercased()
     
-    if lower.contains("phút trước") {
-        let numStr = lower.components(separatedBy: " ").first ?? "1"
-        let mins = Double(numStr) ?? 1
-        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-mins * 60))
-    } else if lower.contains("giờ trước") {
-        let numStr = lower.components(separatedBy: " ").first ?? "1"
-        let hours = Double(numStr) ?? 1
-        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-hours * 3600))
+    // Tìm con số trong chuỗi thời gian nếu có (vd: "14 phút trước" -> 14)
+    var num: Double = 1
+    if let numRegex = try? NSRegularExpression(pattern: #"(\d+)"#),
+       let match = numRegex.firstMatch(in: lower, options: [], range: NSRange(location: 0, length: (lower as NSString).length)) {
+        let numStr = (lower as NSString).substring(with: match.range)
+        num = Double(numStr) ?? 1
+    }
+    
+    if lower.contains("phút") {
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-num * 60))
+    } else if lower.contains("giờ") {
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-num * 3600))
     } else if lower.contains("hôm kia") {
         return ISO8601DateFormatter().string(from: now.addingTimeInterval(-48 * 3600))
     } else if lower.contains("hôm qua") {
         return ISO8601DateFormatter().string(from: now.addingTimeInterval(-24 * 3600))
-    } else if lower.contains("tuần trước") {
-        let numStr = lower.components(separatedBy: " ").first ?? "1"
-        let weeks = Double(numStr) ?? 1
-        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-weeks * 7 * 86400))
-    } else if lower.contains("ngày trước") {
-        let numStr = lower.components(separatedBy: " ").first ?? "1"
-        let days = Double(numStr) ?? 1
-        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-days * 86400))
+    } else if lower.contains("tuần") {
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-num * 7 * 86400))
+    } else if lower.contains("ngày") {
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-num * 86400))
     }
     return ISO8601DateFormatter().string(from: now)
 }
@@ -216,7 +217,7 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
             AXUIElementCopyAttributeValue(elem, kAXDescriptionAttribute as CFString, &descRef)
             let desc = descRef as? String ?? ""
             
-            if (role == "AXStaticText" || role == "AXGroup") && !desc.isEmpty && (desc.contains("75") || desc.contains("74") || desc.contains("73") || desc.contains("92") || desc.contains("59")) && !desc.contains("Mốc bản đồ") && !desc.lowercased().contains("(lỗi)") && !desc.lowercased().contains("(loi)") {
+            if (role == "AXStaticText" || role == "AXGroup") && !desc.isEmpty && !desc.contains("Mốc bản đồ") && !desc.lowercased().contains("(lỗi)") && !desc.lowercased().contains("(loi)") {
                 allRawTexts.insert(desc)
             }
             var childrenRef: AnyObject?
@@ -268,8 +269,8 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
     
     logMsg("📦 Thu thập được \(allRawTexts.count) dòng thông tin từ ứng dụng Tìm.")
     
-    // Regex nhận diện biển số xe
-    let plateRegex = try! NSRegularExpression(pattern: #"(\d{2}[A-Za-z]\d{1,2}[-.]\d{3}[.]\d{2}|\d{2}[A-Za-z]\d{1,2}\s+\d{3}[.]\d{2})"#, options: [])
+    // Regex nhận diện biển số xe: hỗ trợ định dạng 75G1-160.66, 75G1 160.66, 75-G1 160.66, etc.
+    let plateRegex = try! NSRegularExpression(pattern: #"(\d{2}[A-Za-z]\d{1,2}[-.\s]+\d{3}[.]\d{2}|\d{2}[-][A-Za-z]\d{1,2}[-.\s]+\d{3}[.]\d{2})"#, options: [])
     
     var vehicleMap: [String: ParsedVehicle] = [:]
     
@@ -279,7 +280,9 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         let matches = plateRegex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
         guard let match = matches.first else { continue }
         
-        var rawPlate = nsString.substring(with: match.range).replacingOccurrences(of: " ", with: "-")
+        var rawPlate = nsString.substring(with: match.range)
+            .replacingOccurrences(of: " ", with: "-")
+            .replacingOccurrences(of: "--", with: "-")
         if !rawPlate.contains("-") && rawPlate.count >= 4 {
             let p1 = rawPlate.prefix(4)
             let p2 = rawPlate.dropFirst(4)
@@ -287,47 +290,55 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         }
         let plate = rawPlate.uppercased()
         
-        // Parse timeAgo
+        // Tách chuỗi theo dấu xuống dòng \n, dấu chấm tròn •, hoặc dấu phẩy ,
+        var cleanedText = text
+        cleanedText = cleanedText.replacingOccurrences(of: "•", with: "\n")
+        cleanedText = cleanedText.replacingOccurrences(of: "·", with: "\n")
+        
+        let rawSegments = cleanedText.components(separatedBy: "\n")
+            .flatMap { $0.components(separatedBy: ",") }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        
         var timeAgo = "Gần đây"
-        for part in text.components(separatedBy: ",") {
-            let clean = part.trimmingCharacters(in: .whitespacesAndNewlines)
-            let lower = clean.lowercased()
-            if lower.contains("phút trước") || lower.contains("giờ trước") || lower.contains("ngày trước") || lower.contains("tuần trước") || lower.contains("hôm kia") || lower.contains("hôm qua") || lower.contains("bây giờ") {
-                let firstLine = clean.components(separatedBy: "\n").first ?? clean
-                timeAgo = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
-                break
+        var addressSegments: [String] = []
+        
+        for segment in rawSegments {
+            let lower = segment.lowercased()
+            
+            // 1. Kiểm tra nếu segment chứa thông tin thời gian
+            if lower.contains("phút") || lower.contains("giờ") || lower.contains("ngày") ||
+               lower.contains("tuần") || lower.contains("hôm") || lower.contains("bây giờ") || lower.contains("vừa xong") {
+                if timeAgo == "Gần đây" {
+                    timeAgo = segment
+                }
+                continue
+            }
+            
+            // 2. Kiểm tra nếu segment là tiêu đề tên xe / biển số
+            if segment.contains(plate) || lower.contains("ab ") || lower.contains("vision") || lower.contains("wave") || lower.contains("sh ") {
+                continue
+            }
+            
+            // 3. Kiểm tra nếu segment là trạng thái lỗi / chia sẻ
+            if lower.contains("không tìm") || lower.contains("đã chia sẻ") || lower.contains("đã tạm dừng") || lower.contains("pin yếu") {
+                continue
+            }
+            
+            // 4. Các đoạn còn lại chính là thành phần địa chỉ
+            if segment.count >= 2 {
+                addressSegments.append(segment)
             }
         }
+        
         let isoTimestamp = parseTimeToISO(timeAgo)
         
-        // Trích xuất địa chỉ thực tế từ dòng thẻ
         var extractedAddress: String? = nil
-        let parts = text.components(separatedBy: ",")
-        if parts.count >= 2 {
-            let p1 = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-            let lower = p1.lowercased()
-            
-            let isTimeOrStatus = lower.contains("trước") || lower.contains("hôm") || lower.contains("tuần") ||
-                                 lower.contains("giờ") || lower.contains("phút") || lower.contains("bây giờ") ||
-                                 lower.contains("không tìm") || lower.contains("đã chia sẻ") || lower.contains("đã tạm dừng") ||
-                                 lower.contains("lỗi")
-            
-            if !isTimeOrStatus && p1.count > 3 {
-                extractedAddress = p1
-                if parts.count >= 3 {
-                    let p2 = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
-                    let p2Lower = p2.lowercased()
-                    let isTimeOrStatus2 = p2Lower.contains("trước") || p2Lower.contains("hôm") || p2Lower.contains("tuần") ||
-                                          p2Lower.contains("giờ") || p2Lower.contains("phút") || p2Lower.contains("bây giờ") ||
-                                          p2Lower.contains("đã chia sẻ") || p2Lower.contains("đã tạm dừng")
-                    if !isTimeOrStatus2 && (p2Lower.contains("p.") || p2Lower.contains("x.") || p2Lower.contains("huế") || p2Lower.contains("thành phố") || p2Lower.contains("phú") || p2Lower.contains("hương") || p2Lower.contains("thuận")) {
-                        extractedAddress = "\(p1), \(p2)"
-                    }
-                }
-            }
+        if !addressSegments.isEmpty {
+            extractedAddress = addressSegments.joined(separator: ", ")
         }
         
-        // Nếu không có địa chỉ trong ping này, dùng vị trí nhìn thấy lần cuối cho xe này
+        // Nếu không có địa chỉ trong chuỗi đọc được, dùng vị trí nhìn thấy lần cuối cho xe này
         let finalAddress = extractedAddress ?? KNOWN_LAST_AREAS[plate] ?? "TP. Huế"
         
         if vehicleMap[plate] != nil {
