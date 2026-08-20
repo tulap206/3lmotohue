@@ -27,17 +27,18 @@ func logMsg(_ msg: String) {
 
 // ─── TỌA ĐỘ ĐỊNH NGHĨA CHO TỪNG PHƯỜNG / KHU VỰC TẠI TP. HUẾ ────────────────
 let HUE_COORDINATES: [String: (lat: Double, lng: Double)] = [
+    "tăng bạt hổ": (16.4715, 107.5755),
+    "phú xuân": (16.4715, 107.5755),
+    "nguyễn trãi": (16.4715, 107.5755),
+    "lộc an": (16.3235, 107.7735),
     "phú bài": (16.3985, 107.7012),
     "phạm huy thông": (16.3985, 107.7012),
     "sân bay phú bài": (16.4005, 107.7035),
     "hương thủy": (16.4250, 107.6350),
-    "lộc an": (16.3235, 107.7735),
     "thuận an": (16.5650, 107.6450),
     "phong thái": (16.5820, 107.4520),
     "hương trà": (16.5066, 107.5078),
     "lý nhân tông": (16.5066, 107.5078),
-    "nguyễn trãi": (16.4715, 107.5755),
-    "phú xuân": (16.4715, 107.5755),
     "thuận hóa": (16.4650, 107.5927),
     "nguyễn tri phương": (16.4650, 107.5927),
     "nguyễn thái học": (16.4683, 107.5967),
@@ -253,19 +254,24 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         var extractedAddress: String? = nil
         let parts = text.components(separatedBy: ",")
         if parts.count >= 2 {
-            let candidate = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-            let lower = candidate.lowercased()
-            // Bỏ qua các chuỗi không phải địa chỉ (như "Đã tạm dừng", "3 tuần trước", "Không tìm thấy"...)
-            if !lower.contains("trước") && !lower.contains("hôm") && !lower.contains("tuần") &&
-               !lower.contains("giờ") && !lower.contains("phút") && !lower.contains("bây giờ") &&
-               !lower.contains("không tìm") && !lower.contains("đã chia sẻ") && !lower.contains("đã tạm dừng") &&
-               candidate.count > 3 {
-                extractedAddress = candidate
+            let p1 = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+            let lower = p1.lowercased()
+            
+            let isTimeOrStatus = lower.contains("trước") || lower.contains("hôm") || lower.contains("tuần") ||
+                                 lower.contains("giờ") || lower.contains("phút") || lower.contains("bây giờ") ||
+                                 lower.contains("không tìm") || lower.contains("đã chia sẻ") || lower.contains("đã tạm dừng") ||
+                                 lower.contains("lỗi")
+            
+            if !isTimeOrStatus && p1.count > 3 {
+                extractedAddress = p1
                 if parts.count >= 3 {
                     let p2 = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
                     let p2Lower = p2.lowercased()
-                    if (p2Lower.contains("p.") || p2Lower.contains("x.") || p2Lower.contains("huế") || p2Lower.contains("thành phố")) && !p2Lower.contains("trước") {
-                        extractedAddress = "\(candidate), \(p2)"
+                    let isTimeOrStatus2 = p2Lower.contains("trước") || p2Lower.contains("hôm") || p2Lower.contains("tuần") ||
+                                          p2Lower.contains("giờ") || p2Lower.contains("phút") || p2Lower.contains("bây giờ") ||
+                                          p2Lower.contains("đã chia sẻ") || p2Lower.contains("đã tạm dừng")
+                    if !isTimeOrStatus2 && (p2Lower.contains("p.") || p2Lower.contains("x.") || p2Lower.contains("huế") || p2Lower.contains("thành phố") || p2Lower.contains("phú") || p2Lower.contains("hương") || p2Lower.contains("thuận")) {
+                        extractedAddress = "\(p1), \(p2)"
                     }
                 }
             }
