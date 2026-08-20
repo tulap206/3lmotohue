@@ -2124,7 +2124,7 @@ export default function VehiclesPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-rose-500 animate-pulse" />
-                    <h3 className="font-bold text-lg">{selectedMapVehicle.name}</h3>
+                    <DialogTitle className="font-bold text-lg text-white">{selectedMapVehicle.name}</DialogTitle>
                     <span className="text-xs px-2 py-0.5 rounded-md bg-white/10 border border-white/15 font-mono">{selectedMapVehicle.licensePlate}</span>
                   </div>
                   <p className="text-xs text-slate-300">Định vị & Bản đồ vị trí xe hiện tại</p>
