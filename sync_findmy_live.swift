@@ -67,17 +67,17 @@ let HUE_COORDINATES: [String: (lat: Double, lng: Double)] = [
 
 // Vị trí nhìn thấy lần cuối cho từng biển số xe
 let KNOWN_LAST_AREAS: [String: String] = [
+    "75AA-444.39": "P. Vỹ Dạ, Thành Phố Huế",
     "75E1-291.84": "1 Nguyễn Thái Học, P. Thuận Hóa, TP. Huế",
     "75AA-631.70": "48 Tố Hữu, P. Vỹ Dạ, TP. Huế",
     "75F1-915.31": "37 Kiệt 29 Trần Thanh Mại, P. An Cựu, TP. Huế",
-    "75AA-444.39": "Phạm Huy Thông, P. Phú Bài, TP. Huế",
-    "75E1-336.33": "37 Nguyễn Tất Thành, TP. Huế",
+    "75E1-336.33": "P. Vỹ Dạ, Thành Phố Huế",
     "75E1-306.58": "102 Nguyễn Chí Thanh, P. Phú Xuân, TP. Huế",
     "75K1-258.77": "P. Vỹ Dạ, TP. Huế",
     "73G1-316.77": "P. Vỹ Dạ, TP. Huế",
-    "92B1-359.21": "Kiệt 316 Tăng Bạt Hổ, P. Phú Xuân",
-    "74D1-283.78": "Kiệt 316 Tăng Bạt Hổ, P. Phú Xuân",
-    "75F1-778.28": "X. Lộc An, Thành Phố Huế",
+    "92B1-359.21": "P. Vỹ Dạ, Thành Phố Huế",
+    "74D1-283.78": "P. Vỹ Dạ, Thành Phố Huế",
+    "75F1-778.28": "P. Phú Xuân, Thành Phố Huế",
     "59A3-012.37": "Nguyễn Trãi, P. Phú Xuân"
 ]
 
