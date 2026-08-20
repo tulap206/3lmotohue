@@ -25,53 +25,54 @@ func logMsg(_ msg: String) {
     }
 }
 
-// ─── TỌA ĐỘ MẶC ĐỊNH CHO CÁC PHƯỜNG / KHU VỰC TẠI THÀNH PHỐ HUẾ ──────────────
+// ─── TỌA ĐỘ ĐỊNH NGHĨA CHO TỪNG PHƯỜNG / KHU VỰC TẠI TP. HUẾ ────────────────
 let HUE_COORDINATES: [String: (lat: Double, lng: Double)] = [
     "phú bài": (16.3985, 107.7012),
-    "phú xuân": (16.4715, 107.5755),
-    "thuận hóa": (16.4650, 107.5927),
-    "thuận hòa": (16.4680, 107.5780),
-    "vỹ dạ": (16.4797, 107.5989),
-    "kim long": (16.4580, 107.5520),
-    "hương trà": (16.5066, 107.5078),
+    "phạm huy thông": (16.3985, 107.7012),
+    "sân bay phú bài": (16.4005, 107.7035),
     "hương thủy": (16.4250, 107.6350),
     "lộc an": (16.3235, 107.7735),
     "thuận an": (16.5650, 107.6450),
     "phong thái": (16.5820, 107.4520),
+    "hương trà": (16.5066, 107.5078),
+    "lý nhân tông": (16.5066, 107.5078),
+    "nguyễn trãi": (16.4715, 107.5755),
+    "phú xuân": (16.4715, 107.5755),
+    "thuận hóa": (16.4650, 107.5927),
+    "nguyễn tri phương": (16.4650, 107.5927),
+    "nguyễn thái học": (16.4683, 107.5967),
+    "thuận hòa": (16.4680, 107.5780),
+    "vỹ dạ": (16.4797, 107.5989),
+    "tố hữu": (16.4641, 107.6031),
+    "kim long": (16.4580, 107.5520),
     "vĩnh ninh": (16.4585, 107.5890),
     "phú hội": (16.4670, 107.5950),
     "phú nhuận": (16.4610, 107.5920),
     "phước vĩnh": (16.4510, 107.5850),
     "trường an": (16.4480, 107.5780),
     "an cựu": (16.4550, 107.6020),
+    "trần thanh mại": (16.4550, 107.6020),
     "an đông": (16.4420, 107.6150),
     "an hòa": (16.4850, 107.5620),
     "thủy xuân": (16.4380, 107.5620),
-    "tố hữu": (16.4641, 107.6031),
-    "nguyễn trãi": (16.4715, 107.5755),
-    "nguyễn thái học": (16.4683, 107.5967),
-    "nguyễn tri phương": (16.4650, 107.5927),
-    "lý nhân tông": (16.5066, 107.5078),
-    "phạm huy thông": (16.3985, 107.7012),
     "hùng vương": (16.4660, 107.5940),
     "lê lợi": (16.4630, 107.5900),
     "bến xe phía nam": (16.4490, 107.6050),
     "bến xe phía bắc": (16.4880, 107.5580),
-    "ga huế": (16.4570, 107.5820),
-    "sân bay phú bài": (16.4005, 107.7035)
+    "ga huế": (16.4570, 107.5820)
 ]
 
 func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
     let lower = address.lowercased()
     
-    // Check local dictionary first for fastest, 100% reliable matching
+    // 1. Khớp từ điển địa danh Huế chính xác nhất
     for (key, coords) in HUE_COORDINATES {
         if lower.contains(key) {
             return coords
         }
     }
     
-    // Online Nominatim fallback
+    // 2. Fallback tìm kiếm online qua Nominatim OpenStreetMap
     let fullQuery = address.contains("Huế") ? address : "\(address), Thừa Thiên Huế, Việt Nam"
     if let encoded = fullQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
        let url = URL(string: "https://nominatim.openstreetmap.org/search?q=\(encoded)&format=json&limit=1&countrycodes=vn") {
@@ -99,17 +100,15 @@ func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
         }
     }
     
-    // Default fallback: TP. Huế Center
-    return (16.4637, 107.5908)
+    return (16.4637, 107.5908) // Trung tâm TP. Huế
 }
 
-// ─── ĐỌC DỮ LIỆU TỪ ỨNG DỤNG FINDMY (TÌM) TRÊN MAC ───────────────────────────
 func ensureFindMyRunning() -> NSRunningApplication? {
     let apps = NSWorkspace.shared.runningApplications
     if let findmy = apps.first(where: { $0.bundleIdentifier == "com.apple.findmy" }) {
         return findmy
     }
-    logMsg("🚀 Đang khởi động ứng dụng Tìm (FindMy)...")
+    logMsg("🚀 Đang mở ứng dụng Tìm (FindMy)...")
     if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.findmy") {
         let config = NSWorkspace.OpenConfiguration()
         config.activates = false
@@ -127,16 +126,15 @@ func ensureFindMyRunning() -> NSRunningApplication? {
     return nil
 }
 
-struct VehicleReport {
+struct ParsedVehicle {
     let licensePlate: String
-    let rawName: String
+    let rawText: String
     let address: String
-    let timeAgo: String
 }
 
-func extractVehiclesFromFindMy() -> [VehicleReport] {
+func extractVehiclesFromFindMy() -> [ParsedVehicle] {
     guard let findmy = ensureFindMyRunning() else {
-        logMsg("❌ Không thể kết nối tới ứng dụng FindMy!")
+        logMsg("❌ Không thể mở ứng dụng FindMy!")
         return []
     }
     
@@ -148,7 +146,25 @@ func extractVehiclesFromFindMy() -> [VehicleReport] {
         return []
     }
     
-    // Find scroller in sidebar
+    // Đảm bảo đang ở tab "Vật dụng" (Items)
+    func clickItemsTab(_ elem: AXUIElement) {
+        var descRef: AnyObject?
+        AXUIElementCopyAttributeValue(elem, kAXDescriptionAttribute as CFString, &descRef)
+        let desc = descRef as? String ?? ""
+        if desc == "Vật dụng" || desc == "Items" {
+            AXUIElementPerformAction(elem, kAXPressAction as CFString)
+            return
+        }
+        var childrenRef: AnyObject?
+        AXUIElementCopyAttributeValue(elem, kAXChildrenAttribute as CFString, &childrenRef)
+        if let children = childrenRef as? [AXUIElement] {
+            for child in children { clickItemsTab(child) }
+        }
+    }
+    clickItemsTab(win)
+    Thread.sleep(forTimeInterval: 0.3)
+    
+    // Tìm thanh cuộn danh sách
     func findScroller(_ elem: AXUIElement) -> AXUIElement? {
         var actionsRef: CFArray?
         AXUIElementCopyActionNames(elem, &actionsRef)
@@ -166,34 +182,30 @@ func extractVehiclesFromFindMy() -> [VehicleReport] {
     }
     
     guard let scroller = findScroller(win) else {
-        logMsg("⚠️ Không tìm thấy thanh cuộn danh sách trong FindMy.")
+        logMsg("⚠️ Không tìm thấy thanh cuộn danh sách.")
         return []
     }
     
-    // Scroll to top
-    for _ in 0..<12 {
+    // Cuộn lên đầu trang
+    for _ in 0..<15 {
         AXUIElementPerformAction(scroller, "AXScrollUpByPage" as CFString)
         Thread.sleep(forTimeInterval: 0.05)
     }
     
-    var discoveredRows: [(desc: String, elem: AXUIElement)] = []
-    var seenDesc = Set<String>()
+    var allRawTexts = Set<String>()
     
-    func harvestRows() {
+    func harvest() {
         func scan(_ elem: AXUIElement) {
+            var roleRef: AnyObject?
+            AXUIElementCopyAttributeValue(elem, kAXRoleAttribute as CFString, &roleRef)
+            let role = roleRef as? String ?? ""
+            
             var descRef: AnyObject?
             AXUIElementCopyAttributeValue(elem, kAXDescriptionAttribute as CFString, &descRef)
             let desc = descRef as? String ?? ""
             
-            var actionsRef: CFArray?
-            AXUIElementCopyActionNames(elem, &actionsRef)
-            let actions = (actionsRef as? [String]) ?? []
-            
-            if actions.contains("AXPress") && (desc.contains("75") || desc.contains("74") || desc.contains("73") || desc.contains("92") || desc.contains("59")) && !desc.contains("Mốc bản đồ") {
-                if !seenDesc.contains(desc) {
-                    seenDesc.insert(desc)
-                    discoveredRows.append((desc, elem))
-                }
+            if (role == "AXStaticText" || role == "AXGroup") && !desc.isEmpty && (desc.contains("75") || desc.contains("74") || desc.contains("73") || desc.contains("92") || desc.contains("59")) && !desc.contains("Mốc bản đồ") {
+                allRawTexts.insert(desc)
             }
             var childrenRef: AnyObject?
             AXUIElementCopyAttributeValue(elem, kAXChildrenAttribute as CFString, &childrenRef)
@@ -204,102 +216,74 @@ func extractVehiclesFromFindMy() -> [VehicleReport] {
         scan(win)
     }
     
-    // Page down and collect all items
-    for _ in 0..<12 {
-        harvestRows()
+    // Cuộn xuống từng trang để đọc hết toàn bộ danh sách thẻ
+    for _ in 0..<20 {
+        harvest()
         AXUIElementPerformAction(scroller, "AXScrollDownByPage" as CFString)
-        Thread.sleep(forTimeInterval: 0.15)
+        Thread.sleep(forTimeInterval: 0.2)
     }
     
-    logMsg("📦 Tìm thấy \(discoveredRows.count) xe trong ứng dụng FindMy.")
+    // Cuộn lại về đầu trang
+    for _ in 0..<15 {
+        AXUIElementPerformAction(scroller, "AXScrollUpByPage" as CFString)
+        Thread.sleep(forTimeInterval: 0.05)
+    }
     
+    logMsg("📦 Thu thập được \(allRawTexts.count) dòng thông tin từ ứng dụng Tìm.")
+    
+    // Regex nhận diện biển số xe (VD: 75E1-336.33, 75E1 336.33, 75K1-258.77...)
     let plateRegex = try! NSRegularExpression(pattern: #"(\d{2}[A-Za-z]\d{1,2}[-.]\d{3}[.]\d{2}|\d{2}[A-Za-z]\d{1,2}\s+\d{3}[.]\d{2})"#, options: [])
     
-    var results: [VehicleReport] = []
+    var vehicleMap: [String: ParsedVehicle] = [:]
     
-    for (rowDesc, elem) in discoveredRows {
-        // Click row to inspect detail card
-        AXUIElementPerformAction(elem, kAXPressAction as CFString)
-        Thread.sleep(forTimeInterval: 0.2)
+    for text in allRawTexts {
+        let nsString = text as NSString
+        let matches = plateRegex.matches(in: text, options: [], range: NSRange(location: 0, length: nsString.length))
+        guard let match = matches.first else { continue }
         
-        var cardTexts: [String] = []
-        func readTexts(_ el: AXUIElement) {
-            var roleRef: AnyObject?
-            AXUIElementCopyAttributeValue(el, kAXRoleAttribute as CFString, &roleRef)
-            let role = roleRef as? String ?? ""
-            
-            var descRef: AnyObject?
-            AXUIElementCopyAttributeValue(el, kAXDescriptionAttribute as CFString, &descRef)
-            let desc = descRef as? String ?? ""
-            
-            if role == "AXStaticText" && !desc.isEmpty && !desc.contains("Mốc bản đồ") {
-                cardTexts.append(desc)
-            }
-            var childrenRef: AnyObject?
-            AXUIElementCopyAttributeValue(el, kAXChildrenAttribute as CFString, &childrenRef)
-            if let children = childrenRef as? [AXUIElement] {
-                for child in children { readTexts(child) }
-            }
+        var rawPlate = nsString.substring(with: match.range).replacingOccurrences(of: " ", with: "-")
+        if !rawPlate.contains("-") && rawPlate.count >= 4 {
+            let p1 = rawPlate.prefix(4)
+            let p2 = rawPlate.dropFirst(4)
+            rawPlate = "\(p1)-\(p2)"
         }
-        readTexts(win)
+        let plate = rawPlate.uppercased()
         
-        // Extract plate from row description
-        var foundPlate: String?
-        let nsString = rowDesc as NSString
-        let matches = plateRegex.matches(in: rowDesc, options: [], range: NSRange(location: 0, length: nsString.length))
-        if let match = matches.first {
-            var rawPlate = nsString.substring(with: match.range).replacingOccurrences(of: " ", with: "-")
-            if !rawPlate.contains("-") && rawPlate.count >= 4 {
-                // normalize format 75E1-336.33
-                let p1 = rawPlate.prefix(4)
-                let p2 = rawPlate.dropFirst(4)
-                rawPlate = "\(p1)-\(p2)"
-            }
-            foundPlate = rawPlate.uppercased()
-        }
-        
-        guard let plate = foundPlate else { continue }
-        
-        // Parse best address from cardTexts or rowDesc
-        var bestAddress = ""
-        for t in cardTexts {
-            let lower = t.lowercased()
-            if (lower.contains("đường") || lower.contains("phố") || lower.contains("p.") || lower.contains("x.") || lower.contains("huế") || lower.contains("thành phố")) && !t.contains("Đã chia sẻ") && !t.contains("Lỗi") && !t.contains("Pc02") {
-                bestAddress = t
-                break
-            }
-        }
-        
-        // Fallback: extract from rowDesc
-        if bestAddress.isEmpty {
-            let parts = rowDesc.components(separatedBy: ",")
-            if parts.count >= 2 {
-                let candidate = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                if !candidate.contains("trước") && !candidate.contains("Hôm") && !candidate.contains("Không tìm") {
-                    bestAddress = candidate
+        // Trích xuất địa chỉ thực tế từ dòng thẻ
+        var extractedAddress: String? = nil
+        let parts = text.components(separatedBy: ",")
+        if parts.count >= 2 {
+            let candidate = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+            let lower = candidate.lowercased()
+            // Bỏ qua các chuỗi không phải địa chỉ (như "Đã tạm dừng", "3 tuần trước", "Không tìm thấy"...)
+            if !lower.contains("trước") && !lower.contains("hôm") && !lower.contains("tuần") &&
+               !lower.contains("giờ") && !lower.contains("phút") && !lower.contains("bây giờ") &&
+               !lower.contains("không tìm") && !lower.contains("đã chia sẻ") && !lower.contains("đã tạm dừng") &&
+               candidate.count > 3 {
+                extractedAddress = candidate
+                if parts.count >= 3 {
+                    let p2 = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
+                    let p2Lower = p2.lowercased()
+                    if (p2Lower.contains("p.") || p2Lower.contains("x.") || p2Lower.contains("huế") || p2Lower.contains("thành phố")) && !p2Lower.contains("trước") {
+                        extractedAddress = "\(candidate), \(p2)"
+                    }
                 }
             }
         }
         
-        if bestAddress.isEmpty {
-            bestAddress = "TP. Huế"
+        // CHỈ LƯU NẾU CÓ ĐỊA CHỈ THỰC TẾ HỢP LỆ
+        if let validAddress = extractedAddress {
+            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: validAddress)
         }
-        
-        results.append(VehicleReport(
-            licensePlate: plate,
-            rawName: rowDesc.components(separatedBy: "\n").first ?? rowDesc,
-            address: bestAddress,
-            timeAgo: "Vừa cập nhật"
-        ))
     }
     
-    return results
+    return Array(vehicleMap.values)
 }
 
 // ─── GỬI DỮ LIỆU ĐỒNG BỘ LÊN WEBSITE ─────────────────────────────────────────
-func sendPayloadToWebsite(reports: [VehicleReport]) {
+func sendPayloadToWebsite(reports: [ParsedVehicle]) {
     guard !reports.isEmpty else {
-        logMsg("⚠️ Không có xe nào để cập nhật.")
+        logMsg("⚠️ Không có xe nào có địa chỉ mới hợp lệ để cập nhật.")
         return
     }
     
@@ -309,7 +293,7 @@ func sendPayloadToWebsite(reports: [VehicleReport]) {
     
     for r in reports {
         let coords = geocodeAddress(r.address)
-        logMsg("🚗 [\(r.licensePlate)] ➜ \(r.address) (Tọa độ: \(coords.lat), \(coords.lng))")
+        logMsg("🚗 Khớp biển số [\(r.licensePlate)] ➜ Địa chỉ: '\(r.address)' (Tọa độ: \(coords.lat), \(coords.lng))")
         
         payload.append([
             "licensePlate": r.licensePlate,
