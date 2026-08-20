@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { RentalDataProvider } from "@/contexts/rental-data-context"
+import { NewOrderRealtimeNotifier } from "@/components/dashboard/NewOrderRealtimeNotifier"
 import { Loader2 } from "lucide-react"
 
 const RENTAL_PATHS = [
@@ -41,6 +42,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <DashboardSidebar>
+      <NewOrderRealtimeNotifier />
       {isRentalPath ? (
         <RentalDataProvider>{children}</RentalDataProvider>
       ) : (
