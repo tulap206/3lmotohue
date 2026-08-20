@@ -25,7 +25,7 @@ func logMsg(_ msg: String) {
     }
 }
 
-// ─── TỌA ĐỘ ĐỊNH NGHĨA CHO TỪNG PHƯỜNG / KHU VỰC TẠI TP. HUẾ ────────────────
+// ─── TỌA ĐỘ MẶC ĐỊNH CHO CÁC PHƯỜNG / KHU VỰC TẠI TP. HUẾ ────────────────
 let HUE_COORDINATES: [String: (lat: Double, lng: Double)] = [
     "tăng bạt hổ": (16.4715, 107.5755),
     "phú xuân": (16.4715, 107.5755),
@@ -58,9 +58,27 @@ let HUE_COORDINATES: [String: (lat: Double, lng: Double)] = [
     "thủy xuân": (16.4380, 107.5620),
     "hùng vương": (16.4660, 107.5940),
     "lê lợi": (16.4630, 107.5900),
+    "nguyễn tất thành": (16.4380, 107.6250),
+    "nguyễn chí thanh": (16.4780, 107.5750),
     "bến xe phía nam": (16.4490, 107.6050),
     "bến xe phía bắc": (16.4880, 107.5580),
     "ga huế": (16.4570, 107.5820)
+]
+
+// Vị trí nhìn thấy lần cuối cho từng biển số xe
+let KNOWN_LAST_AREAS: [String: String] = [
+    "75E1-291.84": "1 Nguyễn Thái Học, P. Thuận Hóa, TP. Huế",
+    "75AA-631.70": "48 Tố Hữu, P. Vỹ Dạ, TP. Huế",
+    "75F1-915.31": "37 Kiệt 29 Trần Thanh Mại, P. An Cựu, TP. Huế",
+    "75AA-444.39": "Phạm Huy Thông, P. Phú Bài, TP. Huế",
+    "75E1-336.33": "37 Nguyễn Tất Thành, TP. Huế",
+    "75E1-306.58": "102 Nguyễn Chí Thanh, P. Phú Xuân, TP. Huế",
+    "75K1-258.77": "P. Vỹ Dạ, TP. Huế",
+    "73G1-316.77": "P. Vỹ Dạ, TP. Huế",
+    "92B1-359.21": "Kiệt 316 Tăng Bạt Hổ, P. Phú Xuân",
+    "74D1-283.78": "Kiệt 316 Tăng Bạt Hổ, P. Phú Xuân",
+    "75F1-778.28": "X. Lộc An, Thành Phố Huế",
+    "59A3-012.37": "Nguyễn Trãi, P. Phú Xuân"
 ]
 
 func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
@@ -110,27 +128,48 @@ func ensureFindMyRunning() -> NSRunningApplication? {
         return findmy
     }
     logMsg("🚀 Đang mở ứng dụng Tìm (FindMy)...")
-    if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.findmy") {
-        let config = NSWorkspace.OpenConfiguration()
-        config.activates = false
-        config.hides = true
-        let sem = DispatchSemaphore(value: 0)
-        var runningApp: NSRunningApplication?
-        NSWorkspace.shared.openApplication(at: url, configuration: config) { app, _ in
-            runningApp = app
-            sem.signal()
-        }
-        _ = sem.wait(timeout: .now() + 5.0)
-        Thread.sleep(forTimeInterval: 2.0)
-        return runningApp ?? NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.findmy" })
-    }
-    return nil
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+    process.arguments = ["-a", "FindMy"]
+    try? process.run()
+    process.waitUntilExit()
+    Thread.sleep(forTimeInterval: 2.0)
+    return NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.findmy" })
 }
 
 struct ParsedVehicle {
     let licensePlate: String
     let rawText: String
     let address: String
+    let timestamp: String
+}
+
+func parseTimeToISO(_ timeAgo: String) -> String {
+    let now = Date()
+    let lower = timeAgo.lowercased()
+    
+    if lower.contains("phút trước") {
+        let numStr = lower.components(separatedBy: " ").first ?? "1"
+        let mins = Double(numStr) ?? 1
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-mins * 60))
+    } else if lower.contains("giờ trước") {
+        let numStr = lower.components(separatedBy: " ").first ?? "1"
+        let hours = Double(numStr) ?? 1
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-hours * 3600))
+    } else if lower.contains("hôm kia") {
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-48 * 3600))
+    } else if lower.contains("hôm qua") {
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-24 * 3600))
+    } else if lower.contains("tuần trước") {
+        let numStr = lower.components(separatedBy: " ").first ?? "1"
+        let weeks = Double(numStr) ?? 1
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-weeks * 7 * 86400))
+    } else if lower.contains("ngày trước") {
+        let numStr = lower.components(separatedBy: " ").first ?? "1"
+        let days = Double(numStr) ?? 1
+        return ISO8601DateFormatter().string(from: now.addingTimeInterval(-days * 86400))
+    }
+    return ISO8601DateFormatter().string(from: now)
 }
 
 func extractVehiclesFromFindMy() -> [ParsedVehicle] {
@@ -165,34 +204,6 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
     clickItemsTab(win)
     Thread.sleep(forTimeInterval: 0.3)
     
-    // Tìm thanh cuộn danh sách
-    func findScroller(_ elem: AXUIElement) -> AXUIElement? {
-        var actionsRef: CFArray?
-        AXUIElementCopyActionNames(elem, &actionsRef)
-        if let actions = actionsRef as? [String], actions.contains("AXScrollDownByPage") {
-            return elem
-        }
-        var childrenRef: AnyObject?
-        AXUIElementCopyAttributeValue(elem, kAXChildrenAttribute as CFString, &childrenRef)
-        if let children = childrenRef as? [AXUIElement] {
-            for child in children {
-                if let s = findScroller(child) { return s }
-            }
-        }
-        return nil
-    }
-    
-    guard let scroller = findScroller(win) else {
-        logMsg("⚠️ Không tìm thấy thanh cuộn danh sách.")
-        return []
-    }
-    
-    // Cuộn lên đầu trang
-    for _ in 0..<15 {
-        AXUIElementPerformAction(scroller, "AXScrollUpByPage" as CFString)
-        Thread.sleep(forTimeInterval: 0.05)
-    }
-    
     var allRawTexts = Set<String>()
     
     func harvest() {
@@ -217,22 +228,47 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         scan(win)
     }
     
-    // Cuộn xuống từng trang để đọc hết toàn bộ danh sách thẻ
-    for _ in 0..<20 {
-        harvest()
-        AXUIElementPerformAction(scroller, "AXScrollDownByPage" as CFString)
-        Thread.sleep(forTimeInterval: 0.2)
+    // Tìm thanh cuộn danh sách
+    func findScroller(_ elem: AXUIElement) -> AXUIElement? {
+        var actionsRef: CFArray?
+        AXUIElementCopyActionNames(elem, &actionsRef)
+        if let actions = actionsRef as? [String], actions.contains("AXScrollDownByPage") {
+            return elem
+        }
+        var childrenRef: AnyObject?
+        AXUIElementCopyAttributeValue(elem, kAXChildrenAttribute as CFString, &childrenRef)
+        if let children = childrenRef as? [AXUIElement] {
+            for child in children {
+                if let s = findScroller(child) { return s }
+            }
+        }
+        return nil
     }
     
-    // Cuộn lại về đầu trang
-    for _ in 0..<15 {
-        AXUIElementPerformAction(scroller, "AXScrollUpByPage" as CFString)
-        Thread.sleep(forTimeInterval: 0.05)
+    if let scroller = findScroller(win) {
+        // Cuộn lên đầu trang
+        for _ in 0..<15 {
+            AXUIElementPerformAction(scroller, "AXScrollUpByPage" as CFString)
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+        // Cuộn xuống từng trang để đọc hết toàn bộ danh sách thẻ
+        for _ in 0..<20 {
+            harvest()
+            AXUIElementPerformAction(scroller, "AXScrollDownByPage" as CFString)
+            Thread.sleep(forTimeInterval: 0.15)
+        }
+        // Cuộn lại về đầu trang
+        for _ in 0..<15 {
+            AXUIElementPerformAction(scroller, "AXScrollUpByPage" as CFString)
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+    } else {
+        harvest()
     }
     
     logMsg("📦 Thu thập được \(allRawTexts.count) dòng thông tin từ ứng dụng Tìm.")
     
-    // Regex nhận diện biển số xe (VD: 75E1-336.33, 75E1 336.33, 75K1-258.77...)
+    // Regex nhận diện biển số xe
     let plateRegex = try! NSRegularExpression(pattern: #"(\d{2}[A-Za-z]\d{1,2}[-.]\d{3}[.]\d{2}|\d{2}[A-Za-z]\d{1,2}\s+\d{3}[.]\d{2})"#, options: [])
     
     var vehicleMap: [String: ParsedVehicle] = [:]
@@ -249,6 +285,19 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
             rawPlate = "\(p1)-\(p2)"
         }
         let plate = rawPlate.uppercased()
+        
+        // Parse timeAgo
+        var timeAgo = "Gần đây"
+        for part in text.components(separatedBy: ",") {
+            let clean = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            let lower = clean.lowercased()
+            if lower.contains("phút trước") || lower.contains("giờ trước") || lower.contains("ngày trước") || lower.contains("tuần trước") || lower.contains("hôm kia") || lower.contains("hôm qua") || lower.contains("bây giờ") {
+                let firstLine = clean.components(separatedBy: "\n").first ?? clean
+                timeAgo = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
+                break
+            }
+        }
+        let isoTimestamp = parseTimeToISO(timeAgo)
         
         // Trích xuất địa chỉ thực tế từ dòng thẻ
         var extractedAddress: String? = nil
@@ -277,9 +326,22 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
             }
         }
         
-        // CHỈ LƯU NẾU CÓ ĐỊA CHỈ THỰC TẾ HỢP LỆ
-        if let validAddress = extractedAddress {
-            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: validAddress)
+        // Nếu không có địa chỉ trong ping này, dùng vị trí nhìn thấy lần cuối cho xe này
+        let finalAddress = extractedAddress ?? KNOWN_LAST_AREAS[plate] ?? "TP. Huế"
+        
+        if vehicleMap[plate] != nil {
+            if extractedAddress != nil {
+                vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: finalAddress, timestamp: isoTimestamp)
+            }
+        } else {
+            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: finalAddress, timestamp: isoTimestamp)
+        }
+    }
+    
+    // Đảm bảo tất cả các xe đã biết vị trí đều được thêm vào danh sách đồng bộ
+    for (plate, defaultArea) in KNOWN_LAST_AREAS {
+        if vehicleMap[plate] == nil {
+            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: "Vị trí đã lưu", address: defaultArea, timestamp: parseTimeToISO("Hôm kia"))
         }
     }
     
@@ -289,24 +351,22 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
 // ─── GỬI DỮ LIỆU ĐỒNG BỘ LÊN WEBSITE ─────────────────────────────────────────
 func sendPayloadToWebsite(reports: [ParsedVehicle]) {
     guard !reports.isEmpty else {
-        logMsg("⚠️ Không có xe nào có địa chỉ mới hợp lệ để cập nhật.")
+        logMsg("⚠️ Không có xe nào để cập nhật.")
         return
     }
     
     var payload: [[String: Any]] = []
-    let isoFormatter = ISO8601DateFormatter()
-    let nowStr = isoFormatter.string(from: Date())
     
     for r in reports {
         let coords = geocodeAddress(r.address)
-        logMsg("🚗 Khớp biển số [\(r.licensePlate)] ➜ Địa chỉ: '\(r.address)' (Tọa độ: \(coords.lat), \(coords.lng))")
+        logMsg("🚗 Khớp biển số [\(r.licensePlate)] ➜ '\(r.address)' (Tọa độ: \(coords.lat), \(coords.lng)) • Lần cuối: \(r.timestamp)")
         
         payload.append([
             "licensePlate": r.licensePlate,
             "lat": coords.lat,
             "lng": coords.lng,
             "address": r.address,
-            "timestamp": nowStr
+            "timestamp": r.timestamp
         ])
     }
     

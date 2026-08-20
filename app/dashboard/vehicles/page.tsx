@@ -1363,22 +1363,23 @@ export default function VehiclesPage() {
                             {(() => {
                               const locInfo = extractVehicleLocation(vehicle.notes)
                               const locationStr = locInfo.location
+                              const isRecent = locInfo.updatedAt ? (new Date().getTime() - new Date(locInfo.updatedAt).getTime()) < 2 * 3600 * 1000 : false
                               const relativeTime = formatRelativeTime(locInfo.updatedAt || (vehicle as any).updated_at || vehicle.created_at)
                               return (
                                 <div className="flex items-center gap-1.5 group">
                                   <button
                                     onClick={() => setSelectedMapVehicle(vehicle)}
                                     className="flex items-start gap-1.5 text-left hover:text-slate-700 transition min-w-0"
-                                    title={locationStr ? `Bấm để xem vị trí xe trên bản đồ ${relativeTime}` : "Chưa có vị trí xe"}
+                                    title={locationStr ? `Bấm để xem vị trí xe trên bản đồ • ${relativeTime}` : "Chưa có vị trí xe"}
                                   >
-                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? "text-slate-500" : "text-slate-400")} />
+                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? (isRecent ? "text-emerald-500" : "text-amber-500") : "text-slate-400")} />
                                     <div className="flex flex-col">
                                       <span className={cn("text-xs line-clamp-3 max-w-[220px] whitespace-normal leading-tight text-left", locationStr ? "text-slate-900 font-semibold underline decoration-slate-300 underline-offset-2 hover:text-slate-700" : "text-slate-400 italic")}>
-                                        {locationStr || "chưa cập nhật"}
+                                        {locationStr || "Chưa có tín hiệu"}
                                       </span>
-                                      {locationStr && relativeTime && (
-                                        <span className="text-[10px] text-slate-400 font-normal mt-0.5">
-                                          {relativeTime}
+                                      {locationStr && (
+                                        <span className={cn("text-[10px] font-medium mt-0.5 flex items-center gap-1", isRecent ? "text-emerald-600" : "text-slate-400")}>
+                                          {isRecent ? `🟢 Vừa cập nhật ${relativeTime}` : `🕒 Lần cuối: ${relativeTime || "gần đây"}`}
                                         </span>
                                       )}
                                     </div>
