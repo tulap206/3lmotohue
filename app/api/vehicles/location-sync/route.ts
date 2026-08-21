@@ -9,19 +9,28 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
 
 function extractVehicleLocation(notes?: string) {
-  if (!notes) return { location: "", cleanNotes: "", updatedAt: "" }
+  if (!notes) return { location: "", cleanNotes: "", updatedAt: "", lat: undefined as number | undefined, lng: undefined as number | undefined }
   const match = notes.match(/\[location:(.*?)\]/i)
   if (match) {
     const raw = match[1].trim()
     const cleanNotes = notes.replace(/\[location:(.*?)\]/gi, "").trim()
     let updatedAt = ""
+    let lat: number | undefined
+    let lng: number | undefined
+    let address = raw
     if (raw.includes("|")) {
       const parts = raw.split("|")
+      const coords = parts[0].split(",")
+      const parsedLat = parseFloat(coords[0])
+      const parsedLng = parseFloat(coords[1])
+      if (!isNaN(parsedLat)) lat = parsedLat
+      if (!isNaN(parsedLng)) lng = parsedLng
+      address = parts[1] || ""
       updatedAt = parts[2] || ""
     }
-    return { location: raw, cleanNotes, updatedAt }
+    return { location: address, cleanNotes, updatedAt, lat, lng }
   }
-  return { location: "", cleanNotes: notes, updatedAt: "" }
+  return { location: "", cleanNotes: notes, updatedAt: "", lat: undefined, lng: undefined }
 }
 
 function isNewerTimestamp(incomingTs?: string, existingTs?: string): boolean {
@@ -63,6 +72,15 @@ async function getDetailedReverseGeocode(lat: number, lng: number, inputAddress?
   return cleanInput || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
 }
 
+export async function GET() {
+  return NextResponse.json({
+    status: "online",
+    service: "3lmotohue-location-sync",
+    timestamp: new Date().toISOString(),
+    message: "Endpoint đồng bộ vị trí xe hoạt động bình thường"
+  })
+}
+
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
@@ -82,8 +100,8 @@ export async function POST(req: Request) {
     const latestItemsByVehicleId = new Map<string, any>()
 
     for (const item of items) {
-      const { vehicleId, licensePlate, lat, lng, timestamp = new Date().toISOString() } = item
-      if (!lat || !lng) continue
+      const { vehicleId, licensePlate, lat, lng, timestamp = new Date().toISOString(), force = false } = item
+      if (!lat && !lng && !item.address) continue
 
       const targetPlate = licensePlate ? String(licensePlate).toLowerCase().replace(/[^a-z0-9]/g, '') : ""
       
@@ -102,25 +120,27 @@ export async function POST(req: Request) {
       }
 
       const existingCandidate = latestItemsByVehicleId.get(vehicle.id)
-      if (!existingCandidate || isNewerTimestamp(timestamp, existingCandidate.timestamp)) {
-        latestItemsByVehicleId.set(vehicle.id, { ...item, timestamp, vehicle })
+      if (force || !existingCandidate || isNewerTimestamp(timestamp, existingCandidate.timestamp)) {
+        latestItemsByVehicleId.set(vehicle.id, { ...item, timestamp, force, vehicle })
       }
     }
 
     for (const [vId, candidate] of latestItemsByVehicleId.entries()) {
       const vehicle = candidate.vehicle
-      const { lat, lng, address = "", timestamp } = candidate
+      const { lat, lng, address = "", timestamp, force = false } = candidate
       const existingLoc = extractVehicleLocation(vehicle.notes)
 
-      // Skip update if DB already has a newer location timestamp
-      if (!isNewerTimestamp(timestamp, existingLoc.updatedAt)) {
+      // Skip update if DB already has a newer location timestamp (unless forced)
+      if (!force && existingLoc.updatedAt && !isNewerTimestamp(timestamp, existingLoc.updatedAt)) {
         results.push({ vehicleId: vehicle.id, licensePlate: vehicle.licensePlate, status: "skipped_older", reason: "Existing location is newer" })
         continue
       }
 
       const cleanNotes = existingLoc.cleanNotes
-      const locAddress = await getDetailedReverseGeocode(lat, lng, address)
-      const formattedLoc = `${lat},${lng}|${locAddress}|${timestamp}`
+      const safeLat = typeof lat === 'number' ? lat : (existingLoc.lat || 16.4637)
+      const safeLng = typeof lng === 'number' ? lng : (existingLoc.lng || 107.5908)
+      const locAddress = await getDetailedReverseGeocode(safeLat, safeLng, address)
+      const formattedLoc = `${safeLat},${safeLng}|${locAddress}|${timestamp}`
       const newNotes = cleanNotes ? `${cleanNotes}\n[location:${formattedLoc}]` : `[location:${formattedLoc}]`
 
       const { error: updateErr } = await supabase
@@ -131,7 +151,7 @@ export async function POST(req: Request) {
       if (updateErr) {
         results.push({ vehicleId: vehicle.id, licensePlate: vehicle.licensePlate, status: "error", error: updateErr.message })
       } else {
-        results.push({ vehicleId: vehicle.id, licensePlate: vehicle.licensePlate, status: "success" })
+        results.push({ vehicleId: vehicle.id, licensePlate: vehicle.licensePlate, status: "success", address: locAddress, timestamp })
       }
     }
 

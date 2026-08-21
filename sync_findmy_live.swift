@@ -338,22 +338,12 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
             extractedAddress = addressSegments.joined(separator: ", ")
         }
         
-        // Nếu không có địa chỉ trong chuỗi đọc được, dùng vị trí nhìn thấy lần cuối cho xe này
-        let finalAddress = extractedAddress ?? KNOWN_LAST_AREAS[plate] ?? "TP. Huế"
-        
-        if vehicleMap[plate] != nil {
-            if extractedAddress != nil {
-                vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: finalAddress, timestamp: isoTimestamp)
-            }
-        } else {
-            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: finalAddress, timestamp: isoTimestamp)
-        }
-    }
-    
-    // Đảm bảo tất cả các xe đã biết vị trí đều được thêm vào danh sách đồng bộ
-    for (plate, defaultArea) in KNOWN_LAST_AREAS {
-        if vehicleMap[plate] == nil {
-            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: "Vị trí đã lưu", address: defaultArea, timestamp: parseTimeToISO("Hôm kia"))
+        // Chỉ ghi nhận xe có địa chỉ hoặc được tìm thấy từ Find My
+        if let extractedAddress = extractedAddress {
+            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: extractedAddress, timestamp: isoTimestamp)
+        } else if vehicleMap[plate] == nil {
+            let fallbackAddr = KNOWN_LAST_AREAS[plate] ?? "TP. Huế"
+            vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: fallbackAddr, timestamp: isoTimestamp)
         }
     }
     

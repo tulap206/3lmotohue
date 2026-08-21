@@ -80,7 +80,7 @@ export function extractVehicleLocation(notes?: string): VehicleLocationInfo {
       const address = parts[1] || ""
       const updatedAt = parts[2] || ""
       return {
-        location: address || parts[0],
+        location: address || (lat && lng ? `${lat.toFixed(5)}, ${lng.toFixed(5)}` : parts[0]),
         cleanNotes,
         lat: isNaN(lat) ? undefined : lat,
         lng: isNaN(lng) ? undefined : lng,
@@ -103,11 +103,22 @@ export function extractVehicleLocation(notes?: string): VehicleLocationInfo {
   return { location: "", cleanNotes: notes }
 }
 
-export function buildVehicleNotesWithLocation(existingNotes: string | undefined, location: string): string {
-  const { cleanNotes } = extractVehicleLocation(existingNotes)
+export function buildVehicleNotesWithLocation(
+  existingNotes: string | undefined,
+  location: string,
+  coords?: { lat?: number; lng?: number },
+  timestamp?: string
+): string {
+  const { cleanNotes, lat: oldLat, lng: oldLng } = extractVehicleLocation(existingNotes)
   const locStr = location.trim()
   if (!locStr) return cleanNotes
-  return cleanNotes ? `${cleanNotes}\n[location:${locStr}]` : `[location:${locStr}]`
+
+  const lat = coords?.lat ?? oldLat ?? 16.463713
+  const lng = coords?.lng ?? oldLng ?? 107.590866
+  const ts = timestamp || new Date().toISOString()
+  const formatted = `${lat},${lng}|${locStr}|${ts}`
+
+  return cleanNotes ? `${cleanNotes}\n[location:${formatted}]` : `[location:${formatted}]`
 }
 
 export function replaceVehicleCleanNotes(originalNotes: string | undefined, cleanNotes: string): string {
@@ -124,31 +135,83 @@ export function formatRelativeTime(dateString?: string): string {
   
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-  if (diffInSeconds <= 0 || diffInSeconds < 60) {
-    return "(vừa xong)"
+  if (diffInSeconds < 60) {
+    return "vừa xong"
   }
   const diffInMinutes = Math.floor(diffInSeconds / 60)
   if (diffInMinutes < 60) {
-    return `(${diffInMinutes} phút trước)`
+    return `${diffInMinutes} phút trước`
   }
   const diffInHours = Math.floor(diffInMinutes / 60)
   if (diffInHours < 24) {
-    return `(${diffInHours} giờ trước)`
+    return `${diffInHours} giờ trước`
   }
   const diffInDays = Math.floor(diffInHours / 24)
   if (diffInDays < 7) {
-    return `(${diffInDays} ngày trước)`
+    return `${diffInDays} ngày trước`
   }
   const diffInWeeks = Math.floor(diffInDays / 7)
   if (diffInDays < 30) {
-    return `(${diffInWeeks} tuần trước)`
+    return `${diffInWeeks} tuần trước`
   }
   const diffInMonths = Math.floor(diffInDays / 30)
   if (diffInMonths < 12) {
-    return `(${diffInMonths} tháng trước)`
+    return `${diffInMonths} tháng trước`
   }
   const diffInYears = Math.floor(diffInMonths / 12)
-  return `(${diffInYears} năm trước)`
+  return `${diffInYears} năm trước`
+}
+
+export function getLocationRecency(updatedAt?: string): {
+  status: "live" | "today" | "old" | "none"
+  label: string
+  colorClass: string
+  relativeText: string
+} {
+  if (!updatedAt) {
+    return {
+      status: "none",
+      label: "Chưa có GPS",
+      colorClass: "text-slate-400",
+      relativeText: "Chưa có tín hiệu"
+    }
+  }
+
+  const date = new Date(updatedAt)
+  if (isNaN(date.getTime())) {
+    return {
+      status: "none",
+      label: "Chưa có GPS",
+      colorClass: "text-slate-400",
+      relativeText: "Chưa có tín hiệu"
+    }
+  }
+
+  const diffMs = Date.now() - date.getTime()
+  const relativeText = formatRelativeTime(updatedAt)
+
+  if (diffMs <= 30 * 60 * 1000) { // < 30 phút
+    return {
+      status: "live",
+      label: "🟢 Trực tiếp",
+      colorClass: "text-emerald-600 font-semibold",
+      relativeText: `🟢 Vừa cập nhật • ${relativeText}`
+    }
+  } else if (diffMs <= 6 * 3600 * 1000) { // < 6 giờ
+    return {
+      status: "today",
+      label: "🟡 Hôm nay",
+      colorClass: "text-amber-600 font-medium",
+      relativeText: `🟡 Cập nhật ${relativeText}`
+    }
+  } else {
+    return {
+      status: "old",
+      label: "🕒 Lần cuối",
+      colorClass: "text-slate-400",
+      relativeText: `🕒 Lần cuối: ${relativeText}`
+    }
+  }
 }
 
 type VehicleStatus = "available" | "rented" | "maintenance" | "pending"
@@ -384,18 +447,26 @@ export default function VehiclesPage() {
   const handleSyncLiveLocations = async () => {
     try {
       setIsSyncingLocations(true)
+      let bridgeSucceeded = false
+      let syncResultMsg = ""
 
-      // 1. Kích hoạt chạy script đồng bộ trực tiếp trên máy Mac (nếu local bridge đang bật)
+      // 1. Thử kích hoạt chạy script đồng bộ trực tiếp trên máy Mac (nếu local bridge đang bật)
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 18000)
-        await fetch("http://localhost:3333/api/sync", {
+        const timeoutId = setTimeout(() => controller.abort(), 25000)
+        const res = await fetch("http://localhost:3333/api/sync", {
           method: "POST",
           signal: controller.signal,
         })
         clearTimeout(timeoutId)
+
+        if (res.ok) {
+          const data = await res.json()
+          bridgeSucceeded = true
+          syncResultMsg = data.message || "Đã đồng bộ vị trí xe từ Mac thành công!"
+        }
       } catch (bridgeErr) {
-        console.log("Mac local bridge chưa bật hoặc đang kết nối từ xa, tiến hành tải lại danh sách...", bridgeErr)
+        console.log("Mac local bridge chưa bật hoặc đang kết nối từ xa:", bridgeErr)
       }
 
       // 2. Tải lại danh sách xe mới nhất từ CSDL Supabase
@@ -408,10 +479,14 @@ export default function VehiclesPage() {
         showError("Không thể cập nhật danh sách vị trí: " + error.message)
       } else if (freshVehicles) {
         setVehicles(freshVehicles)
-        showSuccess("Đã kích hoạt đồng bộ từ máy Mac và cập nhật danh sách vị trí xe!")
+        if (bridgeSucceeded) {
+          showSuccess(`🎉 ${syncResultMsg} (Đã cập nhật danh sách)`)
+        } else {
+          showWarning("⚡ Find My Bridge trên máy Mac chưa bật (http://localhost:3333). Hệ thống đã làm mới dữ liệu vị trí đã lưu trên Cloud!")
+        }
       }
     } catch (err: any) {
-      showError("Lỗi khi đồng bộ vị trí xe")
+      showError("Lỗi khi đồng bộ vị trí xe: " + (err.message || ""))
     } finally {
       setIsSyncingLocations(false)
     }
@@ -427,11 +502,12 @@ export default function VehiclesPage() {
     if (!editingLocationVehicle) return
     try {
       setSavingLocation(true)
-      const updatedNotes = buildVehicleNotesWithLocation(editingLocationVehicle.notes, locationInput)
+      const nowIso = new Date().toISOString()
+      const updatedNotes = buildVehicleNotesWithLocation(editingLocationVehicle.notes, locationInput, undefined, nowIso)
 
       const { error } = await supabase
         .from('vehicles')
-        .update({ notes: updatedNotes, updated_at: new Date().toISOString() })
+        .update({ notes: updatedNotes, updated_at: nowIso })
         .eq('id', editingLocationVehicle.id)
 
       if (error) throw error
@@ -1363,23 +1439,22 @@ export default function VehiclesPage() {
                             {(() => {
                               const locInfo = extractVehicleLocation(vehicle.notes)
                               const locationStr = locInfo.location
-                              const isRecent = locInfo.updatedAt ? (new Date().getTime() - new Date(locInfo.updatedAt).getTime()) < 2 * 3600 * 1000 : false
-                              const relativeTime = formatRelativeTime(locInfo.updatedAt || (vehicle as any).updated_at || vehicle.created_at)
+                              const recency = getLocationRecency(locInfo.updatedAt)
                               return (
                                 <div className="flex items-center gap-1.5 group">
                                   <button
                                     onClick={() => setSelectedMapVehicle(vehicle)}
                                     className="flex items-start gap-1.5 text-left hover:text-slate-700 transition min-w-0"
-                                    title={locationStr ? `Bấm để xem vị trí xe trên bản đồ • ${relativeTime}` : "Chưa có vị trí xe"}
+                                    title={locationStr ? `Bấm để xem vị trí xe trên bản đồ • ${recency.relativeText}` : "Chưa có vị trí xe"}
                                   >
-                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? (isRecent ? "text-emerald-500" : "text-amber-500") : "text-slate-400")} />
+                                    <MapPin className={cn("w-3.5 h-3.5 shrink-0 mt-0.5 self-start", locationStr ? (recency.status === "live" ? "text-emerald-500" : recency.status === "today" ? "text-amber-500" : "text-slate-400") : "text-slate-300")} />
                                     <div className="flex flex-col">
                                       <span className={cn("text-xs line-clamp-3 max-w-[220px] whitespace-normal leading-tight text-left", locationStr ? "text-slate-900 font-semibold underline decoration-slate-300 underline-offset-2 hover:text-slate-700" : "text-slate-400 italic")}>
                                         {locationStr || "Chưa có tín hiệu"}
                                       </span>
                                       {locationStr && (
-                                        <span className={cn("text-[10px] font-medium mt-0.5 flex items-center gap-1", isRecent ? "text-emerald-600" : "text-slate-400")}>
-                                          {isRecent ? `🟢 Vừa cập nhật ${relativeTime}` : `🕒 Lần cuối: ${relativeTime || "gần đây"}`}
+                                        <span className={cn("text-[10px] mt-0.5 flex items-center gap-1", recency.colorClass)}>
+                                          {recency.relativeText}
                                         </span>
                                       )}
                                     </div>
@@ -1464,7 +1539,7 @@ export default function VehiclesPage() {
                 mobile={paginatedVehicles.map((vehicle) => {
                   const locInfo = extractVehicleLocation(vehicle.notes)
                   const locationStr = locInfo.location
-                  const relativeTime = formatRelativeTime(locInfo.updatedAt || (vehicle as any).updated_at || vehicle.created_at)
+                  const recency = getLocationRecency(locInfo.updatedAt)
 
                   return (
                     <ModuleMobileCard key={vehicle.id}>
@@ -1494,18 +1569,18 @@ export default function VehiclesPage() {
                           onClick={() => setSelectedMapVehicle(vehicle)}
                           className="flex items-start gap-2 text-left hover:bg-blue-50/60 transition w-full bg-slate-50 p-2.5 rounded-xl border border-slate-100/80 active:scale-[0.99]"
                         >
-                          <MapPin className={cn("w-4 h-4 shrink-0 mt-0.5 self-start", locationStr ? "text-slate-500" : "text-slate-400")} />
+                          <MapPin className={cn("w-4 h-4 shrink-0 mt-0.5 self-start", locationStr ? (recency.status === "live" ? "text-emerald-500" : recency.status === "today" ? "text-amber-500" : "text-slate-400") : "text-slate-300")} />
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-1 w-full">
                               <span className="text-[11px] font-semibold text-slate-500">Vị trí xe hiện tại:</span>
-                              {locationStr && relativeTime && (
-                                <span className="text-[10px] text-slate-400 font-normal">
-                                  {relativeTime}
+                              {locationStr && (
+                                <span className={cn("text-[10px]", recency.colorClass)}>
+                                  {recency.relativeText}
                                 </span>
                               )}
                             </div>
                             <span className={cn("text-xs leading-tight text-left break-words mt-0.5", locationStr ? "text-slate-900 font-semibold underline decoration-slate-300 underline-offset-2" : "text-slate-400 italic")}>
-                              {locationStr || "chưa cập nhật"}
+                              {locationStr || "Chưa có tín hiệu"}
                             </span>
                           </div>
                         </button>
@@ -2071,7 +2146,7 @@ export default function VehiclesPage() {
               id="vehicle-location-input"
               value={locationInput}
               onChange={(e) => setLocationInput(e.target.value)}
-              placeholder="Ví dụ: Bãi xe A, 123 Lê Lợi, Khách đang gửi..."
+              placeholder="Ví dụ: 102 Nguyễn Trãi, P. Thuận Hòa, TP. Huế..."
               className="h-10 text-sm bg-white border-slate-200"
               autoFocus
               onKeyDown={(e) => {
@@ -2081,8 +2156,31 @@ export default function VehiclesPage() {
                 }
               }}
             />
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setLocationInput("Tại cửa hàng 3L Moto (102 Nguyễn Trãi, TP. Huế)")}
+                className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition"
+              >
+                🏠 Tại cửa hàng 3L Moto
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocationInput("Bãi xe cơ sở 2, TP. Huế")}
+                className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition"
+              >
+                🅿️ Bãi xe cơ sở 2
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocationInput("Khách đang thuê lưu hành")}
+                className="text-[11px] px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md transition"
+              >
+                🛵 Đang cho thuê
+              </button>
+            </div>
             <p className="text-[11px] text-slate-500">
-              Nhập địa chỉ hoặc vị trí cụ thể để dễ dàng quản lý bãi và điều phối xe. Để trống nếu muốn xóa vị trí.
+              Nhập địa chỉ hoặc vị trí cụ thể để dễ dàng quản lý bãi và điều phối xe. Hệ thống sẽ tự động lưu lại thời gian thực lúc bạn bấm Lưu.
             </p>
           </div>
 
@@ -2096,7 +2194,7 @@ export default function VehiclesPage() {
               className="h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 gap-1.5 flex-1 sm:flex-none"
             >
               <Save className="w-4 h-4" />
-              {savingLocation ? "Đang lưu..." : "Lưu vị trí"}
+              {savingLocation ? "Đang lưu..." : "Lưu vị trí & Thời gian"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2108,6 +2206,7 @@ export default function VehiclesPage() {
         const locationStr = locInfo.location
         const lat = locInfo.lat
         const lng = locInfo.lng
+        const recency = getLocationRecency(locInfo.updatedAt)
         const mapQuery = lat && lng ? `${lat},${lng}` : encodeURIComponent(locationStr || selectedMapVehicle.name)
         const deltaLng = 0.008
         const deltaLat = 0.005
@@ -2138,8 +2237,12 @@ export default function VehiclesPage() {
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                     <span>Địa chỉ xe:</span>
-                    {locInfo.updatedAt && (
-                      <span className="text-[11px] text-blue-600 font-semibold">Cập nhật: {new Date(locInfo.updatedAt).toLocaleTimeString('vi-VN')} {new Date(locInfo.updatedAt).toLocaleDateString('vi-VN')}</span>
+                    {locInfo.updatedAt ? (
+                      <span className={cn("text-[11px] font-semibold", recency.colorClass)}>
+                        {recency.relativeText} ({new Date(locInfo.updatedAt).toLocaleTimeString('vi-VN')} {new Date(locInfo.updatedAt).toLocaleDateString('vi-VN')})
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">Chưa có thời gian GPS</span>
                     )}
                   </div>
                   <p className="text-sm font-semibold text-slate-800">
@@ -2172,23 +2275,36 @@ export default function VehiclesPage() {
                 </div>
 
                 {/* Action links */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                   <a
                     href={googleMapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition"
                   >
                     <MapPin className="w-4 h-4" />
-                    Mở chỉ đường Google Maps
+                    Google Maps
                   </a>
                   <a
                     href="findmy://"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs shadow-sm transition"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs shadow-sm transition"
                   >
                     <Car className="w-4 h-4" />
-                    Mở app Apple Find My
+                    Apple Find My
                   </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const v = selectedMapVehicle
+                      setSelectedMapVehicle(null)
+                      openEditLocationDialog(v)
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs shadow-sm transition h-auto"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Sửa vị trí
+                  </Button>
                 </div>
               </div>
             </DialogContent>

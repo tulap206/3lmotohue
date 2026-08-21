@@ -10,7 +10,7 @@ import urllib.request
 import urllib.parse
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 # ─── CẤU HÌNH ────────────────────────────────────────────────────────────────
 API_URL     = "https://3lmotohue.com/api/vehicles/location-sync"
@@ -133,38 +133,84 @@ def _collect_texts(elem, texts, child_attr, val_attr, depth=0):
     except Exception:
         pass
 
+def parse_relative_time_to_iso(time_text: str) -> str:
+    now = datetime.now(timezone.utc)
+    lower = time_text.lower()
+    
+    m = re.search(r'(\d+)', lower)
+    num = int(m.group(1)) if m else 1
+    
+    if "phút" in lower or "min" in lower:
+        dt = now - timedelta(minutes=num)
+    elif "giờ" in lower or "hour" in lower or "hr" in lower:
+        dt = now - timedelta(hours=num)
+    elif "hôm qua" in lower or "yesterday" in lower:
+        dt = now - timedelta(days=1)
+    elif "hôm kia" in lower:
+        dt = now - timedelta(days=2)
+    elif "ngày" in lower or "day" in lower:
+        dt = now - timedelta(days=num)
+    elif "tuần" in lower or "week" in lower:
+        dt = now - timedelta(weeks=num)
+    else:
+        dt = now
+        
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
 def parse_items(texts: list[str]) -> list[dict]:
-    """Phân tích danh sách text → list items với name và address."""
+    """Phân tích danh sách text → list items với name, address và timestamp."""
     items = []
-    # Pattern biển số xe trong tên thẻ
-    plate_pattern = re.compile(r'(\d{2}[A-Za-z]\d{1,2}-\d{3}\.\d{2})')
+    plate_pattern = re.compile(r'(\d{2}[A-Za-z]\d{1,2}[-.\s]*\d{3}[.]\d{2}|\d{2}[-][A-Za-z]\d{1,2}[-.\s]*\d{3}[.]\d{2})')
+    time_keywords = ["phút", "giờ", "ngày", "tuần", "hôm", "bây giờ", "vừa xong", "gần đây", "min", "hour", "ago", "now", "yesterday"]
     
     i = 0
     while i < len(texts):
         text = texts[i]
         m = plate_pattern.search(text)
         if m:
-            plate = m.group(1).upper()
-            # Tìm địa chỉ ở dòng tiếp theo (thường là street, ward)
+            raw_plate = m.group(1).upper().replace(" ", "-").replace(".", ".").replace("--", "-")
+            if "-" not in raw_plate and len(raw_plate) >= 4:
+                raw_plate = raw_plate[:4] + "-" + raw_plate[4:]
+            
             address = ""
-            if i + 1 < len(texts):
-                next_text = texts[i + 1]
-                # Địa chỉ không chứa biển số
-                if not plate_pattern.search(next_text) and len(next_text) > 5:
-                    address = next_text
-                    i += 1  # skip address line
-            items.append({"plate": plate, "address": address, "name": text})
+            timestamp_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            
+            # Quét tối đa 4 dòng kế tiếp để tìm address & time
+            j = i + 1
+            while j < min(len(texts), i + 5):
+                next_text = texts[j].strip()
+                if plate_pattern.search(next_text):
+                    break # Gặp xe tiếp theo
+                
+                lower_next = next_text.lower()
+                if any(kw in lower_next for kw in time_keywords):
+                    timestamp_str = parse_relative_time_to_iso(next_text)
+                elif len(next_text) >= 3 and not any(kw in lower_next for kw in ["đang tìm", "pin", "lỗi", "chia sẻ", "vật dụng"]):
+                    if not address:
+                        address = next_text
+                    elif next_text not in address:
+                        address = f"{address}, {next_text}"
+                j += 1
+            
+            items.append({
+                "plate": raw_plate,
+                "address": address or "TP. Huế",
+                "timestamp": timestamp_str,
+                "name": text
+            })
+            i = j - 1
         i += 1
     
     return items
 
 def geocode_address(address: str) -> tuple[float, float] | None:
-    """Geocode địa chỉ sang tọa độ GPS dùng Nominatim."""
-    if not address:
-        return None
+    """Geocode địa chỉ sang tọa độ GPS dùng Nominatim hoặc từ điển Huế."""
+    if not address or address == "TP. Huế":
+        return 16.463713, 107.590866
     
-    # Thêm context "Huế, Việt Nam" để tăng độ chính xác
-    full_address = f"{address}, Thừa Thiên Huế, Việt Nam"
+    # Context Thừa Thiên Huế
+    clean_addr = address.replace("Thành Phố Huế", "TP Huế").replace("Thừa Thiên Huế", "")
+    full_address = f"{clean_addr}, TP Huế, Thừa Thiên Huế, Việt Nam"
     
     url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
         "q": full_address,
@@ -175,13 +221,15 @@ def geocode_address(address: str) -> tuple[float, float] | None:
     
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "3lmotohue-sync/1.0"})
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=8) as resp:
             data = json.loads(resp.read())
             if data:
                 return float(data[0]["lat"]), float(data[0]["lon"])
     except Exception as e:
         print(f"  ⚠️ Geocode lỗi cho '{address}': {e}")
-    return None
+    
+    # Fallback to central Hue if failed
+    return 16.463713, 107.590866
 
 def push_to_api(items: list[dict]) -> bool:
     body = json.dumps(items).encode("utf-8")
@@ -191,7 +239,8 @@ def push_to_api(items: list[dict]) -> bool:
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as res:
-            print(f"✅ API: {res.read().decode()[:200]}")
+            res_text = res.read().decode()
+            print(f"✅ API Response: {res_text}")
             return True
     except Exception as e:
         print(f"❌ Lỗi API: {e}")
@@ -199,67 +248,66 @@ def push_to_api(items: list[dict]) -> bool:
 
 def main():
     print("=" * 60)
-    print("🔍 ĐỌC VỊ TRÍ TỪ FINDMY APP")
+    print("🔍 ĐỌC VỊ TRÍ TỪ FINDMY APP (APPLE)")
     print("=" * 60)
     
     # Bước 1: Đọc từ FindMy UI
-    print("\n📱 Đang đọc FindMy app...")
+    print("\n📱 Đang kết nối và đọc FindMy app...")
+    items = []
     try:
         items = read_findmy_via_applescript()
-    except PermissionError as e:
-        print(f"\n⚠️ {e}")
-        print("\n👉 Làm theo hướng dẫn:")
-        print("   1. Mở System Settings → Privacy & Security → Accessibility")
-        print("   2. Bật Terminal vào danh sách")
-        print("   3. Chạy lại script này")
-        sys.exit(1)
+    except Exception as e:
+        print(f"⚠️ AppleScript: {e}")
     
     if not items:
-        print("⚠️ Không đọc được dữ liệu từ FindMy. Thử approach PyObjC...")
+        print("⚠️ Đang thử phương thức PyObjC AX API...")
         try:
             items = read_findmy_via_pyobjc()
         except Exception as e:
-            print(f"❌ PyObjC cũng thất bại: {e}")
-            sys.exit(1)
-    
-    print(f"✅ Đọc được {len(items)} thẻ từ FindMy:")
-    for item in items:
-        print(f"  • {item['plate']}: {item['address']}")
+            print(f"❌ PyObjC thất bại: {e}")
     
     if not items:
-        print("❌ Không có dữ liệu!")
+        print("❌ Không tìm thấy thẻ xe nào trong Find My app!")
         sys.exit(1)
+        
+    print(f"✅ Đọc được {len(items)} thẻ xe từ Find My:")
+    for item in items:
+        print(f"  • Biển số: {item['plate']} | Vị trí: {item['address']} | Thời gian: {item['timestamp']}")
     
     # Bước 2: Geocode địa chỉ → GPS
-    print("\n🗺️  Geocoding địa chỉ...")
+    print("\n🗺️  Đang xử lý tọa độ vị trí...")
     payload = []
     for item in items:
         plate   = item["plate"]
         address = item["address"]
+        timestamp = item["timestamp"]
         
         coords = geocode_address(address)
         if coords:
             lat, lng = coords
-            print(f"  ✅ {plate}: {lat:.6f}, {lng:.6f} ({address})")
+            print(f"  ✅ {plate}: ({lat:.6f}, {lng:.6f}) - {address}")
             payload.append({
                 "licensePlate": plate,
                 "lat": lat,
                 "lng": lng,
                 "address": address,
-                "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "timestamp": timestamp,
+                "force": True
             })
-        else:
-            print(f"  ⚠️ {plate}: không geocode được '{address}'")
         
-        time.sleep(1)  # Rate limit Nominatim (1 req/sec)
+        time.sleep(0.3)
     
     if not payload:
-        print("❌ Không có tọa độ nào để gửi!")
+        print("❌ Không có dữ liệu để gửi!")
         sys.exit(1)
     
     # Bước 3: Gửi lên API
-    print(f"\n🚀 Gửi {len(payload)} vị trí lên website...")
-    push_to_api(payload)
+    print(f"\n🚀 Đang gửi {len(payload)} vị trí lên website...")
+    success = push_to_api(payload)
+    if success:
+        print(f"🎉 Hoàn tất đồng bộ {len(payload)} xe!")
+    else:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
