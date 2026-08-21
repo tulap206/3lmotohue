@@ -95,6 +95,7 @@ class MacSyncBridgeHandler(BaseHTTPRequestHandler):
 
 def run_server():
     server_address = ("", PORT)
+    HTTPServer.allow_reuse_address = True
     httpd = HTTPServer(server_address, MacSyncBridgeHandler)
     print(f"================================================================")
     print(f"🚀 Mac FindMy Sync Bridge đang chạy tại http://localhost:{PORT}")
