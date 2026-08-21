@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    root: '.',
+  },
   images: {
     unoptimized: true,
   },
@@ -40,7 +43,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://*.supabase.co https://img.vietqr.io https://*.vietqr.io https://*.tile.openstreetmap.org https://*.openstreetmap.org",
-              "connect-src 'self' https://*.supabase.co https://api.telegram.org wss://*.supabase.co",
+              "connect-src 'self' https://*.supabase.co https://api.telegram.org wss://*.supabase.co http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
               "frame-src 'self' https://www.openstreetmap.org https://*.openstreetmap.org https://maps.google.com https://*.google.com",
               "frame-ancestors 'none'",
             ].join('; '),
