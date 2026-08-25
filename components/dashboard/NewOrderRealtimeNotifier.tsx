@@ -42,6 +42,8 @@ export interface IncomingOrder {
 }
 
 const STORAGE_ACK_KEY = "3lmoto_acknowledged_web_order_ids_v2"
+const STORAGE_SEEN_KEY = "3lmoto_seen_web_order_ids_v2"
+const STORAGE_DAILY_POPUP_KEY = "3lmoto_daily_web_order_popup_last_shown"
 const STORAGE_SOUND_KEY = "3lmoto_order_notification_sound_enabled"
 const WEB_BOOKING_NOTE_RE = /đặt trực tuyến từ website|\[source:web\]/i
 
@@ -55,7 +57,56 @@ export function cleanNotesForDisplay(notes?: string | null): string {
     .replace(/^\[rentalTerm:(short|long)\]\s*/gi, "")
     .replace(/\[source:web\]\s*/gi, "")
     .replace(/\[location:(.*?)\]\s*/gi, "")
+    .replace(/\[time:([0-2]?\d:[0-5]\d)\s*->\s*([0-2]?\d:[0-5]\d)\]\s*/gi, "")
     .trim()
+}
+
+function getTodayKey(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+function getSeenIds(): Set<string> {
+  if (typeof window === "undefined") return new Set()
+  try {
+    const raw = localStorage.getItem(STORAGE_SEEN_KEY)
+    if (!raw) return new Set()
+    const arr = JSON.parse(raw)
+    return new Set(Array.isArray(arr) ? arr : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function saveSeenId(id: string) {
+  if (typeof window === "undefined" || !id) return
+  try {
+    const current = getSeenIds()
+    current.add(id)
+    const arr = Array.from(current).slice(-300)
+    localStorage.setItem(STORAGE_SEEN_KEY, JSON.stringify(arr))
+  } catch (e) {
+    console.warn("Error saving seen order:", e)
+  }
+}
+
+function hasShownPopupToday(): boolean {
+  if (typeof window === "undefined") return false
+  try {
+    const lastShown = localStorage.getItem(STORAGE_DAILY_POPUP_KEY)
+    return lastShown === getTodayKey()
+  } catch {
+    return false
+  }
+}
+
+function markPopupShownToday() {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(STORAGE_DAILY_POPUP_KEY, getTodayKey())
+  } catch (e) {
+    console.warn("Error marking popup shown today:", e)
+  }
 }
 
 let sharedAudioCtx: AudioContext | null = null
@@ -213,7 +264,7 @@ export function NewOrderRealtimeNotifier() {
   }, [isOpen, activeOrder])
 
   // Hàm xử lý đơn mới đến (CHỈ CHẤP NHẬN ĐƠN ĐẶT TỪ WEB)
-  const processIncomingWebOrder = useCallback(async (rawOrder: any, triggerSound = true) => {
+  const processIncomingWebOrder = useCallback(async (rawOrder: any, triggerSound = true, forceOpenModal = false) => {
     if (!rawOrder || !rawOrder.id) return
 
     // CHỈ BÁO CÁC ĐƠN ĐẶT TỪ WEBSITE / LANDING PAGE
@@ -264,6 +315,9 @@ export function NewOrderRealtimeNotifier() {
       status: rawOrder.status || "pending",
     }
 
+    // Đánh dấu đã thấy
+    saveSeenId(newOrder.id)
+
     // Phát chuông
     if (triggerSound && soundEnabled) {
       playNotificationChime()
@@ -285,23 +339,28 @@ export function NewOrderRealtimeNotifier() {
       }
     }
 
-    setActiveOrder((currentActive) => {
-      if (!currentActive) {
-        setIsOpen(true)
-        return newOrder
-      } else {
-        if (currentActive.id === newOrder.id) return currentActive
-        setOrderQueue((prevQueue) => {
-          if (prevQueue.some((o) => o.id === newOrder.id)) return prevQueue
-          return [...prevQueue, newOrder]
-        })
-        return currentActive
-      }
-    })
+    markPopupShownToday()
+
+    if (forceOpenModal) {
+      setActiveOrder((currentActive) => {
+        if (!currentActive) {
+          setIsOpen(true)
+          return newOrder
+        } else {
+          if (currentActive.id === newOrder.id) return currentActive
+          setOrderQueue((prevQueue) => {
+            if (prevQueue.some((o) => o.id === newOrder.id)) return prevQueue
+            return [...prevQueue, newOrder]
+          })
+          setIsOpen(true)
+          return currentActive
+        }
+      })
+    }
   }, [soundEnabled])
 
   // Polling đồng bộ định kỳ các đơn pending TỪ WEB
-  const syncPendingWebOrders = useCallback(async (isInitial = false) => {
+  const syncPendingWebOrders = useCallback(async (isManualOpen = false) => {
     try {
       const { data: pendingRentals, error } = await supabase
         .from("rentals")
@@ -325,8 +384,28 @@ export function NewOrderRealtimeNotifier() {
 
       setPendingWebCount(unhandledOrders.length)
 
-      for (let i = 0; i < unhandledOrders.length; i++) {
-        await processIncomingWebOrder(unhandledOrders[i], isInitial ? i === 0 : true)
+      if (unhandledOrders.length === 0) return
+
+      const seenIds = getSeenIds()
+      const brandNewOrders = unhandledOrders.filter((r) => !seenIds.has(r.id))
+      const shownToday = hasShownPopupToday()
+
+      // Quyết định có hiển thị popup hay không:
+      // 1. Khi người dùng tự bấm vào nút chuông (isManualOpen)
+      // 2. Khi có đơn MỚI TINH phát sinh vừa được đặt từ web (brandNewOrders.length > 0)
+      // 3. Khi đây là lần ĐẦU TIÊN trong ngày mở dashboard và có đơn web chờ xử lý (!shownToday)
+      const shouldOpenModal = isManualOpen || brandNewOrders.length > 0 || !shownToday
+
+      if (shouldOpenModal) {
+        const ordersToProcess = brandNewOrders.length > 0 ? brandNewOrders : unhandledOrders
+        for (let i = 0; i < ordersToProcess.length; i++) {
+          await processIncomingWebOrder(ordersToProcess[i], i === 0, true)
+        }
+      } else {
+        // Nếu đã hiển thị trong ngày rồi và không có đơn mới, chỉ lưu ID vào seenIds mà không bật popup làm phiền
+        for (const r of unhandledOrders) {
+          saveSeenId(r.id)
+        }
       }
     } catch (err) {
       console.warn("Polling web orders error:", err)
@@ -335,21 +414,22 @@ export function NewOrderRealtimeNotifier() {
 
   // Hook lắng nghe Realtime Broadcast & Postgres Changes & Polling
   useEffect(() => {
-    // 1. Initial sync
-    syncPendingWebOrders(true)
+    // 1. Khởi động: Kiểm tra lần đầu trong ngày
+    syncPendingWebOrders(false)
 
-    // 2. Kênh Realtime Broadcast từ Landing Page
+    // 2. Kênh Realtime Broadcast từ Landing Page khi khách bấm đặt xe
     const broadcastChannel = supabase
       .channel("realtime-order-notifications")
       .on("broadcast", { event: "new_order" }, (payload) => {
-        if (payload?.payload) {
-          processIncomingWebOrder(payload.payload, true)
+        if (payload?.payload && isWebBookingOrder(payload.payload.notes)) {
+          // Bắt buộc bật popup ngay khi có khách đặt mới
+          processIncomingWebOrder(payload.payload, true, true)
           syncPendingWebOrders(false)
         }
       })
       .subscribe()
 
-    // 3. Kênh Postgres Changes (khi table rentals có INSERT)
+    // 3. Kênh Postgres Changes (khi table rentals có INSERT đơn mới)
     const postgresChannel = supabase
       .channel("realtime-new-rentals-notifier")
       .on(
@@ -357,19 +437,20 @@ export function NewOrderRealtimeNotifier() {
         { event: "INSERT", schema: "public", table: "rentals" },
         (payload) => {
           if (payload.new && isWebBookingOrder(payload.new.notes)) {
-            processIncomingWebOrder(payload.new, true)
+            // Bắt buộc bật popup ngay khi có bản ghi đơn web mới
+            processIncomingWebOrder(payload.new, true, true)
             syncPendingWebOrders(false)
           }
         }
       )
       .subscribe()
 
-    // 4. Polling mỗi 8 giây
+    // 4. Polling chạy nền mỗi 10 giây (chỉ kiểm tra đơn mới hoặc cập nhật số đếm)
     const interval = setInterval(() => {
       syncPendingWebOrders(false)
-    }, 8000)
+    }, 10000)
 
-    // 5. Khi người dùng focus tab
+    // 5. Khi người dùng focus lại tab
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         syncPendingWebOrders(false)
@@ -405,26 +486,26 @@ export function NewOrderRealtimeNotifier() {
   }
 
   const handleSnoozeCurrent = () => {
+    markPopupShownToday()
     if (activeOrder) {
-      snoozeMapRef.current.set(activeOrder.id, Date.now() + 5 * 60 * 1000)
+      saveSeenId(activeOrder.id)
     }
-
-    if (orderQueue.length > 0) {
-      const next = orderQueue[0]
-      setOrderQueue((q) => q.slice(1))
-      setActiveOrder(next)
-      setIsOpen(true)
-    } else {
-      setActiveOrder(null)
-      setIsOpen(false)
-    }
+    orderQueue.forEach((o) => saveSeenId(o.id))
+    setActiveOrder(null)
+    setOrderQueue([])
+    setIsOpen(false)
   }
 
   const handleViewOrders = () => {
+    markPopupShownToday()
     if (activeOrder) {
       saveAcknowledgedId(activeOrder.id)
+      saveSeenId(activeOrder.id)
     }
-    orderQueue.forEach((o) => saveAcknowledgedId(o.id))
+    orderQueue.forEach((o) => {
+      saveAcknowledgedId(o.id)
+      saveSeenId(o.id)
+    })
     setActiveOrder(null)
     setOrderQueue([])
     setIsOpen(false)
