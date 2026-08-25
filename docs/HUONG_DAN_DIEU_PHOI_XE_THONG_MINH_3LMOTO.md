@@ -56,6 +56,13 @@ Khi nhân viên chọn ngày nhận và ngày trả, danh sách xe sẽ tự đ�
     * 🔴 **Bảo trì**: Số xe tạm dừng hoạt động do sửa chữa.
   * Bấm vào bất kỳ thẻ KPI nào để lọc danh sách xe tương ứng của ngày đó.
 
+### F. Giao nhận xe gối đầu trong ngày theo giờ (Same-day Turnaround & Handover Time Engine)
+* **Xử lý bài toán gối đầu cùng ngày:** Khi khách A thuê `25/08 ➔ 27/08 (Trả lúc 13:00)` và khách B đặt xe `27/08 ➔ 28/08 (Nhận lúc 15:00)`:
+  * Hệ thống **không còn chặn xe** như cách so sánh ngày thô trước đây.
+  * Thuật toán tự động kết hợp `Ngày + Giờ (DateTime)` để phát hiện xe đủ điều kiện chuyển giao (có khoảng đệm 1-2 tiếng để kiểm tra xe, rửa xe).
+  * **Tự động gắn huy hiệu:** 🟡 `Gối đầu (Sau 13:00)` và gợi ý: *"Khách trước [DucNhat] trả xe lúc 13:00 ngày 27/08. Đủ thời gian giao tiếp lúc 15:00!"*.
+* **Tích hợp chọn giờ linh hoạt:** Form Tạo / Sửa đơn thuê đã bổ sung ô nhập **Giờ nhận xe** (Mặc định `13:00`) và **Giờ trả xe** (Mặc định `12:00`), tự động lưu trữ và hiển thị trực quan trên sơ đồ Timeline.
+
 ---
 
 ## 📖 3. HƯỚNG DẪN SỬ DỤNG DÀNH CHO NHÂN VIÊN VẬN HÀNH

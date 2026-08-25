@@ -69,6 +69,9 @@ import {
   classifyVehiclesForTimeline,
   checkVehicleTimelineAvailability,
   VehicleTimelineStatus,
+  extractRentalTimes,
+  embedRentalTimes,
+  TIME_TAG_RE,
 } from "@/lib/vehicle-timeline"
 
 const WEB_BOOKING_NOTE_RE = /đặt trực tuyến từ website|\[source:web\]/i
@@ -384,6 +387,8 @@ export default function OrdersPage() {
     vehicleIds: [] as string[],
     startDate: "",
     endDate: "",
+    pickupTime: "13:00",
+    returnTime: "12:00",
     deposit: "0",
     notes: "",
     commissionHome: "",
@@ -395,6 +400,8 @@ export default function OrdersPage() {
     vehicleId: "",
     startDate: "",
     endDate: "",
+    pickupTime: "13:00",
+    returnTime: "12:00",
     deposit: "",
     extraFees: "",
     notes: "",
@@ -446,15 +453,18 @@ export default function OrdersPage() {
     c.id.toLowerCase().includes(customerSearch.toLowerCase())
   )
 
-  // Đánh giá trạng thái khả dụng của xe theo timeline cho khoảng ngày đang chọn
+  // Đánh giá trạng thái khả dụng của xe theo timeline cho khoảng ngày & giờ đang chọn
   const evaluatedVehiclesForForm = useMemo(() => {
     return classifyVehiclesForTimeline(
       vehicles,
       formData.startDate,
       formData.endDate,
-      orders
+      orders,
+      undefined,
+      formData.pickupTime,
+      formData.returnTime
     )
-  }, [vehicles, formData.startDate, formData.endDate, orders])
+  }, [vehicles, formData.startDate, formData.endDate, formData.pickupTime, formData.returnTime, orders])
 
   const filteredVehiclesForSelect = useMemo(() => {
     const q = vehicleSearch.toLowerCase().trim()
@@ -481,9 +491,11 @@ export default function OrdersPage() {
       editFormData.startDate,
       editFormData.endDate,
       orders,
-      editingOrder.id
+      editingOrder.id,
+      editFormData.pickupTime,
+      editFormData.returnTime
     )
-  }, [vehicles, editFormData.startDate, editFormData.endDate, orders, editingOrder])
+  }, [vehicles, editFormData.startDate, editFormData.endDate, editFormData.pickupTime, editFormData.returnTime, orders, editingOrder])
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -784,7 +796,12 @@ export default function OrdersPage() {
       const dividedCommission = Math.round(totalCommission / targetVehicles.length)
 
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
-      const termPayload = buildRentalTermPayload(formData.rentalTerm, formData.notes ? formData.notes.trim() : "")
+      const notesWithTimes = embedRentalTimes(
+        formData.notes ? formData.notes.trim() : "",
+        formData.pickupTime,
+        formData.returnTime
+      )
+      const termPayload = buildRentalTermPayload(formData.rentalTerm, notesWithTimes)
 
       const insertPayloads = targetVehicles.map((vehicle) => {
         const totalPrice = totalDays * vehicle.pricePerDay
@@ -849,7 +866,19 @@ export default function OrdersPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", notes: "", commissionHome: "", homeName: "", rentalTerm: "short" })
+    setFormData({
+      customerId: "",
+      vehicleIds: [],
+      startDate: "",
+      endDate: "",
+      pickupTime: "13:00",
+      returnTime: "12:00",
+      deposit: "0",
+      notes: "",
+      commissionHome: "",
+      homeName: "",
+      rentalTerm: "short",
+    })
     setIsNewCustomer(true)
     setNewCustomerName("")
     setNewCustomerPhone("")
@@ -878,12 +907,15 @@ export default function OrdersPage() {
   const availableVehiclesForAssign = useMemo(() => {
     if (!assigningOrder) return []
     const q = assignVehicleSearch.toLowerCase().trim()
+    const times = extractRentalTimes(assigningOrder.notes)
     const evaluated = classifyVehiclesForTimeline(
       vehicles,
       assigningOrder.startDate,
       assigningOrder.endDate,
       orders,
-      assigningOrder.id
+      assigningOrder.id,
+      times.pickupTime,
+      times.returnTime
     )
 
     return evaluated.allEvaluated
@@ -908,6 +940,8 @@ export default function OrdersPage() {
       vehicleIds: [vehicle.id],
       startDate: dStr,
       endDate: dStr,
+      pickupTime: "13:00",
+      returnTime: "12:00",
       deposit: "0",
       notes: "",
       commissionHome: "",
@@ -999,14 +1033,17 @@ export default function OrdersPage() {
 
   const openEditDialog = (order: RentalOrder) => {
     setEditingOrder(order)
+    const times = extractRentalTimes(order.notes)
     setEditFormData({
       customerId: order.customerId,
       vehicleId: order.vehicleId,
       startDate: parseVNToISODate(order.startDate),
       endDate: parseVNToISODate(order.endDate),
+      pickupTime: times.pickupTime,
+      returnTime: times.returnTime,
       deposit: formatMoneyInput(order.deposit.toString()),
       extraFees: formatMoneyInput(order.extraFees.toString()),
-      notes: stripRentalTermFromNotes(order.notes),
+      notes: stripRentalTermFromNotes(order.notes).replace(TIME_TAG_RE, "").trim(),
       status: order.status,
       commissionHome: formatMoneyInput((order.commissionHome || 0).toString()),
       homeName: order.homeName || "",
@@ -1100,7 +1137,12 @@ export default function OrdersPage() {
         newRevenue = newDeposit + newExtraFees
       }
       
-      const termPayload = buildRentalTermPayload(editFormData.rentalTerm, editFormData.notes.trim())
+      const notesWithTimes = embedRentalTimes(
+        editFormData.notes.trim(),
+        editFormData.pickupTime,
+        editFormData.returnTime
+      )
+      const termPayload = buildRentalTermPayload(editFormData.rentalTerm, notesWithTimes)
       const nextStatus: RentalOrder["status"] =
         isUnassigning && editFormData.status === "active" ? "pending" : editFormData.status
       const updatePayload: Record<string, unknown> = {
@@ -1814,25 +1856,45 @@ export default function OrdersPage() {
                     />
                   </EntityFormField>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <EntityFormField label="Ngày bắt đầu" required>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={formData.startDate}
-                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        className={entityFormInputClass}
-                        required
-                      />
+                    <EntityFormField label="Ngày & Giờ nhận xe" required>
+                      <div className="grid grid-cols-5 gap-2">
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-3")}
+                          required
+                        />
+                        <Input
+                          id="pickupTime"
+                          type="time"
+                          value={formData.pickupTime}
+                          onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                          title="Giờ nhận xe"
+                        />
+                      </div>
                     </EntityFormField>
-                    <EntityFormField label="Ngày kết thúc" required>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={formData.endDate}
-                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        className={entityFormInputClass}
-                        required
-                      />
+                    <EntityFormField label="Ngày & Giờ trả xe" required>
+                      <div className="grid grid-cols-5 gap-2">
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={formData.endDate}
+                          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-3")}
+                          required
+                        />
+                        <Input
+                          id="returnTime"
+                          type="time"
+                          value={formData.returnTime}
+                          onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                          title="Giờ trả xe"
+                        />
+                      </div>
                     </EntityFormField>
                   </div>
 
@@ -2584,26 +2646,46 @@ export default function OrdersPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <EntityFormField label="Ngày bắt đầu">
-              <Input
-                  id="edit-startDate"
-                  type="date"
-                  value={editFormData.startDate}
-                  onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
-                  className={entityFormInputClass}
-                  required
-                />
-            </EntityFormField>
-              <EntityFormField label="Ngày kết thúc">
-              <Input
-                  id="edit-endDate"
-                  type="date"
-                  value={editFormData.endDate}
-                  onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
-                  className={entityFormInputClass}
-                  required
-                />
-            </EntityFormField>
+              <EntityFormField label="Ngày & Giờ nhận xe" required>
+                <div className="grid grid-cols-5 gap-2">
+                  <Input
+                    id="edit-startDate"
+                    type="date"
+                    value={editFormData.startDate}
+                    onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
+                    className={cn(entityFormInputClass, "col-span-3")}
+                    required
+                  />
+                  <Input
+                    id="edit-pickupTime"
+                    type="time"
+                    value={editFormData.pickupTime}
+                    onChange={(e) => setEditFormData({ ...editFormData, pickupTime: e.target.value })}
+                    className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                    title="Giờ nhận xe"
+                  />
+                </div>
+              </EntityFormField>
+              <EntityFormField label="Ngày & Giờ trả xe" required>
+                <div className="grid grid-cols-5 gap-2">
+                  <Input
+                    id="edit-endDate"
+                    type="date"
+                    value={editFormData.endDate}
+                    onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
+                    className={cn(entityFormInputClass, "col-span-3")}
+                    required
+                  />
+                  <Input
+                    id="edit-returnTime"
+                    type="time"
+                    value={editFormData.returnTime}
+                    onChange={(e) => setEditFormData({ ...editFormData, returnTime: e.target.value })}
+                    className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                    title="Giờ trả xe"
+                  />
+                </div>
+              </EntityFormField>
             </div>
             </EntityFormSection>
 

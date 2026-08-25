@@ -7,6 +7,7 @@ import {
   TimelineDay,
   VehicleTimelineRow,
   normalizeDate,
+  extractRentalTimes,
 } from "@/lib/vehicle-timeline"
 import {
   Calendar as CalendarIcon,
@@ -478,6 +479,18 @@ export function FleetTimelineView({
                     {selectedRental.startDate} ➔ {selectedRental.endDate} ({selectedRental.totalDays} ngày)
                   </span>
                 </div>
+
+                {(() => {
+                  const times = extractRentalTimes(selectedRental.notes)
+                  return (
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Giờ nhận ➔ Giờ trả:</span>
+                      <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                        {times.pickupTime} ➔ {times.returnTime}
+                      </span>
+                    </div>
+                  )
+                })()}
 
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500">Tổng tiền:</span>

@@ -76,15 +76,67 @@ export function isRangeOverlapping(
   return !(endA < startB || startA > endB)
 }
 
+export const TIME_TAG_RE = /\[time:([0-2]?\d:[0-5]\d)\s*->\s*([0-2]?\d:[0-5]\d)\]/i
+
 /**
- * Phân tích chi tiết tính khả dụng của 1 chiếc xe cho khoảng thời gian [startDateStr -> endDateStr]
+ * Trích xuất giờ nhận xe và giờ trả xe từ chuỗi ghi chú (hoặc trả về giờ chuẩn mặc định)
+ */
+export function extractRentalTimes(notes?: string | null): { pickupTime: string; returnTime: string; hasExplicitTime: boolean } {
+  if (!notes) return { pickupTime: "08:00", returnTime: "12:00", hasExplicitTime: false }
+  const match = notes.match(TIME_TAG_RE)
+  if (match) {
+    return {
+      pickupTime: match[1],
+      returnTime: match[2],
+      hasExplicitTime: true,
+    }
+  }
+  return { pickupTime: "08:00", returnTime: "12:00", hasExplicitTime: false }
+}
+
+/**
+ * Nhúng giờ nhận xe và giờ trả xe vào ghi chú đơn thuê
+ */
+export function embedRentalTimes(notes: string | null | undefined, pickupTime: string, returnTime: string): string {
+  const clean = (notes || "").replace(TIME_TAG_RE, "").trim()
+  const pTime = pickupTime?.trim() || "08:00"
+  const rTime = returnTime?.trim() || "12:00"
+  const tag = `[time:${pTime}->${rTime}]`
+  return clean ? `${tag}\n${clean}` : tag
+}
+
+/**
+ * Kết hợp Date và chuỗi giờ "HH:mm" thành một đối tượng Date chính xác
+ */
+export function combineDateAndTime(dateInput?: Date | string | null, timeStr?: string, defaultHour = 8, defaultMinute = 0): Date | null {
+  const d = normalizeDate(dateInput)
+  if (!d) return null
+
+  if (timeStr && timeStr.includes(":")) {
+    const [hStr, mStr] = timeStr.split(":")
+    const h = parseInt(hStr, 10)
+    const m = parseInt(mStr, 10)
+    if (!isNaN(h) && !isNaN(m)) {
+      d.setHours(h, m, 0, 0)
+      return d
+    }
+  }
+
+  d.setHours(defaultHour, defaultMinute, 0, 0)
+  return d
+}
+
+/**
+ * Phân tích chi tiết tính khả dụng của 1 chiếc xe cho khoảng thời gian và giờ [startDateStr, pickupTime -> endDateStr, returnTime]
  */
 export function checkVehicleTimelineAvailability(
   vehicle: Vehicle,
   startDateStr: string,
   endDateStr: string,
   allRentals: Rental[],
-  excludeRentalId?: string
+  excludeRentalId?: string,
+  pickupTimeStr = "13:00",
+  returnTimeStr = "12:00"
 ): VehicleTimelineStatus {
   const reqStart = normalizeDate(startDateStr)
   const reqEnd = normalizeDate(endDateStr)
@@ -114,7 +166,10 @@ export function checkVehicleTimelineAvailability(
     }
   }
 
-  if (reqStart > reqEnd) {
+  const reqStartDT = combineDateAndTime(reqStart, pickupTimeStr, 13, 0)!
+  const reqEndDT = combineDateAndTime(reqEnd, returnTimeStr, 12, 0)!
+
+  if (reqStartDT > reqEndDT && reqStart.getTime() > reqEnd.getTime()) {
     return {
       vehicleId: vehicle.id,
       isAvailable: false,
@@ -133,8 +188,10 @@ export function checkVehicleTimelineAvailability(
     return r.vehicleId === vehicle.id
   })
 
-  // Tìm các đơn bị trùng lặp thời gian
+  // Phân loại các trường hợp giao thoa
   const conflictingRentals: Rental[] = []
+  let sameDayTurnaroundPrev: { rental: Rental; returnTime: string } | null = null
+  let sameDayTurnaroundNext: { rental: Rental; pickupTime: string } | null = null
   let nextUpcomingRental: Rental | null = null
   let minDaysUntilNext = Infinity
   let currentActiveRental: Rental | null = null
@@ -145,47 +202,105 @@ export function checkVehicleTimelineAvailability(
   for (const rental of vehicleRentals) {
     const rStart = normalizeDate(rental.startDate)
     const rEnd = normalizeDate(rental.endDate)
-
     if (!rStart || !rEnd) continue
 
-    // Kiểm tra trùng lặp
-    if (isRangeOverlapping(reqStart, reqEnd, rStart, rEnd)) {
+    const rTimes = extractRentalTimes(rental.notes)
+    const rStartDT = combineDateAndTime(rStart, rTimes.pickupTime, 8, 0)!
+    const rEndDT = combineDateAndTime(rEnd, rTimes.returnTime, 12, 0)!
+
+    // 1. Kiểm tra overlap chính xác theo Date-Time
+    const isOverlapping = !(reqEndDT <= rStartDT || reqStartDT >= rEndDT)
+
+    if (isOverlapping) {
       conflictingRentals.push(rental)
+    } else {
+      // 2. Gối đầu trong ngày ở mốc bắt đầu (Khách trước trả xe cùng ngày khách này nhận)
+      if (rEnd.getTime() === reqStart.getTime() && reqStartDT >= rEndDT) {
+        sameDayTurnaroundPrev = {
+          rental,
+          returnTime: rTimes.returnTime,
+        }
+      }
+
+      // 3. Gối đầu trong ngày ở mốc kết thúc (Khách sau nhận xe cùng ngày khách này trả)
+      if (rStart.getTime() === reqEnd.getTime() && reqEndDT <= rStartDT) {
+        sameDayTurnaroundNext = {
+          rental,
+          pickupTime: rTimes.pickupTime,
+        }
+      }
     }
 
     // Kiểm tra đơn đặt trong tương lai sau ngày trả dự kiến
-    if (rStart > reqEnd) {
-      const diffDays = Math.round((rStart.getTime() - reqEnd.getTime()) / (1000 * 60 * 60 * 24))
+    if (rStartDT >= reqEndDT) {
+      const diffDays = Math.max(0, Math.round((rStart.getTime() - reqEnd.getTime()) / (1000 * 60 * 60 * 24)))
       if (diffDays < minDaysUntilNext) {
         minDaysUntilNext = diffDays
         nextUpcomingRental = rental
       }
     }
 
-    // Kiểm tra đơn đang thuê hiện tại (nếu có)
+    // Kiểm tra đơn đang thuê hiện tại
     if (rental.status === "active" && isRangeOverlapping(today, today, rStart, rEnd)) {
       currentActiveRental = rental
     }
   }
 
-  // 1. Trường hợp: Bị trùng lịch
+  // TRƯỜNG HỢP 1: BỊ TRÙNG LỊCH (Trùng cả ngày hoặc trùng giờ trên cùng ngày)
   if (conflictingRentals.length > 0) {
     const conflict = conflictingRentals[0]
     const conflictCustomer = conflict.customerName || "Khách khác"
+    const cTimes = extractRentalTimes(conflict.notes)
+    const timeDetail = cTimes.hasExplicitTime ? ` (${cTimes.pickupTime} - ${cTimes.returnTime})` : ""
     return {
       vehicleId: vehicle.id,
       isAvailable: false,
       statusCategory: "unavailable",
       badgeLabel: "Trùng lịch thuê",
       badgeTone: "rose",
-      reason: `Đã có đơn [${conflictCustomer}] từ ${conflict.startDate} đến ${conflict.endDate}`,
+      reason: `Đã có đơn [${conflictCustomer}] từ ${conflict.startDate} đến ${conflict.endDate}${timeDetail}`,
       conflictingRentals,
       nextUpcomingRental,
       currentActiveRental,
     }
   }
 
-  // 2. Trường hợp: Rảnh trong khoảng này, nhưng CÓ ĐƠN ĐẶT TRƯỚC ngay sau đó (Rảnh có điều kiện)
+  // TRƯỜNG HỢP 2: GỐI ĐẦU TRONG NGÀY (Same-day Turnaround thành công)
+  if (sameDayTurnaroundPrev) {
+    const prevCust = sameDayTurnaroundPrev.rental.customerName || "Khách trước"
+    const retTime = sameDayTurnaroundPrev.returnTime
+    return {
+      vehicleId: vehicle.id,
+      isAvailable: true,
+      statusCategory: "conditional",
+      badgeLabel: `Gối đầu (Sau ${retTime})`,
+      badgeTone: "amber",
+      reason: `Khách [${prevCust}] trả xe lúc ${retTime} ngày ${startDateStr}. Đủ thời gian giao tiếp lúc ${pickupTimeStr}!`,
+      conflictingRentals: [],
+      nextUpcomingRental,
+      daysUntilNextRental: minDaysUntilNext,
+      currentActiveRental,
+    }
+  }
+
+  if (sameDayTurnaroundNext) {
+    const nextCust = sameDayTurnaroundNext.rental.customerName || "Khách sau"
+    const picTime = sameDayTurnaroundNext.pickupTime
+    return {
+      vehicleId: vehicle.id,
+      isAvailable: true,
+      statusCategory: "conditional",
+      badgeLabel: `Gối đầu (Trước ${picTime})`,
+      badgeTone: "amber",
+      reason: `Khách sau [${nextCust}] nhận xe lúc ${picTime} ngày ${endDateStr}. Cần hoàn tất trả trước ${returnTimeStr}!`,
+      conflictingRentals: [],
+      nextUpcomingRental,
+      daysUntilNextRental: minDaysUntilNext,
+      currentActiveRental,
+    }
+  }
+
+  // TRƯỜNG HỢP 3: Rảnh trong khoảng này, nhưng CÓ ĐƠN ĐẶT TRƯỚC ngay sau đó (Rảnh có điều kiện)
   if (nextUpcomingRental && minDaysUntilNext <= 3) {
     const nextStartStr = nextUpcomingRental.startDate
     return {
@@ -202,7 +317,7 @@ export function checkVehicleTimelineAvailability(
     }
   }
 
-  // 3. Trường hợp: Rảnh hoàn toàn (Tối ưu nhất)
+  // TRƯỜNG HỢP 4: Rảnh hoàn toàn (Tối ưu nhất)
   return {
     vehicleId: vehicle.id,
     isAvailable: true,
@@ -231,7 +346,9 @@ export function classifyVehiclesForTimeline(
   startDateStr: string,
   endDateStr: string,
   allRentals: Rental[],
-  excludeRentalId?: string
+  excludeRentalId?: string,
+  pickupTimeStr?: string,
+  returnTimeStr?: string
 ): ClassifiedVehiclesResult {
   const optimal: Array<{ vehicle: Vehicle; status: VehicleTimelineStatus }> = []
   const conditional: Array<{ vehicle: Vehicle; status: VehicleTimelineStatus }> = []
@@ -244,7 +361,9 @@ export function classifyVehiclesForTimeline(
       startDateStr,
       endDateStr,
       allRentals,
-      excludeRentalId
+      excludeRentalId,
+      pickupTimeStr,
+      returnTimeStr
     )
 
     const item = { vehicle, status }
