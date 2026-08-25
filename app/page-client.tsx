@@ -196,7 +196,7 @@ export default function LandingPage() {
       )
 
       const available = vehicles.filter((vehicle: any) => {
-        return vehicle.status === "available" && !conflictingVehicleIds.has(vehicle.id)
+        return vehicle.status !== "maintenance" && !conflictingVehicleIds.has(vehicle.id)
       })
 
       setAvailableVehicles(available)

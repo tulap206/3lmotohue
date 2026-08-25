@@ -54,7 +54,7 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload, ClipboardList } from "lucide-react"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { QUY79_BUSINESS, getVietQrImageUrl, STATIC_PAYMENT_QR_SRC } from "@/lib/business-info"
 import {
@@ -64,6 +64,12 @@ import {
   stripRentalTermFromNotes,
   buildRentalTermPayload,
 } from "@/lib/rental-term"
+import { FleetTimelineView } from "@/components/dashboard/fleet-timeline-view"
+import {
+  classifyVehiclesForTimeline,
+  checkVehicleTimelineAvailability,
+  VehicleTimelineStatus,
+} from "@/lib/vehicle-timeline"
 
 const WEB_BOOKING_NOTE_RE = /đặt trực tuyến từ website|\[source:web\]/i
 const UNASSIGNED_VEHICLE_ID = "00000000-0000-0000-0000-000000000000"
@@ -432,18 +438,52 @@ export default function OrdersPage() {
   const [selectedVehiclesForAssignList, setSelectedVehiclesForAssignList] = useState<Vehicle[]>([])
   const [assigningSubmitting, setAssigningSubmitting] = useState(false)
 
+  const [viewMode, setViewMode] = useState<"table" | "timeline">("table")
+
   const filteredCustomersForSelect = customers.filter(c => 
     c.name.toLowerCase().includes(customerSearch.toLowerCase()) || 
     (c.phone && c.phone.toLowerCase().includes(customerSearch.toLowerCase())) || 
     c.id.toLowerCase().includes(customerSearch.toLowerCase())
   )
 
-  const filteredVehiclesForSelect = vehicles.filter(v => 
-    (v.name.toLowerCase().includes(vehicleSearch.toLowerCase()) || 
-    (v.licensePlate && v.licensePlate.toLowerCase().includes(vehicleSearch.toLowerCase()))) &&
-    !formData.vehicleIds.includes(v.id) &&
-    v.status !== "rented"
-  )
+  // Đánh giá trạng thái khả dụng của xe theo timeline cho khoảng ngày đang chọn
+  const evaluatedVehiclesForForm = useMemo(() => {
+    return classifyVehiclesForTimeline(
+      vehicles,
+      formData.startDate,
+      formData.endDate,
+      orders
+    )
+  }, [vehicles, formData.startDate, formData.endDate, orders])
+
+  const filteredVehiclesForSelect = useMemo(() => {
+    const q = vehicleSearch.toLowerCase().trim()
+    const list = evaluatedVehiclesForForm.allEvaluated.filter(({ vehicle }) => {
+      if (formData.vehicleIds.includes(vehicle.id)) return false
+      if (!q) return true
+      return (
+        vehicle.name.toLowerCase().includes(q) ||
+        (vehicle.licensePlate && vehicle.licensePlate.toLowerCase().includes(q)) ||
+        (vehicle.color && vehicle.color.toLowerCase().includes(q))
+      )
+    })
+
+    return list.sort((a, b) => {
+      const order = { optimal: 1, conditional: 2, unavailable: 3 }
+      return order[a.status.statusCategory] - order[b.status.statusCategory]
+    })
+  }, [evaluatedVehiclesForForm, vehicleSearch, formData.vehicleIds])
+
+  const evaluatedVehiclesForEdit = useMemo(() => {
+    if (!editingOrder) return null
+    return classifyVehiclesForTimeline(
+      vehicles,
+      editFormData.startDate,
+      editFormData.endDate,
+      orders,
+      editingOrder.id
+    )
+  }, [vehicles, editFormData.startDate, editFormData.endDate, orders, editingOrder])
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -835,11 +875,48 @@ export default function OrdersPage() {
     }
   }
 
-  const availableVehiclesForAssign = vehicles.filter((v) => 
-    (v.status === "available" || selectedVehiclesForAssignList.some(item => item.id === v.id)) &&
-    (v.name.toLowerCase().includes(assignVehicleSearch.toLowerCase()) || 
-     v.licensePlate.toLowerCase().includes(assignVehicleSearch.toLowerCase()))
-  )
+  const availableVehiclesForAssign = useMemo(() => {
+    if (!assigningOrder) return []
+    const q = assignVehicleSearch.toLowerCase().trim()
+    const evaluated = classifyVehiclesForTimeline(
+      vehicles,
+      assigningOrder.startDate,
+      assigningOrder.endDate,
+      orders,
+      assigningOrder.id
+    )
+
+    return evaluated.allEvaluated
+      .filter(({ vehicle }) => {
+        if (selectedVehiclesForAssignList.some((item) => item.id === vehicle.id)) return true
+        if (!q) return true
+        return (
+          vehicle.name.toLowerCase().includes(q) ||
+          (vehicle.licensePlate && vehicle.licensePlate.toLowerCase().includes(q))
+        )
+      })
+      .sort((a, b) => {
+        const order = { optimal: 1, conditional: 2, unavailable: 3 }
+        return order[a.status.statusCategory] - order[b.status.statusCategory]
+      })
+  }, [vehicles, assigningOrder, orders, assignVehicleSearch, selectedVehiclesForAssignList])
+
+  const handleQuickBookFromTimeline = (vehicle: Vehicle, date: Date) => {
+    const dStr = toDateInputValue(date)
+    setFormData({
+      customerId: "",
+      vehicleIds: [vehicle.id],
+      startDate: dStr,
+      endDate: dStr,
+      deposit: "0",
+      notes: "",
+      commissionHome: "",
+      homeName: "",
+      rentalTerm: "short",
+    })
+    setIsNewCustomer(false)
+    setIsDialogOpen(true)
+  }
 
   const handleConfirmAssignVehicle = async () => {
     if (!assigningOrder || selectedVehiclesForAssignList.length === 0) return
@@ -1309,6 +1386,40 @@ export default function OrdersPage() {
         ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            {/* View Mode Toggle */}
+            <div
+              role="group"
+              aria-label="Chế độ xem"
+              className="inline-flex items-center p-1 rounded-[var(--radius-control)] bg-slate-100 border border-slate-200"
+            >
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={cn(
+                  "relative h-10 px-3 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition flex items-center gap-1.5",
+                  viewMode === "table"
+                    ? "bg-white text-blue-700 shadow-sm font-bold"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
+                )}
+              >
+                <ClipboardList className="w-4 h-4" />
+                <span>Danh sách</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("timeline")}
+                className={cn(
+                  "relative h-10 px-3 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition flex items-center gap-1.5",
+                  viewMode === "timeline"
+                    ? "bg-white text-blue-700 shadow-sm font-bold"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
+                )}
+              >
+                <Calendar className="w-4 h-4 text-blue-600" />
+                <span>Sơ đồ Timeline</span>
+              </button>
+            </div>
+
             <div
               role="group"
               aria-label="Lọc loại thuê"
@@ -1627,30 +1738,63 @@ export default function OrdersPage() {
                     {showVehicleDropdown && !deferVehicleAssign && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setShowVehicleDropdown(false)} />
-                        <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
+                        <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-xl max-h-72 overflow-y-auto mt-1 divide-y divide-slate-100">
                           {filteredVehiclesForSelect.length === 0 ? (
                             <div className="p-3 text-sm text-slate-500 text-center">Không có xe khả dụng</div>
                           ) : (
-                            filteredVehiclesForSelect.map((vehicle) => (
-                              <div
-                                key={vehicle.id}
-                                onClick={() => {
-                                  setDeferVehicleAssign(false)
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    vehicleIds: [...prev.vehicleIds, vehicle.id]
-                                  }))
-                                  setVehicleSearch("")
-                                  setShowVehicleDropdown(false)
-                                }}
-                                className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer ui-transition border-b border-slate-50 last:border-0"
-                              >
-                                <span className="font-semibold">{vehicle.name}</span>
-                                {" · "}
-                                <span className="font-mono">{vehicle.licensePlate}</span>
-                                <span className="text-slate-500"> · {vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày</span>
-                              </div>
-                            ))
+                            filteredVehiclesForSelect.map(({ vehicle, status }) => {
+                              const isBlocked = !status.isAvailable
+                              return (
+                                <div
+                                  key={vehicle.id}
+                                  onClick={() => {
+                                    if (isBlocked) return
+                                    setDeferVehicleAssign(false)
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      vehicleIds: [...prev.vehicleIds, vehicle.id],
+                                    }))
+                                    setVehicleSearch("")
+                                    setShowVehicleDropdown(false)
+                                  }}
+                                  className={cn(
+                                    "p-3 text-xs flex items-center justify-between gap-2 ui-transition",
+                                    isBlocked
+                                      ? "bg-slate-50/90 text-slate-400 cursor-not-allowed opacity-75"
+                                      : "hover:bg-blue-50/50 cursor-pointer text-slate-800"
+                                  )}
+                                >
+                                  <div className="space-y-0.5 min-w-0 pr-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-bold text-slate-900">{vehicle.name}</span>
+                                      <span className="font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 text-[11px]">
+                                        {vehicle.licensePlate}
+                                      </span>
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                                      <span>{vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày</span>
+                                      {status.reason && (
+                                        <span className="truncate max-w-[200px] text-slate-400">· {status.reason}</span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="shrink-0">
+                                    <span
+                                      className={cn(
+                                        "text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1",
+                                        status.badgeTone === "emerald" && "bg-emerald-100 text-emerald-800",
+                                        status.badgeTone === "amber" && "bg-amber-100 text-amber-900 border border-amber-300",
+                                        status.badgeTone === "rose" && "bg-rose-100 text-rose-800",
+                                        status.badgeTone === "slate" && "bg-slate-100 text-slate-600"
+                                      )}
+                                    >
+                                      {status.badgeLabel}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            })
                           )}
                         </div>
                       </>
@@ -1769,8 +1913,19 @@ export default function OrdersPage() {
           </EntityFormDialogContent>
         </Dialog>
 
-      <div className="space-y-4">
-        <ModuleKpiGrid columns={5}>
+        {viewMode === "timeline" ? (
+          <FleetTimelineView
+            vehicles={vehicles}
+            rentals={orders}
+            onSelectOrder={(rental) => {
+              const fullOrder = orders.find((o) => o.id === rental.id) || (rental as RentalOrder)
+              openEditDialog(fullOrder)
+            }}
+            onQuickBookVehicle={handleQuickBookFromTimeline}
+          />
+        ) : (
+          <div className="space-y-4">
+            <ModuleKpiGrid columns={5}>
           <RentalKpiCard
             variant="hero"
             label="Tổng đơn thuê"
@@ -2085,6 +2240,7 @@ export default function OrdersPage() {
         </CardContent>
       </ModuleSectionCard>
       </div>
+      )}
 
       <Dialog open={!!viewingOrder} onOpenChange={(open) => !open && setViewingOrder(null)}>
         <EntityFormDialogContent accent="blue" maxWidth="lg">
@@ -2388,11 +2544,14 @@ export default function OrdersPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 rounded-[var(--radius-control)]">
                   <SelectItem value={UNASSIGNED_VEHICLE_ID}>Chưa gán xe</SelectItem>
-                  {vehicles
-                    .filter((vehicle) => vehicle.status !== "rented" || vehicle.id === editFormData.vehicleId)
-                    .map((vehicle) => (
-                      <SelectItem key={vehicle.id} value={vehicle.id}>
-                        {vehicle.name} – {vehicle.licensePlate}
+                  {(evaluatedVehiclesForEdit?.allEvaluated || vehicles.map(v => ({ vehicle: v, status: { isAvailable: true, badgeLabel: "", badgeTone: "slate" as const } })))
+                    .map(({ vehicle, status }) => (
+                      <SelectItem
+                        key={vehicle.id}
+                        value={vehicle.id}
+                        disabled={!status.isAvailable && vehicle.id !== editFormData.vehicleId}
+                      >
+                        {vehicle.name} – {vehicle.licensePlate} {status.badgeLabel ? `(${status.badgeLabel})` : ""}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -2959,32 +3118,51 @@ export default function OrdersPage() {
             <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white">
               {availableVehiclesForAssign.length === 0 ? (
                 <div className="p-4 text-center text-slate-500 text-xs">
-                  Không tìm thấy xe nào đang rảnh phù hợp
+                  Không tìm thấy xe nào khả dụng trong khoảng thời gian này
                 </div>
               ) : (
-                availableVehiclesForAssign.map((v) => {
+                availableVehiclesForAssign.map(({ vehicle: v, status }) => {
                   const isSelected = selectedVehiclesForAssignList.some(item => item.id === v.id)
+                  const isBlocked = !status.isAvailable
                   return (
                     <div
                       key={v.id}
                       onClick={() => {
+                        if (isBlocked) return
                         setSelectedVehiclesForAssignList(prev => {
                           const exists = prev.some(item => item.id === v.id)
                           if (exists) return prev.filter(item => item.id !== v.id)
                           return [...prev, v]
                         })
                       }}
-                      className={`p-3 text-sm flex items-center justify-between cursor-pointer ui-transition ${
-                        isSelected ? "bg-emerald-50/80 border-l-4 border-l-emerald-600" : "hover:bg-slate-50"
-                      }`}
+                      className={cn(
+                        "p-3 text-sm flex items-center justify-between cursor-pointer ui-transition",
+                        isSelected && "bg-emerald-50/80 border-l-4 border-l-emerald-600",
+                        !isSelected && !isBlocked && "hover:bg-slate-50",
+                        isBlocked && "bg-slate-50/80 text-slate-400 cursor-not-allowed opacity-75"
+                      )}
                     >
-                      <div className="min-w-0 pr-2">
-                        <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">{v.name}</p>
+                      <div className="min-w-0 pr-2 space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">{v.name}</p>
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full inline-flex items-center gap-1",
+                              status.badgeTone === "emerald" && "bg-emerald-100 text-emerald-800",
+                              status.badgeTone === "amber" && "bg-amber-100 text-amber-900 border border-amber-300",
+                              status.badgeTone === "rose" && "bg-rose-100 text-rose-800",
+                              status.badgeTone === "slate" && "bg-slate-100 text-slate-600"
+                            )}
+                          >
+                            {status.badgeLabel}
+                          </span>
+                        </div>
                         <p className="text-[11px] font-mono text-slate-500 flex items-center gap-1.5 mt-0.5">
                           <span className="bg-slate-100 text-slate-700 font-bold px-1.5 py-0.2 rounded border border-slate-200">
                             {v.licensePlate}
                           </span>
                           <span>· {v.pricePerDay.toLocaleString("vi-VN")}đ/ngày</span>
+                          {status.reason && <span className="text-slate-400 truncate max-w-[160px]">· {status.reason}</span>}
                         </p>
                       </div>
                       {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
