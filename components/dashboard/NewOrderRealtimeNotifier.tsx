@@ -19,11 +19,8 @@ import {
   VolumeX,
   CheckCircle2,
   DollarSign,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
+  Globe,
   Sparkles,
-  AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -44,8 +41,22 @@ export interface IncomingOrder {
   status?: string
 }
 
-const STORAGE_ACK_KEY = "3lmoto_acknowledged_order_ids_v1"
+const STORAGE_ACK_KEY = "3lmoto_acknowledged_web_order_ids_v2"
 const STORAGE_SOUND_KEY = "3lmoto_order_notification_sound_enabled"
+const WEB_BOOKING_NOTE_RE = /đặt trực tuyến từ website|\[source:web\]/i
+
+export function isWebBookingOrder(notes?: string | null): boolean {
+  return WEB_BOOKING_NOTE_RE.test(notes || "")
+}
+
+export function cleanNotesForDisplay(notes?: string | null): string {
+  if (!notes) return ""
+  return notes
+    .replace(/^\[rentalTerm:(short|long)\]\s*/gi, "")
+    .replace(/\[source:web\]\s*/gi, "")
+    .replace(/\[location:(.*?)\]\s*/gi, "")
+    .trim()
+}
 
 let sharedAudioCtx: AudioContext | null = null
 
@@ -72,7 +83,7 @@ function playNotificationChime() {
       ctx.resume().catch(() => {})
     }
 
-    // Âm thanh chuông 4 âm hài hòa (C5 -> E5 -> G5 -> C6)
+    // Âm thanh chuông 4 âm êm ái (C5 -> E5 -> G5 -> C6)
     const notes = [
       { freq: 523.25, time: 0.00, dur: 0.25 },
       { freq: 659.25, time: 0.10, dur: 0.25 },
@@ -87,7 +98,7 @@ function playNotificationChime() {
       osc.frequency.setValueAtTime(freq, ctx.currentTime + time)
 
       gain.gain.setValueAtTime(0.001, ctx.currentTime + time)
-      gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + time + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + time + 0.02)
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + time + dur)
 
       osc.connect(gain)
@@ -118,7 +129,7 @@ function saveAcknowledgedId(id: string) {
   try {
     const current = getAcknowledgedIds()
     current.add(id)
-    const arr = Array.from(current).slice(-200) // Keep last 200 IDs
+    const arr = Array.from(current).slice(-200)
     localStorage.setItem(STORAGE_ACK_KEY, JSON.stringify(arr))
   } catch (e) {
     console.warn("Error saving acknowledged order:", e)
@@ -138,11 +149,10 @@ export function NewOrderRealtimeNotifier() {
   const titleIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isAudioUnlockedRef = useRef(false)
 
-  // Khởi tạo & unlock audio context khi người dùng tương tác lần đầu
+  // Khởi tạo và unlock audio khi người dùng tương tác lần đầu
   useEffect(() => {
     if (typeof window === "undefined") return
 
-    // Load sound preference
     const soundPref = localStorage.getItem(STORAGE_SOUND_KEY)
     if (soundPref !== null) {
       setSoundEnabled(soundPref !== "false")
@@ -152,7 +162,6 @@ export function NewOrderRealtimeNotifier() {
       if (isAudioUnlockedRef.current) return
       isAudioUnlockedRef.current = true
       getAudioContext()
-      // Yêu cầu quyền Notification nếu chưa hỏi
       if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
         Notification.requestPermission().catch(() => {})
       }
@@ -167,7 +176,7 @@ export function NewOrderRealtimeNotifier() {
     }
   }, [])
 
-  // Title flashing alert khi có đơn mới
+  // Title flashing alert khi có đơn mới từ web
   useEffect(() => {
     if (typeof document === "undefined") return
 
@@ -182,8 +191,8 @@ export function NewOrderRealtimeNotifier() {
       titleIntervalRef.current = setInterval(() => {
         toggle = !toggle
         document.title = toggle
-          ? `🔔 (1 ĐƠN MỚI) ${activeOrder.customerName || "Khách đặt xe"}!`
-          : `🚨 KHÁCH ĐẶT TỪ WEB - 3L MOTO`
+          ? `🔔 (ĐƠN WEB MỚI) ${activeOrder.customerName || "Khách đặt xe"}!`
+          : `⚡ 3L MOTO - CÓ KHÁCH ĐẶT TRỰC TUYẾN`
       }, 1000)
     } else {
       if (titleIntervalRef.current) {
@@ -203,9 +212,15 @@ export function NewOrderRealtimeNotifier() {
     }
   }, [isOpen, activeOrder])
 
-  // Hàm xử lý đơn mới đến (từ Realtime broadcast, Postgres changes, hoặc Polling)
-  const processIncomingOrder = useCallback(async (rawOrder: any, triggerSound = true) => {
+  // Hàm xử lý đơn mới đến (CHỈ CHẤP NHẬN ĐƠN ĐẶT TỪ WEB)
+  const processIncomingWebOrder = useCallback(async (rawOrder: any, triggerSound = true) => {
     if (!rawOrder || !rawOrder.id) return
+
+    // CHỈ BÁO CÁC ĐƠN ĐẶT TỪ WEBSITE / LANDING PAGE
+    if (!isWebBookingOrder(rawOrder.notes)) return
+
+    // Nếu đơn không còn ở trạng thái pending
+    if (rawOrder.status && rawOrder.status !== "pending") return
 
     const ackIds = getAcknowledgedIds()
     if (ackIds.has(rawOrder.id)) return
@@ -214,7 +229,7 @@ export function NewOrderRealtimeNotifier() {
     const snoozedUntil = snoozeMapRef.current.get(rawOrder.id)
     if (snoozedUntil && Date.now() < snoozedUntil) return
 
-    // Lấy số điện thoại khách hàng nếu chưa có
+    // Lấy số điện thoại khách hàng nếu chưa có trong record
     let customerPhone = rawOrder.phone || ""
     if (!customerPhone && (rawOrder.customerId || rawOrder.customer_id)) {
       try {
@@ -249,7 +264,7 @@ export function NewOrderRealtimeNotifier() {
       status: rawOrder.status || "pending",
     }
 
-    // Phát âm thanh
+    // Phát chuông
     if (triggerSound && soundEnabled) {
       playNotificationChime()
     }
@@ -258,7 +273,7 @@ export function NewOrderRealtimeNotifier() {
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
       if (document.hidden) {
         try {
-          const notif = new Notification("🏍️ ĐƠN ĐẶT XE MỚI TỪ WEB!", {
+          const notif = new Notification("🏍️ ĐƠN ĐẶT XE MỚI TỪ WEBSITE!", {
             body: `Khách: ${newOrder.customerName} - SĐT: ${newOrder.phone || "Chưa có"} - Xe: ${newOrder.vehicleName}`,
             icon: "/apple-icon.png",
           })
@@ -285,7 +300,7 @@ export function NewOrderRealtimeNotifier() {
     })
   }, [soundEnabled])
 
-  // Polling đồng bộ định kỳ các đơn pending từ database (Tránh bỏ lỡ đơn do đứt mạng/realtime chưa active)
+  // Polling đồng bộ định kỳ các đơn pending TỪ WEB
   const syncPendingWebOrders = useCallback(async (isInitial = false) => {
     try {
       const { data: pendingRentals, error } = await supabase
@@ -293,12 +308,15 @@ export function NewOrderRealtimeNotifier() {
         .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: false })
-        .limit(20)
+        .limit(30)
 
       if (error || !pendingRentals) return
 
+      // CHỈ LẤY ĐƠN ĐẶT TỪ WEB
+      const webRentals = pendingRentals.filter((r) => isWebBookingOrder(r.notes))
+
       const ackIds = getAcknowledgedIds()
-      const unhandledOrders = pendingRentals.filter((r) => {
+      const unhandledOrders = webRentals.filter((r) => {
         if (ackIds.has(r.id)) return false
         const snoozedUntil = snoozeMapRef.current.get(r.id)
         if (snoozedUntil && Date.now() < snoozedUntil) return false
@@ -307,26 +325,25 @@ export function NewOrderRealtimeNotifier() {
 
       setPendingWebCount(unhandledOrders.length)
 
-      // Xử lý từng đơn chưa xác nhận
       for (let i = 0; i < unhandledOrders.length; i++) {
-        await processIncomingOrder(unhandledOrders[i], isInitial ? i === 0 : true)
+        await processIncomingWebOrder(unhandledOrders[i], isInitial ? i === 0 : true)
       }
     } catch (err) {
-      console.warn("Polling pending orders error:", err)
+      console.warn("Polling web orders error:", err)
     }
-  }, [processIncomingOrder])
+  }, [processIncomingWebOrder])
 
-  // Hook khởi chạy Realtime & Polling
+  // Hook lắng nghe Realtime Broadcast & Postgres Changes & Polling
   useEffect(() => {
-    // 1. Initial sync khi mount
+    // 1. Initial sync
     syncPendingWebOrders(true)
 
-    // 2. Kênh Realtime Broadcast trực tiếp (siêu nhanh, không phụ thuộc Postgres replica)
+    // 2. Kênh Realtime Broadcast từ Landing Page
     const broadcastChannel = supabase
       .channel("realtime-order-notifications")
       .on("broadcast", { event: "new_order" }, (payload) => {
         if (payload?.payload) {
-          processIncomingOrder(payload.payload, true)
+          processIncomingWebOrder(payload.payload, true)
           syncPendingWebOrders(false)
         }
       })
@@ -339,20 +356,20 @@ export function NewOrderRealtimeNotifier() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "rentals" },
         (payload) => {
-          if (payload.new) {
-            processIncomingOrder(payload.new, true)
+          if (payload.new && isWebBookingOrder(payload.new.notes)) {
+            processIncomingWebOrder(payload.new, true)
             syncPendingWebOrders(false)
           }
         }
       )
       .subscribe()
 
-    // 4. Smart Polling mỗi 8 giây để đảm bảo 100% không bao giờ trễ/mất đơn
+    // 4. Polling mỗi 8 giây
     const interval = setInterval(() => {
       syncPendingWebOrders(false)
     }, 8000)
 
-    // 5. Khi người dùng focus quay lại tab, kiểm tra ngay lập tức
+    // 5. Khi người dùng focus tab
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         syncPendingWebOrders(false)
@@ -368,9 +385,8 @@ export function NewOrderRealtimeNotifier() {
       window.removeEventListener("visibilitychange", handleVisibilityChange)
       window.removeEventListener("focus", handleVisibilityChange)
     }
-  }, [processIncomingOrder, syncPendingWebOrders])
+  }, [processIncomingWebOrder, syncPendingWebOrders])
 
-  // Xử lý đóng modal hoặc chuyển sang đơn kế tiếp
   const handleAcknowledgeCurrent = () => {
     if (activeOrder) {
       saveAcknowledgedId(activeOrder.id)
@@ -390,7 +406,6 @@ export function NewOrderRealtimeNotifier() {
 
   const handleSnoozeCurrent = () => {
     if (activeOrder) {
-      // Tạm hoãn nhắc lại trong 5 phút
       snoozeMapRef.current.set(activeOrder.id, Date.now() + 5 * 60 * 1000)
     }
 
@@ -433,61 +448,60 @@ export function NewOrderRealtimeNotifier() {
   const cleanPhone = activeOrder?.phone ? activeOrder.phone.replace(/\D/g, "") : ""
   const zaloUrl = cleanPhone ? `https://zalo.me/${cleanPhone}` : ""
   const callUrl = cleanPhone ? `tel:${cleanPhone}` : ""
+  const cleanNotes = cleanNotesForDisplay(activeOrder?.notes)
 
   const totalInQueue = (activeOrder ? 1 : 0) + orderQueue.length
 
   return (
     <>
-      {/* 1. Modal Popup Thông Báo Nổi Bật */}
+      {/* 1. Modal Popup Thông Báo Thiết Kế Đồng Bộ Chuẩn 3L Moto */}
       {activeOrder && (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleSnoozeCurrent()}>
-          <DialogContent className="w-[95vw] sm:max-w-lg p-0 overflow-hidden rounded-2xl bg-white shadow-2xl border-2 border-amber-400 animate-in fade-in zoom-in-95 duration-200 z-[9999]">
-            {/* Header Alert Gradient */}
-            <div className="bg-gradient-to-r from-red-600 via-amber-600 to-orange-600 text-white p-5 relative overflow-hidden">
-              <div className="absolute -right-6 -bottom-6 opacity-15 pointer-events-none">
-                <Bell className="w-36 h-36 animate-pulse" />
-              </div>
+          <DialogContent className="w-[95vw] sm:max-w-lg p-0 overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200 z-[9999]">
+            {/* Header: Signature Dark Slate / Indigo Gradient */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 sm:p-6 relative overflow-hidden">
+              <div className="absolute -right-8 -top-8 w-36 h-36 bg-blue-500/15 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="flex items-start justify-between relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-inner animate-bounce shrink-0">
-                    <Bell className="w-7 h-7 text-yellow-300 fill-yellow-300" />
+              <div className="flex items-start justify-between relative z-10 gap-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="size-11 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/15 shadow-sm shrink-0">
+                    <Bell className="w-5 h-5 text-amber-400 animate-bounce" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white text-red-700 text-[11px] font-black tracking-wide uppercase shadow-sm">
-                        <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" />
-                        Đơn Mới Từ Website
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/25 text-[11px] font-semibold tracking-wide">
+                        <Globe className="w-3 h-3 text-blue-300" />
+                        Đơn mới từ Website
                       </span>
                       {totalInQueue > 1 && (
-                        <span className="px-2 py-0.5 rounded-full bg-black/30 text-white text-[11px] font-bold">
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-slate-300 text-[11px] font-medium">
                           Đơn 1 / {totalInQueue}
                         </span>
                       )}
                     </div>
-                    <DialogTitle className="text-xl font-black text-white leading-tight">
-                      Có Khách Hàng Đặt Xe Mới!
+                    <DialogTitle className="text-lg sm:text-xl font-bold text-white tracking-tight leading-tight">
+                      Khách hàng vừa đặt xe!
                     </DialogTitle>
-                    <DialogDescription className="text-xs text-amber-100 font-medium mt-0.5">
-                      Vui lòng liên hệ xác nhận sớm để không bỏ lỡ khách
+                    <DialogDescription className="text-xs text-slate-300 mt-0.5">
+                      Vui lòng liên hệ xác nhận sớm để chốt xe cho khách
                     </DialogDescription>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={toggleSound}
-                    title={soundEnabled ? "Tắt âm thông báo" : "Bật âm thông báo"}
-                    className="size-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition"
+                    title={soundEnabled ? "Tắt chuông" : "Bật chuông"}
+                    className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white flex items-center justify-center transition"
                   >
-                    {soundEnabled ? <Volume2 className="w-4 h-4 text-yellow-300" /> : <VolumeX className="w-4 h-4 text-white/70" />}
+                    {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-300" /> : <VolumeX className="w-4 h-4 text-white/60" />}
                   </button>
                   <button
                     type="button"
                     onClick={handleSnoozeCurrent}
                     title="Đóng / Nhắc lại sau"
-                    className="size-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition"
+                    className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white flex items-center justify-center transition"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -496,57 +510,57 @@ export function NewOrderRealtimeNotifier() {
             </div>
 
             {/* Body Content */}
-            <div className="p-5 space-y-4">
-              {/* Customer & Vehicle Card */}
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/90 space-y-3.5 shadow-inner">
-                {/* Customer Info */}
-                <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-200">
+            <div className="p-5 sm:p-6 space-y-4">
+              {/* Customer & Vehicle Info Box */}
+              <div className="bg-slate-50/90 rounded-2xl p-4 sm:p-4.5 border border-slate-200/80 space-y-3.5 shadow-xs">
+                {/* Customer Row */}
+                <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-200/70">
                   <div className="space-y-0.5">
-                    <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">Khách hàng đặt xe</p>
-                    <p className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
+                    <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Khách hàng</p>
+                    <p className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-1.5">
                       <User className="w-4 h-4 text-blue-600 shrink-0" />
                       {activeOrder.customerName}
                     </p>
                   </div>
                   {activeOrder.phone ? (
                     <div className="text-right space-y-0.5">
-                      <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">Số điện thoại</p>
-                      <p className="text-lg font-black text-blue-700 font-mono tracking-tight">
+                      <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Số điện thoại</p>
+                      <p className="text-base sm:text-lg font-bold text-blue-700 font-mono tracking-tight">
                         {activeOrder.phone}
                       </p>
                     </div>
                   ) : (
                     <div className="text-right">
-                      <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">
+                      <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">
                         Chưa có SĐT
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Vehicle & Pricing Info */}
+                {/* Vehicle & Price Row */}
                 <div className="grid grid-cols-2 gap-3 pt-0.5">
                   <div className="space-y-0.5">
-                    <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 flex items-center gap-1">
+                    <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 flex items-center gap-1">
                       <Bike className="w-3.5 h-3.5 text-slate-400" />
                       Xe yêu cầu
                     </p>
-                    <p className="text-base font-bold text-slate-900 truncate">
+                    <p className="text-sm sm:text-base font-bold text-slate-800 truncate">
                       {activeOrder.vehicleName}
                     </p>
                     {activeOrder.licensePlate && (
-                      <span className="inline-block text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">
+                      <span className="inline-block text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700">
                         {activeOrder.licensePlate}
                       </span>
                     )}
                   </div>
 
                   <div className="space-y-0.5 text-right">
-                    <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 flex items-center justify-end gap-1">
+                    <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 flex items-center justify-end gap-1">
                       <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                      Tổng tiền dự kiến
+                      Tổng tiền tạm tính
                     </p>
-                    <p className="text-lg font-black text-emerald-600 font-mono">
+                    <p className="text-base sm:text-lg font-bold text-emerald-600 font-mono">
                       {formatMoney(activeOrder.totalPrice)}
                     </p>
                     <p className="text-xs text-slate-500 font-medium">
@@ -555,40 +569,40 @@ export function NewOrderRealtimeNotifier() {
                   </div>
                 </div>
 
-                {/* Rental Duration */}
-                <div className="bg-white rounded-xl p-3 border border-slate-200 flex items-center justify-between text-xs text-slate-700 font-medium">
+                {/* Rental Duration Bar */}
+                <div className="bg-white rounded-xl p-3 border border-slate-200/80 flex items-center justify-between text-xs text-slate-700 font-medium shadow-xs">
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-blue-600" />
-                    <span>Nhận: <strong className="text-slate-950 font-bold">{activeOrder.startDate}</strong></span>
+                    <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>Nhận: <strong className="text-slate-900 font-bold">{activeOrder.startDate}</strong></span>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-amber-600" />
-                    <span>Trả: <strong className="text-slate-950 font-bold">{activeOrder.endDate}</strong></span>
+                    <Calendar className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>Trả: <strong className="text-slate-900 font-bold">{activeOrder.endDate}</strong></span>
                   </div>
                 </div>
 
-                {/* Notes if any */}
-                {activeOrder.notes && (
-                  <div className="text-xs bg-amber-50/80 rounded-lg p-2.5 border border-amber-200/60 text-amber-900">
-                    <span className="font-bold">Ghi chú:</span> {activeOrder.notes}
+                {/* Clean Notes if any */}
+                {cleanNotes && (
+                  <div className="text-xs bg-blue-50/60 rounded-xl p-2.5 border border-blue-100 text-slate-700">
+                    <span className="font-semibold text-slate-900">Ghi chú:</span> {cleanNotes}
                   </div>
                 )}
               </div>
 
-              {/* Quick Action Buttons */}
+              {/* Action Buttons */}
               <div className="space-y-2.5 pt-1">
                 <div className="grid grid-cols-2 gap-2.5">
                   {callUrl ? (
                     <a
                       href={callUrl}
-                      className="flex items-center justify-center gap-2 h-12 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-xs transition active:scale-[0.98]"
                     >
-                      <Phone className="w-4 h-4 animate-bounce" />
+                      <Phone className="w-4 h-4" />
                       Gọi khách ngay
                     </a>
                   ) : (
-                    <Button disabled className="h-12 rounded-xl">
+                    <Button disabled className="h-11 rounded-xl">
                       <Phone className="w-4 h-4 mr-2" />
                       Chưa có SĐT
                     </Button>
@@ -599,13 +613,13 @@ export function NewOrderRealtimeNotifier() {
                       href={zaloUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 h-12 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md transition active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-xs transition active:scale-[0.98]"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Nhắn Zalo
                     </a>
                   ) : (
-                    <Button disabled className="h-12 rounded-xl">
+                    <Button disabled className="h-11 rounded-xl">
                       <MessageCircle className="w-4 h-4 mr-2" />
                       Nhắn Zalo
                     </Button>
@@ -616,7 +630,7 @@ export function NewOrderRealtimeNotifier() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 rounded-xl border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 transition"
+                    className="h-11 rounded-xl border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition"
                     onClick={handleAcknowledgeCurrent}
                   >
                     <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-600" />
@@ -625,11 +639,11 @@ export function NewOrderRealtimeNotifier() {
 
                   <Button
                     type="button"
-                    className="h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition shadow-sm"
+                    className="h-11 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition shadow-xs"
                     onClick={handleViewOrders}
                   >
                     Xem đơn & Chốt xe
-                    <ArrowRight className="w-4 h-4 ml-1.5" />
+                    <ArrowRight className="w-4 h-4 ml-1.5 text-slate-400" />
                   </Button>
                 </div>
               </div>
@@ -638,24 +652,22 @@ export function NewOrderRealtimeNotifier() {
         </Dialog>
       )}
 
-      {/* 2. Floating Persistent Indicator (Hiển thị góc dưới nếu có đơn chưa xử lý mà modal đang đóng) */}
+      {/* 2. Floating Persistent Indicator (Hiển thị góc dưới nếu có đơn web chưa chốt mà modal đang đóng) */}
       {!isOpen && pendingWebCount > 0 && (
         <div className="fixed bottom-6 right-6 z-50 animate-bounce">
           <button
             type="button"
             onClick={() => syncPendingWebOrders(true)}
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold shadow-2xl hover:scale-105 transition-all border-2 border-white"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-900/95 hover:bg-slate-900 text-white font-semibold text-xs shadow-xl border border-slate-700 backdrop-blur-md transition-all hover:scale-105"
           >
             <div className="relative">
-              <Bell className="w-5 h-5 animate-pulse" />
-              <span className="absolute -top-1.5 -right-1.5 size-4 bg-yellow-300 text-slate-950 text-[10px] font-black rounded-full flex items-center justify-center">
-                {pendingWebCount}
-              </span>
+              <Bell className="w-4 h-4 text-amber-400" />
+              <span className="absolute -top-1 -right-1 size-2 bg-rose-500 rounded-full animate-ping" />
             </div>
-            <span className="text-sm">
-              Có {pendingWebCount} đơn web chờ chốt!
+            <span>
+              Có <strong className="text-amber-300 font-bold">{pendingWebCount}</strong> đơn web chờ chốt!
             </span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
           </button>
         </div>
       )}
