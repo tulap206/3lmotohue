@@ -62,17 +62,16 @@ export const EntityFormDialogContent = React.forwardRef<
       ref={ref}
       {...props}
       className={cn(
-        "flex flex-col overflow-hidden border-slate-200 rounded-[var(--radius-container)] bg-white p-0 gap-0",
+        "flex flex-col border-slate-200 rounded-[var(--radius-container)] bg-white p-0 gap-0",
         "max-h-[min(92dvh,calc(100dvh-0.75rem))] sm:max-h-[min(90dvh,calc(100dvh-1.25rem))]",
+        "overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]",
         maxW,
         className
       )}
     >
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <div className={cn("absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r", accentMap[accent].stripe)} />
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] p-4 pt-6 sm:p-6 sm:pt-7">
-          {children}
-        </div>
+      <div className={cn("sticky top-0 inset-x-0 z-30 h-1 shrink-0 bg-gradient-to-r", accentMap[accent].stripe)} />
+      <div className="p-4 pt-5 sm:p-6 sm:pt-6">
+        {children}
       </div>
     </DialogContent>
   )
