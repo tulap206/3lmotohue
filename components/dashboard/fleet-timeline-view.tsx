@@ -249,23 +249,23 @@ export function FleetTimelineView({
             {/* Header: Dates */}
             <thead className="sticky top-0 z-30 bg-slate-900 text-white shadow-md">
               <tr>
-                <th className="sticky left-0 z-40 bg-slate-900 px-4 py-3 text-left font-bold border-r border-slate-800 min-w-[200px] max-w-[220px]">
-                  <div className="flex items-center gap-2">
-                    <Bike className="w-4 h-4 text-blue-400" />
-                    <span>Đội Xe ({filteredVehicles.length})</span>
+                <th className="sticky left-0 z-40 bg-slate-900 px-2.5 sm:px-4 py-2.5 sm:py-3 text-left font-bold border-r border-slate-800 min-w-[140px] max-w-[160px] sm:min-w-[200px] sm:max-w-[220px]">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Bike className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 shrink-0" />
+                    <span className="truncate">Đội Xe ({filteredVehicles.length})</span>
                   </div>
                 </th>
                 {days.map((day, idx) => (
                   <th
                     key={idx}
                     className={cn(
-                      "px-2 py-2 text-center border-r border-slate-800 font-medium min-w-[50px] max-w-[65px] transition-colors",
+                      "px-1.5 sm:px-2 py-1.5 sm:py-2 text-center border-r border-slate-800 font-medium min-w-[44px] max-w-[55px] sm:min-w-[50px] sm:max-w-[65px] transition-colors",
                       day.isToday && "bg-blue-600 text-white font-bold ring-2 ring-blue-400 z-10",
                       day.isWeekend && !day.isToday && "bg-slate-800/80 text-amber-300"
                     )}
                   >
-                    <div className="text-[10px] uppercase font-bold opacity-80">{day.dayOfWeek}</div>
-                    <div className="text-xs font-mono font-black mt-0.5">{day.dateStr}</div>
+                    <div className="text-[9px] sm:text-[10px] uppercase font-bold opacity-80">{day.dayOfWeek}</div>
+                    <div className="text-[11px] sm:text-xs font-mono font-black mt-0.5">{day.dateStr}</div>
                   </th>
                 ))}
               </tr>
@@ -283,7 +283,7 @@ export function FleetTimelineView({
                 rows.map(({ vehicle, slots }) => (
                   <tr key={vehicle.id} className="hover:bg-slate-50/70 transition-colors group">
                     {/* Sticky Vehicle Info */}
-                    <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50 px-3.5 py-2.5 border-r border-slate-200 shadow-sm min-w-[200px] max-w-[220px]">
+                    <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50 px-2.5 sm:px-3.5 py-2 sm:py-2.5 border-r border-slate-200 shadow-sm min-w-[140px] max-w-[160px] sm:min-w-[200px] sm:max-w-[220px]">
                       <div className="space-y-0.5 truncate">
                         <div className="flex items-center justify-between gap-1">
                           <span className="font-bold text-slate-900 truncate">{vehicle.name}</span>

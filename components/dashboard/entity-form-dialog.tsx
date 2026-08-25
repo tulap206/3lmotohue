@@ -62,15 +62,15 @@ export const EntityFormDialogContent = React.forwardRef<
       ref={ref}
       {...props}
       className={cn(
-        "flex flex-col border-slate-200 rounded-[var(--radius-container)] bg-white p-0 gap-0",
-        "max-h-[min(92dvh,calc(100dvh-0.75rem))] sm:max-h-[min(90dvh,calc(100dvh-1.25rem))]",
+        "w-[calc(100vw-1rem)] sm:w-full flex flex-col border-slate-200 rounded-[var(--radius-container)] bg-white p-0 gap-0",
+        "max-h-[min(94dvh,calc(100dvh-0.75rem))] sm:max-h-[min(90dvh,calc(100dvh-1.25rem))]",
         "overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]",
         maxW,
         className
       )}
     >
       <div className={cn("sticky top-0 inset-x-0 z-30 h-1 shrink-0 bg-gradient-to-r", accentMap[accent].stripe)} />
-      <div className="p-4 pt-5 sm:p-6 sm:pt-6">
+      <div className="p-3.5 pt-4 sm:p-6 sm:pt-6">
         {children}
       </div>
     </DialogContent>
@@ -86,7 +86,7 @@ export function EntityFormHeader({
   description: string
 }) {
   return (
-    <DialogHeader className="mb-4 sm:mb-5 text-left">
+    <DialogHeader className="mb-3.5 sm:mb-5 text-left">
       <DialogTitle className="text-title text-pretty pr-8">{title}</DialogTitle>
       <DialogDescription className="text-meta text-pretty">{description}</DialogDescription>
     </DialogHeader>
@@ -94,7 +94,7 @@ export function EntityFormHeader({
 }
 
 export function EntityFormBody({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("space-y-5", className)}>{children}</div>
+  return <div className={cn("space-y-4 sm:space-y-5", className)}>{children}</div>
 }
 
 export function EntityFormSection({
@@ -107,7 +107,7 @@ export function EntityFormSection({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-slate-50/60 p-4 rounded-[var(--radius-container)] border border-slate-100 space-y-4">
+    <div className="bg-slate-50/60 p-3 sm:p-4 rounded-[var(--radius-container)] border border-slate-100 space-y-3 sm:space-y-4">
       <div className="border-b border-slate-100 pb-2">
         <h3 className="text-title">{title}</h3>
         {description && <p className="text-meta mt-0.5">{description}</p>}

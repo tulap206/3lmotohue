@@ -125,12 +125,12 @@ export function TodayHandoverSchedule({
           </div>
 
           {/* Tab Filter buttons */}
-          <div className="flex items-center bg-white/10 p-1 rounded-xl border border-white/15 text-xs font-semibold self-start sm:self-auto">
+          <div className="w-full sm:w-auto grid grid-cols-3 sm:flex items-center bg-white/10 p-1 rounded-xl border border-white/15 text-xs font-semibold">
             <button
               type="button"
               onClick={() => setActiveTab("all")}
               className={cn(
-                "px-3 py-1.5 rounded-lg transition",
+                "px-2.5 sm:px-3 py-1.5 rounded-lg transition text-center",
                 activeTab === "all" ? "bg-white text-slate-900 shadow-xs font-bold" : "text-slate-300 hover:text-white"
               )}
             >
@@ -140,31 +140,31 @@ export function TodayHandoverSchedule({
               type="button"
               onClick={() => setActiveTab("deliveries")}
               className={cn(
-                "px-3 py-1.5 rounded-lg transition flex items-center gap-1.5",
+                "px-2.5 sm:px-3 py-1.5 rounded-lg transition flex items-center justify-center gap-1.5 text-center",
                 activeTab === "deliveries" ? "bg-emerald-500 text-white shadow-xs font-bold" : "text-emerald-300 hover:text-white"
               )}
             >
-              <span className="size-2 rounded-full bg-emerald-400" />
-              Giao xe ({todayDeliveries.length})
+              <span className="size-2 rounded-full bg-emerald-400 shrink-0" />
+              <span className="truncate">Giao ({todayDeliveries.length})</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("returns")}
               className={cn(
-                "px-3 py-1.5 rounded-lg transition flex items-center gap-1.5",
+                "px-2.5 sm:px-3 py-1.5 rounded-lg transition flex items-center justify-center gap-1.5 text-center",
                 activeTab === "returns" ? "bg-amber-500 text-white shadow-xs font-bold" : "text-amber-300 hover:text-white"
               )}
             >
-              <span className="size-2 rounded-full bg-amber-400" />
-              Thu xe ({todayReturns.length})
+              <span className="size-2 rounded-full bg-amber-400 shrink-0" />
+              <span className="truncate">Thu ({todayReturns.length})</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Grid Content */}
-      <div className="p-4 sm:p-5">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="p-3 sm:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           {/* Cột GIAO XE */}
           {(activeTab === "all" || activeTab === "deliveries") && (
             <div className={cn("space-y-3", activeTab === "deliveries" && "lg:col-span-2")}>
@@ -175,7 +175,7 @@ export function TodayHandoverSchedule({
                     Xe Cần Giao Hôm Nay ({todayDeliveries.length})
                   </h4>
                 </div>
-                <span className="text-[11px] text-slate-400">Sắp xếp theo giờ nhận</span>
+                <span className="text-[11px] text-slate-400">Theo giờ nhận</span>
               </div>
 
               {todayDeliveries.length === 0 ? (
@@ -192,44 +192,44 @@ export function TodayHandoverSchedule({
                     return (
                       <div
                         key={order.id}
-                        className="bg-slate-50/80 hover:bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 transition shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="bg-slate-50/80 hover:bg-slate-50 rounded-xl p-3 sm:p-3.5 border border-slate-200/80 transition shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3"
                       >
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-bold text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                            <span className="font-mono font-bold text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1 shrink-0">
                               <Clock className="w-3 h-3" />
                               {pickupTime}
                             </span>
-                            <span className="font-bold text-slate-900 text-sm flex items-center gap-1">
+                            <span className="font-bold text-slate-900 text-sm flex items-center gap-1 truncate">
                               <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                              {order.customerName}
+                              <span className="truncate">{order.customerName}</span>
                             </span>
                             {phone && (
-                              <span className="font-mono text-xs text-slate-600 font-semibold">
+                              <span className="font-mono text-xs text-slate-600 font-semibold truncate">
                                 · {phone}
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2 text-xs text-slate-600">
-                            <div className="flex items-center gap-1">
-                              <Bike className="w-3.5 h-3.5 text-slate-400" />
-                              <span className="font-medium text-slate-800">{order.vehicleName}</span>
+                          <div className="flex items-center gap-2 text-xs text-slate-600 flex-wrap">
+                            <div className="flex items-center gap-1 truncate">
+                              <Bike className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="font-medium text-slate-800 truncate">{order.vehicleName}</span>
                             </div>
                             {order.licensePlate && (
                               <span className={cn(
-                                "font-mono font-bold px-1.5 py-0.2 rounded text-[11px]",
+                                "font-mono font-bold px-1.5 py-0.2 rounded text-[11px] shrink-0",
                                 isUnassigned ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-blue-50 text-blue-700 border border-blue-100"
                               )}>
                                 {order.licensePlate}
                               </span>
                             )}
-                            <span className="text-slate-400">· {order.totalDays} ngày (đến {order.endDate})</span>
+                            <span className="text-slate-400 shrink-0">· {order.totalDays} ngày</span>
                           </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                        <div className="flex items-center gap-1.5 shrink-0 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
                           {cleanPhone && (
                             <>
                               <a
@@ -297,41 +297,41 @@ export function TodayHandoverSchedule({
                     return (
                       <div
                         key={order.id}
-                        className="bg-slate-50/80 hover:bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 transition shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="bg-slate-50/80 hover:bg-slate-50 rounded-xl p-3 sm:p-3.5 border border-slate-200/80 transition shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3"
                       >
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-bold text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1">
+                            <span className="font-mono font-bold text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1 shrink-0">
                               <Clock className="w-3 h-3" />
                               {returnTime}
                             </span>
-                            <span className="font-bold text-slate-900 text-sm flex items-center gap-1">
+                            <span className="font-bold text-slate-900 text-sm flex items-center gap-1 truncate">
                               <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                              {order.customerName}
+                              <span className="truncate">{order.customerName}</span>
                             </span>
                             {phone && (
-                              <span className="font-mono text-xs text-slate-600 font-semibold">
+                              <span className="font-mono text-xs text-slate-600 font-semibold truncate">
                                 · {phone}
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2 text-xs text-slate-600">
-                            <div className="flex items-center gap-1">
-                              <Bike className="w-3.5 h-3.5 text-slate-400" />
-                              <span className="font-medium text-slate-800">{order.vehicleName}</span>
+                          <div className="flex items-center gap-2 text-xs text-slate-600 flex-wrap">
+                            <div className="flex items-center gap-1 truncate">
+                              <Bike className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="font-medium text-slate-800 truncate">{order.vehicleName}</span>
                             </div>
                             {order.licensePlate && (
-                              <span className="font-mono font-bold px-1.5 py-0.2 rounded text-[11px] bg-blue-50 text-blue-700 border border-blue-100">
+                              <span className="font-mono font-bold px-1.5 py-0.2 rounded text-[11px] bg-blue-50 text-blue-700 border border-blue-100 shrink-0">
                                 {order.licensePlate}
                               </span>
                             )}
-                            <span className="text-slate-400">· Cọc: {order.deposit.toLocaleString("vi-VN")}đ</span>
+                            <span className="text-slate-400 shrink-0">· Cọc: {order.deposit.toLocaleString("vi-VN")}đ</span>
                           </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                        <div className="flex items-center gap-1.5 shrink-0 justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
                           {cleanPhone && (
                             <>
                               <a

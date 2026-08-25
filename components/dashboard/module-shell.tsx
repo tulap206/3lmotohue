@@ -498,7 +498,7 @@ export function ModuleMobileCard({
   className?: string
 }) {
   return (
-    <div className={cn("module-table-row px-4 py-4 space-y-2.5", className)}>{children}</div>
+    <div className={cn("module-table-row px-3.5 sm:px-4 py-3 sm:py-4 space-y-2.5", className)}>{children}</div>
   )
 }
 
@@ -539,11 +539,11 @@ export function ModulePagination({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-t border-slate-100 bg-white",
+        "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 p-3 sm:p-4 border-t border-slate-100 bg-white",
         className
       )}
     >
-      <div className="text-meta font-medium hidden sm:block">
+      <div className="text-meta font-medium text-center sm:text-left">
         Trang <span className="font-semibold text-slate-700 money">{safePage}</span>
         {" / "}
         <span className="font-semibold text-slate-700 money">{totalPages}</span>
@@ -555,18 +555,18 @@ export function ModulePagination({
           </>
         )}
       </div>
-      <div className="flex items-center gap-1.5 ml-auto sm:ml-0 flex-wrap justify-end">
+      <div className="flex items-center gap-1 sm:gap-1.5 justify-center sm:justify-end w-full sm:w-auto">
         <Button
           type="button"
           onClick={() => onPageChange(Math.max(1, safePage - 1))}
           disabled={safePage === 1}
           variant="outline"
           size="sm"
-          className="h-11 min-w-11 text-label border-slate-200 rounded-[var(--radius-control)] px-3 font-semibold hover:bg-slate-50 text-slate-600"
+          className="h-10 min-w-10 sm:h-11 sm:min-w-11 text-label border-slate-200 rounded-[var(--radius-control)] px-2.5 sm:px-3 font-semibold hover:bg-slate-50 text-slate-600"
         >
           Trước
         </Button>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-none">
           {pages.map((p, idx) =>
             p === "ellipsis" ? (
               <span key={`e-${idx}`} className="text-slate-400 text-meta px-1 select-none">
@@ -580,7 +580,7 @@ export function ModulePagination({
                 variant={safePage === p ? "default" : "outline"}
                 size="sm"
                 className={cn(
-                  "h-11 w-11 text-label rounded-[var(--radius-control)] font-semibold ui-transition",
+                  "h-10 w-10 sm:h-11 sm:w-11 text-label rounded-[var(--radius-control)] font-semibold ui-transition shrink-0",
                   safePage === p
                     ? "bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white border-transparent"
                     : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -597,7 +597,7 @@ export function ModulePagination({
           disabled={safePage === totalPages}
           variant="outline"
           size="sm"
-          className="h-11 min-w-11 text-label border-slate-200 rounded-[var(--radius-control)] px-3 font-semibold hover:bg-slate-50 text-slate-600"
+          className="h-10 min-w-10 sm:h-11 sm:min-w-11 text-label border-slate-200 rounded-[var(--radius-control)] px-2.5 sm:px-3 font-semibold hover:bg-slate-50 text-slate-600"
         >
           Tiếp
         </Button>

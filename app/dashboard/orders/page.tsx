@@ -1856,15 +1856,15 @@ export default function OrdersPage() {
                       ]}
                     />
                   </EntityFormField>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <EntityFormField label="Ngày & Giờ nhận xe" required>
-                      <div className="grid grid-cols-5 gap-2">
+                      <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
                         <Input
                           id="startDate"
                           type="date"
                           value={formData.startDate}
                           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                          className={cn(entityFormInputClass, "col-span-3")}
+                          className={cn(entityFormInputClass, "col-span-7 text-xs sm:text-sm px-2 sm:px-3")}
                           required
                         />
                         <Input
@@ -1872,19 +1872,19 @@ export default function OrdersPage() {
                           type="time"
                           value={formData.pickupTime}
                           onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
-                          className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                          className={cn(entityFormInputClass, "col-span-5 font-mono text-xs text-center px-1")}
                           title="Giờ nhận xe"
                         />
                       </div>
                     </EntityFormField>
                     <EntityFormField label="Ngày & Giờ trả xe" required>
-                      <div className="grid grid-cols-5 gap-2">
+                      <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
                         <Input
                           id="endDate"
                           type="date"
                           value={formData.endDate}
                           onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                          className={cn(entityFormInputClass, "col-span-3")}
+                          className={cn(entityFormInputClass, "col-span-7 text-xs sm:text-sm px-2 sm:px-3")}
                           required
                         />
                         <Input
@@ -1892,7 +1892,7 @@ export default function OrdersPage() {
                           type="time"
                           value={formData.returnTime}
                           onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
-                          className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                          className={cn(entityFormInputClass, "col-span-5 font-mono text-xs text-center px-1")}
                           title="Giờ trả xe"
                         />
                       </div>
@@ -2659,15 +2659,15 @@ export default function OrdersPage() {
             </EntityFormField>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <EntityFormField label="Ngày & Giờ nhận xe" required>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
                   <Input
                     id="edit-startDate"
                     type="date"
                     value={editFormData.startDate}
                     onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
-                    className={cn(entityFormInputClass, "col-span-3")}
+                    className={cn(entityFormInputClass, "col-span-7 text-xs sm:text-sm px-2 sm:px-3")}
                     required
                   />
                   <Input
@@ -2675,19 +2675,19 @@ export default function OrdersPage() {
                     type="time"
                     value={editFormData.pickupTime}
                     onChange={(e) => setEditFormData({ ...editFormData, pickupTime: e.target.value })}
-                    className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                    className={cn(entityFormInputClass, "col-span-5 font-mono text-xs text-center px-1")}
                     title="Giờ nhận xe"
                   />
                 </div>
               </EntityFormField>
               <EntityFormField label="Ngày & Giờ trả xe" required>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
                   <Input
                     id="edit-endDate"
                     type="date"
                     value={editFormData.endDate}
                     onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
-                    className={cn(entityFormInputClass, "col-span-3")}
+                    className={cn(entityFormInputClass, "col-span-7 text-xs sm:text-sm px-2 sm:px-3")}
                     required
                   />
                   <Input
@@ -2695,7 +2695,7 @@ export default function OrdersPage() {
                     type="time"
                     value={editFormData.returnTime}
                     onChange={(e) => setEditFormData({ ...editFormData, returnTime: e.target.value })}
-                    className={cn(entityFormInputClass, "col-span-2 font-mono text-xs text-center px-1")}
+                    className={cn(entityFormInputClass, "col-span-5 font-mono text-xs text-center px-1")}
                     title="Giờ trả xe"
                   />
                 </div>

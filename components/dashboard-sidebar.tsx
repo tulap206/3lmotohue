@@ -287,7 +287,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
           </div>
         </div>
 
-        <main className="p-4 sm:p-5 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] min-w-0 overflow-x-clip">{children}</main>
+        <main className="p-3 sm:p-5 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] min-w-0 overflow-x-clip">{children}</main>
       </div>
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>

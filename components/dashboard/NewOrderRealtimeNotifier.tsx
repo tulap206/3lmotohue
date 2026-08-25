@@ -538,9 +538,9 @@ export function NewOrderRealtimeNotifier() {
       {/* 1. Modal Popup Thông Báo Thiết Kế Đồng Bộ Chuẩn 3L Moto */}
       {activeOrder && (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleSnoozeCurrent()}>
-          <DialogContent className="w-[95vw] sm:max-w-lg p-0 overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200 z-[9999]">
+          <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-lg p-0 rounded-2xl bg-white shadow-2xl border border-slate-200 z-[9999] max-h-[min(94dvh,calc(100dvh-1rem))] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
             {/* Header: Signature Dark Slate / Indigo Gradient */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 sm:p-6 relative overflow-hidden">
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-4 sm:p-6 relative overflow-hidden shrink-0">
               <div className="absolute -right-8 -top-8 w-36 h-36 bg-blue-500/15 rounded-full blur-2xl pointer-events-none" />
 
               <div className="flex items-start justify-between relative z-10 gap-3">
