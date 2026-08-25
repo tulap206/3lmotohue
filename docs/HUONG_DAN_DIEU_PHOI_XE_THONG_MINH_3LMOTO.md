@@ -46,6 +46,16 @@ Khi nhân viên chọn ngày nhận và ngày trả, danh sách xe sẽ tự đ�
 * Khách hàng tìm xe trên website cho các ngày tương lai sẽ nhìn thấy cả những xe **hiện đang chạy nhưng sẽ trả trước ngày khách nhận**.
 * Đảm bảo tối đa hóa tỉ lệ chốt đơn và doanh thu cho cửa hàng.
 
+### E. Quản lý trạng thái xe linh hoạt theo ngày (Dynamic Fleet Status by Date)
+* Tại trang **Quản lý xe (`/dashboard/vehicles`)**, hệ thống đã bổ sung thanh công cụ **"Trạng thái xe theo ngày"**:
+  * Cho phép chọn xem nhanh trạng thái đội xe tại các mốc: **Hôm nay**, **Ngày mai**, **Ngày kia** hoặc **Chọn một ngày bất kỳ trong tương lai**.
+  * **5 Thẻ KPI tự động tính toán lại theo ngày được chọn**:
+    * 🟢 **Sẵn sàng**: Số xe rảnh trong ngày đó (kèm chú thích *Trống đến ngày nào / Còn bao nhiêu ngày*).
+    * 🟡 **Chờ giao**: Số xe có lịch hẹn giao cho khách trong ngày đó.
+    * 🔵 **Đang thuê**: Số xe đang chạy trên đường trong ngày đó (kèm thông tin khách thuê và ngày trả).
+    * 🔴 **Bảo trì**: Số xe tạm dừng hoạt động do sửa chữa.
+  * Bấm vào bất kỳ thẻ KPI nào để lọc danh sách xe tương ứng của ngày đó.
+
 ---
 
 ## 📖 3. HƯỚNG DẪN SỬ DỤNG DÀNH CHO NHÂN VIÊN VẬN HÀNH

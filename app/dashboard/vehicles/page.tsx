@@ -54,7 +54,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History, MapPin, Save, RefreshCw } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Car, Eye, Clock, Upload, X, History, MapPin, Save, RefreshCw, Calendar, Sparkles } from "lucide-react"
+import { getVehicleDynamicStatusForDate, VehicleDateDynamicStatus, normalizeDate } from "@/lib/vehicle-timeline"
 import { Textarea } from "@/components/ui/textarea"
 
 export interface VehicleLocationInfo {
@@ -573,23 +574,60 @@ export default function VehiclesPage() {
     return map
   }, [vehicles, orders])
 
-  const pendingDeliveryVehicleIds = useMemo(() => {
-    const ids = new Set<string>()
-    for (const order of orders || []) {
-      if (order.status === "pending" && order.vehicleId) ids.add(order.vehicleId)
+  // Date target state for dynamic vehicle status calculation
+  const [dateFilterMode, setDateFilterMode] = useState<"today" | "tomorrow" | "dayAfter" | "custom">("today")
+  const [customTargetDate, setCustomTargetDate] = useState<string>(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  })
+
+  const targetCalculationDate = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    if (dateFilterMode === "today") {
+      return d
+    } else if (dateFilterMode === "tomorrow") {
+      d.setDate(d.getDate() + 1)
+      return d
+    } else if (dateFilterMode === "dayAfter") {
+      d.setDate(d.getDate() + 2)
+      return d
+    } else {
+      return normalizeDate(customTargetDate) || d
     }
-    return ids
-  }, [orders])
+  }, [dateFilterMode, customTargetDate])
+
+  const targetDateFormatted = useMemo(() => {
+    return formatDisplayDate(targetCalculationDate)
+  }, [targetCalculationDate])
+
+  const targetDateTitle = useMemo(() => {
+    if (dateFilterMode === "today") return `Hôm nay (${targetDateFormatted})`
+    if (dateFilterMode === "tomorrow") return `Ngày mai (${targetDateFormatted})`
+    if (dateFilterMode === "dayAfter") return `Ngày kia (${targetDateFormatted})`
+    return `Ngày ${targetDateFormatted}`
+  }, [dateFilterMode, targetDateFormatted])
+
+  // Calculate dynamic status for each vehicle on targetCalculationDate
+  const vehicleDynamicStatusMap = useMemo(() => {
+    const map: Record<string, VehicleDateDynamicStatus> = {}
+    for (const v of vehicles) {
+      map[v.id] = getVehicleDynamicStatusForDate(v, targetCalculationDate, orders || [])
+    }
+    return map
+  }, [vehicles, targetCalculationDate, orders])
 
   const filteredVehicles = useMemo(() => {
     const filtered = vehicles.filter((vehicle) => {
       const matchesSearch =
         vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vehicle.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const dynStatus = vehicleDynamicStatusMap[vehicle.id]?.effectiveStatus || vehicle.status
       const matchesStatus =
         statusFilter === "all"
           ? true
-          : vehicle.status === statusFilter
+          : dynStatus === statusFilter
       return matchesSearch && matchesStatus
     })
 
@@ -610,12 +648,12 @@ export default function VehiclesPage() {
       // Tertiary sort: by name
       return a.name.localeCompare(b.name)
     })
-  }, [vehicles, searchTerm, statusFilter, vehiclePerformanceMap])
+  }, [vehicles, searchTerm, statusFilter, vehicleDynamicStatusMap, vehiclePerformanceMap])
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter])
+  }, [searchTerm, statusFilter, dateFilterMode, customTargetDate])
 
   const totalPages = useMemo(() => {
     return Math.ceil(filteredVehicles.length / itemsPerPage)
@@ -631,14 +669,34 @@ export default function VehiclesPage() {
   }, [filteredVehicles, startIndex])
 
   const vehicleStats = useMemo(() => {
+    let available = 0
+    let pendingDelivery = 0
+    let rented = 0
+    let maintenance = 0
+
+    for (const v of vehicles) {
+      const dyn = vehicleDynamicStatusMap[v.id]
+      if (dyn) {
+        if (dyn.effectiveStatus === "available") available++
+        else if (dyn.effectiveStatus === "pending") pendingDelivery++
+        else if (dyn.effectiveStatus === "rented") rented++
+        else if (dyn.effectiveStatus === "maintenance") maintenance++
+      } else {
+        if (v.status === "available") available++
+        else if (v.status === "pending") pendingDelivery++
+        else if (v.status === "rented") rented++
+        else if (v.status === "maintenance") maintenance++
+      }
+    }
+
     return {
       total: vehicles.length,
-      available: vehicles.filter((v) => v.status === "available").length,
-      pendingDelivery: vehicles.filter((v) => v.status === "pending").length,
-      rented: vehicles.filter((v) => v.status === "rented").length,
-      maintenance: vehicles.filter((v) => v.status === "maintenance").length,
+      available,
+      pendingDelivery,
+      rented,
+      maintenance,
     }
-  }, [vehicles])
+  }, [vehicles, vehicleDynamicStatusMap])
 
   const handleAddVehicle = async () => {
     if (!newVehicle.name || !newVehicle.name.trim()) {
@@ -1287,6 +1345,86 @@ export default function VehiclesPage() {
       </Dialog>
 
       <div className="space-y-4">
+        {/* Date Filter Toolbar for Dynamic Fleet Status */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 sm:px-4 sm:py-3.5 rounded-[var(--radius-container)] border border-slate-200 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
+              <Calendar className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <span>Trạng thái xe ngày:</span>
+                <span className="text-blue-700 font-black">{targetDateTitle}</span>
+              </p>
+              <p className="text-[11px] text-slate-500">
+                Tính toán chính xác số xe rảnh, chờ giao và đang thuê theo lịch trình thực tế
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center p-1 rounded-[var(--radius-control)] bg-slate-100 border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setDateFilterMode("today")}
+                className={cn(
+                  "h-8 px-3 rounded-[calc(var(--radius-control)-2px)] text-xs font-semibold ui-transition",
+                  dateFilterMode === "today"
+                    ? "bg-blue-600 !text-white shadow-xs font-bold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                )}
+              >
+                Hôm nay
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterMode("tomorrow")}
+                className={cn(
+                  "h-8 px-3 rounded-[calc(var(--radius-control)-2px)] text-xs font-semibold ui-transition",
+                  dateFilterMode === "tomorrow"
+                    ? "bg-blue-600 !text-white shadow-xs font-bold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                )}
+              >
+                Ngày mai
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterMode("dayAfter")}
+                className={cn(
+                  "h-8 px-3 rounded-[calc(var(--radius-control)-2px)] text-xs font-semibold ui-transition",
+                  dateFilterMode === "dayAfter"
+                    ? "bg-blue-600 !text-white shadow-xs font-bold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                )}
+              >
+                Ngày kia
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterMode("custom")}
+                className={cn(
+                  "h-8 px-3 rounded-[calc(var(--radius-control)-2px)] text-xs font-semibold ui-transition",
+                  dateFilterMode === "custom"
+                    ? "bg-blue-600 !text-white shadow-xs font-bold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                )}
+              >
+                Chọn ngày
+              </button>
+            </div>
+
+            {dateFilterMode === "custom" && (
+              <Input
+                type="date"
+                value={customTargetDate}
+                onChange={(e) => setCustomTargetDate(e.target.value)}
+                className="h-9 w-36 text-xs bg-white border-slate-200 font-mono rounded-[var(--radius-control)] shadow-xs"
+              />
+            )}
+          </div>
+        </div>
+
         <ModuleKpiGrid columns={5}>
           <RentalKpiCard
             variant="hero"
@@ -1300,7 +1438,7 @@ export default function VehiclesPage() {
             variant="hero"
             label="Sẵn sàng"
             value={vehicleStats.available}
-            sublabel="Có thể cho thuê"
+            sublabel={`Trống trong ${targetDateFormatted}`}
             valueClassName="text-emerald-700"
             onClick={() => setStatusFilter("available")}
             selected={statusFilter === "available"}
@@ -1309,7 +1447,7 @@ export default function VehiclesPage() {
             variant="hero"
             label="Chờ giao"
             value={vehicleStats.pendingDelivery}
-            sublabel="Chờ giao xe"
+            sublabel={`Chờ giao trong ${targetDateFormatted}`}
             valueClassName="text-amber-700"
             onClick={() => setStatusFilter("pending")}
             selected={statusFilter === "pending"}
@@ -1318,7 +1456,7 @@ export default function VehiclesPage() {
             variant="hero"
             label="Đang thuê"
             value={vehicleStats.rented}
-            sublabel="Xe đang cho khách"
+            sublabel={`Đang chạy trong ${targetDateFormatted}`}
             valueClassName="text-blue-700"
             onClick={() => setStatusFilter("rented")}
             selected={statusFilter === "rented"}
@@ -1464,9 +1602,32 @@ export default function VehiclesPage() {
                             })()}
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <span className={cn(vehicleStatusBadgeClass, rentalVehicleStatusBadgeClass(vehicle.status))}>
-                              {getRentalVehicleStatusLabel(vehicle.status)}
-                            </span>
+                            {(() => {
+                              const dyn = vehicleDynamicStatusMap[vehicle.id]
+                              const tone = dyn?.statusTone || (vehicle.status === "available" ? "emerald" : vehicle.status === "rented" ? "blue" : vehicle.status === "pending" ? "amber" : "rose")
+                              const label = dyn?.statusLabel || getRentalVehicleStatusLabel(vehicle.status)
+                              const detail = dyn?.detailText || ""
+                              return (
+                                <div className="flex flex-col items-center gap-1">
+                                  <span
+                                    className={cn(
+                                      "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border",
+                                      tone === "emerald" && "bg-emerald-50 text-emerald-800 border-emerald-200",
+                                      tone === "amber" && "bg-amber-50 text-amber-900 border-amber-300",
+                                      tone === "blue" && "bg-blue-50 text-blue-800 border-blue-200",
+                                      tone === "rose" && "bg-rose-50 text-rose-800 border-rose-200"
+                                    )}
+                                  >
+                                    {label}
+                                  </span>
+                                  {detail && (
+                                    <span className="text-[11px] text-slate-500 max-w-[170px] truncate" title={detail}>
+                                      {detail}
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            })()}
                           </td>
                           <td className="py-3.5 px-4 text-right">
                             <div className="flex justify-end gap-1">
@@ -1557,9 +1718,31 @@ export default function VehiclesPage() {
                             <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
                           </div>
                         </div>
-                        <span className={cn(vehicleStatusBadgeClass, "shrink-0", rentalVehicleStatusBadgeClass(vehicle.status))}>
-                          {getRentalVehicleStatusLabel(vehicle.status)}
-                        </span>
+                        {(() => {
+                          const dyn = vehicleDynamicStatusMap[vehicle.id]
+                          const tone = dyn?.statusTone || (vehicle.status === "available" ? "emerald" : vehicle.status === "rented" ? "blue" : vehicle.status === "pending" ? "amber" : "rose")
+                          const label = dyn?.statusLabel || getRentalVehicleStatusLabel(vehicle.status)
+                          return (
+                            <div className="flex flex-col items-end gap-0.5 shrink-0">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center px-2 py-0.5 rounded-[var(--radius-badge)] text-xs font-semibold border",
+                                  tone === "emerald" && "bg-emerald-50 text-emerald-800 border-emerald-200",
+                                  tone === "amber" && "bg-amber-50 text-amber-900 border-amber-300",
+                                  tone === "blue" && "bg-blue-50 text-blue-800 border-blue-200",
+                                  tone === "rose" && "bg-rose-50 text-rose-800 border-rose-200"
+                                )}
+                              >
+                                {label}
+                              </span>
+                              {dyn?.detailText && (
+                                <span className="text-[10px] text-slate-500 max-w-[130px] truncate text-right">
+                                  {dyn.detailText}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })()}
                       </div>
 
                       {/* 📍 Mobile Live Location block with 1-tap map launcher */}

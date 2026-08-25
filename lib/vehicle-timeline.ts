@@ -370,3 +370,135 @@ export function generateTimelineGrid(
 
   return { days, rows }
 }
+
+export interface VehicleDateDynamicStatus {
+  vehicleId: string
+  date: Date
+  dateStr: string
+  effectiveStatus: "available" | "pending" | "rented" | "maintenance"
+  statusLabel: string
+  statusTone: "emerald" | "amber" | "blue" | "rose"
+  detailText: string
+  activeRental?: Rental | null
+  pendingRental?: Rental | null
+  nextUpcomingRental?: Rental | null
+  daysUntilNextRental?: number | null
+}
+
+/**
+ * Tính toán trạng thái thực tế chính xác của 1 chiếc xe tại 1 thời điểm ngày cụ thể (Hôm nay, ngày mai hoặc ngày chọn bất kỳ)
+ */
+export function getVehicleDynamicStatusForDate(
+  vehicle: Vehicle,
+  targetDateInput: Date | string,
+  allRentals: Rental[]
+): VehicleDateDynamicStatus {
+  const targetDate = normalizeDate(targetDateInput) || new Date()
+  targetDate.setHours(0, 0, 0, 0)
+  const dateStr = formatDisplayDate(targetDate)
+
+  // 1. Xe đang trong trạng thái bảo dưỡng tại xưởng
+  if (vehicle.status === "maintenance") {
+    return {
+      vehicleId: vehicle.id,
+      date: targetDate,
+      dateStr,
+      effectiveStatus: "maintenance",
+      statusLabel: "Bảo trì",
+      statusTone: "rose",
+      detailText: "Đang bảo dưỡng / sửa chữa",
+    }
+  }
+
+  const vehicleRentals = (allRentals || []).filter(
+    (r) => r.vehicleId === vehicle.id && r.status !== "cancelled"
+  )
+
+  // 2. Tìm rental rơi vào targetDate
+  let currentActive: Rental | null = null
+  let currentPending: Rental | null = null
+
+  for (const r of vehicleRentals) {
+    const rStart = normalizeDate(r.startDate)
+    const rEnd = normalizeDate(r.endDate)
+    if (!rStart || !rEnd) continue
+
+    if (targetDate >= rStart && targetDate <= rEnd) {
+      if (r.status === "active") {
+        currentActive = r
+        break
+      } else if (r.status === "pending") {
+        currentPending = r
+      }
+    }
+  }
+
+  if (currentActive) {
+    const rEnd = normalizeDate(currentActive.endDate)
+    const isReturningToday = rEnd && rEnd.getTime() === targetDate.getTime()
+    return {
+      vehicleId: vehicle.id,
+      date: targetDate,
+      dateStr,
+      effectiveStatus: "rented",
+      statusLabel: "Đang thuê",
+      statusTone: "blue",
+      detailText: isReturningToday
+        ? `Trả trong ngày (${currentActive.customerName || "Khách"})`
+        : `Khách: ${currentActive.customerName || "Đang thuê"} · Đến ${currentActive.endDate}`,
+      activeRental: currentActive,
+    }
+  }
+
+  if (currentPending) {
+    const rStart = normalizeDate(currentPending.startDate)
+    const isStartingToday = rStart && rStart.getTime() === targetDate.getTime()
+    return {
+      vehicleId: vehicle.id,
+      date: targetDate,
+      dateStr,
+      effectiveStatus: "pending",
+      statusLabel: "Chờ giao",
+      statusTone: "amber",
+      detailText: isStartingToday
+        ? `Giao hôm nay cho ${currentPending.customerName || "Khách"}`
+        : `Đã cọc: ${currentPending.customerName || "Khách"} · ${currentPending.startDate} → ${currentPending.endDate}`,
+      pendingRental: currentPending,
+    }
+  }
+
+  // 3. Không có đơn trùng -> Xe SẴN SÀNG trong ngày targetDate
+  // Tìm đơn kế tiếp trong tương lai sau targetDate
+  const futureRentals = vehicleRentals
+    .filter((r) => {
+      const rStart = normalizeDate(r.startDate)
+      return rStart && rStart > targetDate && r.status !== "completed"
+    })
+    .sort((a, b) => {
+      const aStart = normalizeDate(a.startDate)!.getTime()
+      const bStart = normalizeDate(b.startDate)!.getTime()
+      return aStart - bStart
+    })
+
+  const nextRental = futureRentals[0] || null
+  let daysUntilNext: number | null = null
+  let detailText = "Rảnh suốt kỳ"
+
+  if (nextRental) {
+    const nStart = normalizeDate(nextRental.startDate)!
+    daysUntilNext = Math.max(1, Math.round((nStart.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24)))
+    detailText = `Trống đến ${nextRental.startDate} (còn ${daysUntilNext} ngày)`
+  }
+
+  return {
+    vehicleId: vehicle.id,
+    date: targetDate,
+    dateStr,
+    effectiveStatus: "available",
+    statusLabel: "Sẵn sàng",
+    statusTone: "emerald",
+    detailText,
+    nextUpcomingRental: nextRental,
+    daysUntilNextRental: daysUntilNext,
+  }
+}
