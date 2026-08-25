@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { fetchVehicles, fetchRentals, fetchCustomers, insertCustomer, insertRental } from "@/lib/supabase"
+import { supabase, fetchVehicles, fetchRentals, fetchCustomers, insertCustomer, insertRental } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -249,7 +249,7 @@ export default function LandingPage() {
       const formattedEnd = formatDateStr(formData.endDate)
       const totalPrice = totalDays * vehicle.pricePerDay
 
-      await insertRental({
+      const newRental = await insertRental({
         customerId,
         customerName: formData.name,
         vehicleId: vehicle.id,
@@ -266,6 +266,56 @@ export default function LandingPage() {
         revenue: 0,
         status: "pending",
       })
+
+      // 1. Gửi realtime broadcast để lập tức kích hoạt popup trên admin dashboard
+      try {
+        const notifyChannel = supabase.channel("realtime-order-notifications")
+        notifyChannel.subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            notifyChannel.send({
+              type: "broadcast",
+              event: "new_order",
+              payload: {
+                id: newRental?.id || `web-${Date.now()}`,
+                customerId,
+                customerName: formData.name,
+                phone: formData.phone,
+                vehicleId: vehicle.id,
+                vehicleName: vehicle.name,
+                licensePlate: vehicle.licensePlate,
+                startDate: formattedStart,
+                endDate: formattedEnd,
+                totalDays,
+                totalPrice,
+                notes: "[source:web] Khách đặt trực tuyến từ website",
+                created_at: new Date().toISOString(),
+                status: "pending",
+              },
+            }).catch(() => {})
+          }
+        })
+      } catch (bcErr) {
+        console.warn("Realtime broadcast error:", bcErr)
+      }
+
+      // 2. Gửi thông báo Telegram và ghi log hệ thống
+      try {
+        fetch("/api/booking-notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName: formData.name,
+            phone: formData.phone,
+            vehicleName: vehicle.name,
+            licensePlate: vehicle.licensePlate,
+            startDate: formattedStart,
+            endDate: formattedEnd,
+            totalDays,
+            totalPrice,
+            notes: "Khách đặt trực tuyến từ landing page website",
+          }),
+        }).catch((apiErr) => console.warn("Booking notify API call error:", apiErr))
+      } catch (err) {}
 
       setBookingSuccess(true)
     } catch (error) {
