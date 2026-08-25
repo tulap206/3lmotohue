@@ -65,6 +65,7 @@ import {
   buildRentalTermPayload,
 } from "@/lib/rental-term"
 import { FleetTimelineView } from "@/components/dashboard/fleet-timeline-view"
+import { TodayHandoverSchedule } from "@/components/dashboard/today-handover-schedule"
 import {
   classifyVehiclesForTimeline,
   checkVehicleTimelineAvailability,
@@ -2040,6 +2041,19 @@ export default function OrdersPage() {
             selected={filterStatus === "completed"}
           />
         </ModuleKpiGrid>
+
+        {/* Lịch trình Giao & Thu hồi xe hôm nay theo giờ */}
+        <TodayHandoverSchedule
+          orders={orders}
+          vehicles={vehicles}
+          customers={customers}
+          onDeliverOrder={handleDeliverOrderClick}
+          onCompleteOrder={(order) => {
+            const fullOrder = orders.find((o) => o.id === order.id) || order
+            openEditDialog(fullOrder)
+          }}
+          onSelectOrder={openEditDialog}
+        />
 
       <ModuleSectionCard
         title="Danh sách đơn thuê xe"

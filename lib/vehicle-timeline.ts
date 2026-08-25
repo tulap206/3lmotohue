@@ -555,6 +555,7 @@ export function getVehicleDynamicStatusForDate(
   if (currentActive) {
     const rEnd = normalizeDate(currentActive.endDate)
     const isReturningToday = rEnd && rEnd.getTime() === targetDate.getTime()
+    const times = extractRentalTimes(currentActive.notes)
     return {
       vehicleId: vehicle.id,
       date: targetDate,
@@ -563,8 +564,8 @@ export function getVehicleDynamicStatusForDate(
       statusLabel: "Đang thuê",
       statusTone: "blue",
       detailText: isReturningToday
-        ? `Trả trong ngày (${currentActive.customerName || "Khách"})`
-        : `Khách: ${currentActive.customerName || "Đang thuê"} · Đến ${currentActive.endDate}`,
+        ? `Trả lúc ${times.returnTime} hôm nay (${currentActive.customerName || "Khách"})`
+        : `Khách: ${currentActive.customerName || "Đang thuê"} · Trả ${times.returnTime} ngày ${currentActive.endDate}`,
       activeRental: currentActive,
     }
   }
@@ -572,6 +573,7 @@ export function getVehicleDynamicStatusForDate(
   if (currentPending) {
     const rStart = normalizeDate(currentPending.startDate)
     const isStartingToday = rStart && rStart.getTime() === targetDate.getTime()
+    const times = extractRentalTimes(currentPending.notes)
     return {
       vehicleId: vehicle.id,
       date: targetDate,
@@ -580,8 +582,8 @@ export function getVehicleDynamicStatusForDate(
       statusLabel: "Chờ giao",
       statusTone: "amber",
       detailText: isStartingToday
-        ? `Giao hôm nay cho ${currentPending.customerName || "Khách"}`
-        : `Đã cọc: ${currentPending.customerName || "Khách"} · ${currentPending.startDate} → ${currentPending.endDate}`,
+        ? `Giao lúc ${times.pickupTime} hôm nay cho ${currentPending.customerName || "Khách"}`
+        : `Đã cọc: ${currentPending.customerName || "Khách"} · Nhận ${times.pickupTime} ngày ${currentPending.startDate}`,
       pendingRental: currentPending,
     }
   }
@@ -606,7 +608,8 @@ export function getVehicleDynamicStatusForDate(
   if (nextRental) {
     const nStart = normalizeDate(nextRental.startDate)!
     daysUntilNext = Math.max(1, Math.round((nStart.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24)))
-    detailText = `Trống đến ${nextRental.startDate} (còn ${daysUntilNext} ngày)`
+    const nextTimes = extractRentalTimes(nextRental.notes)
+    detailText = `Trống đến ${nextTimes.pickupTime} ngày ${nextRental.startDate} (còn ${daysUntilNext} ngày)`
   }
 
   return {

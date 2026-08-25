@@ -31,6 +31,7 @@ import { DailyNotificationModal } from "@/components/dashboard/daily-notificatio
 import { SkeletonMetricCards, SkeletonTable, SkeletonCharts } from "@/components/ui/skeleton-loader"
 import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeExpenseChart } from "@/components/dashboard/rental-charts"
 import { OverdueOrdersPanel, CommissionHomeReportPanel } from "@/components/dashboard/rental-overview-panels"
+import { TodayHandoverSchedule } from "@/components/dashboard/today-handover-schedule"
 import { RentalKpiCard, rentalTableHeadClass, getRentalTransactionTypeLabel } from "@/components/dashboard/rental-ui"
 import { ModulePageShell, ModuleBrandHeader, ModuleSectionCard, ModuleSectionTitle, ModuleKpiGrid, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleEmptyState, ModuleToolbar, moduleFilterInputClass } from "@/components/dashboard/module-shell"
 import { cn } from "@/lib/utils"
@@ -1058,6 +1059,15 @@ export default function DashboardPage() {
             />
           </ModuleKpiGrid>
         </div>
+
+        {/* Lịch trình Giao & Thu hồi xe hôm nay theo giờ */}
+        <TodayHandoverSchedule
+          orders={orders}
+          vehicles={vehicles}
+          customers={customers}
+          onDeliverOrder={() => router.push("/dashboard/orders")}
+          onCompleteOrder={() => router.push("/dashboard/orders")}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-7 min-w-0">

@@ -1621,7 +1621,7 @@ export default function VehiclesPage() {
                                     {label}
                                   </span>
                                   {detail && (
-                                    <span className="text-[11px] text-slate-500 max-w-[170px] truncate" title={detail}>
+                                    <span className="text-[11px] font-medium text-slate-600 max-w-[240px] truncate text-center" title={detail}>
                                       {detail}
                                     </span>
                                   )}
