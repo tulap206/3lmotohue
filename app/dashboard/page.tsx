@@ -56,6 +56,7 @@ import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCa
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { Textarea } from "@/components/ui/textarea"
 import { buildRentalTermPayload } from "@/lib/rental-term"
+import { extractRentalTimes, embedRentalTimes } from "@/lib/vehicle-timeline"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
 
@@ -174,6 +175,8 @@ export default function DashboardPage() {
     vehicleIds: [] as string[],
     startDate: "",
     endDate: "",
+    pickupTime: "08:00",
+    returnTime: "12:00",
     deposit: "0",
     notes: "",
     commissionHome: "",
@@ -225,7 +228,7 @@ export default function DashboardPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", deposit: "0", notes: "", commissionHome: "", homeName: "" })
+    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", pickupTime: "08:00", returnTime: "12:00", deposit: "0", notes: "", commissionHome: "", homeName: "" })
     setIsNewCustomer(true)
     setNewCustomerName("")
     setNewCustomerPhone("")
@@ -368,6 +371,8 @@ export default function DashboardPage() {
       const dividedCommission = Math.round(totalCommission / targetVehicles.length)
 
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
+      const rawNotes = formData.notes ? formData.notes.trim() : ""
+      const notesWithTime = embedRentalTimes(rawNotes, formData.pickupTime || "08:00", formData.returnTime || "12:00")
 
       const insertPayloads = targetVehicles.map((vehicle) => {
         const totalPrice = totalDays * vehicle.pricePerDay
@@ -384,7 +389,7 @@ export default function DashboardPage() {
           totalPrice,
           deposit: dividedDeposit,
           extraFees: 0,
-          notes: formData.notes ? formData.notes.trim() : "",
+          notes: notesWithTime,
           revenue: 0,
           status: "pending",
           created_at: now,
@@ -402,7 +407,7 @@ export default function DashboardPage() {
       if (error && /rentalTerm/i.test(error.message || "")) {
         const withoutCols = insertPayloads.map(({ rentalTerm: _omit, ...rest }) => ({
           ...rest,
-          notes: "[rentalTerm:short]"
+          notes: buildRentalTermPayload("short", notesWithTime).notes
         }))
         ;({ data, error } = await supabase.from('rentals').insert(withoutCols).select())
       }
@@ -1530,7 +1535,7 @@ export default function DashboardPage() {
                         ? "Chưa gán xe"
                         : "Chưa chọn xe"}
                     {formData.startDate && formData.endDate
-                      ? ` · ${formData.startDate} → ${formData.endDate}`
+                      ? ` · ${formData.pickupTime || "08:00"} ${formData.startDate} → ${formData.returnTime || "12:00"} ${formData.endDate}`
                       : ""}
                   </p>
                 </div>
@@ -1794,27 +1799,47 @@ export default function DashboardPage() {
                   </div>
                 </EntityFormSection>
 
-                <EntityFormSection title="Hợp đồng" description="Ngày thuê và tiền cọc">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <EntityFormField label="Ngày bắt đầu" required>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={formData.startDate}
-                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        className={entityFormInputClass}
-                        required
-                      />
+                <EntityFormSection title="Hợp đồng" description="Thời gian thuê và tiền cọc">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <EntityFormField label="Ngày & Giờ nhận xe" required>
+                      <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-7 text-xs sm:text-sm px-2 sm:px-3")}
+                          required
+                        />
+                        <Input
+                          id="pickupTime"
+                          type="time"
+                          value={formData.pickupTime}
+                          onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-5 font-mono text-xs text-center px-1")}
+                          title="Giờ nhận xe"
+                        />
+                      </div>
                     </EntityFormField>
-                    <EntityFormField label="Ngày kết thúc" required>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={formData.endDate}
-                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        className={entityFormInputClass}
-                        required
-                      />
+                    <EntityFormField label="Ngày & Giờ trả xe" required>
+                      <div className="grid grid-cols-12 gap-1.5 sm:gap-2">
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={formData.endDate}
+                          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-7 text-xs sm:text-sm px-2 sm:px-3")}
+                          required
+                        />
+                        <Input
+                          id="returnTime"
+                          type="time"
+                          value={formData.returnTime}
+                          onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
+                          className={cn(entityFormInputClass, "col-span-5 font-mono text-xs text-center px-1")}
+                          title="Giờ trả xe"
+                        />
+                      </div>
                     </EntityFormField>
                   </div>
 
