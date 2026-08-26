@@ -124,18 +124,15 @@ func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
 }
 
 func ensureFindMyRunning() -> NSRunningApplication? {
-    let apps = NSWorkspace.shared.runningApplications
-    if let findmy = apps.first(where: { $0.bundleIdentifier == "com.apple.findmy" }) {
-        return findmy
-    }
-    logMsg("🚀 Đang mở ứng dụng Tìm (FindMy)...")
     let process = Process()
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-    process.arguments = ["-a", "FindMy"]
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+    process.arguments = ["-e", "tell application \"FindMy\" to activate", "-e", "tell application \"FindMy\" to reopen"]
     try? process.run()
     process.waitUntilExit()
-    Thread.sleep(forTimeInterval: 2.0)
-    return NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.findmy" })
+    Thread.sleep(forTimeInterval: 1.5)
+
+    let apps = NSWorkspace.shared.runningApplications
+    return apps.first(where: { $0.bundleIdentifier == "com.apple.findmy" })
 }
 
 struct ParsedVehicle {
@@ -181,8 +178,24 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
     
     let axApp = AXUIElementCreateApplication(findmy.processIdentifier)
     var windowsRef: AnyObject?
-    let res = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
-    guard res == .success, let windows = windowsRef as? [AXUIElement], let win = windows.first else {
+    var res = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+    var windows = windowsRef as? [AXUIElement]
+    
+    if res != .success || windows == nil || windows!.isEmpty {
+        logMsg("⚠️ Cửa sổ FindMy chưa sẵn sàng, đang mở lại cửa sổ...")
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        p.arguments = ["-e", "tell application \"FindMy\" to activate", "-e", "tell application \"FindMy\" to reopen"]
+        try? p.run()
+        p.waitUntilExit()
+        Thread.sleep(forTimeInterval: 2.0)
+        
+        windowsRef = nil
+        res = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+        windows = windowsRef as? [AXUIElement]
+    }
+    
+    guard res == .success, let validWindows = windows, let win = validWindows.first else {
         logMsg("❌ Không tìm thấy cửa sổ ứng dụng FindMy!")
         return []
     }
