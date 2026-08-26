@@ -1369,56 +1369,67 @@ export default function ReportsPage() {
                   </div>
                 </div>
                 
-                <div className="border-t border-blue-200 pt-3">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">LN vận hành (trước lương)</p>
-                      <p className="font-semibold text-base text-emerald-700 break-words">
-                        {operatingProfitBeforeSalary.toLocaleString("vi-VN")} đ
-                      </p>
+                <div className="border-t border-blue-200 pt-3 space-y-3">
+                  {/* Nhóm 1: Hiệu quả kinh doanh (P&L) */}
+                  <div className="bg-white/70 rounded-xl p-3 border border-blue-100">
+                    <p className="text-xs font-semibold text-blue-900 uppercase tracking-wider mb-2">1. Hiệu quả kinh doanh (P&L vận hành)</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">LN vận hành (trước lương)</p>
+                        <p className="font-semibold text-base text-emerald-700 break-words">
+                          {operatingProfitBeforeSalary.toLocaleString("vi-VN")} đ
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">Tổng chi lương NV</p>
+                        <p className="font-semibold text-base text-rose-600 break-words">
+                          -{salaryExpenses.toLocaleString("vi-VN")} đ
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">Chi HH Home</p>
+                        <p className="font-semibold text-base text-amber-700 break-words">
+                          -{reportData.commissionHomeTotal.toLocaleString("vi-VN")} đ
+                        </p>
+                        <p className="text-[10px] text-slate-400">đã trừ trong doanh thu</p>
+                      </div>
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">Lợi nhuận ròng vận hành</p>
+                        <p className="font-bold text-base text-emerald-600 break-words">
+                          {reportData.totalProfit.toLocaleString("vi-VN")} đ
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">Tổng chi lương NV</p>
-                      <p className="font-semibold text-base text-rose-600 break-words">
-                        -{salaryExpenses.toLocaleString("vi-VN")} đ
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">Lợi nhuận ròng vận hành</p>
-                      <p className="font-semibold text-base text-emerald-600 break-words">
-                        {reportData.totalProfit.toLocaleString("vi-VN")} đ
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">Tổng thu (bao gồm vốn)</p>
-                      <p className="font-semibold text-base text-emerald-600 break-words">
-                        +{(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">Tổng chi (gồm cả lương/vốn)</p>
-                      <p className="font-semibold text-base text-rose-600">
-                        -{totalExpense.toLocaleString("vi-VN")} đ
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">Cổ tức đã chia</p>
-                      <p className="font-semibold text-base text-slate-900 money break-words">
-                        -{dividendExpenses.toLocaleString("vi-VN")} đ
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">Chi HH Home</p>
-                      <p className="font-semibold text-base text-amber-700 break-words">
-                        -{reportData.commissionHomeTotal.toLocaleString("vi-VN")} đ
-                      </p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">đã trừ trong doanh thu</p>
-                    </div>
-                    <div>
-                      <p className="text-meta text-slate-500 mb-1">Tiền mặt hiện có</p>
-                      <p className={`font-semibold text-base ${cashOnHand >= 0 ? 'text-slate-900 money' : 'text-rose-600 money'} break-words`}>
-                        {cashOnHand.toLocaleString("vi-VN")} đ
-                      </p>
+                  </div>
+
+                  {/* Nhóm 2: Dòng tiền & Quỹ thực tế (Cashflow) */}
+                  <div className="bg-white/70 rounded-xl p-3 border border-blue-100">
+                    <p className="text-xs font-semibold text-blue-900 uppercase tracking-wider mb-2">2. Dòng tiền thực tế & Quỹ tiền mặt</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">Tổng thu (bao gồm vốn)</p>
+                        <p className="font-semibold text-base text-emerald-600 break-words">
+                          +{(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">Tổng chi (gồm cả lương/vốn)</p>
+                        <p className="font-semibold text-base text-rose-600 break-words">
+                          -{totalExpense.toLocaleString("vi-VN")} đ
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">Cổ tức đã chia</p>
+                        <p className="font-semibold text-base text-slate-900 money break-words">
+                          -{dividendExpenses.toLocaleString("vi-VN")} đ
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-meta text-slate-500 mb-0.5">Tiền mặt hiện có</p>
+                        <p className={`font-bold text-base ${cashOnHand >= 0 ? 'text-slate-900 money' : 'text-rose-600 money'} break-words`}>
+                          {cashOnHand.toLocaleString("vi-VN")} đ
+                        </p>
+                      </div>
                     </div>
                   </div>
                   
