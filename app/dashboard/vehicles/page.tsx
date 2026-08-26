@@ -1621,7 +1621,7 @@ export default function VehiclesPage() {
                                     {label}
                                   </span>
                                   {detail && (
-                                    <span className="text-[11px] font-medium text-slate-600 max-w-[240px] truncate text-center" title={detail}>
+                                    <span className="text-[11px] font-medium text-slate-600 max-w-[240px] line-clamp-2 text-center leading-snug whitespace-normal" title={detail}>
                                       {detail}
                                     </span>
                                   )}
@@ -1736,7 +1736,7 @@ export default function VehiclesPage() {
                                 {label}
                               </span>
                               {dyn?.detailText && (
-                                <span className="text-[10px] text-slate-500 max-w-[130px] truncate text-right">
+                                <span className="text-[10px] text-slate-500 max-w-[150px] line-clamp-2 text-right leading-tight whitespace-normal">
                                   {dyn.detailText}
                                 </span>
                               )}
