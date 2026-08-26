@@ -388,33 +388,31 @@ export function NewOrderRealtimeNotifier() {
 
       const seenIds = getSeenIds()
       const brandNewOrders = unhandledOrders.filter((r) => !seenIds.has(r.id))
-      const shownToday = hasShownPopupToday()
 
-      // Quyết định có hiển thị popup hay không:
-      // 1. Khi người dùng tự bấm vào nút chuông (isManualOpen)
-      // 2. Khi có đơn MỚI TINH phát sinh vừa được đặt từ web (brandNewOrders.length > 0)
-      // 3. Khi đây là lần ĐẦU TIÊN trong ngày mở dashboard và có đơn web chờ xử lý (!shownToday)
-      const shouldOpenModal = isManualOpen || brandNewOrders.length > 0 || !shownToday
-
-      if (shouldOpenModal) {
-        const ordersToProcess = brandNewOrders.length > 0 ? brandNewOrders : unhandledOrders
-        for (let i = 0; i < ordersToProcess.length; i++) {
-          await processIncomingWebOrder(ordersToProcess[i], i === 0, true)
+      // Nếu có đơn mới phát sinh qua polling, phát chuông báo hiệu và lưu ID
+      if (brandNewOrders.length > 0 && !isManualOpen) {
+        if (soundEnabled) {
+          playNotificationChime()
         }
-      } else {
-        // Nếu đã hiển thị trong ngày rồi và không có đơn mới, chỉ lưu ID vào seenIds mà không bật popup làm phiền
-        for (const r of unhandledOrders) {
+        for (const r of brandNewOrders) {
           saveSeenId(r.id)
+        }
+      }
+
+      // CHỈ MỞ MODAL KHI NGƯỜI DÙNG CHỦ ĐỘNG BẤM VÀO THÔNG BÁO (isManualOpen === true)
+      if (isManualOpen) {
+        for (let i = 0; i < unhandledOrders.length; i++) {
+          await processIncomingWebOrder(unhandledOrders[i], false, true)
         }
       }
     } catch (err) {
       console.warn("Polling web orders error:", err)
     }
-  }, [processIncomingWebOrder])
+  }, [processIncomingWebOrder, soundEnabled])
 
   // Hook lắng nghe Realtime Broadcast & Postgres Changes & Polling
   useEffect(() => {
-    // 1. Khởi động: Kiểm tra lần đầu trong ngày
+    // 1. Khởi động: Kiểm tra số lượng đơn web pending
     syncPendingWebOrders(false)
 
     // 2. Kênh Realtime Broadcast từ Landing Page khi khách bấm đặt xe
@@ -422,8 +420,8 @@ export function NewOrderRealtimeNotifier() {
       .channel("realtime-order-notifications")
       .on("broadcast", { event: "new_order" }, (payload) => {
         if (payload?.payload && isWebBookingOrder(payload.payload.notes)) {
-          // Bắt buộc bật popup ngay khi có khách đặt mới
-          processIncomingWebOrder(payload.payload, true, true)
+          // Phát chuông và hiển thị thông báo, KHÔNG tự động mở popup
+          processIncomingWebOrder(payload.payload, true, false)
           syncPendingWebOrders(false)
         }
       })
@@ -437,8 +435,8 @@ export function NewOrderRealtimeNotifier() {
         { event: "INSERT", schema: "public", table: "rentals" },
         (payload) => {
           if (payload.new && isWebBookingOrder(payload.new.notes)) {
-            // Bắt buộc bật popup ngay khi có bản ghi đơn web mới
-            processIncomingWebOrder(payload.new, true, true)
+            // Phát chuông và hiển thị thông báo, KHÔNG tự động mở popup
+            processIncomingWebOrder(payload.new, true, false)
             syncPendingWebOrders(false)
           }
         }
@@ -739,7 +737,7 @@ export function NewOrderRealtimeNotifier() {
           <button
             type="button"
             onClick={() => syncPendingWebOrders(true)}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-900/95 hover:bg-slate-900 text-white font-semibold text-xs shadow-xl border border-slate-700 backdrop-blur-md transition-all hover:scale-105"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-900/95 hover:bg-slate-900 text-white font-semibold text-xs shadow-xl border border-slate-700 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
           >
             <div className="relative">
               <Bell className="w-4 h-4 text-amber-400" />
