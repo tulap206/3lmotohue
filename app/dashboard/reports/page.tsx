@@ -1335,8 +1335,10 @@ export default function ReportsPage() {
         // Operating profit before salaries (Gross Operating Profit)
         const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses
         
-        // Equal split estimation for shareholders (example: 3 partners)
-        const partnerShare = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 3) : 0
+        // Phân chia 2 cổ đông: Admin (50%) và Lộc A (50%)
+        const remainingToDistribute = reportData.totalProfit - dividendExpenses
+        const partnerShareTotal = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 2) : 0
+        const partnerShareRemaining = remainingToDistribute > 0 ? Math.floor(remainingToDistribute / 2) : 0
         
         return (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -1444,50 +1446,49 @@ export default function ReportsPage() {
                   Phân Chia Cổ Đông
                 </CardTitle>
                 <CardDescription className="text-meta text-slate-500">
-                  Bảng chia đề xuất theo lợi nhuận ròng tháng trước
+                  Bảng chia đề xuất 2 bên theo kết quả kỳ báo cáo
                 </CardDescription>
               </CardHeader>
               <CardContent className="text-meta text-slate-700 p-3 md:p-4 space-y-4">
                 <div className="bg-white rounded-xl p-3 border border-slate-200/60 shadow-sm space-y-1.5">
                   <div className="flex justify-between text-slate-500">
                     <span>Lợi nhuận ròng vận hành:</span>
-                    <span className="font-bold text-slate-700">{reportData.totalProfit.toLocaleString("vi-VN")}đ</span>
+                    <span className="font-bold text-slate-700">{reportData.totalProfit.toLocaleString("vi-VN")} đ</span>
                   </div>
                   <div className="flex justify-between text-slate-500">
                     <span>Đã chia trong kỳ:</span>
-                    <span className="font-bold text-slate-900 money">-{dividendExpenses.toLocaleString("vi-VN")}đ</span>
+                    <span className="font-bold text-slate-900 money">-{dividendExpenses.toLocaleString("vi-VN")} đ</span>
                   </div>
                   <div className="flex justify-between border-t border-slate-100 pt-1.5 font-semibold text-slate-800">
                     <span>Còn lại cần chia:</span>
-                    <span className={reportData.totalProfit - dividendExpenses >= 0 ? "text-emerald-600" : "text-rose-600"}>
-                      {(reportData.totalProfit - dividendExpenses).toLocaleString("vi-VN")}đ
+                    <span className={remainingToDistribute >= 0 ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>
+                      {remainingToDistribute.toLocaleString("vi-VN")} đ
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-2.5">
-                  <p className="font-semibold text-slate-600 text-meta">Phân chia theo tỷ lệ (Đề xuất 3 bên bằng nhau):</p>
+                  <p className="font-semibold text-slate-600 text-meta">Phân chia theo tỷ lệ (Đề xuất 2 bên 50% - 50%):</p>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
+                    <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200/60 shadow-xs">
                       <div>
-                        <p className="font-medium text-slate-800">Cổ đông Admin</p>
-                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
+                        <p className="font-semibold text-slate-800">Cổ đông Admin</p>
+                        <p className="text-xs text-slate-400">Tỷ lệ: 50% (LN ròng: {partnerShareTotal.toLocaleString("vi-VN")} đ)</p>
                       </div>
-                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">Còn lại</p>
+                        <p className="font-bold text-emerald-700 tabular-nums">{partnerShareRemaining.toLocaleString("vi-VN")} đ</p>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
+                    <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200/60 shadow-xs">
                       <div>
-                        <p className="font-medium text-slate-800">Cổ đông Lộc A</p>
-                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
+                        <p className="font-semibold text-slate-800">Cổ đông Lộc A</p>
+                        <p className="text-xs text-slate-400">Tỷ lệ: 50% (LN ròng: {partnerShareTotal.toLocaleString("vi-VN")} đ)</p>
                       </div>
-                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
-                    </div>
-                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/50">
-                      <div>
-                        <p className="font-medium text-slate-800">Cổ đông Lộc B</p>
-                        <p className="text-[10px] text-slate-400">Tỷ lệ: 33.33%</p>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">Còn lại</p>
+                        <p className="font-bold text-emerald-700 tabular-nums">{partnerShareRemaining.toLocaleString("vi-VN")} đ</p>
                       </div>
-                      <p className="font-bold text-slate-700 tabular-nums">{partnerShare.toLocaleString("vi-VN")}đ</p>
                     </div>
                   </div>
                 </div>
