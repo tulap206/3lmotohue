@@ -66,6 +66,7 @@ import {
 } from "@/lib/rental-term"
 import { FleetTimelineView } from "@/components/dashboard/fleet-timeline-view"
 import { TodayHandoverSchedule } from "@/components/dashboard/today-handover-schedule"
+import { QuickAssignVehiclePopover } from "@/components/dashboard/quick-assign-vehicle-popover"
 import {
   classifyVehiclesForTimeline,
   checkVehicleTimelineAvailability,
@@ -902,6 +903,50 @@ export default function OrdersPage() {
       setAssignVehicleSearch("")
     } else {
       updateOrderStatus(order.id, "active")
+    }
+  }
+
+  // Quick assign a single vehicle directly from popover
+  const handleQuickAssignVehicle = async (order: RentalOrder, selectedVehicle: Vehicle) => {
+    try {
+      const totalPrice = order.totalDays * selectedVehicle.pricePerDay
+
+      const { error } = await supabase
+        .from("rentals")
+        .update({
+          vehicleId: selectedVehicle.id,
+          vehicleName: selectedVehicle.name,
+          licensePlate: selectedVehicle.licensePlate,
+          pricePerDay: selectedVehicle.pricePerDay,
+          totalPrice,
+        })
+        .eq("id", order.id)
+
+      if (error) throw error
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? {
+                ...o,
+                vehicleId: selectedVehicle.id,
+                vehicleName: selectedVehicle.name,
+                licensePlate: selectedVehicle.licensePlate,
+                pricePerDay: selectedVehicle.pricePerDay,
+                totalPrice,
+              }
+            : o
+        )
+      )
+
+      if (user) {
+        logger.addRental(user.username, user.displayName, order.customerName, selectedVehicle.name)
+      }
+
+      showSuccess(`Đã gán xe ${selectedVehicle.name} (${selectedVehicle.licensePlate}) cho khách ${order.customerName}!`)
+    } catch (err: any) {
+      console.error("Error quick assigning vehicle:", err)
+      showError(`Lỗi khi gán xe: ${err.message || err}`)
     }
   }
 
@@ -2141,17 +2186,40 @@ export default function OrdersPage() {
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex flex-col gap-1.5">
-                                <button
-                                  className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left block"
-                                  onClick={() => openVehicleDetail(order.vehicleId)}
-                                >
-                                  {order.vehicleName}
-                                </button>
-                                <div>
-                                  <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
-                                    {order.licensePlate}
-                                  </span>
-                                </div>
+                                {isUnassignedVehicle(order) ? (
+                                  <>
+                                    <span className="font-bold text-amber-800 text-body block">
+                                      {order.vehicleName || "Chưa gán xe"}
+                                    </span>
+                                    <div>
+                                      <QuickAssignVehiclePopover
+                                        order={order}
+                                        vehicles={vehicles}
+                                        orders={orders}
+                                        onAssign={handleQuickAssignVehicle}
+                                        onOpenAssignModal={(targetOrder) => {
+                                          setAssigningOrder(targetOrder)
+                                          setSelectedVehiclesForAssignList([])
+                                          setAssignVehicleSearch("")
+                                        }}
+                                      />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left block"
+                                      onClick={() => openVehicleDetail(order.vehicleId)}
+                                    >
+                                      {order.vehicleName}
+                                    </button>
+                                    <div>
+                                      <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
+                                        {order.licensePlate}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             </td>
                             <td className="py-3.5 px-4 text-center text-sm font-semibold text-slate-700">
@@ -2232,10 +2300,29 @@ export default function OrdersPage() {
                             <p className="text-meta text-blue-600">(đặt từ Web)</p>
                           )}
                           <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                            <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
-                            <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase">
-                              {order.licensePlate}
-                            </span>
+                            {isUnassignedVehicle(order) ? (
+                              <>
+                                <span className="text-sm text-amber-800 font-medium">{order.vehicleName || "Chưa gán xe"}</span>
+                                <QuickAssignVehiclePopover
+                                  order={order}
+                                  vehicles={vehicles}
+                                  orders={orders}
+                                  onAssign={handleQuickAssignVehicle}
+                                  onOpenAssignModal={(targetOrder) => {
+                                    setAssigningOrder(targetOrder)
+                                    setSelectedVehiclesForAssignList([])
+                                    setAssignVehicleSearch("")
+                                  }}
+                                />
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
+                                <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase">
+                                  {order.licensePlate}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                         <span className={cn(orderStatusBadgeClass, "shrink-0", rentalOrderStatusBadgeClass(order.status, isOverdue))}>

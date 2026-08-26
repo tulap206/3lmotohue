@@ -217,10 +217,16 @@ export function TodayHandoverSchedule({
                               <span className="font-medium text-slate-800 truncate">{order.vehicleName}</span>
                             </div>
                             {order.licensePlate && (
-                              <span className={cn(
-                                "font-mono font-bold px-1.5 py-0.2 rounded text-[11px] shrink-0",
-                                isUnassigned ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-blue-50 text-blue-700 border border-blue-100"
-                              )}>
+                              <span
+                                onClick={() => isUnassigned && onDeliverOrder?.(order)}
+                                className={cn(
+                                  "font-mono font-bold px-1.5 py-0.2 rounded text-[11px] shrink-0",
+                                  isUnassigned
+                                    ? "bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 cursor-pointer shadow-2xs transition-colors"
+                                    : "bg-blue-50 text-blue-700 border border-blue-100"
+                                )}
+                                title={isUnassigned ? "Nhấn để gán xe" : undefined}
+                              >
                                 {order.licensePlate}
                               </span>
                             )}
