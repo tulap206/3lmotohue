@@ -371,23 +371,16 @@ export function NewOrderRealtimeNotifier() {
 
       if (error || !pendingRentals) return
 
-      // CHỈ LẤY ĐƠN ĐẶT TỪ WEB
+      // CHỈ LẤY ĐƠN ĐẶT TỪ WEB VÀ ĐANG Ở TRẠNG THÁI PENDING
       const webRentals = pendingRentals.filter((r) => isWebBookingOrder(r.notes))
 
-      const ackIds = getAcknowledgedIds()
-      const unhandledOrders = webRentals.filter((r) => {
-        if (ackIds.has(r.id)) return false
-        const snoozedUntil = snoozeMapRef.current.get(r.id)
-        if (snoozedUntil && Date.now() < snoozedUntil) return false
-        return true
-      })
+      // Luôn phản ánh đúng số lượng đơn web pending thực tế trên hệ thống cho mọi tài khoản
+      setPendingWebCount(webRentals.length)
 
-      setPendingWebCount(unhandledOrders.length)
-
-      if (unhandledOrders.length === 0) return
+      if (webRentals.length === 0) return
 
       const seenIds = getSeenIds()
-      const brandNewOrders = unhandledOrders.filter((r) => !seenIds.has(r.id))
+      const brandNewOrders = webRentals.filter((r) => !seenIds.has(r.id))
 
       // Nếu có đơn mới phát sinh qua polling, phát chuông báo hiệu và lưu ID
       if (brandNewOrders.length > 0 && !isManualOpen) {
@@ -401,8 +394,8 @@ export function NewOrderRealtimeNotifier() {
 
       // CHỈ MỞ MODAL KHI NGƯỜI DÙNG CHỦ ĐỘNG BẤM VÀO THÔNG BÁO (isManualOpen === true)
       if (isManualOpen) {
-        for (let i = 0; i < unhandledOrders.length; i++) {
-          await processIncomingWebOrder(unhandledOrders[i], false, true)
+        for (let i = 0; i < webRentals.length; i++) {
+          await processIncomingWebOrder(webRentals[i], false, true)
         }
       }
     } catch (err) {
