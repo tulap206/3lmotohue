@@ -124,12 +124,21 @@ func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
 }
 
 func ensureFindMyRunning() -> NSRunningApplication? {
+    let openProc = Process()
+    openProc.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+    openProc.arguments = ["-b", "com.apple.findmy"]
+    try? openProc.run()
+    openProc.waitUntilExit()
+
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-    process.arguments = ["-e", "tell application \"FindMy\" to activate", "-e", "tell application \"FindMy\" to reopen"]
+    process.arguments = [
+        "-e", "tell application id \"com.apple.findmy\" to activate",
+        "-e", "tell application id \"com.apple.findmy\" to reopen"
+    ]
     try? process.run()
     process.waitUntilExit()
-    Thread.sleep(forTimeInterval: 1.5)
+    Thread.sleep(forTimeInterval: 2.0)
 
     let apps = NSWorkspace.shared.runningApplications
     return apps.first(where: { $0.bundleIdentifier == "com.apple.findmy" })
@@ -185,7 +194,7 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         logMsg("⚠️ Cửa sổ FindMy chưa sẵn sàng, đang mở lại cửa sổ...")
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        p.arguments = ["-e", "tell application \"FindMy\" to activate", "-e", "tell application \"FindMy\" to reopen"]
+        p.arguments = ["-e", "tell application id \"com.apple.findmy\" to activate", "-e", "tell application id \"com.apple.findmy\" to reopen"]
         try? p.run()
         p.waitUntilExit()
         Thread.sleep(forTimeInterval: 2.0)

@@ -454,7 +454,7 @@ export default function VehiclesPage() {
       // 1. Thử kích hoạt chạy script đồng bộ trực tiếp trên máy Mac (nếu local bridge đang bật)
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 25000)
+        const timeoutId = setTimeout(() => controller.abort(), 45000)
         const res = await fetch("http://localhost:3333/api/sync", {
           method: "POST",
           signal: controller.signal,
@@ -464,7 +464,7 @@ export default function VehiclesPage() {
         if (res.ok) {
           const data = await res.json()
           bridgeSucceeded = true
-          syncResultMsg = data.message || "Đã đồng bộ vị trí xe từ Mac thành công!"
+          syncResultMsg = data.message || "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
         }
       } catch (bridgeErr) {
         console.log("Mac local bridge chưa bật hoặc đang kết nối từ xa:", bridgeErr)
@@ -481,9 +481,9 @@ export default function VehiclesPage() {
       } else if (freshVehicles) {
         setVehicles(freshVehicles)
         if (bridgeSucceeded) {
-          showSuccess(`🎉 ${syncResultMsg} (Đã cập nhật danh sách)`)
+          showSuccess(`🎉 ${syncResultMsg} (Đã cập nhật danh sách vị trí mới nhất)`)
         } else {
-          showWarning("⚡ Find My Bridge trên máy Mac chưa bật (http://localhost:3333). Hệ thống đã làm mới dữ liệu vị trí đã lưu trên Cloud!")
+          showWarning("⚡ Mac Bridge chưa bật (http://localhost:3333). Hệ thống đã làm mới dữ liệu vị trí đã lưu trên Cloud!")
         }
       }
     } catch (err: any) {
@@ -1113,10 +1113,10 @@ export default function VehiclesPage() {
               className="border-blue-200 text-blue-700 hover:bg-blue-50 bg-white rounded-[var(--radius-control)] h-11 font-semibold text-body transition-colors"
               onClick={handleSyncLiveLocations}
               disabled={isSyncingLocations}
-              title="Bấm để đồng bộ dữ liệu vị trí xe mới nhất"
+              title="Bấm để mở Tìm (Find My) trên Mac và đồng bộ vị trí xe mới nhất"
             >
               <RefreshCw className={cn("w-4 h-4 mr-2 text-blue-600", isSyncingLocations && "animate-spin")} />
-              {isSyncingLocations ? "Đang đồng bộ..." : "Cập nhật vị trí"}
+              {isSyncingLocations ? "Đang mở Tìm & cập nhật..." : "Cập nhật vị trí"}
             </Button>
             <Button
               className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"

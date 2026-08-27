@@ -44,23 +44,32 @@ class MacSyncBridgeHandler(BaseHTTPRequestHandler):
         method_used = ""
         
         try:
-            # Ưu tiên 1: Chạy sync_from_findmy_ui.py nếu có (đọc UI FindMy trực tiếp trên Mac)
-            if SYNC_UI_SCRIPT.exists():
+            # Ưu tiên 1: Chạy native binary sync_findmy_live nếu có (đọc trực tiếp Find My UI qua macOS Accessibility)
+            if SYNC_BINARY_PATH.exists() and os.access(SYNC_BINARY_PATH, os.X_OK):
+                method_used = "sync_findmy_live"
+                print(f"🚀 Đang chạy binary: {SYNC_BINARY_PATH} ...")
+                res = subprocess.run([str(SYNC_BINARY_PATH)], capture_output=True, text=True, timeout=40)
+                output = (res.stdout or "") + "\n" + (res.stderr or "")
+                success = (res.returncode == 0)
+
+            # Ưu tiên 2: Chạy sync_findmy_live.swift qua swift runner
+            elif (WORKSPACE_DIR / "sync_findmy_live.swift").exists():
+                method_used = "sync_findmy_live.swift"
+                swift_file = str(WORKSPACE_DIR / "sync_findmy_live.swift")
+                print(f"🚀 Đang chạy: swift {swift_file} ...")
+                res = subprocess.run(["swift", swift_file], capture_output=True, text=True, timeout=45)
+                output = (res.stdout or "") + "\n" + (res.stderr or "")
+                success = (res.returncode == 0)
+
+            # Ưu tiên 3: Chạy sync_from_findmy_ui.py nếu có
+            elif SYNC_UI_SCRIPT.exists():
                 method_used = "sync_from_findmy_ui.py"
                 print(f"🚀 Đang chạy: python3 {SYNC_UI_SCRIPT} ...")
                 res = subprocess.run([sys.executable, str(SYNC_UI_SCRIPT)], capture_output=True, text=True, timeout=40)
                 output = (res.stdout or "") + "\n" + (res.stderr or "")
                 success = (res.returncode == 0)
-            
-            # Ưu tiên 2: Chạy native binary nếu có
-            elif SYNC_BINARY_PATH.exists() and os.access(SYNC_BINARY_PATH, os.X_OK):
-                method_used = "sync_findmy_live"
-                print(f"🚀 Đang chạy binary: {SYNC_BINARY_PATH} ...")
-                res = subprocess.run([str(SYNC_BINARY_PATH)], capture_output=True, text=True, timeout=30)
-                output = (res.stdout or "") + "\n" + (res.stderr or "")
-                success = (res.returncode == 0)
 
-            # Ưu tiên 3: Chạy sync_auto_findmy.py
+            # Ưu tiên 4: Chạy sync_auto_findmy.py
             elif SYNC_AUTO_SCRIPT.exists():
                 method_used = "sync_auto_findmy.py"
                 print(f"🚀 Đang chạy: python3 {SYNC_AUTO_SCRIPT} ...")
@@ -68,7 +77,7 @@ class MacSyncBridgeHandler(BaseHTTPRequestHandler):
                 output = (res.stdout or "") + "\n" + (res.stderr or "")
                 success = (res.returncode == 0)
             else:
-                raise FileNotFoundError("Không tìm thấy script đồng bộ nào (sync_from_findmy_ui.py / sync_findmy_live / sync_auto_findmy.py)")
+                raise FileNotFoundError("Không tìm thấy script đồng bộ nào (sync_findmy_live / sync_from_findmy_ui.py)")
 
             print("📝 Kết quả:\n", output.strip())
             
