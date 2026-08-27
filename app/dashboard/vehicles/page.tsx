@@ -451,26 +451,61 @@ export default function VehiclesPage() {
       let bridgeSucceeded = false
       let syncResultMsg = ""
 
-      // 1. Thử kích hoạt chạy script đồng bộ trực tiếp trên máy Mac (nếu local bridge đang bật)
+      // 1. Kích hoạt đồng bộ qua Cloud Trigger API (Hỗ trợ HTTPS 3lmotohue.com mà không bị chặn Mixed Content)
       try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 45000)
-        const res = await fetch("http://localhost:3333/api/sync", {
+        const triggerRes = await fetch("/api/vehicles/sync-trigger", {
           method: "POST",
-          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "request" }),
         })
-        clearTimeout(timeoutId)
 
-        if (res.ok) {
-          const data = await res.json()
-          bridgeSucceeded = true
-          syncResultMsg = data.message || "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
+        if (triggerRes.ok) {
+          const triggerData = await triggerRes.json()
+          const requestId = triggerData.requestId
+
+          if (requestId) {
+            // Chờ Mac Bridge nhận lệnh, mở Tìm và gửi kết quả về (Polling tối đa 30s)
+            const startTime = Date.now()
+            while (Date.now() - startTime < 30000) {
+              await new Promise((r) => setTimeout(r, 1500))
+              const statusRes = await fetch(`/api/vehicles/sync-trigger?action=status&requestId=${requestId}`)
+              if (statusRes.ok) {
+                const statusData = await statusRes.json()
+                if (statusData.status === "completed") {
+                  bridgeSucceeded = true
+                  syncResultMsg = "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
+                  break
+                } else if (statusData.status === "failed") {
+                  break
+                }
+              }
+            }
+          }
         }
-      } catch (bridgeErr) {
-        console.log("Mac local bridge chưa bật hoặc đang kết nối từ xa:", bridgeErr)
+      } catch (cloudErr) {
+        console.log("Cloud trigger error:", cloudErr)
       }
 
-      // 2. Tải lại danh sách xe mới nhất từ CSDL Supabase
+      // 2. Dự phòng: Thử trực tiếp localhost:3333 nếu đang chạy trên localhost
+      if (!bridgeSucceeded && typeof window !== "undefined" && window.location.hostname === "localhost") {
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 15000)
+          const res = await fetch("http://localhost:3333/api/sync", {
+            method: "POST",
+            signal: controller.signal,
+          })
+          clearTimeout(timeoutId)
+
+          if (res.ok) {
+            const data = await res.json()
+            bridgeSucceeded = true
+            syncResultMsg = data.message || "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
+          }
+        } catch (_) {}
+      }
+
+      // 3. Tải lại danh sách xe mới nhất từ CSDL Supabase
       const { data: freshVehicles, error } = await supabase
         .from("vehicles")
         .select("*")
@@ -483,7 +518,7 @@ export default function VehiclesPage() {
         if (bridgeSucceeded) {
           showSuccess(`🎉 ${syncResultMsg} (Đã cập nhật danh sách vị trí mới nhất)`)
         } else {
-          showWarning("⚡ Mac Bridge chưa bật (http://localhost:3333). Hệ thống đã làm mới dữ liệu vị trí đã lưu trên Cloud!")
+          showWarning("⚡ Chưa kết nối được với Mac Bridge (hoặc máy Mac chưa mở Bridge). Hệ thống đã làm mới dữ liệu vị trí đã lưu trên Cloud!")
         }
       }
     } catch (err: any) {
