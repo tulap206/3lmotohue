@@ -56,7 +56,7 @@ import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCa
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { Textarea } from "@/components/ui/textarea"
 import { buildRentalTermPayload } from "@/lib/rental-term"
-import { extractRentalTimes, embedRentalTimes } from "@/lib/vehicle-timeline"
+import { checkVehicleTimelineAvailability, extractRentalTimes, embedRentalTimes } from "@/lib/vehicle-timeline"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
 
@@ -301,6 +301,37 @@ export default function DashboardPage() {
     let customerName = ""
 
     try {
+      if (!isUnassigned) {
+        const { data: latestOrders, error: latestOrdersError } = await supabase
+          .from('rentals')
+          .select('*')
+
+        if (latestOrdersError) {
+          alert(`❌ Không thể kiểm tra lịch xe: ${latestOrdersError.message}`)
+          return
+        }
+
+        const unavailable = selectedVehicles
+          .map((vehicle) => ({
+            vehicle,
+            status: checkVehicleTimelineAvailability(
+              vehicle as any,
+              formData.startDate,
+              formData.endDate,
+              latestOrders || [],
+              undefined,
+              formData.pickupTime || "08:00",
+              formData.returnTime || "12:00"
+            ),
+          }))
+          .find(({ status }) => !status.isAvailable)
+
+        if (unavailable) {
+          alert(`⚠️ Xe ${unavailable.vehicle.name} không khả dụng: ${unavailable.status.reason || unavailable.status.badgeLabel}`)
+          return
+        }
+      }
+
       if (isNewCustomer) {
         if (!newCustomerName.trim()) {
           alert("⚠️ Vui lòng nhập tên khách hàng!")
