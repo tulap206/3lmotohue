@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 
 # ─── CẤU HÌNH ────────────────────────────────────────────────────────────────
 API_URL     = "https://3lmotohue.com/api/vehicles/location-sync"
-SYNC_SECRET = "3lmotohue-sync-secret-2026"
+SYNC_SECRET = os.environ.get("LOCATION_SYNC_SECRET", "").strip()
 
 # Ánh xạ tên thẻ → biển số (tên trong FindMy app)
 NAME_TO_PLATE = {
@@ -206,7 +206,7 @@ def parse_items(texts: list[str]) -> list[dict]:
 def geocode_address(address: str) -> tuple[float, float] | None:
     """Geocode địa chỉ sang tọa độ GPS dùng Nominatim hoặc từ điển Huế."""
     if not address or address == "TP. Huế":
-        return 16.463713, 107.590866
+        return None
     
     # Context Thừa Thiên Huế
     clean_addr = address.replace("Thành Phố Huế", "TP Huế").replace("Thừa Thiên Huế", "")
@@ -228,10 +228,13 @@ def geocode_address(address: str) -> tuple[float, float] | None:
     except Exception as e:
         print(f"  ⚠️ Geocode lỗi cho '{address}': {e}")
     
-    # Fallback to central Hue if failed
-    return 16.463713, 107.590866
+    return None
 
 def push_to_api(items: list[dict]) -> bool:
+    if not SYNC_SECRET:
+        print("❌ Thiếu LOCATION_SYNC_SECRET. Không gửi dữ liệu vị trí khi chưa cấu hình mật mã riêng.")
+        return False
+
     body = json.dumps(items).encode("utf-8")
     req  = urllib.request.Request(
         API_URL, data=body,

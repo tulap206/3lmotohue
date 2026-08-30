@@ -4,7 +4,7 @@ import Foundation
 
 // ─── CẤU HÌNH API & SECRET ───────────────────────────────────────────────────
 let API_URL = "https://3lmotohue.com/api/vehicles/location-sync"
-let SYNC_SECRET = "3lmotohue-sync-secret-2026"
+let SYNC_SECRET = ProcessInfo.processInfo.environment["LOCATION_SYNC_SECRET"]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 let LOG_FILE = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("findmy-sync-service/sync.log")
 
 func logMsg(_ msg: String) {
@@ -82,7 +82,7 @@ let KNOWN_LAST_AREAS: [String: String] = [
     "59A3-012.37": "Nguyễn Trãi, P. Phú Xuân"
 ]
 
-func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
+func geocodeAddress(_ address: String) -> (lat: Double, lng: Double)? {
     let lower = address.lowercased()
     
     // 1. Khớp từ điển địa danh Huế chính xác nhất
@@ -120,7 +120,7 @@ func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
         }
     }
     
-    return (16.4637, 107.5908) // Trung tâm TP. Huế
+    return nil
 }
 
 func ensureFindMyRunning() -> NSRunningApplication? {
@@ -378,11 +378,19 @@ func sendPayloadToWebsite(reports: [ParsedVehicle]) {
         logMsg("⚠️ Không có xe nào để cập nhật.")
         return
     }
+
+    guard !SYNC_SECRET.isEmpty else {
+        logMsg("❌ Thiếu LOCATION_SYNC_SECRET. Không gửi dữ liệu vị trí khi chưa cấu hình mật mã riêng.")
+        return
+    }
     
     var payload: [[String: Any]] = []
     
     for r in reports {
-        let coords = geocodeAddress(r.address)
+        guard let coords = geocodeAddress(r.address) else {
+            logMsg("⚠️ Bỏ qua [\(r.licensePlate)] vì không xác định được tọa độ thật cho '\(r.address)'")
+            continue
+        }
         logMsg("🚗 Khớp biển số [\(r.licensePlate)] ➜ '\(r.address)' (Tọa độ: \(coords.lat), \(coords.lng)) • Lần cuối: \(r.timestamp)")
         
         payload.append([
@@ -392,6 +400,11 @@ func sendPayloadToWebsite(reports: [ParsedVehicle]) {
             "address": r.address,
             "timestamp": r.timestamp
         ])
+    }
+
+    guard !payload.isEmpty else {
+        logMsg("⚠️ Không có tọa độ hợp lệ để gửi lên Website.")
+        return
     }
     
     guard let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []) else {

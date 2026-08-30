@@ -5,8 +5,41 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Endpoint secret token for security
-const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
+function getSyncSecret() {
+  return process.env.LOCATION_SYNC_SECRET?.trim() || ""
+}
+
+function checkSyncAuth(req: Request) {
+  const syncSecret = getSyncSecret()
+  if (!syncSecret) {
+    return NextResponse.json({ error: "LOCATION_SYNC_SECRET is not configured" }, { status: 503 })
+  }
+
+  const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
+  if (authHeader !== `Bearer ${syncSecret}` && authHeader !== syncSecret) {
+    return NextResponse.json({ error: "Unauthorized invalid sync secret token" }, { status: 401 })
+  }
+
+  return null
+}
+
+function normalizePlate(plate?: string) {
+  return String(plate || "").toLowerCase().replace(/[^a-z0-9]/g, "")
+}
+
+function parseCoordinate(value: unknown) {
+  if (value == null) return undefined
+  if (typeof value === "string" && !value.trim()) return undefined
+  if (typeof value !== "number" && typeof value !== "string") return undefined
+  const n = typeof value === "number" ? value : Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function normalizeTimestamp(value: unknown) {
+  if (typeof value !== "string" || !value.trim()) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date.toISOString()
+}
 
 function extractVehicleLocation(notes?: string) {
   if (!notes) return { location: "", cleanNotes: "", updatedAt: "", lat: undefined as number | undefined, lng: undefined as number | undefined }
@@ -35,10 +68,10 @@ function extractVehicleLocation(notes?: string) {
 
 function isNewerTimestamp(incomingTs?: string, existingTs?: string): boolean {
   if (!existingTs) return true
-  if (!incomingTs) return true
+  if (!incomingTs) return false
   const incomingDate = new Date(incomingTs)
   const existingDate = new Date(existingTs)
-  if (isNaN(incomingDate.getTime())) return true
+  if (isNaN(incomingDate.getTime())) return false
   if (isNaN(existingDate.getTime())) return true
   return incomingDate.getTime() > existingDate.getTime()
 }
@@ -83,10 +116,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
-    if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
-      return NextResponse.json({ error: "Unauthorized invalid sync secret token" }, { status: 401 })
-    }
+    const authError = checkSyncAuth(req)
+    if (authError) return authError
 
     const body = await req.json()
     const items = Array.isArray(body) ? body : [body]
@@ -100,19 +131,30 @@ export async function POST(req: Request) {
     const latestItemsByVehicleId = new Map<string, any>()
 
     for (const item of items) {
-      const { vehicleId, licensePlate, lat, lng, timestamp = new Date().toISOString(), force = false } = item
-      if (!lat && !lng && !item.address) continue
+      const { vehicleId, licensePlate, force = false } = item
+      const lat = parseCoordinate(item.lat)
+      const lng = parseCoordinate(item.lng)
+      const timestamp = normalizeTimestamp(item.timestamp)
+      if (!timestamp) {
+        results.push({ item, status: "invalid_timestamp" })
+        continue
+      }
+      if (lat === undefined || lng === undefined) {
+        results.push({ item, status: "invalid_coordinates" })
+        continue
+      }
 
-      const targetPlate = licensePlate ? String(licensePlate).toLowerCase().replace(/[^a-z0-9]/g, '') : ""
+      const targetPlate = normalizePlate(licensePlate)
       
-      const vehicle = vehicles.find((v) => {
-        if (vehicleId && v.id === vehicleId) return true
-        if (targetPlate) {
-          const vPlate = String(v.licensePlate || "").toLowerCase().replace(/[^a-z0-9]/g, '')
-          return vPlate === targetPlate || vPlate.includes(targetPlate) || targetPlate.includes(vPlate)
+      let vehicle = vehicleId ? vehicles.find((v) => v.id === vehicleId) : undefined
+      if (!vehicle && targetPlate) {
+        const exactMatches = vehicles.filter((v) => normalizePlate(v.licensePlate) === targetPlate)
+        if (exactMatches.length > 1) {
+          results.push({ item, status: "ambiguous_license_plate" })
+          continue
         }
-        return false
-      })
+        vehicle = exactMatches[0]
+      }
 
       if (!vehicle) {
         results.push({ item, status: "not_found" })
@@ -121,11 +163,11 @@ export async function POST(req: Request) {
 
       const existingCandidate = latestItemsByVehicleId.get(vehicle.id)
       if (force || !existingCandidate || isNewerTimestamp(timestamp, existingCandidate.timestamp)) {
-        latestItemsByVehicleId.set(vehicle.id, { ...item, timestamp, force, vehicle })
+        latestItemsByVehicleId.set(vehicle.id, { ...item, lat, lng, timestamp, force, vehicle })
       }
     }
 
-    for (const [vId, candidate] of latestItemsByVehicleId.entries()) {
+    for (const candidate of latestItemsByVehicleId.values()) {
       const vehicle = candidate.vehicle
       const { lat, lng, address = "", timestamp, force = false } = candidate
       const existingLoc = extractVehicleLocation(vehicle.notes)
@@ -137,10 +179,8 @@ export async function POST(req: Request) {
       }
 
       const cleanNotes = existingLoc.cleanNotes
-      const safeLat = typeof lat === 'number' ? lat : (existingLoc.lat || 16.4637)
-      const safeLng = typeof lng === 'number' ? lng : (existingLoc.lng || 107.5908)
-      const locAddress = await getDetailedReverseGeocode(safeLat, safeLng, address)
-      const formattedLoc = `${safeLat},${safeLng}|${locAddress}|${timestamp}`
+      const locAddress = await getDetailedReverseGeocode(lat, lng, address)
+      const formattedLoc = `${lat},${lng}|${locAddress}|${timestamp}`
       const newNotes = cleanNotes ? `${cleanNotes}\n[location:${formattedLoc}]` : `[location:${formattedLoc}]`
 
       const { error: updateErr } = await supabase

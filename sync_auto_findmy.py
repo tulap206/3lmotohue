@@ -20,7 +20,7 @@ import findmy.reports as reports_mod
 
 # ─── CẤU HÌNH ────────────────────────────────────────────────────────────────
 API_URL         = "https://3lmotohue.com/api/vehicles/location-sync"
-SYNC_SECRET     = "3lmotohue-sync-secret-2026"
+SYNC_SECRET     = os.environ.get("LOCATION_SYNC_SECRET", "").strip()
 ACCOUNT_FILE    = Path.home() / "findmy-sync-service" / "apple_account.json"
 LOG_FILE        = Path.home() / "findmy-sync-service" / "sync.log"
 
@@ -192,6 +192,10 @@ async def do_login(account: AsyncAppleAccount):
 
 # ─── GỬI DỮ LIỆU LÊN API ─────────────────────────────────────────────────────
 def push_to_api(items: list[dict]) -> bool:
+    if not SYNC_SECRET:
+        log("❌ Thiếu LOCATION_SYNC_SECRET. Không gửi dữ liệu vị trí khi chưa cấu hình mật mã riêng.")
+        return False
+
     req = urllib.request.Request(
         API_URL,
         data=json.dumps(items).encode("utf-8"),

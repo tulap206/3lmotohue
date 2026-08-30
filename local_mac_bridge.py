@@ -17,7 +17,7 @@ SYNC_UI_SCRIPT = WORKSPACE_DIR / "sync_from_findmy_ui.py"
 SYNC_AUTO_SCRIPT = WORKSPACE_DIR / "sync_auto_findmy.py"
 
 API_BASE_URL = "https://3lmotohue.com/api/vehicles/sync-trigger"
-SYNC_SECRET = "3lmotohue-sync-secret-2026"
+SYNC_SECRET = os.environ.get("LOCATION_SYNC_SECRET", "").strip()
 
 def execute_mac_sync() -> tuple[bool, str, str]:
     """Kích hoạt mở Find My trên Mac và cào dữ liệu vị trí đẩy lên Cloud"""
@@ -111,6 +111,10 @@ class MacSyncBridgeHandler(BaseHTTPRequestHandler):
 
 def cloud_poller_worker():
     """Lắng nghe yêu cầu từ Website Cloud (https://3lmotohue.com) qua cơ chế Long-polling"""
+    if not SYNC_SECRET:
+        print("❌ [Cloud Poller] Thiếu LOCATION_SYNC_SECRET. Không lắng nghe Cloud khi chưa cấu hình mật mã riêng.")
+        return
+
     print("🌐 [Cloud Poller] Bắt đầu lắng nghe tín hiệu 'Cập nhật vị trí' từ 3lmotohue.com...")
     
     poll_url = f"{API_BASE_URL}?action=poll"
