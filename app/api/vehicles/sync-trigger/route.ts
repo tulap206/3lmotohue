@@ -1,7 +1,31 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { verifyJWT } from "@/lib/auth-jwt"
 
-// Endpoint secret token for security
-const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
+function getSyncSecret() {
+  return process.env.LOCATION_SYNC_SECRET?.trim() || ""
+}
+
+function checkBridgeAuth(req: Request) {
+  const syncSecret = getSyncSecret()
+  if (!syncSecret) {
+    return NextResponse.json({ error: "LOCATION_SYNC_SECRET is not configured" }, { status: 503 })
+  }
+
+  const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
+  if (authHeader !== `Bearer ${syncSecret}` && authHeader !== syncSecret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  return null
+}
+
+async function hasDashboardSession(req: NextRequest) {
+  const token = req.cookies.get("3l_moto_session")?.value
+  if (!token) return false
+
+  const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "fallback-secret-key-3lmoto"
+  return !!(await verifyJWT(token, secret))
+}
 
 interface SyncRequest {
   id: string
@@ -32,13 +56,17 @@ function notifyWaiters() {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const action = searchParams.get("action")
   const requestId = searchParams.get("requestId")
 
   // 1. Kiểm tra trạng thái yêu cầu từ Frontend
   if (action === "status") {
+    if (!(await hasDashboardSession(req))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const current = globalThis.__globalSyncRequest
     if (!current || (requestId && current.id !== requestId)) {
       return NextResponse.json({ status: "not_found" })
@@ -53,10 +81,8 @@ export async function GET(req: Request) {
 
   // 2. Long-polling từ Mac Bridge
   if (action === "poll") {
-    const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
-    if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = checkBridgeAuth(req)
+    if (authError) return authError
 
     const current = globalThis.__globalSyncRequest
     const isRecent = current && current.status === "pending" && (Date.now() - current.requestedAt < 60000)
@@ -109,13 +135,17 @@ export async function GET(req: Request) {
   })
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}))
     const action = body.action || "request"
 
     // 1. Web client gửi yêu cầu kích hoạt đồng bộ
     if (action === "request") {
+      if (!(await hasDashboardSession(req))) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
+
       const newId = "req_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7)
       globalThis.__globalSyncRequest = {
         id: newId,
@@ -135,10 +165,8 @@ export async function POST(req: Request) {
 
     // 2. Mac bridge báo cáo hoàn tất
     if (action === "complete" || action === "fail") {
-      const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
-      if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      }
+      const authError = checkBridgeAuth(req)
+      if (authError) return authError
 
       const { requestId, result } = body
       if (globalThis.__globalSyncRequest && (!requestId || globalThis.__globalSyncRequest.id === requestId)) {

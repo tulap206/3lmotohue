@@ -1,13 +1,12 @@
 import os
 import glob
 import json
-import time
 import requests
 from pathlib import Path
 
 # API Endpoint & Secret
 API_URL = "https://3lmotohue.com/api/vehicles/location-sync"
-SYNC_SECRET = "3lmotohue-sync-secret-2026"
+SYNC_SECRET = os.environ.get("LOCATION_SYNC_SECRET", "").strip()
 
 ACCESSORIES_DIR = Path.home() / "findmy-sync-service" / "accessories"
 
@@ -26,6 +25,10 @@ VEHICLE_MAP = {
 }
 
 def sync_locations():
+    if not SYNC_SECRET:
+        print("❌ Thiếu LOCATION_SYNC_SECRET. Không gửi dữ liệu vị trí khi chưa cấu hình mật mã riêng.")
+        return
+
     json_files = sorted(glob.glob(str(ACCESSORIES_DIR / "*.json")))
     if not json_files:
         print("❌ Chưa tìm thấy tệp chìa khóa nào trong ~/findmy-sync-service/accessories/")
@@ -49,15 +52,21 @@ def sync_locations():
             identifier = data.get("identifier", "")
             license_plate = VEHICLE_MAP.get(identifier, data.get("name"))
             
-            # Read last location timestamp from JSON or current time
-            loc_time = data.get("last_location", {}).get("timestamp") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            location = data.get("last_location", {}) or {}
+            loc_time = location.get("timestamp")
+            lat = location.get("latitude")
+            lng = location.get("longitude")
+
+            if lat is None or lng is None or not loc_time:
+                print(f"⚠️ Bỏ qua {license_plate or identifier}: thiếu tọa độ hoặc thời gian vị trí thật")
+                continue
 
             if license_plate:
                 candidate = {
                     "licensePlate": license_plate,
-                    "lat": data.get("last_location", {}).get("latitude", 16.463713),
-                    "lng": data.get("last_location", {}).get("longitude", 107.590866),
-                    "address": data.get("last_location", {}).get("address", "TP. Huế"),
+                    "lat": lat,
+                    "lng": lng,
+                    "address": location.get("address", ""),
                     "timestamp": loc_time
                 }
                 
