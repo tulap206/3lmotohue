@@ -32,6 +32,7 @@ import { BlurFade } from "@/components/ui/blur-fade"
 import { Marquee } from "@/components/ui/marquee"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "motion/react"
+import { checkVehicleTimelineAvailability } from "@/lib/vehicle-timeline"
 
 const FLEET = [
   {
@@ -213,6 +214,41 @@ export default function LandingPage() {
     setSelectedVehicle(vehicle)
     setIsSubmitting(true)
     try {
+      const formatDateStr = (dateInput: string) => {
+        const d = new Date(dateInput)
+        const day = String(d.getDate()).padStart(2, "0")
+        const month = String(d.getMonth() + 1).padStart(2, "0")
+        const year = d.getFullYear()
+        return `${day}/${month}/${year}`
+      }
+
+      const formattedStart = formatDateStr(formData.startDate)
+      const formattedEnd = formatDateStr(formData.endDate)
+      const { data: latestRentals, error: latestRentalsError } = await supabase
+        .from("rentals")
+        .select("*")
+
+      if (latestRentalsError) {
+        setFormError("Không thể kiểm tra lịch xe lúc này. Vui lòng thử lại hoặc gọi hotline.")
+        return
+      }
+
+      const availability = checkVehicleTimelineAvailability(
+        vehicle,
+        formattedStart,
+        formattedEnd,
+        latestRentals || [],
+        undefined,
+        "13:00",
+        "12:00"
+      )
+
+      if (!availability.isAvailable) {
+        setFormError(`Xe ${vehicle.name} vừa có lịch đặt khác. Vui lòng chọn xe khác hoặc gọi hotline.`)
+        setIsModalOpen(false)
+        return
+      }
+
       const customersList = await fetchCustomers()
       let customer = customersList.find((c: any) => c.phone === formData.phone)
       let customerId = ""
@@ -237,16 +273,6 @@ export default function LandingPage() {
         customerId = newCustomer.id
       }
 
-      const formatDateStr = (dateInput: string) => {
-        const d = new Date(dateInput)
-        const day = String(d.getDate()).padStart(2, "0")
-        const month = String(d.getMonth() + 1).padStart(2, "0")
-        const year = d.getFullYear()
-        return `${day}/${month}/${year}`
-      }
-
-      const formattedStart = formatDateStr(formData.startDate)
-      const formattedEnd = formatDateStr(formData.endDate)
       const totalPrice = totalDays * vehicle.pricePerDay
 
       const newRental = await insertRental({

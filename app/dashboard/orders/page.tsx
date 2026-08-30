@@ -729,6 +729,37 @@ export default function OrdersPage() {
     let customerName = ""
 
     try {
+      if (!isUnassigned) {
+        const { data: latestOrders, error: latestOrdersError } = await supabase
+          .from('rentals')
+          .select('*')
+
+        if (latestOrdersError) {
+          showError(`Không thể kiểm tra lịch xe: ${latestOrdersError.message}`)
+          return
+        }
+
+        const unavailable = selectedVehicles
+          .map((vehicle) => ({
+            vehicle,
+            status: checkVehicleTimelineAvailability(
+              vehicle as any,
+              formData.startDate,
+              formData.endDate,
+              (latestOrders || []) as any,
+              undefined,
+              formData.pickupTime,
+              formData.returnTime
+            ),
+          }))
+          .find(({ status }) => !status.isAvailable)
+
+        if (unavailable) {
+          showWarning(`Xe ${unavailable.vehicle.name} không khả dụng: ${unavailable.status.reason || unavailable.status.badgeLabel}`)
+          return
+        }
+      }
+
       if (isNewCustomer) {
         if (!newCustomerName.trim()) {
           showWarning("Vui lòng nhập tên khách hàng!")
@@ -1011,6 +1042,40 @@ export default function OrdersPage() {
         isUnassignedVehicle(o)
       )
 
+      const { data: latestOrders, error: latestOrdersError } = await supabase
+        .from('rentals')
+        .select('*')
+
+      if (latestOrdersError) {
+        showError(`Không thể kiểm tra lịch xe: ${latestOrdersError.message}`)
+        return
+      }
+
+      const unavailable = selectedVehiclesForAssignList
+        .map((vehicle, index) => {
+          const targetOrder = customerPendingOrders[index] || assigningOrder
+          const times = extractRentalTimes(targetOrder.notes)
+          return {
+            vehicle,
+            targetOrder,
+            status: checkVehicleTimelineAvailability(
+              vehicle as any,
+              targetOrder.startDate,
+              targetOrder.endDate,
+              (latestOrders || []) as any,
+              targetOrder.id,
+              times.pickupTime,
+              times.returnTime
+            ),
+          }
+        })
+        .find(({ status }) => !status.isAvailable)
+
+      if (unavailable) {
+        showError(`Xe ${unavailable.vehicle.name} không khả dụng cho đơn ${unavailable.targetOrder.rentalCode || unavailable.targetOrder.id}: ${unavailable.status.reason || unavailable.status.badgeLabel}`)
+        return
+      }
+
       // Pair each selected vehicle with a pending order
       const updatePromises = selectedVehiclesForAssignList.map(async (v, index) => {
         const targetOrder = customerPendingOrders[index] || assigningOrder
@@ -1191,6 +1256,33 @@ export default function OrdersPage() {
       const termPayload = buildRentalTermPayload(editFormData.rentalTerm, notesWithTimes)
       const nextStatus: RentalOrder["status"] =
         isUnassigning && editFormData.status === "active" ? "pending" : editFormData.status
+
+      if (!isUnassigning && nextStatus !== "cancelled" && nextStatus !== "completed") {
+        const { data: latestOrders, error: latestOrdersError } = await supabase
+          .from('rentals')
+          .select('*')
+
+        if (latestOrdersError) {
+          showError(`Không thể kiểm tra lịch xe: ${latestOrdersError.message}`)
+          return
+        }
+
+        const availability = checkVehicleTimelineAvailability(
+          vehicle as any,
+          editFormData.startDate,
+          editFormData.endDate,
+          (latestOrders || []) as any,
+          editingOrder.id,
+          editFormData.pickupTime,
+          editFormData.returnTime
+        )
+
+        if (!availability.isAvailable) {
+          showWarning(`Xe ${vehicle.name} không khả dụng: ${availability.reason || availability.badgeLabel}`)
+          return
+        }
+      }
+
       const updatePayload: Record<string, unknown> = {
           customerId: customer.id,
           customerName: customer.name,

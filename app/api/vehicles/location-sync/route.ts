@@ -6,7 +6,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Endpoint secret token for security
-const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
+const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET?.trim() || ""
 
 function extractVehicleLocation(notes?: string) {
   if (!notes) return { location: "", cleanNotes: "", updatedAt: "", lat: undefined as number | undefined, lng: undefined as number | undefined }
@@ -84,6 +84,9 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
+    if (!SYNC_SECRET) {
+      return NextResponse.json({ error: "Location sync secret is not configured" }, { status: 503 })
+    }
     if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
       return NextResponse.json({ error: "Unauthorized invalid sync secret token" }, { status: 401 })
     }

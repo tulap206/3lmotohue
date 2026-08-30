@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server"
 
 // Endpoint secret token for security
-const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
+const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET?.trim() || ""
+
+function validateSyncSecret(req: Request) {
+  if (!SYNC_SECRET) {
+    return NextResponse.json({ error: "Location sync secret is not configured" }, { status: 503 })
+  }
+
+  const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
+  if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  return null
+}
 
 interface SyncRequest {
   id: string
@@ -53,10 +66,8 @@ export async function GET(req: Request) {
 
   // 2. Long-polling từ Mac Bridge
   if (action === "poll") {
-    const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
-    if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const denied = validateSyncSecret(req)
+    if (denied) return denied
 
     const current = globalThis.__globalSyncRequest
     const isRecent = current && current.status === "pending" && (Date.now() - current.requestedAt < 60000)
@@ -135,10 +146,8 @@ export async function POST(req: Request) {
 
     // 2. Mac bridge báo cáo hoàn tất
     if (action === "complete" || action === "fail") {
-      const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
-      if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      }
+      const denied = validateSyncSecret(req)
+      if (denied) return denied
 
       const { requestId, result } = body
       if (globalThis.__globalSyncRequest && (!requestId || globalThis.__globalSyncRequest.id === requestId)) {
