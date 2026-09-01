@@ -30,6 +30,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { fetchBookingLockStatus } from "@/lib/booking-lock"
+import { classifyVehiclesForTimeline, embedRentalTimes } from "@/lib/vehicle-timeline"
 import Image from "next/image"
 import Link from "next/link"
 import { BlurFade } from "@/components/ui/blur-fade"
@@ -117,6 +118,8 @@ export default function LandingPage() {
     address: "",
     startDate: "",
     endDate: "",
+    pickupTime: "08:00",
+    returnTime: "12:00",
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -185,6 +188,13 @@ export default function LandingPage() {
       return
     }
 
+    if (start.getTime() === end.getTime() && formData.pickupTime && formData.returnTime) {
+      if (formData.pickupTime >= formData.returnTime) {
+        setFormError("Nếu nhận và trả trong cùng một ngày, giờ trả xe phải sau giờ nhận xe.")
+        return
+      }
+    }
+
     setIsLoading(true)
     try {
       // Check if booking is locked by admin (e.g. holidays / fully booked)
@@ -201,26 +211,30 @@ export default function LandingPage() {
 
       const [vehicles, rentals] = await Promise.all([fetchVehicles(), fetchRentals()])
 
-      const conflictingVehicleIds = new Set(
-        rentals
-          .filter((rental: any) => {
-            if (rental.status === "cancelled" || rental.status === "completed") return false
+      // Đồng bộ 100% thuật toán kiểm tra khả dụng theo ngày + giờ chính xác với Admin
+      const formatDateStr = (dateInput: string) => {
+        const d = new Date(dateInput)
+        const day = String(d.getDate()).padStart(2, "0")
+        const month = String(d.getMonth() + 1).padStart(2, "0")
+        const year = d.getFullYear()
+        return `${day}/${month}/${year}`
+      }
 
-            const parseDate = (dStr: string) => {
-              const parts = dStr.split("/")
-              return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-            }
+      const formattedStart = formatDateStr(formData.startDate)
+      const formattedEnd = formatDateStr(formData.endDate)
 
-            const rStart = parseDate(rental.startDate)
-            const rEnd = parseDate(rental.endDate)
-
-            return !(end < rStart || start > rEnd)
-          })
-          .map((rental: any) => rental.vehicleId)
+      const classified = classifyVehiclesForTimeline(
+        vehicles || [],
+        formattedStart,
+        formattedEnd,
+        rentals || [],
+        undefined,
+        formData.pickupTime || "08:00",
+        formData.returnTime || "12:00"
       )
 
       const activeVehicles = (vehicles || []).filter((vehicle: any) => vehicle.status !== "maintenance")
-      const available = activeVehicles.filter((vehicle: any) => !conflictingVehicleIds.has(vehicle.id))
+      const available = classified.optimal.concat(classified.conditional).map((item) => item.vehicle)
       const rentedCount = activeVehicles.length - available.length
       const occupancy = activeVehicles.length > 0 ? Math.round((rentedCount / activeVehicles.length) * 100) : 0
 
@@ -294,7 +308,11 @@ export default function LandingPage() {
         totalPrice,
         deposit: 0,
         extraFees: 0,
-        notes: "[source:web] Khách đặt trực tuyến từ website",
+        notes: embedRentalTimes(
+          "[source:web] Khách đặt trực tuyến từ website",
+          formData.pickupTime || "08:00",
+          formData.returnTime || "12:00"
+        ),
         revenue: 0,
         status: "pending",
       })
@@ -616,37 +634,66 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="startDate" className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                        Ngày nhận xe *
+                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                    {/* Nhận xe */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                        Nhận xe (Ngày & Giờ) *
                       </Label>
-                      <div className="relative">
-                        <Calendar className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400" />
-                        <Input
-                          id="startDate"
-                          type="date"
-                          required
-                          className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
-                          value={formData.startDate}
-                          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                        />
+                      <div className="grid grid-cols-5 gap-2">
+                        <div className="relative col-span-3">
+                          <Calendar className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                          <Input
+                            id="startDate"
+                            type="date"
+                            required
+                            className="h-12 rounded-xl border-slate-200 bg-white pl-9 pr-2 text-xs sm:text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
+                            value={formData.startDate}
+                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                          />
+                        </div>
+                        <div className="relative col-span-2">
+                          <Clock className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-slate-400" />
+                          <Input
+                            id="pickupTime"
+                            type="time"
+                            required
+                            className="h-12 rounded-xl border-slate-200 bg-white pl-8 pr-1 text-xs sm:text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
+                            value={formData.pickupTime}
+                            onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className="min-w-0 space-y-1.5">
-                      <Label htmlFor="endDate" className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                        Ngày trả xe *
+
+                    {/* Trả xe */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                        Trả xe (Ngày & Giờ) *
                       </Label>
-                      <div className="relative">
-                        <Calendar className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400" />
-                        <Input
-                          id="endDate"
-                          type="date"
-                          required
-                          className="h-12 rounded-xl border-slate-200 bg-white pl-11 text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
-                          value={formData.endDate}
-                          onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                        />
+                      <div className="grid grid-cols-5 gap-2">
+                        <div className="relative col-span-3">
+                          <Calendar className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                          <Input
+                            id="endDate"
+                            type="date"
+                            required
+                            className="h-12 rounded-xl border-slate-200 bg-white pl-9 pr-2 text-xs sm:text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
+                            value={formData.endDate}
+                            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                          />
+                        </div>
+                        <div className="relative col-span-2">
+                          <Clock className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-slate-400" />
+                          <Input
+                            id="returnTime"
+                            type="time"
+                            required
+                            className="h-12 rounded-xl border-slate-200 bg-white pl-8 pr-1 text-xs sm:text-sm font-semibold text-slate-800 shadow-xs focus:border-blue-500 focus:ring-0 transition-all duration-200"
+                            value={formData.returnTime}
+                            onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1004,8 +1051,8 @@ export default function LandingPage() {
                 <div>
                   <h3 className="text-lg font-bold">Danh sách xe máy khả dụng</h3>
                   <p className="mt-1 text-xs text-slate-400">
-                    Thời gian: {new Date(formData.startDate).toLocaleDateString("vi-VN")} →{" "}
-                    {new Date(formData.endDate).toLocaleDateString("vi-VN")} ({totalDays} ngày)
+                    Thời gian: {new Date(formData.startDate).toLocaleDateString("vi-VN")} ({formData.pickupTime}) →{" "}
+                    {new Date(formData.endDate).toLocaleDateString("vi-VN")} ({formData.returnTime}) ({totalDays} ngày)
                   </p>
                 </div>
                 <button
