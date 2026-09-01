@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyJWT } from '@/lib/auth-jwt'
 import { hashPassword, generateSalt } from '@/lib/auth-crypto'
+import { getSessionSecret } from '@/lib/session-secret'
 
 // Helper to verify admin role
 async function verifyAdmin(request: NextRequest) {
   const token = request.cookies.get('3l_moto_session')?.value
   if (!token) return null
 
-  const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+  const secret = getSessionSecret()
+  if (!secret) return null
   const decoded = await verifyJWT(token, secret)
   
   if (!decoded || decoded.role !== 'admin') return null
@@ -19,7 +21,8 @@ async function verifyUserListViewer(request: NextRequest) {
   const token = request.cookies.get('3l_moto_session')?.value
   if (!token) return null
 
-  const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+  const secret = getSessionSecret()
+  if (!secret) return null
   const decoded = await verifyJWT(token, secret)
   if (!decoded) return null
   if (decoded.role === 'admin' || decoded.permissions?.canViewAccessHistory) return decoded

@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
 import { verifyJWT, signJWT } from "@/lib/auth-jwt"
 import { getUserAvatarPublicUrl, USER_AVATAR_BUCKET, userAvatarStoragePath } from "@/lib/user-avatar"
+import { getSessionSecret } from "@/lib/session-secret"
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
 const MAX_BYTES = 5 * 1024 * 1024
-
-function sessionSecret() {
-  return process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "fallback-secret-key-3lmoto"
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +14,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Chưa đăng nhập hoặc phiên hết hạn" }, { status: 401 })
     }
 
-    const decoded = await verifyJWT(token, sessionSecret())
+    const secret = getSessionSecret()
+    if (!secret) {
+      return NextResponse.json({ error: "Cấu hình phiên đăng nhập chưa sẵn sàng" }, { status: 500 })
+    }
+
+    const decoded = await verifyJWT(token, secret)
     if (!decoded?.id || !decoded?.username) {
       return NextResponse.json({ error: "Phiên đăng nhập không hợp lệ" }, { status: 401 })
     }
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const newToken = await signJWT(
       { ...userData, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 },
-      sessionSecret()
+      secret
     )
 
     const response = NextResponse.json({ success: true, user: userData })
