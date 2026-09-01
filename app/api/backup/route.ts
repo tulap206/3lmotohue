@@ -24,21 +24,24 @@ export async function GET(request: Request) {
     console.log("📦 [Auto-Backup] Starting daily backup...")
 
     // 2. Fetch all data from tables
-    const [customersRes, vehiclesRes, rentalsRes] = await Promise.all([
+    const [customersRes, vehiclesRes, rentalsRes, transactionsRes] = await Promise.all([
       supabase.from("customers").select("*"),
       supabase.from("vehicles").select("*"),
-      supabase.from("rentals").select("*")
+      supabase.from("rentals").select("*"),
+      supabase.from("transactions").select("*")
     ])
 
     if (customersRes.error) throw customersRes.error
     if (vehiclesRes.error) throw vehiclesRes.error
     if (rentalsRes.error) throw rentalsRes.error
+    if (transactionsRes.error) console.error("Transactions backup error:", transactionsRes.error)
 
     const backupData = {
       timestamp: new Date().toISOString(),
       customers: customersRes.data || [],
       vehicles: vehiclesRes.data || [],
       rentals: rentalsRes.data || [],
+      transactions: transactionsRes.data || [],
     }
 
     // 3. Upload to Supabase Storage
