@@ -2318,7 +2318,7 @@ export default function OrdersPage() {
                             ) : (
                               <>
                                 <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
-                                <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase">
+                                <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
                                   {order.licensePlate}
                                 </span>
                               </>

@@ -307,7 +307,12 @@ const historyTypeConfig: Record<HistoryType, { label: string; className: string;
 const vehicleActionBtnClass =
   "h-9 w-9 p-0 border-slate-200 rounded-[var(--radius-control)] hover:bg-slate-50 text-slate-500"
 const vehiclePlateClass =
-  "inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase"
+  "inline-flex items-center justify-center whitespace-nowrap bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-xs tracking-wider uppercase shrink-0 select-all"
+
+function formatLicensePlateDisplay(plate?: string) {
+  if (!plate) return "Chưa biển"
+  return plate.replace(/[\r\n\t]+/g, " ").trim()
+}
 const vehicleStatusBadgeClass =
   "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
 
@@ -1577,7 +1582,7 @@ export default function VehiclesPage() {
                                   {vehicle.name}
                                 </button>
                                 <div className="flex items-center gap-2">
-                                  <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
+                                  <span className={vehiclePlateClass}>{formatLicensePlateDisplay(vehicle.licensePlate)}</span>
                                 </div>
                                 <span className="text-xs font-bold text-rose-600 tabular-nums money">
                                   {formatPrice(vehicle.pricePerDay)}<span className="text-[11px] font-normal text-slate-500">/ngày</span>
@@ -1750,7 +1755,7 @@ export default function VehiclesPage() {
                             >
                               {vehicle.name}
                             </button>
-                            <span className={vehiclePlateClass}>{vehicle.licensePlate}</span>
+                            <span className={vehiclePlateClass}>{formatLicensePlateDisplay(vehicle.licensePlate)}</span>
                           </div>
                         </div>
                         {(() => {
