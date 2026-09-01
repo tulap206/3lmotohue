@@ -30,6 +30,7 @@ import {
   EntityFormField,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
+import { APP_BRAND_VERSION, APP_AUTHOR_SIGNATURE } from "@/lib/version"
 
 interface SidebarProps {
   children: React.ReactNode
@@ -245,6 +246,15 @@ export function DashboardSidebar({ children }: SidebarProps) {
           <LogOut className="w-5 h-5 shrink-0" />
           <span>Đăng xuất</span>
         </button>
+
+        <div className="pt-2.5 pb-1 border-t border-slate-800/60 text-center select-none">
+          <p className="text-[11px] font-semibold text-slate-400 tracking-wider">
+            {APP_BRAND_VERSION}
+          </p>
+          <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+            {APP_AUTHOR_SIGNATURE}
+          </p>
+        </div>
       </div>
     </>
   )
