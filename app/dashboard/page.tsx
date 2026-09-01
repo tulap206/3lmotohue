@@ -1991,81 +1991,109 @@ export default function DashboardPage() {
 
       {/* Booking Lock Confirmation Dialog */}
       <Dialog open={isLockModalOpen} onOpenChange={setIsLockModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white p-6 rounded-2xl">
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div
-                className={cn(
-                  "flex size-11 shrink-0 items-center justify-center rounded-xl",
-                  isBookingLocked ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
-                )}
-              >
-                {isBookingLocked ? <LockOpen className="size-6" /> : <Lock className="size-6" />}
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-bold text-slate-900">
-                  {isBookingLocked ? "Mở khóa đặt xe trực tuyến?" : "Khóa tính năng đặt xe trực tuyến?"}
-                </DialogTitle>
-                <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                  {isBookingLocked
-                    ? "Khách hàng trên Landing Page sẽ có thể tìm và đặt xe lại bình thường."
-                    : "Ngăn khách hàng gửi yêu cầu đặt xe từ website (áp dụng khi nghỉ lễ hoặc hết xe)."}
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
+        <EntityFormDialogContent
+          accent={isBookingLocked ? "emerald" : "red"}
+          maxWidth="md"
+        >
+          <EntityFormHeader
+            title={isBookingLocked ? "Mở khóa đặt xe trực tuyến?" : "Khóa tính năng đặt xe trực tuyến"}
+            description={
+              isBookingLocked
+                ? "Bật lại tính năng tìm & đặt xe cho khách hàng trên website."
+                : "Tạm ngưng nhận đơn đặt xe từ Landing Page (khi hết xe hoặc nghỉ lễ)."
+            }
+          />
 
-          <div className="space-y-4 my-2">
-            {!isBookingLocked ? (
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700">
-                  Lý do tạm ngưng (hiển thị khi khách bấm tìm xe):
-                </label>
-                <Input
-                  value={lockReason}
-                  onChange={(e) => setLockReason(e.target.value)}
-                  placeholder="Ví dụ: Hiện tại toàn bộ xe đã được đặt kín / Đang nghỉ lễ..."
-                  className="rounded-xl text-sm"
-                />
-                <p className="text-[11px] text-slate-400">
-                  Khách hàng khi nhập thông tin và bấm tìm xe sẽ nhận được popup thông báo lịch sự kèm hotline để liên hệ.
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 leading-relaxed">
-                Hệ thống sẽ kích hoạt lại bộ lọc tìm xe và cho phép khách hàng gửi đơn đặt xe trực tuyến ngay lập tức.
-              </div>
-            )}
-          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleToggleBookingLock()
+            }}
+          >
+            <EntityFormBody>
+              {!isBookingLocked ? (
+                <>
+                  {/* Status Card */}
+                  <div className="flex items-start gap-3 rounded-[var(--radius-control)] border border-rose-200 bg-rose-50/70 p-3.5">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                      <Lock className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-title text-rose-900 text-sm font-semibold">
+                        Sắp kích hoạt chế độ Tạm ngưng
+                      </p>
+                      <p className="text-meta text-rose-700 mt-0.5 text-xs leading-relaxed">
+                        Khách hàng bấm tìm xe trên website sẽ nhận được thông báo kèm Hotline & Zalo để hỗ trợ.
+                      </p>
+                    </div>
+                  </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsLockModalOpen(false)}
-              className="rounded-xl h-10 text-xs font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="button"
-              onClick={handleToggleBookingLock}
-              disabled={isLockSubmitting}
-              className={cn(
-                "rounded-xl h-10 px-5 text-xs font-bold text-white shadow-sm",
-                isBookingLocked
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-rose-600 hover:bg-rose-700"
+                  <EntityFormField
+                    label="Lý do tạm ngưng hiển thị cho khách"
+                    hint="Thông báo này sẽ xuất hiện trên popup khi khách tìm xe"
+                    required
+                  >
+                    <Input
+                      value={lockReason}
+                      onChange={(e) => setLockReason(e.target.value)}
+                      placeholder="Ví dụ: Hiện tại toàn bộ xe đã được đặt kín / Đang nghỉ lễ..."
+                      className={entityFormInputClass}
+                      autoFocus
+                    />
+                  </EntityFormField>
+
+                  {/* Quick Preset Tags */}
+                  <div className="space-y-1.5">
+                    <p className="text-meta text-xs text-slate-500 font-medium">Gợi ý lý do nhanh:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        "Hiện tại toàn bộ xe đã được đặt kín",
+                        "Cửa hàng tạm ngưng phục vụ đợt lễ",
+                        "Tạm ngưng nhận thêm đơn hôm nay",
+                      ].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setLockReason(preset)}
+                          className={cn(
+                            "text-xs px-2.5 py-1 rounded-[var(--radius-control)] border ui-transition",
+                            lockReason === preset
+                              ? "bg-rose-50 border-rose-300 text-rose-700 font-medium shadow-xs"
+                              : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                          )}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-start gap-3 rounded-[var(--radius-control)] border border-emerald-200 bg-emerald-50/80 p-3.5">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                    <LockOpen className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-title text-emerald-900 text-sm font-semibold">
+                      Sẵn sàng mở lại tính năng đặt xe
+                    </p>
+                    <p className="text-meta text-emerald-700 mt-0.5 text-xs leading-relaxed">
+                      Website sẽ kích hoạt lại bộ lọc tìm xe và cho phép khách hàng gửi đơn đặt xe trực tuyến bình thường ngay lập tức.
+                    </p>
+                  </div>
+                </div>
               )}
-            >
-              {isLockSubmitting
-                ? "Đang xử lý..."
-                : isBookingLocked
-                ? "Xác nhận Mở khóa"
-                : "Xác nhận Khóa đặt xe"}
-            </Button>
-          </div>
-        </DialogContent>
+
+              <EntityFormFooter
+                onCancel={() => setIsLockModalOpen(false)}
+                submitLabel={isBookingLocked ? "Xác nhận Mở khóa" : "Xác nhận Khóa đặt xe"}
+                cancelLabel="Hủy bỏ"
+                accent={isBookingLocked ? "emerald" : "red"}
+                loading={isLockSubmitting}
+              />
+            </EntityFormBody>
+          </form>
+        </EntityFormDialogContent>
       </Dialog>
     </ModulePageShell>
   )
