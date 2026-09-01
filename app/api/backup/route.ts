@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     if (customersRes.error) throw customersRes.error
     if (vehiclesRes.error) throw vehiclesRes.error
     if (rentalsRes.error) throw rentalsRes.error
-    if (transactionsRes.error) console.error("Transactions backup error:", transactionsRes.error)
+    if (transactionsRes.error) throw transactionsRes.error
 
     const backupData = {
       timestamp: new Date().toISOString(),
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
       displayName: "Tự động sao lưu",
       action: "Tự động sao lưu",
       module: "settings",
-      details: `Tự động sao lưu thành công: ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê`,
+      details: `Tự động sao lưu thành công: ${backupData.customers.length} khách, ${backupData.vehicles.length} xe, ${backupData.rentals.length} đơn thuê, ${backupData.transactions.length} giao dịch`,
       timestamp: new Date().toISOString()
     })
 
