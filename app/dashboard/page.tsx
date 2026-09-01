@@ -961,8 +961,7 @@ export default function DashboardPage() {
               className="col-span-2 md:col-span-1 bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
-              <span className="sm:hidden">Tạo đơn</span>
-              <span className="hidden sm:inline">Tạo đơn thuê mới</span>
+              <span>Đơn mới</span>
             </Button>
             <Button
               onClick={() => setIsDailyNotificationOpen(true)}

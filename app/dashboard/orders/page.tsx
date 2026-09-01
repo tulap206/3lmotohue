@@ -1571,7 +1571,7 @@ export default function OrdersPage() {
               }}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Tạo đơn thuê mới
+              Đơn mới
             </Button>
           </div>
         }
@@ -2146,7 +2146,7 @@ export default function OrdersPage() {
                   }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Tạo đơn thuê mới
+                  Đơn mới
                 </Button>
               }
             />
