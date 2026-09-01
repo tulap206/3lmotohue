@@ -27,7 +27,9 @@ import {
   Sparkles,
   Flame,
   TrendingUp,
+  AlertTriangle,
 } from "lucide-react"
+import { fetchBookingLockStatus } from "@/lib/booking-lock"
 import Image from "next/image"
 import Link from "next/link"
 import { BlurFade } from "@/components/ui/blur-fade"
@@ -128,6 +130,8 @@ export default function LandingPage() {
   })
   const [totalDays, setTotalDays] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLockedNoticeOpen, setIsLockedNoticeOpen] = useState(false)
+  const [lockedReasonText, setLockedReasonText] = useState("")
   const [bookingSuccess, setBookingSuccess] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null)
   const [isOpenContact, setIsOpenContact] = useState(false)
@@ -183,6 +187,18 @@ export default function LandingPage() {
 
     setIsLoading(true)
     try {
+      // Check if booking is locked by admin (e.g. holidays / fully booked)
+      const lockStatus = await fetchBookingLockStatus()
+      if (lockStatus.isLocked) {
+        setLockedReasonText(
+          lockStatus.reason ||
+            "Hiện tại toàn bộ xe của 3L Moto đã kín lịch hoặc hệ thống đang tạm ngưng nhận đơn trực tuyến."
+        )
+        setIsLockedNoticeOpen(true)
+        setIsLoading(false)
+        return
+      }
+
       const [vehicles, rentals] = await Promise.all([fetchVehicles(), fetchRentals()])
 
       const conflictingVehicleIds = new Set(
@@ -1151,6 +1167,94 @@ export default function LandingPage() {
                     )}
                   </>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Locked Booking Notice Modal */}
+      <AnimatePresence>
+        {isLockedNoticeOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            >
+              <div className="flex items-center justify-between bg-slate-950 px-6 py-5 text-white">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-9 items-center justify-center rounded-full bg-rose-500/20 text-rose-400">
+                    <AlertTriangle className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold">Thông báo đặt xe</h3>
+                    <p className="text-xs text-slate-400">3L Moto · Dịch vụ thuê xe máy Huế</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsLockedNoticeOpen(false)}
+                  className="flex size-9 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20"
+                  aria-label="Đóng"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5 text-center">
+                <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                  <Bike className="size-8 opacity-80" />
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-xl font-extrabold text-slate-900">
+                    Hiện tại đã hết xe khả dụng
+                  </h4>
+                  <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto">
+                    {lockedReasonText}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900 leading-relaxed text-left">
+                  <p className="font-bold flex items-center gap-1.5 mb-1">
+                    <PhoneCall className="size-3.5 text-amber-700" /> Quý khách cần hỗ trợ kiểm tra xe gấp?
+                  </p>
+                  Vui lòng liên hệ trực tiếp hotline hoặc Zalo để nhân viên kiểm tra đội xe trả sớm và sắp xếp ưu tiên cho bạn.
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <a
+                    href="tel:0934924195"
+                    className="flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                  >
+                    <PhoneCall className="size-4" />
+                    0934.924.195
+                  </a>
+                  <a
+                    href="https://zalo.me/0934924195"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    <MessageCircle className="size-4 text-blue-600" />
+                    Nhắn tin Zalo
+                  </a>
+                </div>
+
+                <Button
+                  onClick={() => setIsLockedNoticeOpen(false)}
+                  variant="ghost"
+                  className="w-full text-xs text-slate-500 hover:text-slate-800"
+                >
+                  Đóng cửa sổ
+                </Button>
               </div>
             </motion.div>
           </motion.div>

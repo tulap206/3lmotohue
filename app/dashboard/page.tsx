@@ -25,7 +25,10 @@ import {
   Bell,
   Bike,
   Upload,
+  Lock,
+  LockOpen,
 } from "lucide-react"
+import { fetchBookingLockStatus, setBookingLockStatus } from "@/lib/booking-lock"
 import { DailySummaryDialog } from "@/components/dashboard/daily-summary-dialog"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { SkeletonMetricCards, SkeletonTable, SkeletonCharts } from "@/components/ui/skeleton-loader"
@@ -99,6 +102,37 @@ export default function DashboardPage() {
   const [isDailySummaryOpen, setIsDailySummaryOpen] = useState(false)
   const [isDailyNotificationOpen, setIsDailyNotificationOpen] = useState(false)
   const [hasCheckedDailyNotification, setHasCheckedDailyNotification] = useState(false)
+  const [isLockModalOpen, setIsLockModalOpen] = useState(false)
+  const [isBookingLocked, setIsBookingLocked] = useState(false)
+  const [lockReason, setLockReason] = useState("")
+  const [isLockSubmitting, setIsLockSubmitting] = useState(false)
+
+  // Fetch booking lock status on load
+  useEffect(() => {
+    fetchBookingLockStatus().then((res) => {
+      setIsBookingLocked(res.isLocked)
+      if (res.reason) setLockReason(res.reason)
+    })
+  }, [])
+
+  const handleToggleBookingLock = async () => {
+    setIsLockSubmitting(true)
+    try {
+      const nextState = !isBookingLocked
+      await setBookingLockStatus(
+        nextState,
+        lockReason,
+        user?.username || user?.displayName
+      )
+      setIsBookingLocked(nextState)
+      setIsLockModalOpen(false)
+    } catch (err) {
+      console.error("Lỗi khi cập nhật trạng thái khóa đặt xe:", err)
+      alert("Không thể cập nhật trạng thái khóa đặt xe. Vui lòng thử lại.")
+    } finally {
+      setIsLockSubmitting(false)
+    }
+  }
 
   // Auto-open daily notification popup on first load/login of the day
   useEffect(() => {
@@ -941,6 +975,28 @@ export default function DashboardPage() {
                 <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none shrink-0">
                   {dailyNotifyBadgeCount}
                 </span>
+              )}
+            </Button>
+            <Button
+              onClick={() => setIsLockModalOpen(true)}
+              variant="outline"
+              className={cn(
+                "min-w-0 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3 ui-transition",
+                isBookingLocked
+                  ? "bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-400 [&_svg]:text-rose-600"
+                  : "bg-white hover:bg-slate-50 text-slate-700 border-slate-300 hover:border-slate-400 [&_svg]:text-slate-500"
+              )}
+            >
+              {isBookingLocked ? (
+                <>
+                  <Lock className="w-4 h-4 mr-1.5 shrink-0 text-rose-600 animate-pulse" />
+                  <span className="truncate">Đang khóa đặt xe</span>
+                </>
+              ) : (
+                <>
+                  <LockOpen className="w-4 h-4 mr-1.5 shrink-0 text-slate-500" />
+                  <span className="truncate">Khóa đặt xe</span>
+                </>
               )}
             </Button>
             <Button
@@ -1934,6 +1990,85 @@ export default function DashboardPage() {
         orders={orders}
         vehicles={vehicles}
       />
+
+      {/* Booking Lock Confirmation Dialog */}
+      <Dialog open={isLockModalOpen} onOpenChange={setIsLockModalOpen}>
+        <DialogContent className="sm:max-w-md bg-white p-6 rounded-2xl">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div
+                className={cn(
+                  "flex size-11 shrink-0 items-center justify-center rounded-xl",
+                  isBookingLocked ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
+                )}
+              >
+                {isBookingLocked ? <LockOpen className="size-6" /> : <Lock className="size-6" />}
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold text-slate-900">
+                  {isBookingLocked ? "Mở khóa đặt xe trực tuyến?" : "Khóa tính năng đặt xe trực tuyến?"}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 mt-0.5">
+                  {isBookingLocked
+                    ? "Khách hàng trên Landing Page sẽ có thể tìm và đặt xe lại bình thường."
+                    : "Ngăn khách hàng gửi yêu cầu đặt xe từ website (áp dụng khi nghỉ lễ hoặc hết xe)."}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 my-2">
+            {!isBookingLocked ? (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Lý do tạm ngưng (hiển thị khi khách bấm tìm xe):
+                </label>
+                <Input
+                  value={lockReason}
+                  onChange={(e) => setLockReason(e.target.value)}
+                  placeholder="Ví dụ: Hiện tại toàn bộ xe đã được đặt kín / Đang nghỉ lễ..."
+                  className="rounded-xl text-sm"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Khách hàng khi nhập thông tin và bấm tìm xe sẽ nhận được popup thông báo lịch sự kèm hotline để liên hệ.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 leading-relaxed">
+                Hệ thống sẽ kích hoạt lại bộ lọc tìm xe và cho phép khách hàng gửi đơn đặt xe trực tuyến ngay lập tức.
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsLockModalOpen(false)}
+              className="rounded-xl h-10 text-xs font-semibold"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              onClick={handleToggleBookingLock}
+              disabled={isLockSubmitting}
+              className={cn(
+                "rounded-xl h-10 px-5 text-xs font-bold text-white shadow-sm",
+                isBookingLocked
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-rose-600 hover:bg-rose-700"
+              )}
+            >
+              {isLockSubmitting
+                ? "Đang xử lý..."
+                : isBookingLocked
+                ? "Xác nhận Mở khóa"
+                : "Xác nhận Khóa đặt xe"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </ModulePageShell>
   )
 }
