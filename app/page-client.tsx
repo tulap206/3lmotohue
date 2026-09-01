@@ -25,6 +25,8 @@ import {
   Compass,
   ThumbsUp,
   Sparkles,
+  Flame,
+  TrendingUp,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -118,6 +120,12 @@ export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [availableVehicles, setAvailableVehicles] = useState<any[]>([])
+  const [fleetStats, setFleetStats] = useState({
+    total: 0,
+    rented: 0,
+    available: 0,
+    occupancyRate: 0,
+  })
   const [totalDays, setTotalDays] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [bookingSuccess, setBookingSuccess] = useState(false)
@@ -195,8 +203,16 @@ export default function LandingPage() {
           .map((rental: any) => rental.vehicleId)
       )
 
-      const available = vehicles.filter((vehicle: any) => {
-        return vehicle.status !== "maintenance" && !conflictingVehicleIds.has(vehicle.id)
+      const activeVehicles = (vehicles || []).filter((vehicle: any) => vehicle.status !== "maintenance")
+      const available = activeVehicles.filter((vehicle: any) => !conflictingVehicleIds.has(vehicle.id))
+      const rentedCount = activeVehicles.length - available.length
+      const occupancy = activeVehicles.length > 0 ? Math.round((rentedCount / activeVehicles.length) * 100) : 0
+
+      setFleetStats({
+        total: activeVehicles.length,
+        rented: rentedCount,
+        available: available.length,
+        occupancyRate: occupancy,
       })
 
       setAvailableVehicles(available)
@@ -1008,75 +1024,151 @@ export default function LandingPage() {
                       Đóng cửa sổ
                     </Button>
                   </div>
-                ) : availableVehicles.length === 0 ? (
-                  <div className="space-y-4 py-16 text-center text-slate-500">
-                    <Bike className="mx-auto size-16 opacity-20 text-slate-400" />
-                    <div className="space-y-1">
-                      <p className="text-lg font-bold text-slate-800">Không tìm thấy xe máy khả dụng</p>
-                      <p className="mx-auto max-w-sm text-xs text-slate-400 leading-relaxed">
-                        Hiện tại toàn bộ xe đã được đặt kín trong khoảng thời gian này. Vui lòng chọn mốc thời gian khác hoặc liên hệ hotline để được hỗ trợ thủ công.
-                      </p>
-                    </div>
-                  </div>
                 ) : (
-                  <div className="divide-y divide-slate-100">
-                    {availableVehicles.map((vehicle) => {
-                      const priceTotal = totalDays * vehicle.pricePerDay
-                      const thumbSrc = getVehicleThumbSrc(vehicle)
-                      return (
-                        <div
-                          key={vehicle.id}
-                          className="flex flex-col gap-4 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div className="flex items-center gap-4 min-w-0">
-                            <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                              {thumbSrc ? (
-                                <Image
-                                  src={thumbSrc}
-                                  alt={vehicle.name}
-                                  fill
-                                  className="object-cover"
-                                  sizes="64px"
-                                />
-                              ) : (
-                                <div className="flex size-full items-center justify-center text-blue-600">
-                                  <Bike className="size-6" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className="font-bold text-slate-900 truncate">{vehicle.name}</h4>
-                              <p className="mt-1 text-xs text-slate-500">
-                                Màu xe: <span className="font-semibold text-slate-700">{vehicle.color || "Ngẫu nhiên"}</span>
-                              </p>
-                            </div>
+                  <>
+                    {/* Fleet Availability Summary Banner */}
+                    <div className="mb-6 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 p-4 sm:p-5 shadow-xs">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="flex size-2 rounded-full bg-emerald-500 ring-4 ring-emerald-100 animate-pulse" />
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                              Tình trạng đội xe trong đợt này
+                            </h4>
                           </div>
-
-                          <div className="flex flex-col gap-3 sm:items-end">
-                            <div className="text-left sm:text-right">
-                              <span className="block text-xs text-slate-400">
-                                Đơn giá: {vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày
+                          <p className="mt-1 text-xs text-slate-500">
+                            {fleetStats.available <= 3 && fleetStats.available > 0 ? (
+                              <span className="font-semibold text-amber-700 flex items-center gap-1">
+                                <Flame className="size-3.5 text-amber-500 inline shrink-0" />
+                                Nhu cầu đặt xe cao — chỉ còn {fleetStats.available} xe sẵn sàng bàn giao!
                               </span>
-                              <span className="block text-base font-extrabold text-slate-900">
-                                Tổng cộng: {priceTotal.toLocaleString("vi-VN")}đ
-                              </span>
-                            </div>
-                            <Button
-                              onClick={() => handleConfirmBooking(vehicle)}
-                              disabled={isSubmitting}
-                              className="h-10 rounded-lg bg-blue-600 px-5 text-xs font-bold text-white hover:bg-blue-700 transition-colors w-full sm:w-auto"
-                            >
-                              {isSubmitting && selectedVehicle?.id === vehicle.id ? (
-                                <Loader2 className="size-4 animate-spin" />
-                              ) : (
-                                "Xác nhận dòng xe này"
-                              )}
-                            </Button>
-                          </div>
+                            ) : (
+                              <span>Đội xe luôn được bảo dưỡng kỹ lưỡng trước khi giao khách.</span>
+                            )}
+                          </p>
                         </div>
-                      )
-                    })}
-                  </div>
+
+                        {/* Stat pills */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 font-bold text-emerald-700 border border-emerald-200">
+                            <span className="size-1.5 rounded-full bg-emerald-500" />
+                            Còn trống: <strong className="font-extrabold">{fleetStats.available}</strong> xe
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 font-bold text-blue-700 border border-blue-200">
+                            <span className="size-1.5 rounded-full bg-blue-500" />
+                            Đang thuê / Đã đặt: <strong className="font-extrabold">{fleetStats.rented}</strong> xe
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-600 border border-slate-200/60">
+                            Tổng: {fleetStats.total} xe
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Capacity progress bar */}
+                      <div className="mt-3.5 border-t border-slate-200/60 pt-3">
+                        <div className="mb-1.5 flex items-center justify-between text-[11px]">
+                          <span className="font-medium text-slate-500">
+                            Tỷ lệ giữ chỗ: <strong className="font-bold text-slate-800">{fleetStats.occupancyRate}%</strong> công suất
+                          </span>
+                          <span>
+                            {fleetStats.available <= 3 && fleetStats.available > 0 ? (
+                              <span className="font-bold text-amber-600">⚡ Số lượng có hạn</span>
+                            ) : (
+                              <span className="font-medium text-emerald-600">✓ Sẵn sàng giao tận nơi</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${
+                              fleetStats.occupancyRate >= 80
+                                ? "bg-gradient-to-r from-amber-500 to-rose-500"
+                                : fleetStats.occupancyRate >= 50
+                                ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                                : "bg-gradient-to-r from-emerald-400 to-teal-500"
+                            }`}
+                            style={{ width: `${Math.max(6, Math.min(100, fleetStats.occupancyRate))}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {availableVehicles.length === 0 ? (
+                      <div className="space-y-4 py-12 text-center text-slate-500">
+                        <Bike className="mx-auto size-16 opacity-20 text-slate-400" />
+                        <div className="space-y-1">
+                          <p className="text-lg font-bold text-slate-800">Không tìm thấy xe máy khả dụng</p>
+                          <p className="mx-auto max-w-md text-xs text-slate-500 leading-relaxed">
+                            Toàn bộ <strong>{fleetStats.total} xe</strong> của 3L Moto đã được thuê kín trong khoảng thời gian này (<strong>{fleetStats.rented} xe</strong> đang phục vụ khách). Vui lòng chọn mốc thời gian khác hoặc liên hệ hotline để được hỗ trợ sắp xếp xe ưu tiên.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {availableVehicles.map((vehicle) => {
+                          const priceTotal = totalDays * vehicle.pricePerDay
+                          const thumbSrc = getVehicleThumbSrc(vehicle)
+                          return (
+                            <div
+                              key={vehicle.id}
+                              className="flex flex-col gap-4 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <div className="flex items-center gap-4 min-w-0">
+                                <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                                  {thumbSrc ? (
+                                    <Image
+                                      src={thumbSrc}
+                                      alt={vehicle.name}
+                                      fill
+                                      className="object-cover"
+                                      sizes="64px"
+                                    />
+                                  ) : (
+                                    <div className="flex size-full items-center justify-center text-blue-600">
+                                      <Bike className="size-6" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-slate-900 truncate">{vehicle.name}</h4>
+                                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200/80">
+                                      <span className="size-1 rounded-full bg-emerald-500" /> Sẵn sàng
+                                    </span>
+                                  </div>
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    Màu xe: <span className="font-semibold text-slate-700">{vehicle.color || "Ngẫu nhiên"}</span>
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2.5 sm:items-end">
+                                <div className="text-left sm:text-right">
+                                  <span className="block text-xs text-slate-400">
+                                    Đơn giá: {vehicle.pricePerDay.toLocaleString("vi-VN")}đ/ngày
+                                  </span>
+                                  <span className="block text-base font-extrabold text-slate-900">
+                                    Tổng cộng: {priceTotal.toLocaleString("vi-VN")}đ
+                                  </span>
+                                </div>
+                                <Button
+                                  onClick={() => handleConfirmBooking(vehicle)}
+                                  disabled={isSubmitting}
+                                  className="h-10 rounded-lg bg-blue-600 px-5 text-xs font-bold text-white hover:bg-blue-700 transition-colors w-full sm:w-auto shadow-xs"
+                                >
+                                  {isSubmitting && selectedVehicle?.id === vehicle.id ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    "Xác nhận dòng xe này"
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </motion.div>
