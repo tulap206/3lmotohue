@@ -1027,29 +1027,10 @@ export default function LandingPage() {
                 ) : (
                   <>
                     {/* Fleet Availability Summary Banner */}
-                    <div className="mb-6 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 p-4 sm:p-5 shadow-xs">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="flex size-2 rounded-full bg-emerald-500 ring-4 ring-emerald-100 animate-pulse" />
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                              Tình trạng đội xe trong đợt này
-                            </h4>
-                          </div>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {fleetStats.available <= 3 && fleetStats.available > 0 ? (
-                              <span className="font-semibold text-amber-700 flex items-center gap-1">
-                                <Flame className="size-3.5 text-amber-500 inline shrink-0" />
-                                Nhu cầu đặt xe cao — chỉ còn {fleetStats.available} xe sẵn sàng bàn giao!
-                              </span>
-                            ) : (
-                              <span>Đội xe luôn được bảo dưỡng kỹ lưỡng trước khi giao khách.</span>
-                            )}
-                          </p>
-                        </div>
-
-                        {/* Stat pills */}
-                        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    <div className="mb-5 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 p-3.5 sm:p-4 shadow-xs">
+                      {/* Stat pills */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 font-bold text-emerald-700 border border-emerald-200">
                             <span className="size-1.5 rounded-full bg-emerald-500" />
                             Còn trống: <strong className="font-extrabold">{fleetStats.available}</strong> xe
@@ -1058,14 +1039,14 @@ export default function LandingPage() {
                             <span className="size-1.5 rounded-full bg-blue-500" />
                             Đang thuê / Đã đặt: <strong className="font-extrabold">{fleetStats.rented}</strong> xe
                           </span>
-                          <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 font-medium text-slate-600 border border-slate-200/60">
-                            Tổng: {fleetStats.total} xe
-                          </span>
                         </div>
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 font-medium text-slate-600 border border-slate-200/60 text-xs">
+                          Tổng: {fleetStats.total} xe
+                        </span>
                       </div>
 
                       {/* Capacity progress bar */}
-                      <div className="mt-3.5 border-t border-slate-200/60 pt-3">
+                      <div className="mt-3 border-t border-slate-200/60 pt-2.5">
                         <div className="mb-1.5 flex items-center justify-between text-[11px]">
                           <span className="font-medium text-slate-500">
                             Tỷ lệ giữ chỗ: <strong className="font-bold text-slate-800">{fleetStats.occupancyRate}%</strong> công suất
