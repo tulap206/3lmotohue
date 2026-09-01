@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     if (customersRes.error) throw customersRes.error
     if (vehiclesRes.error) throw vehiclesRes.error
     if (rentalsRes.error) throw rentalsRes.error
-    if (transactionsRes.error) console.error("Transactions backup error:", transactionsRes.error)
+    if (transactionsRes.error) throw transactionsRes.error
 
     const backupData = {
       timestamp: new Date().toISOString(),
