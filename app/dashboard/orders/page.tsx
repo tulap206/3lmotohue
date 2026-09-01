@@ -1551,19 +1551,6 @@ export default function OrdersPage() {
               })}
             </div>
             <Button
-              variant="outline"
-              onClick={() => setIsDailyNotificationOpen(true)}
-              className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
-            >
-              <Bell className="w-4 h-4 mr-1.5 text-amber-500" />
-              Thông báo
-              {dailyNotifyBadgeCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none">
-                  {dailyNotifyBadgeCount}
-                </span>
-              )}
-            </Button>
-            <Button
               className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
               onClick={() => {
                 setFormData((prev) => ({ ...prev, rentalTerm: filterTerm }))
