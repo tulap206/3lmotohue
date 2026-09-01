@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyJWT } from '@/lib/auth-jwt'
 import { hashPassword, generateSalt } from '@/lib/auth-crypto'
+import { getSessionSecret } from '@/lib/session-secret'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Chưa đăng nhập hoặc phiên hết hạn' }, { status: 401 })
     }
 
-    const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+    const secret = getSessionSecret()
+    if (!secret) {
+      return NextResponse.json({ error: 'Cấu hình phiên đăng nhập chưa sẵn sàng' }, { status: 500 })
+    }
+
     const decoded = await verifyJWT(token, secret)
     if (!decoded) {
       return NextResponse.json({ error: 'Phiên đăng nhập không hợp lệ' }, { status: 401 })

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyJWT } from '@/lib/auth-jwt'
+import { getSessionSecret } from '@/lib/session-secret'
 
 // Simple in-memory rate limiter store
 const ipRequestMap = new Map<string, { count: number; resetAt: number }>()
@@ -64,7 +65,15 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+    const secret = getSessionSecret()
+    if (!secret) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      const response = NextResponse.redirect(url)
+      response.cookies.delete('3l_moto_session')
+      return response
+    }
+
     const decoded = await verifyJWT(sessionToken, secret)
 
     if (!decoded) {

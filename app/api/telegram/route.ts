@@ -1,30 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyJWT } from "@/lib/auth-jwt"
 import { sendTelegramNotification } from "@/lib/telegram-notify"
-
-function jwtSecret() {
-  return process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "fallback-secret-key-3lmoto"
-}
-
-function configuredInternalSecrets() {
-  return [
-    process.env.INTERNAL_API_SECRET,
-    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET,
-  ]
-    .map((value) => value?.trim())
-    .filter((value): value is string => Boolean(value))
-}
+import { getSessionSecret } from "@/lib/session-secret"
 
 async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const secret = getSessionSecret()
+  if (!secret) return false
+
   const headerSecret = req.headers.get("x-internal-secret")?.trim()
-  if (headerSecret && configuredInternalSecrets().includes(headerSecret)) {
+  if (headerSecret && headerSecret === secret) {
     return true
   }
 
   const sessionToken = req.cookies.get("3l_moto_session")?.value
   if (!sessionToken) return false
 
-  const decoded = await verifyJWT(sessionToken, jwtSecret())
+  const decoded = await verifyJWT(sessionToken, secret)
   return Boolean(decoded)
 }
 

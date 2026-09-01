@@ -5,6 +5,7 @@ import { hashPassword, generateSalt } from '@/lib/auth-crypto'
 import { checkLoginAttempts, recordFailedLogin, resetLoginAttempts } from '@/lib/auth-guard'
 import { logger } from '@/lib/logger'
 import { getUserAvatarPublicUrl } from '@/lib/user-avatar'
+import { getSessionSecret } from '@/lib/session-secret'
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,7 +80,12 @@ export async function POST(request: NextRequest) {
     await resetLoginAttempts(username)
 
     // 5. Create payload & Sign JWT
-    const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+    const secret = getSessionSecret()
+    if (!secret) {
+      console.error('INTERNAL_API_SECRET is required for session signing')
+      return NextResponse.json({ error: 'Cấu hình phiên đăng nhập chưa sẵn sàng' }, { status: 500 })
+    }
+
     const userData = {
       id: userRecord.id,
       username: userRecord.username,
