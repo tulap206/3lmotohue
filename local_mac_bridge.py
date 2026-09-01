@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import sys
 import json
@@ -21,51 +22,49 @@ SYNC_SECRET = "3lmotohue-sync-secret-2026"
 
 def execute_mac_sync() -> tuple[bool, str, str]:
     """Kích hoạt mở Find My trên Mac và cào dữ liệu vị trí đẩy lên Cloud"""
-    output = ""
-    success = False
-    method_used = ""
+    candidates = []
 
-    try:
-        # Ưu tiên 1: Chạy native binary sync_findmy_live nếu có (đọc trực tiếp Find My UI qua macOS Accessibility)
-        if SYNC_BINARY_PATH.exists() and os.access(SYNC_BINARY_PATH, os.X_OK):
-            method_used = "sync_findmy_live"
-            print(f"🚀 [Mac Bridge] Đang chạy binary: {SYNC_BINARY_PATH} ...")
-            res = subprocess.run([str(SYNC_BINARY_PATH)], capture_output=True, text=True, timeout=40)
-            output = (res.stdout or "") + "\n" + (res.stderr or "")
-            success = (res.returncode == 0)
+    # 1. Native binary
+    if SYNC_BINARY_PATH.exists() and os.access(SYNC_BINARY_PATH, os.X_OK):
+        candidates.append(("sync_findmy_live", [str(SYNC_BINARY_PATH)]))
 
-        # Ưu tiên 2: Chạy sync_findmy_live.swift qua swift runner
-        elif SYNC_SWIFT_SCRIPT.exists():
-            method_used = "sync_findmy_live.swift"
-            print(f"🚀 [Mac Bridge] Đang chạy: swift {SYNC_SWIFT_SCRIPT} ...")
-            res = subprocess.run(["swift", str(SYNC_SWIFT_SCRIPT)], capture_output=True, text=True, timeout=45)
-            output = (res.stdout or "") + "\n" + (res.stderr or "")
-            success = (res.returncode == 0)
+    # 2. Python UI Script (rất ổn định qua AppleScript / PyObjC)
+    if SYNC_UI_SCRIPT.exists():
+        candidates.append(("sync_from_findmy_ui.py", [sys.executable, str(SYNC_UI_SCRIPT)]))
 
-        # Ưu tiên 3: Chạy sync_from_findmy_ui.py nếu có
-        elif SYNC_UI_SCRIPT.exists():
-            method_used = "sync_from_findmy_ui.py"
-            print(f"🚀 [Mac Bridge] Đang chạy: python3 {SYNC_UI_SCRIPT} ...")
-            res = subprocess.run([sys.executable, str(SYNC_UI_SCRIPT)], capture_output=True, text=True, timeout=40)
-            output = (res.stdout or "") + "\n" + (res.stderr or "")
-            success = (res.returncode == 0)
+    # 3. Swift Runner Script
+    if SYNC_SWIFT_SCRIPT.exists():
+        candidates.append(("sync_findmy_live.swift", ["swift", str(SYNC_SWIFT_SCRIPT)]))
 
-        # Ưu tiên 4: Chạy sync_auto_findmy.py
-        elif SYNC_AUTO_SCRIPT.exists():
-            method_used = "sync_auto_findmy.py"
-            print(f"🚀 [Mac Bridge] Đang chạy: python3 {SYNC_AUTO_SCRIPT} ...")
-            res = subprocess.run([sys.executable, str(SYNC_AUTO_SCRIPT)], capture_output=True, text=True, timeout=40)
-            output = (res.stdout or "") + "\n" + (res.stderr or "")
-            success = (res.returncode == 0)
-        else:
-            raise FileNotFoundError("Không tìm thấy script đồng bộ nào (sync_findmy_live / sync_from_findmy_ui.py)")
+    # 4. Auto FindMy Script
+    if SYNC_AUTO_SCRIPT.exists():
+        candidates.append(("sync_auto_findmy.py", [sys.executable, str(SYNC_AUTO_SCRIPT)]))
 
-        print(f"📝 [Mac Bridge] Kết quả ({method_used}):\n", output.strip())
-        return success, method_used, output.strip()
+    if not candidates:
+        return False, "none", "Không tìm thấy script đồng bộ nào."
 
-    except Exception as e:
-        print("❌ [Mac Bridge] Lỗi kích hoạt đồng bộ Mac:", e)
-        return False, "error", str(e)
+    last_output = ""
+    last_method = ""
+
+    for method_name, cmd in candidates:
+        try:
+            print(f"🚀 [Mac Bridge] Đang thử phương thức ({method_name}): {' '.join(cmd)} ...")
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+            output = ((res.stdout or "") + "\n" + (res.stderr or "")).strip()
+            last_output = output
+            last_method = method_name
+
+            if res.returncode == 0:
+                print(f"✅ [Mac Bridge] Phương thức {method_name} thành công!\n{output}")
+                return True, method_name, output
+            else:
+                print(f"⚠️ [Mac Bridge] Phương thức {method_name} thất bại (exit code {res.returncode}):\n{output}")
+        except Exception as err:
+            print(f"⚠️ [Mac Bridge] Lỗi khi chạy {method_name}: {err}")
+            last_output = str(err)
+            last_method = method_name
+
+    return False, last_method, last_output
 
 class MacSyncBridgeHandler(BaseHTTPRequestHandler):
     def _set_cors_headers(self):

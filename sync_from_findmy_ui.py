@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 Đọc vị trí từ FindMy app qua Accessibility API (PyObjC) và đồng bộ lên website.
 Yêu cầu: cấp quyền Accessibility cho Terminal trong System Settings.

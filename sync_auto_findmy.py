@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 Đồng bộ vị trí thẻ UGreen từ Apple Find My lên Website 3lmotohue.com
 Chạy tự động mỗi 10 phút trên MacBook (LaunchAgent)
