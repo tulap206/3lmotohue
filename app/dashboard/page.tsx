@@ -964,36 +964,22 @@ export default function DashboardPage() {
               <span>Đơn mới</span>
             </Button>
             <Button
-              onClick={() => setIsDailyNotificationOpen(true)}
-              variant="outline"
-              className="min-w-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3 ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
-            >
-              <Bell className="w-4 h-4 mr-1.5 shrink-0 text-amber-500" />
-              <span className="truncate">Thông báo</span>
-              {dailyNotifyBadgeCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none shrink-0">
-                  {dailyNotifyBadgeCount}
-                </span>
-              )}
-            </Button>
-            <Button
               onClick={() => setIsLockModalOpen(true)}
-              variant="outline"
               className={cn(
-                "min-w-0 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3 ui-transition",
+                "min-w-0 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3.5 ui-transition !text-white hover:!text-white [&_svg]:!text-white",
                 isBookingLocked
-                  ? "bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100 hover:border-rose-400 [&_svg]:text-rose-600"
-                  : "bg-white hover:bg-slate-50 text-slate-700 border-slate-300 hover:border-slate-400 [&_svg]:text-slate-500"
+                  ? "bg-rose-700 hover:bg-rose-800 ring-2 ring-rose-300"
+                  : "bg-rose-600 hover:bg-rose-700"
               )}
             >
               {isBookingLocked ? (
                 <>
-                  <Lock className="w-4 h-4 mr-1.5 shrink-0 text-rose-600 animate-pulse" />
+                  <Lock className="w-4 h-4 mr-1.5 shrink-0 animate-pulse" />
                   <span className="truncate">Đang khóa đặt xe</span>
                 </>
               ) : (
                 <>
-                  <LockOpen className="w-4 h-4 mr-1.5 shrink-0 text-slate-500" />
+                  <LockOpen className="w-4 h-4 mr-1.5 shrink-0" />
                   <span className="truncate">Khóa đặt xe</span>
                 </>
               )}
@@ -1005,6 +991,19 @@ export default function DashboardPage() {
             >
               <CalendarCheck className="w-4 h-4 mr-1.5 shrink-0 text-blue-600" />
               <span className="truncate">Tổng ngày</span>
+            </Button>
+            <Button
+              onClick={() => setIsDailyNotificationOpen(true)}
+              variant="outline"
+              className="min-w-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-3 ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
+            >
+              <Bell className="w-4 h-4 mr-1.5 shrink-0 text-amber-500" />
+              <span className="truncate">Thông báo</span>
+              {dailyNotifyBadgeCount > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-600 text-white leading-none shrink-0">
+                  {dailyNotifyBadgeCount}
+                </span>
+              )}
             </Button>
           </div>
         }
