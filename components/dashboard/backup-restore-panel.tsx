@@ -26,7 +26,14 @@ import {
   Users,
   Bike,
   ClipboardList,
+  Copy,
+  Check,
+  DollarSign,
+  ShieldCheck,
+  FileCode,
+  Layers,
 } from "lucide-react"
+import { showSuccess } from "@/lib/toast-utils"
 import { cn } from "@/lib/utils"
 import { formatDisplayDateTime } from "@/lib/format-date"
 import {
@@ -60,6 +67,7 @@ type BackupPreviewData = {
   customers?: unknown[]
   vehicles?: unknown[]
   rentals?: unknown[]
+  transactions?: unknown[]
   [key: string]: unknown
 }
 
@@ -67,6 +75,7 @@ type BackupCounts = {
   customers: number
   vehicles: number
   rentals: number
+  transactions?: number
   timestamp?: string
 }
 
@@ -108,11 +117,62 @@ function pickLabel(item: unknown, keys: string[], fallback: string) {
   return fallback
 }
 
+function extractCustomerInfo(item: unknown, index: number) {
+  const row = asRecord(item)
+  if (!row) return { name: `Khách #${index + 1}`, phone: "", cccd: "" }
+  const name = pickLabel(item, ["name", "fullName", "full_name", "customerName", "customer_name"], `Khách #${index + 1}`)
+  const phone = pickLabel(item, ["phone", "phoneNumber", "phone_number", "sdt", "tel"], "")
+  const cccd = pickLabel(item, ["idCard", "id_number", "idNumber", "cccd", "cmnd", "passport"], "")
+  return { name, phone, cccd }
+}
+
+function extractVehicleInfo(item: unknown, index: number) {
+  const row = asRecord(item)
+  if (!row) return { name: `Xe #${index + 1}`, plate: "", priceDaily: 0 }
+  const name = pickLabel(item, ["name", "model", "vehicleName", "vehicle_name"], `Xe #${index + 1}`)
+  const plate = pickLabel(item, ["licensePlate", "license_plate", "bienso", "plate"], "")
+  const rawPrice = row.priceDaily ?? row.price_daily ?? row.dailyRate ?? row.price
+  const priceDaily = typeof rawPrice === "number" ? rawPrice : typeof rawPrice === "string" ? parseInt(rawPrice, 10) || 0 : 0
+  return { name, plate, priceDaily }
+}
+
+function extractRentalInfo(item: unknown, index: number) {
+  const row = asRecord(item)
+  if (!row) return { customer: `Khách hàng`, vehicle: `Xe máy`, plate: "", price: 0, status: "" }
+  
+  const customer = pickLabel(item, ["customerName", "customer_name", "customer", "fullName", "name"], `Khách #${index + 1}`)
+  const vehicle = pickLabel(item, ["vehicleName", "vehicle_name", "vehicle", "bikeName", "model"], "Xe máy")
+  const plate = pickLabel(item, ["licensePlate", "license_plate", "vehiclePlate", "plate"], "")
+  const rawPrice = row.totalPrice ?? row.total_price ?? row.revenue ?? row.price ?? row.amount
+  const price = typeof rawPrice === "number" ? rawPrice : typeof rawPrice === "string" ? parseInt(rawPrice, 10) || 0 : 0
+  const status = pickLabel(item, ["status", "trang_thai"], "")
+
+  return { customer, vehicle, plate, price, status }
+}
+
+function getRentalStatusBadge(status: string) {
+  const s = (status || "").toLowerCase()
+  if (s === "active" || s === "dang_thue" || s === "đang thuê") {
+    return { label: "Đang thuê", className: "bg-blue-50 text-blue-700 border-blue-200" }
+  }
+  if (s === "completed" || s === "hoan_thanh" || s === "hoàn thành" || s === "xong") {
+    return { label: "Hoàn thành", className: "bg-emerald-50 text-emerald-700 border-emerald-200" }
+  }
+  if (s === "cancelled" || s === "da_huy" || s === "huỷ" || s === "hủy") {
+    return { label: "Đã huỷ", className: "bg-rose-50 text-rose-700 border-rose-200" }
+  }
+  if (s === "pending" || s === "cho_giao" || s === "chờ") {
+    return { label: "Chờ giao", className: "bg-amber-50 text-amber-700 border-amber-200" }
+  }
+  return { label: status || "Đơn thuê", className: "bg-slate-50 text-slate-600 border-slate-200" }
+}
+
 function countsFromPreview(data: BackupPreviewData): BackupCounts {
   return {
     customers: Array.isArray(data.customers) ? data.customers.length : 0,
     vehicles: Array.isArray(data.vehicles) ? data.vehicles.length : 0,
     rentals: Array.isArray(data.rentals) ? data.rentals.length : 0,
+    transactions: Array.isArray(data.transactions) ? data.transactions.length : 0,
     timestamp: typeof data.timestamp === "string" ? data.timestamp : undefined,
   }
 }
@@ -192,6 +252,8 @@ export function BackupRestorePanel({
   const [detailError, setDetailError] = useState<string | null>(null)
   const [detailData, setDetailData] = useState<BackupPreviewData | null>(null)
   const [detailRaw, setDetailRaw] = useState("")
+  const [activeDetailTab, setActiveDetailTab] = useState<"summary" | "json">("summary")
+  const [copiedJson, setCopiedJson] = useState(false)
 
   const [pendingRestore, setPendingRestore] = useState<PendingRestore | null>(null)
   const [restorePreview, setRestorePreview] = useState<BackupCounts | null>(null)
@@ -224,6 +286,8 @@ export function BackupRestorePanel({
     setDetailError(null)
     setDetailData(null)
     setDetailRaw("")
+    setActiveDetailTab("summary")
+    setCopiedJson(false)
 
     try {
       const response = await fetch(file.url)
@@ -233,7 +297,8 @@ export function BackupRestorePanel({
       const text = await response.text()
       const parsed = JSON.parse(text) as BackupPreviewData
       setDetailData(parsed)
-      setDetailRaw(text.length > 120_000 ? `${text.slice(0, 120_000)}\n\n… (đã rút gọn, tệp quá lớn)` : text)
+      const formatted = JSON.stringify(parsed, null, 2)
+      setDetailRaw(formatted.length > 150_000 ? `${formatted.slice(0, 150_000)}\n\n… (đã rút gọn vì tệp quá lớn)` : formatted)
     } catch (err) {
       setDetailError(err instanceof Error ? err.message : "Không đọc được nội dung tệp sao lưu")
     } finally {
@@ -297,6 +362,7 @@ export function BackupRestorePanel({
   const customers = Array.isArray(detailData?.customers) ? detailData.customers : []
   const vehicles = Array.isArray(detailData?.vehicles) ? detailData.vehicles : []
   const rentals = Array.isArray(detailData?.rentals) ? detailData.rentals : []
+  const transactions = Array.isArray(detailData?.transactions) ? detailData.transactions : []
   const backupTimestamp =
     typeof detailData?.timestamp === "string" ? detailData.timestamp : detailFile?.created_at
 
@@ -627,123 +693,224 @@ export function BackupRestorePanel({
           }
         }}
       >
-        <DialogContent className={cn(moduleDialogContentClass, "max-w-3xl max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0")}>
-          <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-100 shrink-0">
-            <DialogTitle className="text-title flex items-center gap-2">
-              <FileJson className="h-4 w-4 text-blue-600" />
-              Chi tiết tệp sao lưu
-            </DialogTitle>
-            <DialogDescription className="text-meta break-all">{detailFile?.name}</DialogDescription>
+        <DialogContent className={cn(moduleDialogContentClass, "max-w-4xl max-h-[88vh] overflow-hidden flex flex-col gap-0 p-0 rounded-[var(--radius-container)] shadow-2xl border-slate-200")}>
+          <DialogHeader className="px-6 pt-5 pb-4 border-b border-slate-100 shrink-0 bg-slate-50/60">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0 shadow-2xs">
+                  <FileJson className="h-5 w-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    Chi tiết tệp sao lưu
+                  </DialogTitle>
+                  <p className="text-xs font-mono text-slate-500 mt-0.5 break-all font-medium">
+                    {detailFile?.name}
+                  </p>
+                </div>
+              </div>
+
+              {detailFile && (
+                <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+                  <span
+                    className={cn(
+                      "inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border",
+                      isAutoBackup(detailFile.name)
+                        ? "bg-slate-100 text-slate-700 border-slate-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200"
+                    )}
+                  >
+                    {isAutoBackup(detailFile.name) ? "Tự động (17:00)" : "Thủ công"}
+                  </span>
+                  <span className="inline-flex text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                    Dung lượng {formatFileSize(detailFile.size)}
+                  </span>
+                  <span className="inline-flex text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                    {formatFileDate(detailFile.created_at)}
+                  </span>
+                </div>
+              )}
+            </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
             {detailLoading ? (
-              <div className="space-y-2 py-4">
-                <div className="h-16 rounded-[var(--radius-control)] bg-slate-100 animate-pulse" />
-                <div className="h-32 rounded-[var(--radius-control)] bg-slate-100 animate-pulse" />
+              <div className="space-y-4 py-8">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-20 rounded-xl bg-slate-100 animate-pulse" />
+                  ))}
+                </div>
+                <div className="h-48 rounded-xl bg-slate-100 animate-pulse" />
               </div>
             ) : detailError ? (
-              <div className="rounded-[var(--radius-control)] border border-rose-100 bg-rose-50 px-4 py-3 text-body text-rose-700">
-                {detailError}
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-body text-rose-800 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-sm">Không thể đọc dữ liệu tệp sao lưu</p>
+                  <p className="text-xs text-rose-700 mt-1">{detailError}</p>
+                </div>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div className="rounded-[var(--radius-control)] border border-slate-100 bg-slate-50/80 px-3 py-2.5">
-                    <p className="text-meta flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" /> Khách hàng
-                    </p>
-                    <p className="text-title money tabular-nums mt-0.5">{customers.length}</p>
+                {/* 1. Four KPI Summary Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                      <Users className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-blue-800 font-semibold">Khách hàng</p>
+                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">{customers.length}</p>
+                      <p className="text-[10px] text-slate-400 truncate">Hồ sơ khách thuê</p>
+                    </div>
                   </div>
-                  <div className="rounded-[var(--radius-control)] border border-slate-100 bg-slate-50/80 px-3 py-2.5">
-                    <p className="text-meta flex items-center gap-1">
-                      <Bike className="h-3.5 w-3.5" /> Xe
-                    </p>
-                    <p className="text-title money tabular-nums mt-0.5">{vehicles.length}</p>
+
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Bike className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-emerald-800 font-semibold">Đội xe</p>
+                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">{vehicles.length}</p>
+                      <p className="text-[10px] text-slate-400 truncate">Phương tiện quản lý</p>
+                    </div>
                   </div>
-                  <div className="rounded-[var(--radius-control)] border border-slate-100 bg-slate-50/80 px-3 py-2.5">
-                    <p className="text-meta flex items-center gap-1">
-                      <ClipboardList className="h-3.5 w-3.5" /> Đơn thuê
-                    </p>
-                    <p className="text-title money tabular-nums mt-0.5">{rentals.length}</p>
+
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/40 p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                      <ClipboardList className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-amber-800 font-semibold">Đơn thuê</p>
+                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">{rentals.length}</p>
+                      <p className="text-[10px] text-slate-400 truncate">Hợp đồng & lịch sử</p>
+                    </div>
                   </div>
-                  <div className="rounded-[var(--radius-control)] border border-slate-100 bg-slate-50/80 px-3 py-2.5">
-                    <p className="text-meta flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" /> Thời điểm
-                    </p>
-                    <p className="text-label font-semibold text-slate-800 mt-0.5 leading-snug">
-                      {backupTimestamp ? formatFileDate(backupTimestamp) : "—"}
-                    </p>
+
+                  <div className="rounded-xl border border-purple-100 bg-purple-50/40 p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                      <DollarSign className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-purple-800 font-semibold">Thu chi / Quỹ</p>
+                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">
+                        {transactions.length > 0 ? transactions.length : "Toàn vẹn"}
+                      </p>
+                      <p className="text-[10px] text-slate-400 truncate">Giao dịch đồng bộ</p>
+                    </div>
                   </div>
                 </div>
 
-                {detailFile && (
-                  <p className="text-meta">
-                    Dung lượng {formatFileSize(detailFile.size)} · tạo trên cloud {formatFileDate(detailFile.created_at)}
-                  </p>
+                {/* 2. Tabs Switcher */}
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveDetailTab("summary")}
+                      className={cn(
+                        "px-3.5 py-1.5 rounded-lg text-xs font-semibold ui-transition flex items-center gap-1.5",
+                        activeDetailTab === "summary"
+                          ? "bg-blue-600 text-white shadow-xs"
+                          : "text-slate-600 hover:bg-slate-100"
+                      )}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      Tóm tắt dữ liệu thực thể
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveDetailTab("json")}
+                      className={cn(
+                        "px-3.5 py-1.5 rounded-lg text-xs font-semibold ui-transition flex items-center gap-1.5",
+                        activeDetailTab === "json"
+                          ? "bg-blue-600 text-white shadow-xs"
+                          : "text-slate-600 hover:bg-slate-100"
+                      )}
+                    >
+                      <FileCode className="w-3.5 h-3.5" />
+                      Mã nguồn JSON ({formatFileSize(detailFile?.size || 0)})
+                    </button>
+                  </div>
+
+                  {activeDetailTab === "json" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (detailRaw) {
+                          navigator.clipboard.writeText(detailRaw)
+                          setCopiedJson(true)
+                          showSuccess("Đã sao chép nội dung JSON vào bộ nhớ tạm")
+                          setTimeout(() => setCopiedJson(false), 2000)
+                        }
+                      }}
+                      className="h-7 px-2.5 text-xs text-slate-700 font-medium border-slate-200 hover:bg-slate-50"
+                    >
+                      {copiedJson ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                          Đã sao chép
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 mr-1 text-slate-500" />
+                          Sao chép JSON
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+
+                {/* 3. Tab Content */}
+                {activeDetailTab === "summary" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 items-stretch">
+                    <CustomerPreviewList customers={customers} />
+                    <VehiclePreviewList vehicles={vehicles} />
+                    <RentalPreviewList rentals={rentals} />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <pre className="max-h-[360px] overflow-auto rounded-xl border border-slate-800 bg-slate-950 text-slate-100 text-xs leading-relaxed p-4 font-mono whitespace-pre-wrap break-all shadow-inner">
+                      {detailRaw || "—"}
+                    </pre>
+                  </div>
                 )}
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <PreviewList
-                    title="Khách hàng (mẫu)"
-                    empty="Không có khách hàng"
-                    items={customers.slice(0, 5).map((item, i) =>
-                      pickLabel(item, ["name", "fullName", "phone", "id"], `Khách #${i + 1}`)
-                    )}
-                    more={Math.max(0, customers.length - 5)}
-                  />
-                  <PreviewList
-                    title="Xe (mẫu)"
-                    empty="Không có xe"
-                    items={vehicles.slice(0, 5).map((item, i) => {
-                      const name = pickLabel(item, ["name", "model", "id"], `Xe #${i + 1}`)
-                      const plate = pickLabel(item, ["licensePlate", "license_plate", "bienso"], "")
-                      return plate ? `${name} · ${plate}` : name
-                    })}
-                    more={Math.max(0, vehicles.length - 5)}
-                  />
-                  <PreviewList
-                    title="Đơn thuê (mẫu)"
-                    empty="Không có đơn thuê"
-                    items={rentals.slice(0, 5).map((item, i) =>
-                      pickLabel(item, ["rentalCode", "rental_code", "id", "customerName"], `Đơn #${i + 1}`)
-                    )}
-                    more={Math.max(0, rentals.length - 5)}
-                  />
-                </div>
-
-                <div>
-                  <p className="text-label mb-2">Nội dung JSON</p>
-                  <pre className="max-h-56 overflow-auto rounded-[var(--radius-control)] border border-slate-100 bg-slate-50 text-slate-700 text-meta leading-relaxed p-3 font-mono whitespace-pre-wrap break-all">
-                    {detailRaw || "—"}
-                  </pre>
-                </div>
               </>
             )}
           </div>
 
-          <DialogFooter className="px-5 py-3 border-t border-slate-100 shrink-0 gap-2">
+          <DialogFooter className="px-6 py-3.5 border-t border-slate-100 shrink-0 flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/60">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Khôi phục tệp sẽ đồng bộ lại toàn bộ dữ liệu khách hàng, xe và đơn thuê.</span>
+            </div>
+
             {detailFile && (
-              <>
+              <div className="flex items-center gap-2 justify-end">
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 rounded-[var(--radius-control)] border-slate-200"
+                  className="h-10 px-4 rounded-[var(--radius-control)] border-slate-200 text-slate-700 hover:bg-white text-xs font-semibold"
                   onClick={() => downloadBackupFile(detailFile)}
                   disabled={loading}
                 >
-                  <Download className="h-4 w-4 mr-1.5" />
-                  Tải về
+                  <Download className="h-4 w-4 mr-1.5 text-slate-500" />
+                  Tải về file
                 </Button>
                 <Button
                   type="button"
-                  className={cn("h-11 rounded-[var(--radius-control)]", ACCENT_BTN_CLASS[accent])}
+                  className={cn(
+                    "h-10 px-4 rounded-[var(--radius-control)] text-white text-xs font-semibold shadow-sm",
+                    ACCENT_BTN_CLASS[accent]
+                  )}
                   disabled={loading || !canRestore || detailLoading || !!detailError}
                   onClick={() => void beginCloudRestore(detailFile.url, detailFile.name)}
                 >
                   Khôi phục từ tệp này
                 </Button>
-              </>
+              </div>
             )}
           </DialogFooter>
         </DialogContent>
@@ -845,34 +1012,178 @@ export function BackupRestorePanel({
   )
 }
 
-function PreviewList({
-  title,
-  items,
-  empty,
-  more,
+function CustomerPreviewList({
+  customers,
 }: {
-  title: string
-  items: string[]
-  empty: string
-  more: number
+  customers: unknown[]
 }) {
+  const top5 = customers.slice(0, 5).map((c, i) => extractCustomerInfo(c, i))
+  const more = Math.max(0, customers.length - 5)
+
   return (
-    <div className="rounded-[var(--radius-control)] border border-slate-100 overflow-hidden">
-      <div className="bg-slate-50/80 px-3 py-2 border-b border-slate-100">
-        <p className="text-label font-semibold text-slate-700">{title}</p>
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs flex flex-col h-full">
+      <div className="bg-slate-50 px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+          <Users className="w-3.5 h-3.5 text-blue-600" />
+          <span>Khách hàng</span>
+        </div>
+        <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">
+          {customers.length}
+        </span>
       </div>
-      <ul className="px-3 py-2 space-y-1.5 min-h-[7rem]">
-        {items.length === 0 ? (
-          <li className="text-meta">{empty}</li>
+
+      <div className="p-3 flex-1 divide-y divide-slate-100 space-y-2.5">
+        {top5.length === 0 ? (
+          <p className="text-xs text-slate-400 italic py-4 text-center">Không có dữ liệu khách</p>
         ) : (
-          items.map((label, idx) => (
-            <li key={`${label}-${idx}`} className="text-body text-slate-700 truncate" title={label}>
-              {label}
-            </li>
+          top5.map((c, idx) => (
+            <div key={idx} className="pt-2.5 first:pt-0 flex items-start gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                {c.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-800 truncate" title={c.name}>
+                  {c.name}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500 mt-0.5">
+                  {c.phone && <span className="font-mono text-slate-600 font-medium">{c.phone}</span>}
+                  {c.cccd && <span className="font-mono text-slate-400">CCCD: {c.cccd}</span>}
+                  {!c.phone && !c.cccd && <span className="text-slate-400 italic">Chưa có SĐT</span>}
+                </div>
+              </div>
+            </div>
           ))
         )}
-        {more > 0 && <li className="text-meta">+{more} mục khác</li>}
-      </ul>
+      </div>
+
+      {more > 0 && (
+        <div className="bg-slate-50/70 border-t border-slate-100 px-3 py-1.5 text-center text-[11px] font-medium text-slate-500">
+          +{more} khách hàng khác trong tệp
+        </div>
+      )}
+    </div>
+  )
+}
+
+function VehiclePreviewList({
+  vehicles,
+}: {
+  vehicles: unknown[]
+}) {
+  const top5 = vehicles.slice(0, 5).map((v, i) => extractVehicleInfo(v, i))
+  const more = Math.max(0, vehicles.length - 5)
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs flex flex-col h-full">
+      <div className="bg-slate-50 px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+          <Bike className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Đội xe</span>
+        </div>
+        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full">
+          {vehicles.length}
+        </span>
+      </div>
+
+      <div className="p-3 flex-1 divide-y divide-slate-100 space-y-2.5">
+        {top5.length === 0 ? (
+          <p className="text-xs text-slate-400 italic py-4 text-center">Không có dữ liệu xe</p>
+        ) : (
+          top5.map((v, idx) => (
+            <div key={idx} className="pt-2.5 first:pt-0 flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-800 truncate" title={v.name}>
+                  {v.name}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {v.plate ? (
+                    <span className="text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-700">
+                      {v.plate}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 italic">Chưa có biển</span>
+                  )}
+                </div>
+              </div>
+              {v.priceDaily > 0 && (
+                <div className="text-right shrink-0">
+                  <span className="text-[11px] font-bold text-emerald-700 font-mono">
+                    {v.priceDaily.toLocaleString("vi-VN")} đ
+                  </span>
+                  <p className="text-[9px] text-slate-400">/ngày</p>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {more > 0 && (
+        <div className="bg-slate-50/70 border-t border-slate-100 px-3 py-1.5 text-center text-[11px] font-medium text-slate-500">
+          +{more} phương tiện khác trong tệp
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RentalPreviewList({
+  rentals,
+}: {
+  rentals: unknown[]
+}) {
+  const top5 = rentals.slice(0, 5).map((r, i) => extractRentalInfo(r, i))
+  const more = Math.max(0, rentals.length - 5)
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs flex flex-col h-full">
+      <div className="bg-slate-50 px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+          <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
+          <span>Đơn thuê</span>
+        </div>
+        <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-full">
+          {rentals.length}
+        </span>
+      </div>
+
+      <div className="p-3 flex-1 divide-y divide-slate-100 space-y-2.5">
+        {top5.length === 0 ? (
+          <p className="text-xs text-slate-400 italic py-4 text-center">Không có dữ liệu đơn</p>
+        ) : (
+          top5.map((r, idx) => {
+            const badge = getRentalStatusBadge(r.status)
+            return (
+              <div key={idx} className="pt-2.5 first:pt-0 space-y-1">
+                <div className="flex items-center justify-between gap-1.5">
+                  <p className="text-xs font-bold text-slate-800 truncate flex-1" title={r.customer}>
+                    {r.customer}
+                  </p>
+                  <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0", badge.className)}>
+                    {badge.label}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                  <span className="truncate max-w-[130px] text-slate-600">
+                    {r.vehicle} {r.plate ? `• ${r.plate}` : ""}
+                  </span>
+                  {r.price > 0 && (
+                    <span className="font-bold text-slate-900 font-mono">
+                      {r.price.toLocaleString("vi-VN")} đ
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {more > 0 && (
+        <div className="bg-slate-50/70 border-t border-slate-100 px-3 py-1.5 text-center text-[11px] font-medium text-slate-500">
+          +{more} hợp đồng khác trong tệp
+        </div>
+      )}
     </div>
   )
 }
