@@ -41,7 +41,7 @@ import {
   EntityFormField,
   entityFormInputClass,
 } from "@/components/dashboard/entity-form-dialog"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -1490,105 +1490,96 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
 
-      <ModuleSubpageHeader
-        module="rental"
-        title="Đơn thuê"
-        subtitle="Quản lý các đơn thuê xe"
-        breadcrumbs={[
-          { label: "Cho thuê xe", href: "/dashboard" },
-          { label: "Đơn thuê" },
-        ]}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* View Mode Toggle */}
-            <div
-              role="group"
-              aria-label="Chế độ xem"
-              className="inline-flex items-center p-1 rounded-[var(--radius-control)] bg-slate-100 border border-slate-200"
-            >
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={cn(
-                  "relative h-10 px-3 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition flex items-center gap-1.5",
-                  viewMode === "table"
-                    ? "bg-white text-blue-700 shadow-sm font-bold"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
-                )}
-              >
-                <ClipboardList className="w-4 h-4" />
-                <span>Danh sách</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("timeline")}
-                className={cn(
-                  "relative h-10 px-3 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition flex items-center gap-1.5",
-                  viewMode === "timeline"
-                    ? "bg-white text-blue-700 shadow-sm font-bold"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
-                )}
-              >
-                <Calendar className="w-4 h-4 text-blue-600" />
-                <span>Sơ đồ Timeline</span>
-              </button>
-            </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* View Mode Toggle */}
+        <div
+          role="group"
+          aria-label="Chế độ xem"
+          className="inline-flex items-center p-1 rounded-[var(--radius-control)] bg-slate-100 border border-slate-200"
+        >
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            className={cn(
+              "relative h-10 px-3 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition flex items-center gap-1.5",
+              viewMode === "table"
+                ? "bg-white text-blue-700 shadow-sm font-bold"
+                : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
+            )}
+          >
+            <ClipboardList className="w-4 h-4" />
+            <span>Danh sách</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("timeline")}
+            className={cn(
+              "relative h-10 px-3 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition flex items-center gap-1.5",
+              viewMode === "timeline"
+                ? "bg-white text-blue-700 shadow-sm font-bold"
+                : "text-slate-500 hover:text-slate-800 hover:bg-white/50"
+            )}
+          >
+            <Calendar className="w-4 h-4 text-blue-600" />
+            <span>Sơ đồ Timeline</span>
+          </button>
+        </div>
 
-            <div
-              role="group"
-              aria-label="Lọc loại thuê"
-              className="inline-flex items-center p-1 rounded-[var(--radius-control)] bg-slate-100 border border-slate-200"
-            >
-              {([
-                { value: "short" as const, label: "Thuê ngắn hạn" },
-                { value: "long" as const, label: "Thuê dài hạn" },
-              ]).map((opt) => {
-                const active = filterTerm === opt.value
-                const count = termCounts[opt.value]
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setFilterTerm(opt.value)}
-                    className={cn(
-                      "relative h-10 px-3.5 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1",
-                      active
-                        ? "bg-blue-600 !text-white shadow-[0_2px_8px_rgba(37,99,235,0.28)]"
-                        : "text-slate-500 hover:text-slate-800 hover:bg-white/80"
-                    )}
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      {opt.label}
-                      <span
-                        className={cn(
-                          "inline-flex min-w-[1.35rem] h-5 items-center justify-center rounded-md px-1 text-label font-bold tabular-nums",
-                          active
-                            ? "bg-white/20 text-white"
-                            : "bg-slate-200/80 text-slate-600"
-                        )}
-                      >
-                        {count}
-                      </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            role="group"
+            aria-label="Lọc loại thuê"
+            className="inline-flex items-center p-1 rounded-[var(--radius-control)] bg-slate-100 border border-slate-200"
+          >
+            {([
+              { value: "short" as const, label: "Thuê ngắn hạn" },
+              { value: "long" as const, label: "Thuê dài hạn" },
+            ]).map((opt) => {
+              const active = filterTerm === opt.value
+              const count = termCounts[opt.value]
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFilterTerm(opt.value)}
+                  className={cn(
+                    "relative h-10 px-3.5 rounded-[calc(var(--radius-control)-2px)] text-body font-semibold ui-transition",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1",
+                    active
+                      ? "bg-blue-600 !text-white shadow-[0_2px_8px_rgba(37,99,235,0.28)]"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-white/80"
+                  )}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {opt.label}
+                    <span
+                      className={cn(
+                        "inline-flex min-w-[1.35rem] h-5 items-center justify-center rounded-md px-1 text-label font-bold tabular-nums",
+                        active
+                          ? "bg-white/20 text-white"
+                          : "bg-slate-200/80 text-slate-600"
+                      )}
+                    >
+                      {count}
                     </span>
-                  </button>
-                )
-              })}
-            </div>
-            <Button
-              className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
-              onClick={() => {
-                setFormData((prev) => ({ ...prev, rentalTerm: filterTerm }))
-                setIsDialogOpen(true)
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Đơn mới
-            </Button>
+                  </span>
+                </button>
+              )
+            })}
           </div>
-        }
-      />
+          <Button
+            className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
+            onClick={() => {
+              setFormData((prev) => ({ ...prev, rentalTerm: filterTerm }))
+              setIsDialogOpen(true)
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Đơn mới
+          </Button>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <EntityFormDialogContent
@@ -2199,42 +2190,67 @@ export default function OrdersPage() {
                               )}
                             </td>
                             <td className="py-3.5 px-4">
-                              <div className="flex flex-col gap-1.5">
-                                {isUnassignedVehicle(order) ? (
-                                  <>
-                                    <span className="font-bold text-amber-800 text-body block">
-                                      {order.vehicleName || "Chưa gán xe"}
-                                    </span>
-                                    <div>
-                                      <QuickAssignVehiclePopover
-                                        order={order}
-                                        vehicles={vehicles}
-                                        orders={orders}
-                                        onAssign={handleQuickAssignVehicle}
-                                        onOpenAssignModal={(targetOrder) => {
-                                          setAssigningOrder(targetOrder)
-                                          setSelectedVehiclesForAssignList([])
-                                          setAssignVehicleSearch("")
-                                        }}
-                                      />
+                              {(() => {
+                                const matchedVehicle = vehicles.find((v) => v.id === order.vehicleId)
+                                const vehicleImg = matchedVehicle?.vehicleImages?.[0]
+                                return (
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[var(--radius-badge)] border border-slate-200 bg-slate-50 flex items-center justify-center">
+                                      {vehicleImg ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                          src={vehicleImg}
+                                          alt={order.vehicleName || "Xe thuê"}
+                                          className="h-full w-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                          onClick={() => {
+                                            if (order.vehicleId && !isUnassignedVehicle(order)) {
+                                              openVehicleDetail(order.vehicleId)
+                                            }
+                                          }}
+                                        />
+                                      ) : (
+                                        <Bike className="h-5 w-5 text-slate-300" />
+                                      )}
                                     </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left block"
-                                      onClick={() => openVehicleDetail(order.vehicleId)}
-                                    >
-                                      {order.vehicleName}
-                                    </button>
-                                    <div>
-                                      <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2.5 py-1 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
-                                        {order.licensePlate}
-                                      </span>
+                                    <div className="flex flex-col gap-1 min-w-0">
+                                      {isUnassignedVehicle(order) ? (
+                                        <>
+                                          <span className="font-bold text-amber-800 text-body block truncate">
+                                            {order.vehicleName || "Chưa gán xe"}
+                                          </span>
+                                          <div>
+                                            <QuickAssignVehiclePopover
+                                              order={order}
+                                              vehicles={vehicles}
+                                              orders={orders}
+                                              onAssign={handleQuickAssignVehicle}
+                                              onOpenAssignModal={(targetOrder) => {
+                                                setAssigningOrder(targetOrder)
+                                                setSelectedVehiclesForAssignList([])
+                                                setAssignVehicleSearch("")
+                                              }}
+                                            />
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <button
+                                            className="font-bold text-slate-800 text-body hover:text-slate-700 hover:underline text-left truncate block"
+                                            onClick={() => openVehicleDetail(order.vehicleId)}
+                                          >
+                                            {order.vehicleName}
+                                          </button>
+                                          <div>
+                                            <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-2 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
+                                              {order.licensePlate}
+                                            </span>
+                                          </div>
+                                        </>
+                                      )}
                                     </div>
-                                  </>
-                                )}
-                              </div>
+                                  </div>
+                                )
+                              })()}
                             </td>
                             <td className="py-3.5 px-4 text-center text-sm font-semibold text-slate-700">
                               <div className="whitespace-nowrap">{formatDisplayDate(order.startDate)}</div>
@@ -2307,38 +2323,54 @@ export default function OrdersPage() {
                 }
                 mobile={paginatedOrders.map((order) => {
                   const isOverdue = isOrderOverdue(order)
+                  const matchedVehicle = vehicles.find((v) => v.id === order.vehicleId)
+                  const vehicleImg = matchedVehicle?.vehicleImages?.[0]
                   return (
                     <ModuleMobileCard key={order.id}>
                       <div className="flex justify-between items-start gap-2">
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 truncate">{order.customerName}</p>
-                          {isWebBookingOrder(order.notes) && (
-                            <p className="text-meta text-blue-600">(đặt từ Web)</p>
-                          )}
-                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                            {isUnassignedVehicle(order) ? (
-                              <>
-                                <span className="text-sm text-amber-800 font-medium">{order.vehicleName || "Chưa gán xe"}</span>
-                                <QuickAssignVehiclePopover
-                                  order={order}
-                                  vehicles={vehicles}
-                                  orders={orders}
-                                  onAssign={handleQuickAssignVehicle}
-                                  onOpenAssignModal={(targetOrder) => {
-                                    setAssigningOrder(targetOrder)
-                                    setSelectedVehiclesForAssignList([])
-                                    setAssignVehicleSearch("")
-                                  }}
-                                />
-                              </>
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[var(--radius-badge)] border border-slate-200 bg-slate-50 flex items-center justify-center mt-0.5">
+                            {vehicleImg ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={vehicleImg}
+                                alt={order.vehicleName || "Xe thuê"}
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
-                              <>
-                                <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
-                                <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
-                                  {order.licensePlate}
-                                </span>
-                              </>
+                              <Bike className="h-5 w-5 text-slate-300" />
                             )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-slate-800 truncate">{order.customerName}</p>
+                            {isWebBookingOrder(order.notes) && (
+                              <p className="text-meta text-blue-600">(đặt từ Web)</p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                              {isUnassignedVehicle(order) ? (
+                                <>
+                                  <span className="text-sm text-amber-800 font-medium">{order.vehicleName || "Chưa gán xe"}</span>
+                                  <QuickAssignVehiclePopover
+                                    order={order}
+                                    vehicles={vehicles}
+                                    orders={orders}
+                                    onAssign={handleQuickAssignVehicle}
+                                    onOpenAssignModal={(targetOrder) => {
+                                      setAssigningOrder(targetOrder)
+                                      setSelectedVehiclesForAssignList([])
+                                      setAssignVehicleSearch("")
+                                    }}
+                                  />
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
+                                  <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
+                                    {order.licensePlate}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <span className={cn(orderStatusBadgeClass, "shrink-0", rentalOrderStatusBadgeClass(order.status, isOverdue))}>
