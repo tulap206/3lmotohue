@@ -16,7 +16,7 @@ import {
   getRentalOrderStatusLabel,
   rentalOrderStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
-import { formatDisplayDate } from "@/lib/format-date"
+import { formatDisplayDate, parseDisplayDate } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 import {
   EntityFormDialogContent,
@@ -202,6 +202,23 @@ export default function CustomersPage() {
     }, 1500)
   }
 
+  const customerLatestRentalMap = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const r of rentals) {
+      const cId = r.customerId || (r as any).customer_id
+      if (!cId) continue
+      const dStart = parseDisplayDate(r.startDate || (r as any).start_date)?.getTime() || 0
+      const dEnd = parseDisplayDate(r.endDate || (r as any).end_date)?.getTime() || 0
+      const dCreated = new Date(r.created_at || (r as any).createdAt || 0).getTime() || 0
+      const maxTime = Math.max(dStart, dEnd, dCreated)
+      const current = map.get(cId) || 0
+      if (maxTime > current) {
+        map.set(cId, maxTime)
+      }
+    }
+    return map
+  }, [rentals])
+
   const filteredCustomers = useMemo(() => {
     // Deduplicate by ID and normalize
     const seenIds = new Set<string>()
@@ -227,14 +244,14 @@ export default function CustomersPage() {
       }
     )
 
-    // Sort: blocked -> renting -> pending -> active -> inactive
+    // Sort: renting -> pending -> active (newest rental first) -> inactive -> blocked
     return [...filtered].sort((a, b) => {
       const getPriority = (status: string) => {
-        if (status === "blocked" || status === "blacklist") return 1
-        if (status === "renting") return 2
-        if (status === "pending") return 3
-        if (status === "active") return 4
-        if (status === "inactive") return 5
+        if (status === "renting") return 1
+        if (status === "pending") return 2
+        if (status === "active") return 3
+        if (status === "inactive") return 4
+        if (status === "blocked" || status === "blacklist") return 5
         return 6
       }
       const priorityA = getPriority(a.status)
@@ -242,12 +259,20 @@ export default function CustomersPage() {
       if (priorityA !== priorityB) {
         return priorityA - priorityB
       }
+
+      // Within same status: sort by latest rental date descending
+      const timeA = customerLatestRentalMap.get(a.id) || new Date(a.created_at || a.createdAt || 0).getTime()
+      const timeB = customerLatestRentalMap.get(b.id) || new Date(b.created_at || b.createdAt || 0).getTime()
+      if (timeA !== timeB) {
+        return timeB - timeA
+      }
+
       // Secondary sort: created_at / createdAt descending
-      const timeA = new Date(a.created_at || a.createdAt || 0).getTime()
-      const timeB = new Date(b.created_at || b.createdAt || 0).getTime()
-      return timeB - timeA
+      const createdA = new Date(a.created_at || a.createdAt || 0).getTime()
+      const createdB = new Date(b.created_at || b.createdAt || 0).getTime()
+      return createdB - createdA
     })
-  }, [customers, searchQuery, filterStatus])
+  }, [customers, searchQuery, filterStatus, customerLatestRentalMap])
 
   // Reset page when search query or status filter changes
   useEffect(() => {

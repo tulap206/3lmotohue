@@ -10,7 +10,7 @@ import {
   Customer,
   Rental,
 } from "@/lib/supabase"
-import { formatDisplayDate } from "@/lib/format-date"
+import { formatDisplayDate, parseDisplayDate } from "@/lib/format-date"
 import { useAuth } from "@/contexts/auth-context"
 import { showSuccess } from "@/lib/toast-utils"
 
@@ -53,13 +53,27 @@ function generateRentalCode(customerName: string, licensePlate: string, startDat
 }
 
 function enrichCustomersWithStatus(customers: Customer[], rentals: Rental[]): Customer[] {
+  const latestRentalTimeMap = new Map<string, number>()
+  for (const r of rentals) {
+    const cId = r.customerId || (r as any).customer_id
+    if (!cId) continue
+    const dStart = parseDisplayDate(r.startDate || (r as any).start_date)?.getTime() || 0
+    const dEnd = parseDisplayDate(r.endDate || (r as any).end_date)?.getTime() || 0
+    const dCreated = new Date(r.created_at || (r as any).createdAt || 0).getTime() || 0
+    const maxTime = Math.max(dStart, dEnd, dCreated)
+    const current = latestRentalTimeMap.get(cId) || 0
+    if (maxTime > current) {
+      latestRentalTimeMap.set(cId, maxTime)
+    }
+  }
+
   return customers
     .map((customer) => {
       const activeRental = rentals.find(
-        (r) => r.customerId === customer.id && r.status === "active"
+        (r) => (r.customerId === customer.id || (r as any).customer_id === customer.id) && r.status === "active"
       )
       const pendingRental = rentals.find(
-        (r) => r.customerId === customer.id && r.status === "pending"
+        (r) => (r.customerId === customer.id || (r as any).customer_id === customer.id) && r.status === "pending"
       )
 
       let status: Customer["status"] | "renting" | "pending" | "blocked" = "active"
@@ -73,11 +87,27 @@ function enrichCustomersWithStatus(customers: Customer[], rentals: Rental[]): Cu
         status = "inactive"
       }
 
-      const totalrentals = rentals.filter((r) => r.customerId === customer.id).length
+      const totalrentals = rentals.filter((r) => r.customerId === customer.id || (r as any).customer_id === customer.id).length
 
       return { ...customer, status, totalrentals }
     })
     .sort((a, b) => {
+      const getPriority = (status: string) => {
+        if (status === "renting") return 1
+        if (status === "pending") return 2
+        if (status === "active") return 3
+        if (status === "inactive") return 4
+        if (status === "blocked" || status === "blacklist") return 5
+        return 6
+      }
+      const pA = getPriority(a.status)
+      const pB = getPriority(b.status)
+      if (pA !== pB) return pA - pB
+
+      const timeA = latestRentalTimeMap.get(a.id) || new Date((a as { createdAt?: string }).createdAt || a.created_at || 0).getTime()
+      const timeB = latestRentalTimeMap.get(b.id) || new Date((b as { createdAt?: string }).createdAt || b.created_at || 0).getTime()
+      if (timeA !== timeB) return timeB - timeA
+
       const dateA = new Date((a as { createdAt?: string }).createdAt || a.created_at || 0).getTime()
       const dateB = new Date((b as { createdAt?: string }).createdAt || b.created_at || 0).getTime()
       return dateB - dateA
