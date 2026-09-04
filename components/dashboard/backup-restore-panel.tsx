@@ -74,7 +74,7 @@ type PendingRestore =
   | { kind: "cloud"; url: string; name: string }
   | { kind: "upload"; file: File; name: string }
 
-const FILES_PER_PAGE = 10
+const FILES_PER_PAGE = 5
 
 function formatFileDate(iso: string) {
   return formatDisplayDateTime(iso)

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { BackupRestorePanel } from "@/components/dashboard/backup-restore-panel"
-import { ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
+import { ModulePageShell } from "@/components/dashboard/module-shell"
 import { UserAccountsModal } from "@/components/dashboard/user-accounts-modal"
 import { AboutSoftwareDialog } from "@/components/dashboard/about-software-dialog"
 import { Button } from "@/components/ui/button"
@@ -409,36 +409,25 @@ export default function SettingsPage() {
 
   return (
     <ModulePageShell module="rental">
-      <ModuleSubpageHeader
-        module="rental"
-        title="Sao lưu & khôi phục"
-        subtitle="Sao lưu khách, xe và đơn thuê lên đám mây. Khôi phục ghi đè toàn bộ dữ liệu hiện tại."
-        breadcrumbs={[
-          { label: "Cho thuê xe", href: "/dashboard" },
-          { label: "Sao lưu khôi phục" },
-        ]}
-        actions={
-          <>
-            {user?.role === "admin" && (
-              <Button
-                onClick={() => setIsAccountsModalOpen(true)}
-                className="h-11 shrink-0 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
-              >
-                <Users className="w-4 h-4" />
-                Tài khoản
-              </Button>
-            )}
-            <Button
-              type="button"
-              onClick={() => setIsAboutOpen(true)}
-              className="h-11 shrink-0 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
-            >
-              <Info className="w-4 h-4" />
-              Giới thiệu
-            </Button>
-          </>
-        }
-      />
+      <div className="flex items-center justify-end gap-2">
+        {user?.role === "admin" && (
+          <Button
+            onClick={() => setIsAccountsModalOpen(true)}
+            className="h-11 shrink-0 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
+          >
+            <Users className="w-4 h-4" />
+            Tài khoản
+          </Button>
+        )}
+        <Button
+          type="button"
+          onClick={() => setIsAboutOpen(true)}
+          className="h-11 shrink-0 bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)] font-medium gap-2 px-4 shadow-sm [&_svg]:!text-white"
+        >
+          <Info className="w-4 h-4" />
+          Giới thiệu
+        </Button>
+      </div>
       <UserAccountsModal
         open={isAccountsModalOpen}
         onOpenChange={setIsAccountsModalOpen}
