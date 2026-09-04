@@ -363,28 +363,52 @@ export default function DashboardPage() {
           if (url) cccdfront = [url]
         }
 
-        const newCust = await insertCustomer({
-          name: newCustomerName.trim(),
-          phone: newCustomerPhone.trim(),
-          facebook: "",
-          address: newCustomerAddress.trim(),
-          idcard: newCustomerCCCD.trim() || "",
-          totalrentals: 0,
-          status: "active",
-          customerphoto,
-          cccdfront,
-          cccdback: [],
-          licensefront: [],
-          licenseback: []
+        const normPhone = newCustomerPhone.replace(/\D/g, "")
+        const existingCust = (customers || []).find((c) => {
+          const cp = (c.phone || "").replace(/\D/g, "")
+          return normPhone.length >= 9 && cp === normPhone
         })
 
-        if (!newCust) {
-          alert("❌ Không thể tạo khách hàng mới")
-          return
-        }
+        if (existingCust) {
+          customerId = existingCust.id
+          customerName = existingCust.name || newCustomerName.trim()
+          const updatePayload: any = {}
+          if (customerphoto.length > 0 && (!existingCust.customerphoto || existingCust.customerphoto.length === 0)) {
+            updatePayload.customerphoto = customerphoto
+          }
+          if (cccdfront.length > 0 && (!existingCust.cccdfront || existingCust.cccdfront.length === 0)) {
+            updatePayload.cccdfront = cccdfront
+          }
+          if (newCustomerCCCD.trim() && (!existingCust.idcard || existingCust.idcard.startsWith("CCCD_"))) {
+            updatePayload.idcard = newCustomerCCCD.trim()
+          }
+          if (Object.keys(updatePayload).length > 0) {
+            await supabase.from('customers').update(updatePayload).eq('id', existingCust.id)
+          }
+        } else {
+          const newCust = await insertCustomer({
+            name: newCustomerName.trim(),
+            phone: newCustomerPhone.trim(),
+            facebook: "",
+            address: newCustomerAddress.trim(),
+            idcard: newCustomerCCCD.trim() || "",
+            totalrentals: 0,
+            status: "active",
+            customerphoto,
+            cccdfront,
+            cccdback: [],
+            licensefront: [],
+            licenseback: []
+          })
 
-        customerId = newCust.id
-        customerName = newCust.name
+          if (!newCust) {
+            alert("❌ Không thể tạo khách hàng mới")
+            return
+          }
+
+          customerId = newCust.id
+          customerName = newCust.name
+        }
       } else {
         const customer = customers.find((c) => c.id === formData.customerId)
         if (!customer) {

@@ -203,7 +203,15 @@ export default function CustomersPage() {
   }
 
   const filteredCustomers = useMemo(() => {
-    const filtered = customers.filter(
+    // Deduplicate by ID and normalize
+    const seenIds = new Set<string>()
+    const uniqueCustomers = customers.filter((c) => {
+      if (!c.id || seenIds.has(c.id)) return false
+      seenIds.add(c.id)
+      return true
+    })
+
+    const filtered = uniqueCustomers.filter(
       (customer) => {
         const matchesSearch =
           customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
