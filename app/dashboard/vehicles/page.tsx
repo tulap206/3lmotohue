@@ -8,7 +8,7 @@ import { useRentalData } from "@/contexts/rental-data-context"
 import { supabase } from "@/lib/supabase"
 import { uploadMultipleImages } from "@/lib/storage"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -1138,37 +1138,26 @@ export default function VehiclesPage() {
 
   return (
     <ModulePageShell module="rental">
-      <ModuleSubpageHeader
-        module="rental"
-        title="Quản lý xe"
-        subtitle="Quản lý danh sách xe cho thuê của cửa hàng"
-        breadcrumbs={[
-          { label: "Cho thuê xe", href: "/dashboard" },
-          { label: "Quản lý xe" },
-        ]}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-blue-200 text-blue-700 hover:bg-blue-50 bg-white rounded-[var(--radius-control)] h-11 font-semibold text-body transition-colors"
-              onClick={handleSyncLiveLocations}
-              disabled={isSyncingLocations}
-              title="Bấm để mở Tìm (Find My) trên Mac và đồng bộ vị trí xe mới nhất"
-            >
-              <RefreshCw className={cn("w-4 h-4 mr-2 text-blue-600", isSyncingLocations && "animate-spin")} />
-              {isSyncingLocations ? "Đang mở Tìm & cập nhật..." : "Cập nhật vị trí"}
-            </Button>
-            <Button
-              className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
-              onClick={() => setIsAddDialogOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm xe mới
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="border-blue-200 text-blue-700 hover:bg-blue-50 bg-white rounded-[var(--radius-control)] h-11 font-semibold text-body transition-colors"
+          onClick={handleSyncLiveLocations}
+          disabled={isSyncingLocations}
+          title="Bấm để mở Tìm (Find My) trên Mac và đồng bộ vị trí xe mới nhất"
+        >
+          <RefreshCw className={cn("w-4 h-4 mr-2 text-blue-600", isSyncingLocations && "animate-spin")} />
+          {isSyncingLocations ? "Đang mở Tìm & cập nhật..." : "Cập nhật vị trí"}
+        </Button>
+        <Button
+          className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
+          onClick={() => setIsAddDialogOpen(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Thêm xe mới
+        </Button>
+      </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
         if (!lightboxImage) {
@@ -1396,9 +1385,6 @@ export default function VehiclesPage() {
               <p className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
                 <span>Trạng thái xe ngày:</span>
                 <span className="text-blue-700 font-black">{targetDateTitle}</span>
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Tính toán chính xác số xe rảnh, chờ giao và đang thuê theo lịch trình thực tế
               </p>
             </div>
           </div>
