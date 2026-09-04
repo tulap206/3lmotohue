@@ -680,18 +680,6 @@ export default function CustomersPage() {
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={refresh}
-          disabled={loading}
-          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
-          title="Tải lại dữ liệu"
-          aria-label="Tải lại dữ liệu"
-        >
-          <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
-        </Button>
-        <Button
           className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
           onClick={() => { setEditingCustomer(null); resetForm(); setIsDialogOpen(true) }}
         >
@@ -893,7 +881,7 @@ export default function CustomersPage() {
         title="Danh sách khách hàng"
         description={`Quản lý ${filteredCustomers.length} khách hàng trong hệ thống`}
         filters={
-          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <div className="relative flex-1 lg:w-48">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
@@ -916,6 +904,18 @@ export default function CustomersPage() {
                 <SelectItem value="blocked">Danh sách đen (Chặn)</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={refresh}
+              disabled={loading}
+              className="h-10 w-10 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-300"
+              title="Tải lại dữ liệu"
+              aria-label="Tải lại dữ liệu"
+            >
+              <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+            </Button>
           </div>
         }
       >
