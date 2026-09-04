@@ -60,7 +60,7 @@ type AccessHistoryLayout = "page" | "embedded"
 type AccessHistoryAccent = "red" | "blue" | "amber" | "emerald" | "violet"
 
 const EMBEDDED_ROWS = 10
-const PAGE_ROWS = 12
+const PAGE_ROWS = 10
 
 const MODULE_CONFIG: Record<
   AccessHistoryModuleKey,
@@ -108,7 +108,7 @@ const MODULE_CONFIG: Record<
 }
 
 const layoutHeight: Record<AccessHistoryLayout, string> = {
-  page: "md:h-[calc(100dvh-8.5rem)] md:max-h-[calc(100dvh-8.5rem)]",
+  page: "",
   embedded: "",
 }
 
@@ -525,27 +525,6 @@ export function AccessHistoryPanel({
     safePage * itemsPerPage
   )
 
-  const logStats = useMemo(() => {
-    const today = new Date()
-    const isToday = (ts: string) => {
-      const d = new Date(ts)
-      return (
-        d.getFullYear() === today.getFullYear() &&
-        d.getMonth() === today.getMonth() &&
-        d.getDate() === today.getDate()
-      )
-    }
-    return {
-      total: normalizedLogs.length,
-      today: normalizedLogs.filter((l) => l.timestamp && isToday(l.timestamp)).length,
-      logins: normalizedLogs.filter((l) => getActionLabel(l.action) === "Đăng nhập").length,
-      changes: normalizedLogs.filter((l) => {
-        const a = getActionLabel(l.action)
-        return a === "Thêm mới" || a === "Chỉnh sửa" || a === "Xóa" || a === "Bảo trì" || a === "Trả xe"
-      }).length,
-    }
-  }, [normalizedLogs])
-
   if (loading) {
     return (
       <div className={panelShellClass(layout)}>
@@ -561,29 +540,9 @@ export function AccessHistoryPanel({
 
   return (
     <div className={panelShellClass(layout)}>
-      {layout === "page" && (
-        <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: "Tổng nhật ký", value: logStats.total },
-            { label: "Hôm nay", value: logStats.today },
-            { label: "Đăng nhập", value: logStats.logins },
-            { label: "Thay đổi dữ liệu", value: logStats.changes },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-[var(--radius-container)] border border-slate-100 bg-white px-3 py-2.5 shadow-sm"
-            >
-              <p className="text-meta text-slate-500">{stat.label}</p>
-              <p className="mt-0.5 text-lg font-semibold text-slate-900 money tabular-nums">{stat.value}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div
         className={cn(
           "module-card relative flex flex-col overflow-hidden rounded-[var(--radius-container)] border border-slate-100 bg-white shadow-sm ring-1",
-          layout === "page" && "min-h-0 flex-1",
           styles.ring
         )}
       >
@@ -592,27 +551,7 @@ export function AccessHistoryPanel({
         {/* Toolbar */}
         <div className="shrink-0 border-b border-slate-100 bg-slate-50/60 px-3 py-3 md:px-4">
           <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
-            <div className="mr-1 flex min-w-0 items-center gap-2">
-              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-control)]", styles.icon)}>
-                <History className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-title">{title}</h2>
-                  {scopeLabel && (
-                    <span className={cn("hidden rounded-[var(--radius-badge)] border px-2 py-0.5 text-label font-semibold sm:inline", styles.badge)}>
-                      {scopeLabel}
-                    </span>
-                  )}
-                  <span className="rounded-[var(--radius-badge)] border border-slate-200 bg-white px-1.5 py-0.5 text-label font-semibold tabular-nums text-slate-600">
-                    {filteredLogs.length}
-                  </span>
-                </div>
-                <p className="hidden truncate text-meta sm:block">{description}</p>
-              </div>
-            </div>
-
-            <div className="relative w-full sm:min-w-[140px] sm:flex-1 sm:max-w-xs">
+            <div className="relative w-full sm:min-w-[180px] sm:flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 placeholder="Tìm theo nội dung, biển số, IP..."
@@ -633,7 +572,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-11 w-full sm:w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
+              <SelectTrigger className="h-11 w-full sm:w-[10.5rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
                 <SelectValue placeholder="Tất cả tài khoản" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -687,7 +626,7 @@ export function AccessHistoryPanel({
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="h-11 w-full sm:w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
+              <SelectTrigger className="h-11 w-full sm:w-[10.5rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
                 <SelectValue placeholder="Tất cả hành động" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
@@ -712,7 +651,7 @@ export function AccessHistoryPanel({
               variant="outline"
               size="icon"
               disabled={loading}
-              className="h-11 w-11 shrink-0 rounded-[var(--radius-control)] border-slate-200 self-end sm:self-auto hover:bg-slate-100"
+              className="h-11 w-11 shrink-0 rounded-[var(--radius-control)] border-slate-200 hover:bg-slate-100"
               title="Làm mới"
             >
               <RefreshCw className={cn("h-4 w-4 text-slate-500", loading && "animate-spin")} />
@@ -721,7 +660,7 @@ export function AccessHistoryPanel({
         </div>
 
         {/* Table */}
-        <div className={layout === "page" ? "min-h-0 flex-1 overflow-hidden" : ""}>
+        <div>
           {filteredLogs.length === 0 ? (
             <div className="flex h-40 flex-col items-center justify-center text-center px-4">
               <History className="h-10 w-10 text-slate-300 mb-2" />
@@ -731,7 +670,7 @@ export function AccessHistoryPanel({
               </p>
             </div>
           ) : (
-            <div className={layout === "page" ? "md:h-full md:overflow-y-auto" : ""}>
+            <div>
               <ModuleResponsiveTable
                 desktop={
                   <table className="access-history-table w-full border-collapse text-left">

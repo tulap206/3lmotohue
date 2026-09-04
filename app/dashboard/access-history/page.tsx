@@ -7,7 +7,7 @@ import {
   AccessHistoryModuleSection,
   type AccessLogRecord,
 } from "@/components/dashboard/access-history-panel"
-import { ModulePageShell, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
+import { ModulePageShell } from "@/components/dashboard/module-shell"
 
 export default function AccessHistoryPage() {
   const { user } = useAuth()
@@ -73,15 +73,6 @@ export default function AccessHistoryPage() {
 
   return (
     <ModulePageShell module="rental">
-      <ModuleSubpageHeader
-        module="rental"
-        title="Lịch sử truy cập"
-        subtitle="Theo dõi hoạt động người dùng trên phân hệ cho thuê xe"
-        breadcrumbs={[
-          { label: "Cho thuê xe", href: "/dashboard" },
-          { label: "Lịch sử truy cập" },
-        ]}
-      />
       <AccessHistoryModuleSection
         module="rental"
         logs={accessLogs}
