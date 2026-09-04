@@ -10,6 +10,7 @@ import { UserAccountsModal } from "@/components/dashboard/user-accounts-modal"
 import { AboutSoftwareDialog } from "@/components/dashboard/about-software-dialog"
 import { Button } from "@/components/ui/button"
 import { Info, Users } from "lucide-react"
+import { showSuccess, showError } from "@/lib/toast-utils"
 
 interface BackupData {
   timestamp: string
@@ -103,12 +104,16 @@ export default function SettingsPage() {
         rentals: rentals || [],
       }
 
-      const jsonString = JSON.stringify(backupData, null, 2)
-      const blob = new Blob([jsonString], { type: "application/json" })
+      const backupJSON = JSON.stringify(backupData, null, 2)
+      const blob = new Blob([backupJSON], { type: "application/json" })
 
+      // Upload lên Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from("backups")
-        .upload(autoFileName, blob, { upsert: false })
+        .upload(autoFileName, blob, {
+          contentType: "application/json",
+          upsert: true,
+        })
 
       if (uploadError) throw uploadError
 
@@ -170,6 +175,21 @@ export default function SettingsPage() {
       setBackupFiles([])
     } finally {
       setFilesLoading(false)
+    }
+  }
+
+  const handleManualRefresh = async () => {
+    const startTime = Date.now()
+    try {
+      await loadBackupFiles()
+      const elapsed = Date.now() - startTime
+      if (elapsed < 400) {
+        await new Promise((r) => setTimeout(r, 400 - elapsed))
+      }
+      showSuccess("Đã làm mới danh sách bản sao lưu")
+    } catch (err) {
+      console.error("Error refreshing backup files:", err)
+      showError("Không thể làm mới danh sách bản sao lưu")
     }
   }
 
@@ -440,7 +460,7 @@ export default function SettingsPage() {
         onRestoreUpload={handleRestoreFromUpload}
         onRestoreFile={handleRestoreFromFile}
         onDeleteFile={handleDeleteBackup}
-        onRefresh={loadBackupFiles}
+        onRefresh={handleManualRefresh}
       />
     </ModulePageShell>
   )

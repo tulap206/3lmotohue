@@ -8,6 +8,7 @@ import {
   type AccessLogRecord,
 } from "@/components/dashboard/access-history-panel"
 import { ModulePageShell } from "@/components/dashboard/module-shell"
+import { showSuccess, showError } from "@/lib/toast-utils"
 
 export default function AccessHistoryPage() {
   const { user } = useAuth()
@@ -56,6 +57,21 @@ export default function AccessHistoryPage() {
     }
   }, [loadProjectUsers])
 
+  const handleManualRefresh = async () => {
+    const startTime = Date.now()
+    try {
+      await loadAccessLogs(true)
+      const elapsed = Date.now() - startTime
+      if (elapsed < 400) {
+        await new Promise((r) => setTimeout(r, 400 - elapsed))
+      }
+      showSuccess("Đã làm mới lịch sử truy cập")
+    } catch (err) {
+      console.error("Error refreshing access logs:", err)
+      showError("Không thể làm mới lịch sử truy cập")
+    }
+  }
+
   useEffect(() => {
     loadAccessLogs(true)
 
@@ -77,7 +93,7 @@ export default function AccessHistoryPage() {
         module="rental"
         logs={accessLogs}
         loading={loading}
-        onRefresh={() => loadAccessLogs(true)}
+        onRefresh={handleManualRefresh}
         allowed={user?.role === "admin" || user?.permissions?.canViewAccessHistory || false}
         dbUsers={dbUsers}
       />

@@ -38,6 +38,7 @@ import { OverdueOrdersPanel, CommissionHomeReportPanel } from "@/components/dash
 import { TodayHandoverSchedule } from "@/components/dashboard/today-handover-schedule"
 import { RentalKpiCard, rentalTableHeadClass, getRentalTransactionTypeLabel } from "@/components/dashboard/rental-ui"
 import { ModulePageShell, ModuleSectionCard, ModuleSectionTitle, ModuleKpiGrid, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleEmptyState, ModuleToolbar, moduleFilterInputClass } from "@/components/dashboard/module-shell"
+import { showSuccess, showError } from "@/lib/toast-utils"
 import { cn } from "@/lib/utils"
 import {
   EntityFormDialogContent,
@@ -474,6 +475,7 @@ export default function DashboardPage() {
     cashOnHand: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Reports & Transactions States
   const [monthlyRevenue, setMonthlyRevenue] = useState<{ month: string; revenue: number }[]>([])
@@ -959,6 +961,24 @@ export default function DashboardPage() {
   }
 
 
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    const startTime = Date.now()
+    try {
+      await loadDashboardData(false)
+      const elapsed = Date.now() - startTime
+      if (elapsed < 400) {
+        await new Promise((r) => setTimeout(r, 400 - elapsed))
+      }
+      showSuccess("Đã làm mới dữ liệu tổng quan")
+    } catch (error) {
+      console.error("Dashboard refresh error:", error)
+      showError("Không thể làm mới dữ liệu")
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   if (loading) {
     return (
       <ModulePageShell module="rental">
@@ -975,14 +995,14 @@ export default function DashboardPage() {
     <ModulePageShell module="rental">
       <div className="flex items-center justify-end gap-2">
         <Button
-          onClick={() => loadDashboardData(false)}
+          onClick={handleManualRefresh}
           title="Tải lại dữ liệu"
           aria-label="Tải lại dữ liệu"
           variant="outline"
-          disabled={loading}
+          disabled={isRefreshing || loading}
           className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
         >
-          <RefreshCw className={cn("w-5 h-5 shrink-0 text-slate-600", loading && "animate-spin")} />
+          <RefreshCw className={cn("w-5 h-5 shrink-0 text-slate-600", isRefreshing && "animate-spin")} />
         </Button>
         <Button
           onClick={() => setIsDialogOpen(true)}

@@ -71,6 +71,7 @@ export default function ReportsPage() {
 
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [userDisplayNames, setUserDisplayNames] = useState<Record<string, string>>({})
   const [searchQuery, setSearchQuery] = useState("")
@@ -875,6 +876,24 @@ export default function ReportsPage() {
     },
   ]
 
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    const startTime = Date.now()
+    try {
+      await loadReportData(false)
+      const elapsed = Date.now() - startTime
+      if (elapsed < 400) {
+        await new Promise((r) => setTimeout(r, 400 - elapsed))
+      }
+      showSuccess("Đã làm mới dữ liệu báo cáo")
+    } catch (error) {
+      console.error("Report refresh error:", error)
+      showError("Không thể làm mới dữ liệu báo cáo")
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
     <ModulePageShell module="rental">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -883,13 +902,13 @@ export default function ReportsPage() {
             type="button"
             variant="outline"
             size="icon"
-            onClick={() => loadReportData(true)}
-            disabled={loading}
+            onClick={handleManualRefresh}
+            disabled={isRefreshing || loading}
             className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
             title="Tải lại dữ liệu"
             aria-label="Tải lại dữ liệu"
           >
-            <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+            <RefreshCw className={cn("w-4 h-4 text-slate-600", isRefreshing && "animate-spin")} />
           </Button>
 
           <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>

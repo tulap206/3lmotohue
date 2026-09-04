@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Plus, Pencil, Trash2, Shield, User, Lock, RefreshCw } from "lucide-react"
+import { showSuccess, showError } from "@/lib/toast-utils"
 import { cn } from "@/lib/utils"
 import { ModuleMobileCard, ModulePageShell, ModuleResponsiveTable, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
 
@@ -286,6 +287,21 @@ export default function UsersPage() {
     setIsDialogOpen(true)
   }
 
+  const handleManualRefresh = async () => {
+    const startTime = Date.now()
+    try {
+      await loadUsers()
+      const elapsed = Date.now() - startTime
+      if (elapsed < 400) {
+        await new Promise((r) => setTimeout(r, 400 - elapsed))
+      }
+      showSuccess("Đã làm mới danh sách tài khoản")
+    } catch (err) {
+      console.error("Error refreshing users:", err)
+      showError("Không thể làm mới danh sách tài khoản")
+    }
+  }
+
   return (
     <ModulePageShell module="rental">
       <ModuleSubpageHeader
@@ -302,7 +318,7 @@ export default function UsersPage() {
               type="button"
               variant="outline"
               size="icon"
-              onClick={() => loadUsers()}
+              onClick={handleManualRefresh}
               disabled={loading}
               className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
               title="Tải lại dữ liệu"

@@ -12,6 +12,7 @@ import {
 } from "@/lib/supabase"
 import { formatDisplayDate } from "@/lib/format-date"
 import { useAuth } from "@/contexts/auth-context"
+import { showSuccess } from "@/lib/toast-utils"
 
 export interface RentalOrder extends Rental {
   rentalCode?: string
@@ -161,6 +162,23 @@ export function RentalDataProvider({ children }: { children: React.ReactNode }) 
     }
   }, [loadAll])
 
+  const refresh = useCallback(async () => {
+    setIsLoading(true)
+    const startTime = Date.now()
+    try {
+      await loadAll(false)
+      const elapsed = Date.now() - startTime
+      if (elapsed < 400) {
+        await new Promise((r) => setTimeout(r, 400 - elapsed))
+      }
+      showSuccess("Đã làm mới dữ liệu")
+    } catch (error) {
+      console.error("[RentalDataContext] Refresh error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [loadAll])
+
   return (
     <RentalDataContext.Provider
       value={{
@@ -168,7 +186,7 @@ export function RentalDataProvider({ children }: { children: React.ReactNode }) 
         customers,
         orders,
         isLoading,
-        refresh: () => loadAll(false),
+        refresh,
         setVehicles,
         setCustomers,
         setOrders,
