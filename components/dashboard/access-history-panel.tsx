@@ -212,6 +212,28 @@ function normalizeLog(log: AccessLogRecord): AccessLogRecord {
   }
 }
 
+export function isTelegramLog(log: AccessLogRecord): boolean {
+  const u = (log.username || "").toLowerCase()
+  const m = (log.module || "").toLowerCase()
+  const d = (log.displayName || log.displayname || "").toLowerCase()
+  const details = (log.details || "").toLowerCase()
+  const a = (log.action || "").toLowerCase()
+
+  if (u.includes("telegram")) return true
+  if (m.includes("telegram")) return true
+  if (d.includes("telegram")) return true
+  if (a.includes("telegram")) return true
+  if (
+    details.includes("hệ thống telegram") ||
+    details.includes("thông báo telegram") ||
+    (details.includes("nhận sự kiện:") && details.includes("token:")) ||
+    details.includes("chatid:")
+  ) {
+    return true
+  }
+  return false
+}
+
 /**
  * Chuẩn hóa phân hệ thông minh, map dữ liệu cũ và mới vào nhóm phân hệ chính xác
  */
@@ -425,9 +447,9 @@ export function AccessHistoryPanel({
   const styles = accentStyles[accent]
   const itemsPerPage = itemsPerPageProp ?? (layout === "page" ? PAGE_ROWS : EMBEDDED_ROWS)
 
-  // Normalize logs
+  // Normalize logs and filter out internal telegram notifications
   const normalizedLogs = useMemo(() => {
-    return logs.map(normalizeLog)
+    return logs.filter((log) => !isTelegramLog(log)).map(normalizeLog)
   }, [logs])
 
   // Lấy danh sách tài khoản từ DB (auth_users)
