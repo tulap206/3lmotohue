@@ -30,7 +30,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { showSuccess, showError } from "@/lib/toast-utils"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X, Home, Building2, Eye, Car, RefreshCw, Download, Coins } from "lucide-react"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X, Home, Building2, Eye, Car, RefreshCw, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { rentalTableHeadClass, RentalKpiCard } from "@/components/dashboard/rental-ui"
 import { formatDisplayDate } from "@/lib/format-date"
@@ -909,19 +909,6 @@ export default function ReportsPage() {
   return (
     <ModulePageShell module="rental">
       <div className="flex flex-wrap items-center justify-end gap-2 w-full">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={handleManualRefresh}
-          disabled={isRefreshing || loading}
-          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
-          title="Tải lại dữ liệu"
-          aria-label="Tải lại dữ liệu"
-        >
-          <RefreshCw className={cn("w-4 h-4 text-slate-600", isRefreshing && "animate-spin")} />
-        </Button>
-
         <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
           <SelectTrigger className="w-[180px] bg-white border-slate-300 rounded-[var(--radius-control)] h-11 text-body font-semibold">
             <SelectValue placeholder="Chọn kỳ báo cáo" />
@@ -955,12 +942,15 @@ export default function ReportsPage() {
 
         <Button
           type="button"
-          onClick={() => setIsA4PreviewOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] h-11 px-4 font-semibold text-body shadow-sm ui-transition [&_svg]:!text-white"
-          title="Xem và xuất báo cáo tài chính chuẩn A4"
+          variant="outline"
+          size="icon"
+          onClick={handleManualRefresh}
+          disabled={isRefreshing || loading}
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+          title="Tải lại dữ liệu"
+          aria-label="Tải lại dữ liệu"
         >
-          <Download className="w-4 h-4 mr-2" />
-          <span>Xuất báo cáo</span>
+          <RefreshCw className={cn("w-4 h-4 text-slate-600", isRefreshing && "animate-spin")} />
         </Button>
       </div>
 
