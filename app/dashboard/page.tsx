@@ -36,7 +36,7 @@ import { MonthlyRevenueChart, RentalStatusChart, RentalFleetChart, RentalIncomeE
 import { OverdueOrdersPanel, CommissionHomeReportPanel } from "@/components/dashboard/rental-overview-panels"
 import { TodayHandoverSchedule } from "@/components/dashboard/today-handover-schedule"
 import { RentalKpiCard, rentalTableHeadClass, getRentalTransactionTypeLabel } from "@/components/dashboard/rental-ui"
-import { ModulePageShell, ModuleBrandHeader, ModuleSectionCard, ModuleSectionTitle, ModuleKpiGrid, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleEmptyState, ModuleToolbar, moduleFilterInputClass } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSectionCard, ModuleSectionTitle, ModuleKpiGrid, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleEmptyState, ModuleToolbar, moduleFilterInputClass } from "@/components/dashboard/module-shell"
 import { cn } from "@/lib/utils"
 import {
   EntityFormDialogContent,
@@ -962,7 +962,6 @@ export default function DashboardPage() {
     return (
       <ModulePageShell module="rental">
         <div className="space-y-6">
-          <div className="h-20 skeleton rounded-[var(--radius-container)]" />
           <SkeletonMetricCards count={5} />
           <SkeletonCharts />
           <SkeletonTable rows={5} />
@@ -973,67 +972,55 @@ export default function DashboardPage() {
 
   return (
     <ModulePageShell module="rental">
-      <ModuleBrandHeader
-        module="rental"
-        title={
-          <>
-            Tổng quan{" "}
-            <span className="hidden sm:inline text-blue-600 font-semibold">Cho thuê xe · 3L Moto</span>
-          </>
-        }
-        subtitle="Vận hành đội xe và theo dõi hiệu suất kinh doanh"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              <span>Đơn mới</span>
-            </Button>
-            <Button
-              onClick={() => setIsLockModalOpen(true)}
-              title={isBookingLocked ? "Đang khóa đặt xe" : "Khóa đặt xe"}
-              aria-label={isBookingLocked ? "Đang khóa đặt xe" : "Khóa đặt xe"}
-              className={cn(
-                "h-11 w-11 p-0 flex items-center justify-center shrink-0 rounded-[var(--radius-control)] shadow-sm ui-transition !text-white hover:!text-white [&_svg]:!text-white",
-                isBookingLocked
-                  ? "bg-rose-700 hover:bg-rose-800 ring-2 ring-rose-300"
-                  : "bg-rose-600 hover:bg-rose-700"
-              )}
-            >
-              {isBookingLocked ? (
-                <Lock className="w-5 h-5 shrink-0 animate-pulse" />
-              ) : (
-                <LockOpen className="w-5 h-5 shrink-0" />
-              )}
-            </Button>
-            <Button
-              onClick={() => setIsDailySummaryOpen(true)}
-              title="Tổng ngày"
-              aria-label="Tổng ngày"
-              variant="outline"
-              className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition [&_svg]:text-blue-600 hover:border-slate-400"
-            >
-              <CalendarCheck className="w-5 h-5 shrink-0 text-blue-600" />
-            </Button>
-            <Button
-              onClick={() => setIsDailyNotificationOpen(true)}
-              title="Thông báo"
-              aria-label="Thông báo"
-              variant="outline"
-              className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
-            >
-              <Bell className="w-5 h-5 shrink-0 text-amber-500" />
-              {dailyNotifyBadgeCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold bg-rose-600 text-white leading-none shadow-sm">
-                  {dailyNotifyBadgeCount}
-                </span>
-              )}
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          <span>Đơn mới</span>
+        </Button>
+        <Button
+          onClick={() => setIsLockModalOpen(true)}
+          title={isBookingLocked ? "Đang khóa đặt xe" : "Khóa đặt xe"}
+          aria-label={isBookingLocked ? "Đang khóa đặt xe" : "Khóa đặt xe"}
+          className={cn(
+            "h-11 w-11 p-0 flex items-center justify-center shrink-0 rounded-[var(--radius-control)] shadow-sm ui-transition !text-white hover:!text-white [&_svg]:!text-white",
+            isBookingLocked
+              ? "bg-rose-700 hover:bg-rose-800 ring-2 ring-rose-300"
+              : "bg-rose-600 hover:bg-rose-700"
+          )}
+        >
+          {isBookingLocked ? (
+            <Lock className="w-5 h-5 shrink-0 animate-pulse" />
+          ) : (
+            <LockOpen className="w-5 h-5 shrink-0" />
+          )}
+        </Button>
+        <Button
+          onClick={() => setIsDailySummaryOpen(true)}
+          title="Tổng ngày"
+          aria-label="Tổng ngày"
+          variant="outline"
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition [&_svg]:text-blue-600 hover:border-slate-400"
+        >
+          <CalendarCheck className="w-5 h-5 shrink-0 text-blue-600" />
+        </Button>
+        <Button
+          onClick={() => setIsDailyNotificationOpen(true)}
+          title="Thông báo"
+          aria-label="Thông báo"
+          variant="outline"
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition [&_svg]:text-amber-500 hover:border-slate-400 relative"
+        >
+          <Bell className="w-5 h-5 shrink-0 text-amber-500" />
+          {dailyNotifyBadgeCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold bg-rose-600 text-white leading-none shadow-sm">
+              {dailyNotifyBadgeCount}
+            </span>
+          )}
+        </Button>
+      </div>
 
       <div className="space-y-6">
         {/* Nhóm chỉ số vận hành */}
