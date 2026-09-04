@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChartEmpty, ChartShell } from "@/components/dashboard/chart-primitives"
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 5
 
 export type OverdueRentalRow = {
   id: string

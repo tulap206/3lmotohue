@@ -300,7 +300,13 @@ function RankedComposition({
   )
 }
 
-export function RentalStatusChart({ data }: { data: StatusDatum[] }) {
+export function RentalStatusChart({
+  data,
+  monthLabel,
+}: {
+  data: StatusDatum[]
+  monthLabel?: string
+}) {
   const total = data.reduce((sum, d) => sum + d.value, 0)
   const byName = new Map(data.map((d) => [d.name, d.value]))
   const extra = data.filter((d) => !(STATUS_ORDER as readonly string[]).includes(d.name) && d.value > 0)
@@ -316,14 +322,18 @@ export function RentalStatusChart({ data }: { data: StatusDatum[] }) {
     })),
   ]
 
+  const description = monthLabel
+    ? `Phân bổ đơn theo trạng thái (${monthLabel})`
+    : "Phân bổ đơn theo trạng thái tháng hiện tại"
+
   if (total === 0) {
     return (
       <ChartShell
         title="Trạng thái đơn thuê"
-        description="Phân bổ đơn theo trạng thái"
+        description={description}
         icon={<ClipboardList className="w-4 h-4" />}
       >
-        <ChartEmpty label="Chưa có đơn thuê" />
+        <ChartEmpty label={monthLabel ? `Chưa có đơn thuê trong ${monthLabel}` : "Chưa có đơn thuê tháng này"} />
       </ChartShell>
     )
   }
@@ -331,7 +341,7 @@ export function RentalStatusChart({ data }: { data: StatusDatum[] }) {
   return (
     <ChartShell
       title="Trạng thái đơn thuê"
-      description="Phân bổ đơn theo trạng thái"
+      description={description}
       icon={<ClipboardList className="w-4 h-4" />}
       headerExtra={
         <div>

@@ -651,14 +651,42 @@ export default function DashboardPage() {
   }
 
   const rentalStatusChartData = useMemo(() => {
-    const overdue = orders.filter((o) => isOrderOverdue(o)).length
-    const active = orders.filter((o) => o.status === "active" && !isOrderOverdue(o)).length
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+    const monthStart = new Date(currentYear, currentMonth, 1, 0, 0, 0, 0)
+    const monthEnd = new Date(currentYear, currentMonth, daysInMonth, 23, 59, 59, 999)
+
+    const thisMonthOrders = orders.filter((o) => {
+      const start = parseDisplayDate(o.startDate)
+      const end = parseDisplayDate(o.endDate)
+      if (start && end) {
+        start.setHours(0, 0, 0, 0)
+        end.setHours(23, 59, 59, 999)
+        return start <= monthEnd && end >= monthStart
+      }
+      if (start) {
+        return start.getMonth() === currentMonth && start.getFullYear() === currentYear
+      }
+      if (end) {
+        return end.getMonth() === currentMonth && end.getFullYear() === currentYear
+      }
+      const created = parseDisplayDate(o.created_at || o.createdAt)
+      if (created) {
+        return created.getMonth() === currentMonth && created.getFullYear() === currentYear
+      }
+      return false
+    })
+
+    const overdue = thisMonthOrders.filter((o) => isOrderOverdue(o)).length
+    const active = thisMonthOrders.filter((o) => o.status === "active" && !isOrderOverdue(o)).length
     return [
-      { name: "Chờ giao xe", value: orders.filter((o) => o.status === "pending").length },
+      { name: "Chờ giao xe", value: thisMonthOrders.filter((o) => o.status === "pending").length },
       { name: "Đang thuê", value: active },
       { name: "Quá hạn", value: overdue },
-      { name: "Hoàn thành", value: orders.filter((o) => o.status === "completed").length },
-      { name: "Đã hủy", value: orders.filter((o) => o.status === "cancelled").length },
+      { name: "Hoàn thành", value: thisMonthOrders.filter((o) => o.status === "completed").length },
+      { name: "Đã hủy", value: thisMonthOrders.filter((o) => o.status === "cancelled").length },
     ]
   }, [orders])
 
@@ -782,7 +810,7 @@ export default function DashboardPage() {
   }, [orders])
 
   // Filtered and paginated transactions for Dashboard
-  const txItemsPerPage = 10
+  const txItemsPerPage = 5
 
   const filteredTransactions = useMemo(() => {
     return transactions
@@ -1133,7 +1161,10 @@ export default function DashboardPage() {
             <MonthlyRevenueChart data={monthlyRevenue} formatPrice={formatPrice} />
           </div>
           <div className="lg:col-span-5 min-w-0">
-            <RentalStatusChart data={rentalStatusChartData} />
+            <RentalStatusChart
+              data={rentalStatusChartData}
+              monthLabel={`Tháng ${new Date().getMonth() + 1}/${new Date().getFullYear()}`}
+            />
           </div>
           <div className="lg:col-span-7 min-w-0">
             <RentalIncomeExpenseChart data={rentalIncomeExpenseChartData} formatPrice={formatPrice} />
