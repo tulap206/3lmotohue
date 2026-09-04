@@ -622,6 +622,20 @@ export default function OrdersPage() {
 
   const formatPrice = (n: number) => `${n.toLocaleString("vi-VN")}đ`
 
+  const getOrderNetProfit = (order: RentalOrder): number | null => {
+    if (order.status === "cancelled") {
+      return (order.deposit || 0) + (order.extraFees || 0)
+    }
+    if (order.status === "completed") {
+      if (order.revenue !== undefined && order.revenue !== null && order.revenue > 0) {
+        return order.revenue
+      }
+      const commissionTotal = (order.commissionHome || 0) * (order.totalDays || 0)
+      return Math.max(0, (order.totalPrice || 0) + (order.extraFees || 0) - commissionTotal)
+    }
+    return null
+  }
+
   const calculateTotalDays = (start: string, end: string) => {
     const startDate = new Date(start)
     const endDate = new Date(end)
@@ -2161,7 +2175,7 @@ export default function OrdersPage() {
                         <th className={cn(rentalTableHeadClass, "text-slate-600")}>Xe thuê</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Thời gian</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Tổng tiền</th>
-                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thu</th>
+                        <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Lợi nhuận</th>
                         <th className={cn(rentalTableHeadClass, "text-center text-slate-600")}>Trạng thái</th>
                         <th className={cn(rentalTableHeadClass, "text-right text-slate-600")}>Thao tác</th>
                       </tr>
@@ -2169,6 +2183,7 @@ export default function OrdersPage() {
                     <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
                       {paginatedOrders.map((order, index) => {
                         const isOverdue = isOrderOverdue(order)
+                        const netProfit = getOrderNetProfit(order)
                         return (
                           <tr key={order.id} className="module-table-row hover:bg-slate-50/50 transition-colors">
                             <td className="py-3.5 px-4 text-center text-sm text-slate-400 font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</td>
@@ -2238,10 +2253,12 @@ export default function OrdersPage() {
                               </div>
                             </td>
                             <td className="py-3.5 px-4 text-right font-mono text-sm whitespace-nowrap">
-                              {order.revenue > 0 ? (
-                                <span className="font-bold money tabular-nums text-rose-600">
-                                  {order.revenue.toLocaleString("vi-VN")} đ
+                              {netProfit !== null && netProfit > 0 ? (
+                                <span className="font-bold money tabular-nums text-emerald-700">
+                                  {netProfit.toLocaleString("vi-VN")} đ
                                 </span>
+                              ) : netProfit === 0 ? (
+                                <span className="font-medium money tabular-nums text-slate-500">0 đ</span>
                               ) : (
                                 <span className="text-slate-400">—</span>
                               )}
@@ -2360,7 +2377,20 @@ export default function OrdersPage() {
                             </Button>
                           )}
                         </div>
-                        <span className="font-bold text-slate-900 money tabular-nums text-sm">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
+                        <div className="text-right">
+                          <span className="font-bold text-slate-900 money tabular-nums text-sm block">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
+                          {(() => {
+                            const netProfit = getOrderNetProfit(order)
+                            if (netProfit !== null) {
+                              return (
+                                <span className="text-[11px] font-semibold text-emerald-700 tabular-nums block">
+                                  LN: {netProfit.toLocaleString("vi-VN")} đ
+                                </span>
+                              )
+                            }
+                            return null
+                          })()}
+                        </div>
                       </div>
 
                       <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
@@ -2413,6 +2443,7 @@ export default function OrdersPage() {
             const notesClean = stripRentalTermFromNotes(o.notes)
             const commissionTotal = (o.commissionHome || 0) * (o.totalDays || 0)
             const payable = o.totalPrice + (o.extraFees || 0)
+            const modalNetProfit = getOrderNetProfit(o)
             return (
               <>
                 <EntityFormHeader
@@ -2452,8 +2483,8 @@ export default function OrdersPage() {
                     />
                     <div className="col-span-2 sm:col-span-1">
                       <OrderStat
-                        label="Doanh thu"
-                        value={o.status === "pending" || o.status === "active" ? "Chưa chốt" : formatPrice(o.revenue || 0)}
+                        label="Lợi nhuận ròng"
+                        value={o.status === "pending" || o.status === "active" ? "Chưa chốt" : formatPrice(modalNetProfit ?? o.revenue ?? 0)}
                         tone={
                           o.status === "completed" ? "emerald"
                             : o.status === "cancelled" ? "amber"
@@ -2547,8 +2578,8 @@ export default function OrdersPage() {
                               <span className="font-medium text-slate-400 tabular-nums shrink-0">-{formatPrice(o.deposit)}</span>
                             </div>
                             <div className="flex justify-between gap-3 text-body pt-2 border-t border-slate-100">
-                              <span className="font-semibold text-slate-800">Doanh thu thực nhận</span>
-                              <span className="font-semibold text-emerald-700 money tabular-nums shrink-0">{formatPrice(o.revenue || 0)}</span>
+                              <span className="font-semibold text-slate-800">Lợi nhuận ròng</span>
+                              <span className="font-semibold text-emerald-700 money tabular-nums shrink-0">{formatPrice(modalNetProfit ?? o.revenue ?? 0)}</span>
                             </div>
                           </>
                         ) : (
@@ -2564,8 +2595,8 @@ export default function OrdersPage() {
                               </div>
                             )}
                             <div className="flex justify-between gap-3 text-body pt-2 border-t border-slate-100">
-                              <span className="font-semibold text-slate-800">Doanh thu</span>
-                              <span className="font-semibold text-amber-700 money tabular-nums shrink-0">{formatPrice(o.revenue || 0)}</span>
+                              <span className="font-semibold text-slate-800">Lợi nhuận ròng</span>
+                              <span className="font-semibold text-amber-700 money tabular-nums shrink-0">{formatPrice(modalNetProfit ?? o.revenue ?? 0)}</span>
                             </div>
                           </>
                         )}
