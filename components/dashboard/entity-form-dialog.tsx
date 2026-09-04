@@ -233,7 +233,7 @@ export function EntityFormFooter({
   disabled?: boolean
 }) {
   return (
-    <DialogFooter className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 mt-6 px-4 sm:px-6 py-3 border-t border-slate-100 bg-white/95 backdrop-blur-md flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+    <DialogFooter className="sticky bottom-0 z-20 -mx-3.5 sm:-mx-6 mt-6 px-3.5 sm:px-6 py-3 border-t border-slate-100 bg-white/95 backdrop-blur-md flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
       <Button type="button" variant="outline" onClick={onCancel} className="h-11 w-full sm:w-auto rounded-[var(--radius-control)] border-slate-200">
         {cancelLabel}
       </Button>

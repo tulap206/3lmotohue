@@ -261,11 +261,11 @@ export function ModuleKpiCard({
               {watermark}
             </div>
           )}
-          <CardContent className="relative z-10 px-4 py-3.5 flex flex-col justify-between h-full min-h-[5.5rem] space-y-1.5">
-            <div className="flex justify-between items-start w-full gap-2">
+          <CardContent className="relative z-10 px-3 sm:px-4 py-2.5 sm:py-3.5 flex flex-col justify-between h-full min-h-[4.75rem] sm:min-h-[5.5rem] space-y-1 sm:space-y-1.5">
+            <div className="flex justify-between items-start w-full gap-1.5">
               <div className="space-y-0.5 min-w-0 flex-1">
-                <p className="text-label leading-tight">{label}</p>
-                {sublabel && <p className="text-meta leading-snug">{sublabel}</p>}
+                <p className="text-label leading-tight truncate">{label}</p>
+                {sublabel && <p className="text-meta leading-snug truncate">{sublabel}</p>}
               </div>
               {icon && (
                 <div className={cn(iconColor || ACCENT_TITLE_CLASS[accent], "text-sm shrink-0")}>{icon}</div>
@@ -274,7 +274,7 @@ export function ModuleKpiCard({
             <div
               className={cn(
                 "font-semibold text-slate-800 tracking-tight money leading-tight min-w-0 break-words",
-                "text-[1.05rem] sm:text-lg xl:text-xl sm:whitespace-nowrap",
+                "text-[1.05rem] sm:text-lg xl:text-xl",
                 valueClassName
               )}
               title={valueTitle}
@@ -566,7 +566,7 @@ export function ModulePagination({
         >
           Trước
         </Button>
-        <div className="flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-none">
+        <div className="flex items-center gap-1 overflow-x-auto max-w-[calc(100vw-135px)] sm:max-w-none scrollbar-none py-0.5">
           {pages.map((p, idx) =>
             p === "ellipsis" ? (
               <span key={`e-${idx}`} className="text-slate-400 text-meta px-1 select-none">

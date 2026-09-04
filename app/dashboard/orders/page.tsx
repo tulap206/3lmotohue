@@ -2392,7 +2392,13 @@ export default function OrdersPage() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-slate-800 truncate">{order.customerName}</p>
+                            <button
+                              type="button"
+                              className="font-semibold text-slate-800 hover:text-blue-700 hover:underline text-left truncate block w-full"
+                              onClick={() => openCustomerDetail(order.customerId)}
+                            >
+                              {order.customerName}
+                            </button>
                             {isWebBookingOrder(order.notes) && (
                               <p className="text-meta text-blue-600">(đặt từ Web)</p>
                             )}
@@ -2414,7 +2420,13 @@ export default function OrdersPage() {
                                 </>
                               ) : (
                                 <>
-                                  <span className="text-sm text-slate-700 font-medium">{order.vehicleName}</span>
+                                  <button
+                                    type="button"
+                                    className="text-sm text-slate-700 font-medium hover:text-blue-700 hover:underline text-left truncate"
+                                    onClick={() => openVehicleDetail(order.vehicleId)}
+                                  >
+                                    {order.vehicleName}
+                                  </button>
                                   <span className="inline-block bg-white text-slate-800 border border-slate-200 font-mono font-bold px-1.5 py-0.5 rounded-[var(--radius-badge)] text-sm shadow-sm tracking-wider uppercase whitespace-nowrap">
                                     {order.licensePlate}
                                   </span>
@@ -2436,14 +2448,14 @@ export default function OrdersPage() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-1.5">
                           {order.deposit > 0 ? (
-                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-emerald-50 text-emerald-700 border border-emerald-100">Đã cọc</span>
+                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">Đã cọc</span>
                           ) : (
-                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-amber-50 text-amber-600 border border-amber-100">Chưa cọc</span>
+                            <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-amber-50 text-amber-600 border border-amber-100 whitespace-nowrap">Chưa cọc</span>
                           )}
                           {order.status === "pending" && (
                             <Button
                               size="sm"
-                              className="h-9 px-2.5 text-sm bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)]"
+                              className="h-9 px-3 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 !text-white rounded-[var(--radius-control)]"
                               onClick={() => handleDeliverOrderClick(order)}
                             >
                               Giao xe
@@ -2452,7 +2464,7 @@ export default function OrdersPage() {
                           {(order.status === "active" || isOverdue) && (
                             <Button
                               size="sm"
-                              className="h-9 px-2.5 text-sm bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)]"
+                              className="h-9 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-700 !text-white rounded-[var(--radius-control)]"
                               onClick={() => openCompleteWithLateFee(order.id)}
                             >
                               Xong
@@ -2460,12 +2472,12 @@ export default function OrdersPage() {
                           )}
                         </div>
                         <div className="text-right">
-                          <span className="font-bold text-slate-900 money tabular-nums text-sm block">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
+                          <span className="font-bold text-slate-900 money tabular-nums text-sm block whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
                           {(() => {
                             const netProfit = getOrderNetProfit(order)
                             if (netProfit !== null) {
                               return (
-                                <span className="text-[11px] font-semibold text-emerald-700 tabular-nums block">
+                                <span className="text-[11px] font-semibold text-emerald-700 tabular-nums block whitespace-nowrap">
                                   LN: {netProfit.toLocaleString("vi-VN")} đ
                                 </span>
                               )
@@ -2478,17 +2490,17 @@ export default function OrdersPage() {
                       <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-100/50">
                         <span className="text-meta text-slate-400">Đơn #{order.rentalCode || order.id.substring(0, 8)}</span>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => setViewingOrder(order)} title="Xem chi tiết">
+                          <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => setViewingOrder(order)} title="Xem chi tiết">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openEditDialog(order)} title="Chỉnh sửa">
+                          <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => openEditDialog(order)} title="Chỉnh sửa">
                             <Pencil className="w-4 h-4" />
                           </Button>
                           {user?.permissions.canDelete && (
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                              className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                               onClick={() => handleDeleteClick(order)}
                               title="Xóa"
                             >

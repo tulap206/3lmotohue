@@ -278,26 +278,46 @@ export function DashboardSidebar({ children }: SidebarProps) {
       </aside>
 
       <div className="flex-1 min-w-0 lg:ml-[16.5rem]">
-        <div className="lg:hidden sticky top-0 z-30 flex items-center gap-2 min-h-14 px-4 bg-white/90 backdrop-blur-md border-b border-slate-100 pt-[env(safe-area-inset-top)]">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-[var(--radius-control)] hover:bg-slate-50 touch-target shrink-0"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Mở menu"
-          >
-            <Menu className="w-5 h-5 text-slate-600" />
-          </Button>
-          <div className="min-w-0">
-            <p className="text-body font-semibold text-slate-800 leading-tight">3L Moto</p>
-            <p className="text-meta leading-tight truncate">
-              {visibleItems.find((i) => isNavActive(pathname, i.href))?.title
-                || (isNavActive(pathname, "/dashboard/settings") ? "Cài đặt" : "Quản trị")}
-            </p>
+        <div className="lg:hidden sticky top-0 z-30 flex items-center justify-between min-h-14 px-3.5 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 p-0 rounded-[var(--radius-control)] hover:bg-slate-100 touch-target shrink-0 text-slate-700"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Mở menu"
+            >
+              <Menu className="w-5 h-5 text-slate-700" />
+            </Button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <p className="text-body font-bold text-slate-900 leading-tight shrink-0">3L Moto</p>
+                <span className="text-slate-300 font-normal shrink-0">/</span>
+                <p className="text-body font-semibold text-blue-600 leading-tight truncate">
+                  {visibleItems.find((i) => isNavActive(pathname, i.href))?.title
+                    || (isNavActive(pathname, "/dashboard/settings") ? "Cài đặt" : "Quản trị")}
+                </p>
+              </div>
+            </div>
           </div>
+          {user && (
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 ui-transition shrink-0 touch-target"
+              aria-label="Xem thông tin cá nhân"
+            >
+              <Avatar className="h-8 w-8 shrink-0 border border-slate-200">
+                {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover" />}
+                <AvatarFallback className="bg-blue-600 text-white text-[11px] font-bold uppercase">
+                  {user.displayName.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          )}
         </div>
 
-        <main className="p-3 sm:p-5 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] min-w-0 overflow-x-clip">{children}</main>
+        <main className="p-3 sm:p-5 lg:p-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] min-w-0 overflow-x-clip">{children}</main>
       </div>
 
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>

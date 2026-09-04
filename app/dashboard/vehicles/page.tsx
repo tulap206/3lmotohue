@@ -1809,22 +1809,22 @@ export default function VehiclesPage() {
                       </div>
 
                       <div className="flex justify-between items-center text-sm mt-2.5 pt-2 border-t border-slate-100/50">
-                        <span className="font-semibold text-slate-900 tabular-nums money">{formatPrice(vehicle.pricePerDay)}/ngày</span>
+                        <span className="font-semibold text-slate-900 tabular-nums money whitespace-nowrap">{formatPrice(vehicle.pricePerDay)}/ngày</span>
                         <div className="flex gap-1 items-center">
-                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
+                          <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => openHistoryDialog(vehicle)} title="Lịch sử">
                             <Clock className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)} title="Chi tiết">
+                          <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => openDetailDialog(vehicle)} title="Chi tiết">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)} title="Chỉnh sửa">
+                          <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => openEditDialog(vehicle)} title="Chỉnh sửa">
                             <Pencil className="w-4 h-4" />
                           </Button>
                           {user?.role === "admin" && (
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                              className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                               onClick={() => {
                                 if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${vehicle.name} (${vehicle.licensePlate})?`)) {
                                   handleDeleteVehicle(vehicle.id)

@@ -1017,10 +1017,10 @@ export default function DashboardPage() {
 
   return (
     <ModulePageShell module="rental">
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2 w-full">
         <Button
           onClick={() => setIsDialogOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
+          className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           <span>Đơn mới</span>

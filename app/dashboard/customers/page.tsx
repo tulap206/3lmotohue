@@ -1081,30 +1081,34 @@ export default function CustomersPage() {
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100 text-sm text-slate-500">
-                      <div className="flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" />
-                        {customer.phone}
-                      </div>
-                      <div className="flex items-center gap-1 truncate">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        {customer.address}
+                      <a
+                        href={`tel:${customer.phone}`}
+                        className="flex items-center gap-1.5 font-medium text-slate-700 hover:text-blue-600 transition-colors"
+                        title="Gọi trực tiếp"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span className="truncate">{customer.phone}</span>
+                      </a>
+                      <div className="flex items-center gap-1 truncate text-slate-500">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{customer.address || "—"}</span>
                       </div>
                     </div>
                     <div className="flex justify-end gap-1 mt-2 pt-2 border-t border-slate-100/50 items-center">
-                      <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }} title="Lịch sử thuê">
+                      <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => { setHistoryCustomer(customer); setIsHistoryDialogOpen(true) }} title="Lịch sử thuê">
                         <Clock className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => openDetailDialog(customer)} title="Chi tiết">
+                      <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => openDetailDialog(customer)} title="Chi tiết">
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon-sm" className="h-9 w-9 p-0 text-slate-500" onClick={() => handleEdit(customer)} title="Chỉnh sửa">
+                      <Button variant="ghost" size="icon-sm" className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-slate-500" onClick={() => handleEdit(customer)} title="Chỉnh sửa">
                         <Pencil className="w-4 h-4" />
                       </Button>
                       {user?.permissions.canDelete && (
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                          className="h-10 w-10 sm:h-9 sm:w-9 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                           onClick={() => {
                             if (window.confirm(`Bạn có chắc chắn muốn xóa khách hàng ${customer.name}?`)) {
                               handleDelete(customer.id)
