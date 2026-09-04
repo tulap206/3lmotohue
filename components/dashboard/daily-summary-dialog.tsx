@@ -10,7 +10,6 @@ import {
   Download,
   Loader2,
   Calendar,
-  Bike,
 } from "lucide-react"
 import { toBlob } from "html-to-image"
 import { formatDisplayDate, parseDisplayDate, formatDisplayDateTime } from "@/lib/format-date"
@@ -134,23 +133,6 @@ async function saveReportPng(blob: Blob, filename: string): Promise<"shared" | "
     window.setTimeout(() => URL.revokeObjectURL(url), 8000)
   }
   return "downloaded"
-}
-
-function getVehicleImageUrl(vehicle: any): string | null {
-  if (!vehicle) return null
-  if (Array.isArray(vehicle.vehicleImages) && vehicle.vehicleImages.length > 0 && typeof vehicle.vehicleImages[0] === 'string') {
-    return vehicle.vehicleImages[0]
-  }
-  if (Array.isArray(vehicle.vehiclephoto) && vehicle.vehiclephoto.length > 0 && typeof vehicle.vehiclephoto[0] === 'string') {
-    return vehicle.vehiclephoto[0]
-  }
-  if (Array.isArray(vehicle.images) && vehicle.images.length > 0 && typeof vehicle.images[0] === 'string') {
-    return vehicle.images[0]
-  }
-  if (typeof vehicle.image === "string" && vehicle.image) {
-    return vehicle.image
-  }
-  return null
 }
 
 export function DailySummaryDialog({
@@ -651,176 +633,6 @@ export function DailySummaryDialog({
                   </tfoot>
                 )}
               </table>
-            </div>
-          </div>
-
-          {/* BẢNG 3: Danh Sách Xe Đang Sẵn Sàng (3 Cột) */}
-          <div className="space-y-1.5 sm:space-y-2 pt-1">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
-                3. Danh Sách Xe Đang Sẵn Sàng Cho Thuê ({vehicleStats.available.length} xe)
-              </h3>
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                <span>Vision: <strong className="text-slate-800">{availableVision.length}</strong></span>
-                <span>•</span>
-                <span>AB: <strong className="text-slate-800">{availableAB.length}</strong></span>
-                <span>•</span>
-                <span>Khác: <strong className="text-slate-800">{availableOthers.length}</strong></span>
-              </div>
-            </div>
-
-            {/* 3 Cột Light Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
-              {/* Cột 1: Xe Vision */}
-              <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-2xs">
-                <div className="bg-slate-50 border-b border-slate-200/80 px-3 py-1.5 sm:py-2 flex items-center justify-between">
-                  <span className="font-semibold text-slate-800 text-xs">
-                    Xe Vision ({availableVision.length})
-                  </span>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {availableVision.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400 font-normal">
-                      Không có xe Vision sẵn sàng.
-                    </div>
-                  ) : (
-                    availableVision.map((vehicle, i) => {
-                      const imageUrl = getVehicleImageUrl(vehicle)
-                      return (
-                        <div
-                          key={vehicle.id || i}
-                          className="p-1.5 sm:p-2 px-2.5 flex items-center gap-2.5 hover:bg-slate-50/50 transition"
-                        >
-                          <span className="w-4 text-center text-xs font-mono text-slate-400 font-medium shrink-0">
-                            {i + 1}
-                          </span>
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={vehicle.name}
-                              className="w-7 h-7 rounded object-cover border border-slate-200 shrink-0 bg-slate-50"
-                            />
-                          ) : (
-                            <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                              <Bike className="w-3.5 h-3.5" />
-                            </div>
-                          )}
-                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span className="font-medium text-slate-800 text-xs">{vehicle.name}</span>
-                            {/* HIGHLIGHTED 1: Biển Số Xe */}
-                            {vehicle.licensePlate && (
-                              <span className="text-[10px] font-mono font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow-2xs shrink-0">
-                                {vehicle.licensePlate}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Cột 2: Xe AB */}
-              <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-2xs">
-                <div className="bg-slate-50 border-b border-slate-200/80 px-3 py-1.5 sm:py-2 flex items-center justify-between">
-                  <span className="font-semibold text-slate-800 text-xs">
-                    Xe AB (Air Blade) ({availableAB.length})
-                  </span>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {availableAB.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400 font-normal">
-                      Không có xe AB sẵn sàng.
-                    </div>
-                  ) : (
-                    availableAB.map((vehicle, i) => {
-                      const imageUrl = getVehicleImageUrl(vehicle)
-                      return (
-                        <div
-                          key={vehicle.id || i}
-                          className="p-1.5 sm:p-2 px-2.5 flex items-center gap-2.5 hover:bg-slate-50/50 transition"
-                        >
-                          <span className="w-4 text-center text-xs font-mono text-slate-400 font-medium shrink-0">
-                            {i + 1}
-                          </span>
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={vehicle.name}
-                              className="w-7 h-7 rounded object-cover border border-slate-200 shrink-0 bg-slate-50"
-                            />
-                          ) : (
-                            <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                              <Bike className="w-3.5 h-3.5" />
-                            </div>
-                          )}
-                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span className="font-medium text-slate-800 text-xs">{vehicle.name}</span>
-                            {/* HIGHLIGHTED 1: Biển Số Xe */}
-                            {vehicle.licensePlate && (
-                              <span className="text-[10px] font-mono font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow-2xs shrink-0">
-                                {vehicle.licensePlate}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Cột 3: Xe Khác */}
-              <div className="border border-slate-200/80 rounded-xl bg-white overflow-hidden shadow-2xs">
-                <div className="bg-slate-50 border-b border-slate-200/80 px-3 py-1.5 sm:py-2 flex items-center justify-between">
-                  <span className="font-semibold text-slate-800 text-xs">
-                    Xe Khác ({availableOthers.length})
-                  </span>
-                </div>
-                <div className="divide-y divide-slate-100">
-                  {availableOthers.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400 font-normal">
-                      Không có xe khác sẵn sàng.
-                    </div>
-                  ) : (
-                    availableOthers.map((vehicle, i) => {
-                      const imageUrl = getVehicleImageUrl(vehicle)
-                      return (
-                        <div
-                          key={vehicle.id || i}
-                          className="p-1.5 sm:p-2 px-2.5 flex items-center gap-2.5 hover:bg-slate-50/50 transition"
-                        >
-                          <span className="w-4 text-center text-xs font-mono text-slate-400 font-medium shrink-0">
-                            {i + 1}
-                          </span>
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={vehicle.name}
-                              className="w-7 h-7 rounded object-cover border border-slate-200 shrink-0 bg-slate-50"
-                            />
-                          ) : (
-                            <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-                              <Bike className="w-3.5 h-3.5" />
-                            </div>
-                          )}
-                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span className="font-medium text-slate-800 text-xs">{vehicle.name}</span>
-                            {/* HIGHLIGHTED 1: Biển Số Xe */}
-                            {vehicle.licensePlate && (
-                              <span className="text-[10px] font-mono font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded shadow-2xs shrink-0">
-                                {vehicle.licensePlate}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         </div>
