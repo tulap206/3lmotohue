@@ -715,6 +715,9 @@ export default function ReportsPage() {
       iconBg: "bg-amber-50",
       iconColor: "text-amber-500",
       accent: "blue" as const,
+      onClick: () => {
+        document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" })
+      },
     },
     {
       title: "Lợi nhuận",
@@ -724,6 +727,9 @@ export default function ReportsPage() {
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-500",
       accent: "blue" as const,
+      onClick: () => {
+        document.getElementById("finance-summary-section")?.scrollIntoView({ behavior: "smooth" })
+      },
     },
     {
       title: "Tiền Quỹ Còn Lại",
@@ -733,6 +739,21 @@ export default function ReportsPage() {
       iconBg: "bg-slate-50",
       iconColor: "text-slate-500",
       accent: "blue" as const,
+      onClick: () => {
+        document.getElementById("transactions-section")?.scrollIntoView({ behavior: "smooth" })
+      },
+    },
+    {
+      title: "Chi Hoa Hồng Home",
+      value: `${reportData.commissionHomeTotal.toLocaleString("vi-VN")} đ`,
+      change: `${reportData.commissionByHome.length} đối tác (${reportData.commissionByHome.reduce((s, r) => s + r.count, 0)} đơn)`,
+      icon: Home,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      accent: "blue" as const,
+      onClick: () => {
+        document.getElementById("commission-section")?.scrollIntoView({ behavior: "smooth" })
+      },
     },
     {
       title: "Tổng xe",
@@ -742,15 +763,7 @@ export default function ReportsPage() {
       iconBg: "bg-blue-50",
       iconColor: "text-blue-500",
       accent: "blue" as const,
-    },
-    {
-      title: "Tổng khách",
-      value: reportData.totalCustomers.toString(),
-      change: `${reportData.totalRentals} lượt thuê`,
-      icon: Users,
-      iconBg: "bg-slate-50",
-      iconColor: "text-slate-500",
-      accent: "blue" as const,
+      onClick: () => router.push("/dashboard/vehicles"),
     },
     {
       title: "Tổng đơn",
@@ -760,6 +773,7 @@ export default function ReportsPage() {
       iconBg: "bg-rose-50",
       iconColor: "text-rose-500",
       accent: "blue" as const,
+      onClick: () => router.push("/dashboard/orders"),
     },
   ]
 
@@ -768,7 +782,7 @@ export default function ReportsPage() {
       <ModuleSubpageHeader
         module="rental"
         title="Báo cáo"
-        subtitle="Tổng hợp doanh thu, lợi nhuận và thu/chi"
+        subtitle="Tổng hợp doanh thu, lợi nhuận, thu/chi và hoa hồng đối tác"
         breadcrumbs={[
           { label: "Cho thuê xe", href: "/dashboard" },
           { label: "Báo cáo" },
@@ -808,6 +822,47 @@ export default function ReportsPage() {
           </div>
         }
       />
+
+      {/* Quick Navigation Jump Bar */}
+      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100/90 rounded-xl border border-slate-200/80 text-meta">
+        <span className="text-slate-400 font-semibold px-2 text-[11px] uppercase tracking-wider">Xem nhanh:</span>
+        <button
+          type="button"
+          onClick={() => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" })}
+          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
+        >
+          📊 Biểu đồ DT
+        </button>
+        <button
+          type="button"
+          onClick={() => document.getElementById("fleet-section")?.scrollIntoView({ behavior: "smooth" })}
+          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
+        >
+          🛵 Đội xe
+        </button>
+        <button
+          type="button"
+          onClick={() => document.getElementById("transactions-section")?.scrollIntoView({ behavior: "smooth" })}
+          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
+        >
+          💰 Sổ quỹ Thu/Chi
+        </button>
+        <button
+          type="button"
+          onClick={() => document.getElementById("commission-section")?.scrollIntoView({ behavior: "smooth" })}
+          className="px-2.5 py-1 rounded-lg bg-amber-50 shadow-xs font-bold text-amber-800 hover:bg-amber-100 transition border border-amber-200"
+        >
+          🏠 Hoa hồng Homestay ({commissionTotals.homes})
+        </button>
+        <button
+          type="button"
+          onClick={() => document.getElementById("finance-summary-section")?.scrollIntoView({ behavior: "smooth" })}
+          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
+        >
+          📈 Tài chính & Cổ đông
+        </button>
+      </div>
+
       {/* Delete Transaction Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent className="bg-white border-slate-200 rounded-[var(--radius-container)] max-w-sm">
@@ -946,21 +1001,18 @@ export default function ReportsPage() {
             label={stat.title}
             value={stat.value}
             sublabel={stat.change}
-            onClick={() => {
-              if (stat.title === "Tổng xe") router.push("/dashboard/vehicles")
-              if (stat.title === "Tổng khách") router.push("/dashboard/customers")
-            }}
+            onClick={stat.onClick}
           />
         ))}
       </ModuleKpiGrid>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+      <div id="charts-section" className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch scroll-mt-20">
         <MonthlyRevenueChart data={reportData.monthlyRevenue} formatPrice={formatPrice} />
         <ExpenseStructureChart data={reportData.expenseStructure} formatPrice={formatPrice} />
       </div>
 
       {/* Fleet Performance Analytics */}
-      <Card>
+      <Card id="fleet-section" className="scroll-mt-20">
         <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
           <CardTitle className="text-title flex items-center gap-2 text-slate-900">
             <Bike className="w-5 h-5 text-blue-600" />
@@ -1088,7 +1140,7 @@ export default function ReportsPage() {
       </Card>
 
       {/* Transactions Table */}
-      <Card>
+      <Card id="transactions-section" className="scroll-mt-20">
         <CardHeader className="pb-3 md:pb-4 p-3 md:p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
             <div>
@@ -1368,7 +1420,7 @@ export default function ReportsPage() {
       </Card>
 
       {/* Bảng Báo Cáo Tiền Chi Hoa Hồng Homestay / Đối Tác */}
-      <Card className="border-slate-100 bg-white shadow-sm overflow-hidden rounded-[var(--radius-container)]">
+      <Card id="commission-section" className="scroll-mt-20 border-slate-100 bg-white shadow-sm overflow-hidden rounded-[var(--radius-container)]">
         <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-3 md:p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
@@ -1454,10 +1506,41 @@ export default function ReportsPage() {
 
         <CardContent className="p-3 md:p-4">
           {activeCommissionRows.length === 0 ? (
-            <ModuleEmptyState
-              title="Không có dữ liệu hoa hồng"
-              description="Không có đơn thuê nào có hoa hồng Homestay/Đối tác trong kỳ báo cáo này."
-            />
+            <div className="py-8 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                <Home className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-bold text-slate-800 text-base">Không có dữ liệu hoa hồng trong kỳ này</p>
+                <p className="text-meta text-slate-500 max-w-md mx-auto">
+                  {commissionStatusFilter === "completed"
+                    ? "Chưa có đơn hoàn thành nào có ghi nhận tiền hoa hồng Homestay/Đối tác trong kỳ lọc."
+                    : "Chưa có đơn nào có hoa hồng trong kỳ lọc hiện tại."}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                {commissionStatusFilter === "completed" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCommissionStatusFilter("all")}
+                    className="border-amber-200 text-amber-800 hover:bg-amber-50 font-semibold"
+                  >
+                    Xem tất cả đơn (gồm đang thuê)
+                  </Button>
+                )}
+                {filterPeriod !== "all" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFilterPeriod("all")}
+                    className="border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold"
+                  >
+                    Xem tất cả kỳ
+                  </Button>
+                )}
+              </div>
+            </div>
           ) : (
             <div className="space-y-3">
               <ModuleResponsiveTable
@@ -1721,7 +1804,7 @@ export default function ReportsPage() {
         const partnerShareRemaining = remainingToDistribute > 0 ? Math.floor(remainingToDistribute / 2) : 0
         
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div id="finance-summary-section" className="grid grid-cols-1 lg:grid-cols-3 gap-4 scroll-mt-20">
             <Card className="bg-blue-50 border-blue-200 lg:col-span-2">
               <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
                 <CardTitle className="flex items-center gap-2 text-base md:text-lg text-blue-800">
