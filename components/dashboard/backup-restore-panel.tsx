@@ -693,28 +693,28 @@ export function BackupRestorePanel({
           }
         }}
       >
-        <DialogContent className={cn(moduleDialogContentClass, "max-w-4xl max-h-[88vh] overflow-hidden flex flex-col gap-0 p-0 rounded-[var(--radius-container)] shadow-2xl border-slate-200")}>
-          <DialogHeader className="px-6 pt-5 pb-4 border-b border-slate-100 shrink-0 bg-slate-50/60">
+        <DialogContent className="sm:max-w-3xl md:max-w-4xl lg:max-w-[920px] w-[95vw] max-h-[88vh] overflow-hidden flex flex-col gap-0 p-0 rounded-[var(--radius-container)] shadow-2xl border border-slate-200 bg-white">
+          <DialogHeader className="px-6 pt-5 pb-4 border-b border-slate-100 shrink-0 bg-slate-50/70">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0 shadow-2xs">
                   <FileJson className="h-5 w-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                     Chi tiết tệp sao lưu
                   </DialogTitle>
-                  <p className="text-xs font-mono text-slate-500 mt-0.5 break-all font-medium">
+                  <p className="text-xs font-mono text-slate-500 mt-0.5 truncate max-w-[280px] sm:max-w-md font-medium" title={detailFile?.name}>
                     {detailFile?.name}
                   </p>
                 </div>
               </div>
 
               {detailFile && (
-                <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+                <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto shrink-0">
                   <span
                     className={cn(
-                      "inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full border",
+                      "inline-flex text-[11px] font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap",
                       isAutoBackup(detailFile.name)
                         ? "bg-slate-100 text-slate-700 border-slate-200"
                         : "bg-blue-50 text-blue-700 border-blue-200"
@@ -722,10 +722,10 @@ export function BackupRestorePanel({
                   >
                     {isAutoBackup(detailFile.name) ? "Tự động (17:00)" : "Thủ công"}
                   </span>
-                  <span className="inline-flex text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                  <span className="inline-flex text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
                     Dung lượng {formatFileSize(detailFile.size)}
                   </span>
-                  <span className="inline-flex text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                  <span className="inline-flex text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
                     {formatFileDate(detailFile.created_at)}
                   </span>
                 </div>
@@ -754,50 +754,50 @@ export function BackupRestorePanel({
             ) : (
               <>
                 {/* 1. Four KPI Summary Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                      <Users className="h-4.5 w-4.5" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3.5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                      <Users className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-blue-800 font-semibold">Khách hàng</p>
-                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">{customers.length}</p>
-                      <p className="text-[10px] text-slate-400 truncate">Hồ sơ khách thuê</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                      <Bike className="h-4.5 w-4.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-emerald-800 font-semibold">Đội xe</p>
-                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">{vehicles.length}</p>
-                      <p className="text-[10px] text-slate-400 truncate">Phương tiện quản lý</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-blue-800 font-semibold truncate">Khách hàng</p>
+                      <p className="text-xl font-black text-slate-900 tabular-nums leading-tight my-0.5">{customers.length}</p>
+                      <p className="text-[11px] text-slate-500 truncate">Hồ sơ khách thuê</p>
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-amber-100 bg-amber-50/40 p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                      <ClipboardList className="h-4.5 w-4.5" />
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Bike className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-amber-800 font-semibold">Đơn thuê</p>
-                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">{rentals.length}</p>
-                      <p className="text-[10px] text-slate-400 truncate">Hợp đồng & lịch sử</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-emerald-800 font-semibold truncate">Đội xe</p>
+                      <p className="text-xl font-black text-slate-900 tabular-nums leading-tight my-0.5">{vehicles.length}</p>
+                      <p className="text-[11px] text-slate-500 truncate">Phương tiện quản lý</p>
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-purple-100 bg-purple-50/40 p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                      <DollarSign className="h-4.5 w-4.5" />
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3.5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                      <ClipboardList className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-purple-800 font-semibold">Thu chi / Quỹ</p>
-                      <p className="text-lg font-black text-slate-900 tabular-nums leading-tight mt-0.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-amber-800 font-semibold truncate">Đơn thuê</p>
+                      <p className="text-xl font-black text-slate-900 tabular-nums leading-tight my-0.5">{rentals.length}</p>
+                      <p className="text-[11px] text-slate-500 truncate">Hợp đồng & lịch sử</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-3.5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                      <DollarSign className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-purple-800 font-semibold truncate">Thu chi / Quỹ</p>
+                      <p className="text-xl font-black text-slate-900 tabular-nums leading-tight my-0.5">
                         {transactions.length > 0 ? transactions.length : "Toàn vẹn"}
                       </p>
-                      <p className="text-[10px] text-slate-400 truncate">Giao dịch đồng bộ</p>
+                      <p className="text-[11px] text-slate-500 truncate">Giao dịch đồng bộ</p>
                     </div>
                   </div>
                 </div>
@@ -881,7 +881,7 @@ export function BackupRestorePanel({
             )}
           </div>
 
-          <DialogFooter className="px-6 py-3.5 border-t border-slate-100 shrink-0 flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/60">
+          <DialogFooter className="px-6 py-3.5 border-t border-slate-100 shrink-0 flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/70">
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Khôi phục tệp sẽ đồng bộ lại toàn bộ dữ liệu khách hàng, xe và đơn thuê.</span>
@@ -1027,7 +1027,7 @@ function CustomerPreviewList({
           <Users className="w-3.5 h-3.5 text-blue-600" />
           <span>Khách hàng</span>
         </div>
-        <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">
+        <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
           {customers.length}
         </span>
       </div>
@@ -1037,7 +1037,7 @@ function CustomerPreviewList({
           <p className="text-xs text-slate-400 italic py-4 text-center">Không có dữ liệu khách</p>
         ) : (
           top5.map((c, idx) => (
-            <div key={idx} className="pt-2.5 first:pt-0 flex items-start gap-2.5">
+            <div key={idx} className="pt-2.5 first:pt-0 flex items-start gap-2.5 min-w-0">
               <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
                 {c.name.charAt(0).toUpperCase()}
               </div>
@@ -1046,8 +1046,8 @@ function CustomerPreviewList({
                   {c.name}
                 </p>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500 mt-0.5">
-                  {c.phone && <span className="font-mono text-slate-600 font-medium">{c.phone}</span>}
-                  {c.cccd && <span className="font-mono text-slate-400">CCCD: {c.cccd}</span>}
+                  {c.phone && <span className="font-mono text-slate-600 font-medium whitespace-nowrap">{c.phone}</span>}
+                  {c.cccd && <span className="font-mono text-slate-400 whitespace-nowrap">CCCD: {c.cccd}</span>}
                   {!c.phone && !c.cccd && <span className="text-slate-400 italic">Chưa có SĐT</span>}
                 </div>
               </div>
@@ -1080,7 +1080,7 @@ function VehiclePreviewList({
           <Bike className="w-3.5 h-3.5 text-emerald-600" />
           <span>Đội xe</span>
         </div>
-        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full">
+        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
           {vehicles.length}
         </span>
       </div>
@@ -1090,14 +1090,14 @@ function VehiclePreviewList({
           <p className="text-xs text-slate-400 italic py-4 text-center">Không có dữ liệu xe</p>
         ) : (
           top5.map((v, idx) => (
-            <div key={idx} className="pt-2.5 first:pt-0 flex items-center justify-between gap-2">
+            <div key={idx} className="pt-2.5 first:pt-0 flex items-center justify-between gap-2 min-w-0">
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-slate-800 truncate" title={v.name}>
                   {v.name}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   {v.plate ? (
-                    <span className="text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-700">
+                    <span className="text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-700 whitespace-nowrap">
                       {v.plate}
                     </span>
                   ) : (
@@ -1106,7 +1106,7 @@ function VehiclePreviewList({
                 </div>
               </div>
               {v.priceDaily > 0 && (
-                <div className="text-right shrink-0">
+                <div className="text-right shrink-0 whitespace-nowrap">
                   <span className="text-[11px] font-bold text-emerald-700 font-mono">
                     {v.priceDaily.toLocaleString("vi-VN")} đ
                   </span>
@@ -1142,7 +1142,7 @@ function RentalPreviewList({
           <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
           <span>Đơn thuê</span>
         </div>
-        <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-full">
+        <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
           {rentals.length}
         </span>
       </div>
@@ -1154,21 +1154,21 @@ function RentalPreviewList({
           top5.map((r, idx) => {
             const badge = getRentalStatusBadge(r.status)
             return (
-              <div key={idx} className="pt-2.5 first:pt-0 space-y-1">
-                <div className="flex items-center justify-between gap-1.5">
+              <div key={idx} className="pt-2.5 first:pt-0 space-y-1 min-w-0">
+                <div className="flex items-center justify-between gap-1.5 min-w-0">
                   <p className="text-xs font-bold text-slate-800 truncate flex-1" title={r.customer}>
                     {r.customer}
                   </p>
-                  <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0", badge.className)}>
+                  <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 whitespace-nowrap", badge.className)}>
                     {badge.label}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-500">
-                  <span className="truncate max-w-[130px] text-slate-600">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 gap-2 min-w-0">
+                  <span className="truncate flex-1 text-slate-600">
                     {r.vehicle} {r.plate ? `• ${r.plate}` : ""}
                   </span>
                   {r.price > 0 && (
-                    <span className="font-bold text-slate-900 font-mono">
+                    <span className="font-bold text-slate-900 font-mono shrink-0 whitespace-nowrap">
                       {r.price.toLocaleString("vi-VN")} đ
                     </span>
                   )}
