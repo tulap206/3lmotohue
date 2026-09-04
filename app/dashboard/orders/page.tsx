@@ -54,7 +54,7 @@ import {
   rentalVehicleStatusBadgeClass,
 } from "@/components/dashboard/rental-ui"
 import { cn } from "@/lib/utils"
-import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload, ClipboardList } from "lucide-react"
+import { Plus, Search, Eye, Calendar, User, Car, Pencil, X, Phone, MapPin, Trash2, Play, CheckCircle, CheckCircle2, Bike, Bell, Unlink, ChevronRight, Upload, ClipboardList, RefreshCw } from "lucide-react"
 import { DailyNotificationModal } from "@/components/dashboard/daily-notification-modal"
 import { QUY79_BUSINESS, getVietQrImageUrl, STATIC_PAYMENT_QR_SRC } from "@/lib/business-info"
 import {
@@ -312,7 +312,7 @@ export default function OrdersPage() {
   const [newCustomerCCCDFront, setNewCustomerCCCDFront] = useState<File | null>(null)
   const [hasCommission, setHasCommission] = useState(false)
   const { addAccessLog, user } = useAuth()
-  const { orders, setOrders, customers, setCustomers, vehicles, setVehicles, isLoading: loading } = useRentalData()
+  const { orders, setOrders, customers, setCustomers, vehicles, setVehicles, isLoading: loading, refresh } = useRentalData()
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterTerm, setFilterTerm] = useState<RentalTerm>("short")
@@ -1526,6 +1526,19 @@ export default function OrdersPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={refresh}
+            disabled={loading}
+            className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+            title="Tải lại dữ liệu"
+            aria-label="Tải lại dữ liệu"
+          >
+            <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+          </Button>
+
           <div
             role="group"
             aria-label="Lọc loại thuê"

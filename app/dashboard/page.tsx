@@ -27,6 +27,7 @@ import {
   Upload,
   Lock,
   LockOpen,
+  RefreshCw,
 } from "lucide-react"
 import { fetchBookingLockStatus, setBookingLockStatus } from "@/lib/booking-lock"
 import { DailySummaryDialog } from "@/components/dashboard/daily-summary-dialog"
@@ -973,6 +974,16 @@ export default function DashboardPage() {
   return (
     <ModulePageShell module="rental">
       <div className="flex items-center justify-end gap-2">
+        <Button
+          onClick={() => loadDashboardData(false)}
+          title="Tải lại dữ liệu"
+          aria-label="Tải lại dữ liệu"
+          variant="outline"
+          disabled={loading}
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+        >
+          <RefreshCw className={cn("w-5 h-5 shrink-0 text-slate-600", loading && "animate-spin")} />
+        </Button>
         <Button
           onClick={() => setIsDialogOpen(true)}
           className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] text-body font-semibold shadow-sm h-11 px-4 ui-transition [&_svg]:!text-white"

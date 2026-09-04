@@ -411,12 +411,14 @@ export function BackupRestorePanel({
             <Button
               type="button"
               variant="outline"
+              size="icon"
               onClick={onRefresh}
               disabled={filesLoading}
-              className="h-11 rounded-[var(--radius-control)] border-slate-200 text-body font-semibold"
+              className="h-11 w-11 p-0 flex items-center justify-center shrink-0 rounded-[var(--radius-control)] border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm ui-transition hover:border-slate-400"
+              title="Làm mới danh sách bản sao lưu"
+              aria-label="Làm mới danh sách bản sao lưu"
             >
-              <RefreshCw className={cn("h-4 w-4 mr-2", filesLoading && "animate-spin")} />
-              Làm mới
+              <RefreshCw className={cn("h-4 w-4 text-slate-600", filesLoading && "animate-spin")} />
             </Button>
           }
         >

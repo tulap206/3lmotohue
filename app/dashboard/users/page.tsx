@@ -27,7 +27,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Pencil, Trash2, Shield, User, Lock } from "lucide-react"
+import { Plus, Pencil, Trash2, Shield, User, Lock, RefreshCw } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { ModuleMobileCard, ModulePageShell, ModuleResponsiveTable, ModuleSubpageHeader } from "@/components/dashboard/module-shell"
 
 interface UserAccount {
@@ -296,7 +297,20 @@ export default function UsersPage() {
           { label: "Người dùng" },
         ]}
         actions={
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => loadUsers()}
+              disabled={loading}
+              className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+              title="Tải lại dữ liệu"
+              aria-label="Tải lại dữ liệu"
+            >
+              <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 onClick={() => resetForm()}
@@ -396,6 +410,7 @@ export default function UsersPage() {
             </form>
           </DialogContent>
         </Dialog>
+          </div>
         }
       />
 

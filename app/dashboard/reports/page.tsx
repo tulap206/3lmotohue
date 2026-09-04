@@ -29,7 +29,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X, Home, Building2, Eye, Car } from "lucide-react"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X, Home, Building2, Eye, Car, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { rentalTableHeadClass, RentalKpiCard } from "@/components/dashboard/rental-ui"
 import { formatDisplayDate } from "@/lib/format-date"
@@ -788,7 +788,20 @@ export default function ReportsPage() {
           { label: "Báo cáo" },
         ]}
         actions={
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => loadReportData(true)}
+              disabled={loading}
+              className="h-10 w-10 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+              title="Tải lại dữ liệu"
+              aria-label="Tải lại dữ liệu"
+            >
+              <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+            </Button>
+
             <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
               <SelectTrigger className="w-[170px] bg-white border-slate-200 rounded-[var(--radius-control)] h-10">
                 <SelectValue placeholder="Chọn kỳ báo cáo" />

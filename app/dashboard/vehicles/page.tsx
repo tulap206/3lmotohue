@@ -414,7 +414,7 @@ function VehicleStat({
 
 export default function VehiclesPage() {
   const { user, addAccessLog } = useAuth()
-  const { vehicles, setVehicles, orders, setOrders, isLoading } = useRentalData()
+  const { vehicles, setVehicles, orders, setOrders, isLoading, refresh } = useRentalData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
@@ -1139,6 +1139,18 @@ export default function VehiclesPage() {
   return (
     <ModulePageShell module="rental">
       <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={refresh}
+          disabled={isLoading}
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+          title="Tải lại dữ liệu"
+          aria-label="Tải lại dữ liệu"
+        >
+          <RefreshCw className={cn("w-4 h-4 text-slate-600", isLoading && "animate-spin")} />
+        </Button>
         <Button
           type="button"
           variant="outline"

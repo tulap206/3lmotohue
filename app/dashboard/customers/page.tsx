@@ -40,7 +40,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Pencil, Clock, Calendar, History, ShieldAlert } from "lucide-react"
+import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Pencil, Clock, Calendar, History, ShieldAlert, RefreshCw } from "lucide-react"
 
 interface Customer {
   id: string
@@ -162,7 +162,7 @@ function CustomerAvatar({ src, name }: { src?: string; name: string }) {
 
 export default function CustomersPage() {
   const { user } = useAuth()
-  const { customers, setCustomers, orders: rentals, isLoading: loading } = useRentalData()
+  const { customers, setCustomers, orders: rentals, isLoading: loading, refresh } = useRentalData()
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
@@ -679,6 +679,18 @@ export default function CustomersPage() {
       </Dialog>
 
       <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={refresh}
+          disabled={loading}
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+          title="Tải lại dữ liệu"
+          aria-label="Tải lại dữ liệu"
+        >
+          <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+        </Button>
         <Button
           className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
           onClick={() => { setEditingCustomer(null); resetForm(); setIsDialogOpen(true) }}

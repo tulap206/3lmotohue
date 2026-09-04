@@ -28,7 +28,6 @@ import { Check, AlertTriangle, RefreshCw, Search, ChevronDown, ChevronUp, ImageI
 import { toast } from "sonner"
 import {
   ModulePageShell,
-  ModuleSubpageHeader,
   ModuleSectionCard,
   ModuleResponsiveTable,
   ModuleMobileCard,
@@ -202,29 +201,19 @@ export default function MaintenancePage() {
 
   return (
     <ModulePageShell module="rental">
-      <ModuleSubpageHeader
-        module="rental"
-        title="Bảo trì xe"
-        subtitle="Danh sách xe đến hạn bảo trì (cứ 1000 KM bảo trì 1 lần)"
-        breadcrumbs={[
-          { label: "Cho thuê xe", href: "/dashboard" },
-          { label: "Bảo trì xe" },
-        ]}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              onClick={refresh}
-              variant="outline"
-              size="sm"
-              disabled={loading}
-              className="rounded-xl border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm h-10 px-4 font-bold"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              {loading ? "Đang tải..." : "Tải lại"}
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          onClick={refresh}
+          variant="outline"
+          size="icon"
+          disabled={loading}
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+          title="Tải lại dữ liệu"
+          aria-label="Tải lại dữ liệu"
+        >
+          <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+        </Button>
+      </div>
 
       <div className="space-y-4">
         <ModuleKpiGrid columns={4}>
