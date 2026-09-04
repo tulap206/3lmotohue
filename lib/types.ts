@@ -66,7 +66,7 @@ export interface Vehicle {
 
 // ============ CUSTOMER TYPES ============
 
-export type CustomerStatus = 'active' | 'inactive'
+export type CustomerStatus = 'active' | 'inactive' | 'renting' | 'pending' | 'blocked'
 
 export interface Customer {
   id: string

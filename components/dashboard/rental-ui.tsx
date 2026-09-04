@@ -144,6 +144,9 @@ export function rentalVehicleStatusBadgeClass(status?: string): string {
 
 export function getRentalCustomerStatusLabel(status?: string): string {
   switch (status) {
+    case "blocked":
+    case "blacklist":
+      return "Chặn"
     case "renting":
       return "Đang thuê"
     case "pending":
@@ -157,6 +160,9 @@ export function getRentalCustomerStatusLabel(status?: string): string {
 
 export function rentalCustomerStatusBadgeClass(status?: string): string {
   switch (status) {
+    case "blocked":
+    case "blacklist":
+      return "bg-rose-50 text-rose-700 border-rose-100"
     case "renting":
       return "bg-blue-50 text-blue-700 border-blue-100"
     case "pending":

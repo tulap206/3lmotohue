@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
 import { logger } from "@/lib/logger"
 import { supabase, fetchCustomers, fetchRentals } from "@/lib/supabase"
-import { ModulePageShell, ModuleSubpageHeader, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
+import { ModulePageShell, ModuleSectionCard, ModuleResponsiveTable, ModuleMobileCard, ModulePagination, ModuleKpiGrid, ModuleEmptyState } from "@/components/dashboard/module-shell"
 import {
   RentalKpiCard,
   rentalTableHeadClass,
@@ -40,7 +40,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Pencil, Clock, Calendar, History } from "lucide-react"
+import { Plus, Search, Trash2, User, Phone, MapPin, Eye, Upload, Pencil, Clock, Calendar, History, ShieldAlert } from "lucide-react"
 
 interface Customer {
   id: string
@@ -49,7 +49,7 @@ interface Customer {
   address: string
   idcard: string
   totalrentals: number
-  status: "active" | "inactive" | "renting" | "pending"
+  status: "active" | "inactive" | "renting" | "pending" | "blocked"
   createdAt?: string
   created_at?: string
   customerphoto?: string[]
@@ -117,11 +117,12 @@ const customerActionBtnClass =
 const customerStatusBadgeClass =
   "inline-flex items-center px-2.5 py-0.5 rounded-[var(--radius-badge)] text-sm font-semibold border"
 
-/** Hiển thị số CCCD — bỏ tiền tố placeholder `CCCD_` nếu có. */
+/** Hiển thị số CCCD — nếu không có hoặc là timestamp/placeholder tự sinh thì hiển thị — */
 function formatCustomerIdCard(idcard?: string | null): string {
   const raw = (idcard || "").trim()
-  if (!raw) return "—"
-  return raw.replace(/^CCCD_/i, "")
+  if (!raw || raw === "-" || raw === "—" || /^CCCD_/i.test(raw)) return "—"
+  if (/^17\d{11}$/.test(raw) || /^18\d{11}$/.test(raw)) return "—"
+  return raw
 }
 
 function CustomerStat({
@@ -179,6 +180,7 @@ export default function CustomersPage() {
     phone: "",
     address: "",
     idcard: "",
+    status: "active" as "active" | "inactive" | "blocked",
     customerphoto: [] as string[],
     cccdfront: [] as string[],
     cccdback: [] as string[],
@@ -205,22 +207,27 @@ export default function CustomersPage() {
       (customer) => {
         const matchesSearch =
           customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          customer.phone.includes(searchQuery)
+          customer.phone.includes(searchQuery) ||
+          (customer.idcard && formatCustomerIdCard(customer.idcard).toLowerCase().includes(searchQuery.toLowerCase()))
         
-        const matchesStatus = filterStatus === "all" || customer.status === filterStatus
+        const matchesStatus =
+          filterStatus === "all" ||
+          customer.status === filterStatus ||
+          (filterStatus === "blocked" && (customer.status === "blocked" || (customer.status as string) === "blacklist"))
         
         return matchesSearch && matchesStatus
       }
     )
 
-    // Sort: renting -> pending -> active -> inactive
+    // Sort: blocked -> renting -> pending -> active -> inactive
     return [...filtered].sort((a, b) => {
       const getPriority = (status: string) => {
-        if (status === "renting") return 1
-        if (status === "pending") return 2
-        if (status === "active") return 3
-        if (status === "inactive") return 4
-        return 5
+        if (status === "blocked" || status === "blacklist") return 1
+        if (status === "renting") return 2
+        if (status === "pending") return 3
+        if (status === "active") return 4
+        if (status === "inactive") return 5
+        return 6
       }
       const priorityA = getPriority(a.status)
       const priorityB = getPriority(b.status)
@@ -267,6 +274,7 @@ export default function CustomersPage() {
       renting: customers.filter((c) => c.status === "renting").length,
       pending: customers.filter((c) => c.status === "pending").length,
       inactive: customers.filter((c) => c.status === "inactive").length,
+      blocked: customers.filter((c) => c.status === "blocked" || (c.status as string) === "blacklist").length,
       month: month + 1,
       newThisMonth,
     }
@@ -428,10 +436,11 @@ export default function CustomersPage() {
         })
         
         const updateData: any = {
-          name: formData.name,
-          phone: formData.phone,
-          address: formData.address,
-          idcard: formData.idcard,
+          name: formData.name.trim(),
+          phone: formData.phone.trim(),
+          address: formData.address.trim(),
+          idcard: formData.idcard.trim(),
+          status: formData.status,
         }
         
         // Merge: use new uploaded images if available, otherwise keep existing
@@ -477,7 +486,7 @@ export default function CustomersPage() {
       } else {
         // Check if phone already exists
         const existingCustomer = customers.find(
-          (c) => c.phone === formData.phone
+          (c) => c.phone === formData.phone.trim()
         )
         
         if (existingCustomer) {
@@ -488,13 +497,13 @@ export default function CustomersPage() {
         const { error } = await supabase
           .from('customers')
           .insert([{
-            name: formData.name,
-            phone: formData.phone,
+            name: formData.name.trim(),
+            phone: formData.phone.trim(),
             facebook: "",
-            address: formData.address,
-            idcard: formData.idcard,
+            address: formData.address.trim(),
+            idcard: formData.idcard.trim(),
             totalrentals: 0,
-            status: "active",
+            status: formData.status || "active",
             customerphoto: uploadedImages.customerphoto,
             cccdfront: uploadedImages.cccdfront,
             cccdback: uploadedImages.cccdback,
@@ -519,7 +528,9 @@ export default function CustomersPage() {
         )
         
         let statusLabel = "active"
-        if (activeRental) {
+        if (customer.status === "blocked" || (customer.status as string) === "blacklist") {
+          statusLabel = "blocked"
+        } else if (activeRental) {
           statusLabel = "renting"
         } else if (pendingRental) {
           statusLabel = "pending"
@@ -555,6 +566,7 @@ export default function CustomersPage() {
       phone: "", 
       address: "", 
       idcard: "",
+      status: "active",
       customerphoto: [],
       cccdfront: [],
       cccdback: [],
@@ -576,6 +588,9 @@ export default function CustomersPage() {
       phone: customer.phone,
       address: customer.address,
       idcard: formatCustomerIdCard(customer.idcard) === "—" ? "" : formatCustomerIdCard(customer.idcard),
+      status: (customer.status === "blocked" || (customer.status as string) === "blacklist")
+        ? "blocked"
+        : (customer.status === "inactive" ? "inactive" : "active"),
       customerphoto: customer.customerphoto || [],
       cccdfront: customer.cccdfront || [],
       cccdback: customer.cccdback || [],
@@ -663,27 +678,15 @@ export default function CustomersPage() {
         </DialogContent>
       </Dialog>
 
-      <ModuleSubpageHeader
-        module="rental"
-        sticky
-        title="Khách hàng"
-        subtitle="Quản lý thông tin khách hàng thuê xe"
-        breadcrumbs={[
-          { label: "Cho thuê xe", href: "/dashboard" },
-          { label: "Khách hàng" },
-        ]}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
-              onClick={() => { setEditingCustomer(null); resetForm(); setIsDialogOpen(true) }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm khách hàng
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          className="bg-blue-600 !text-white hover:bg-blue-700 hover:!text-white rounded-[var(--radius-control)] h-11 font-semibold text-body ui-transition [&_svg]:!text-white"
+          onClick={() => { setEditingCustomer(null); resetForm(); setIsDialogOpen(true) }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Thêm khách hàng
+        </Button>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <EntityFormDialogContent
@@ -736,15 +739,14 @@ export default function CustomersPage() {
                           required
                         />
                       </EntityFormField>
-                      <EntityFormField label="Số CCCD / CMND" required>
+                      <EntityFormField label="Số CCCD / CMND">
                         <Input
                           id="idcard"
                           inputMode="numeric"
                           value={formData.idcard}
                           onChange={(e) => setFormData({ ...formData, idcard: e.target.value.replace(/^CCCD_/i, "") })}
-                          placeholder="079123456789"
+                          placeholder="079123456789 (tùy chọn)"
                           className={cn(entityFormInputClass, "font-mono")}
-                          required
                         />
                       </EntityFormField>
                       <EntityFormField label="Địa chỉ" required>
@@ -757,6 +759,21 @@ export default function CustomersPage() {
                           className={entityFormInputClass}
                           required
                         />
+                      </EntityFormField>
+                      <EntityFormField label="Trạng thái">
+                        <Select
+                          value={formData.status}
+                          onValueChange={(val: any) => setFormData({ ...formData, status: val })}
+                        >
+                          <SelectTrigger className={cn(entityFormInputClass, "w-full")}>
+                            <SelectValue placeholder="Chọn trạng thái" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white border-slate-100 rounded-[var(--radius-control)]">
+                            <SelectItem value="active">Hoạt động (Bình thường)</SelectItem>
+                            <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
+                            <SelectItem value="blocked">Chặn (Danh sách đen)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </EntityFormField>
                     </div>
                   </EntityFormSection>
@@ -806,7 +823,7 @@ export default function CustomersPage() {
           </Dialog>
 
       <div className="space-y-4">
-        <ModuleKpiGrid columns={4}>
+        <ModuleKpiGrid columns={5}>
           <RentalKpiCard
             variant="hero"
             label="Tổng khách hàng"
@@ -849,6 +866,15 @@ export default function CustomersPage() {
             onClick={() => setFilterStatus("inactive")}
             selected={filterStatus === "inactive"}
           />
+          <RentalKpiCard
+            variant="hero"
+            label="Danh sách đen"
+            value={customerStats.blocked}
+            sublabel="Khách bị chặn"
+            valueClassName="text-rose-600"
+            onClick={() => setFilterStatus("blocked")}
+            selected={filterStatus === "blocked"}
+          />
         </ModuleKpiGrid>
 
       <ModuleSectionCard
@@ -875,6 +901,7 @@ export default function CustomersPage() {
                 <SelectItem value="pending">Chờ giao xe</SelectItem>
                 <SelectItem value="renting">Đang thuê xe</SelectItem>
                 <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
+                <SelectItem value="blocked">Danh sách đen (Chặn)</SelectItem>
               </SelectContent>
             </Select>
           </div>

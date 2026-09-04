@@ -46,7 +46,7 @@ export interface Customer {
   address: string
   idcard: string
   totalrentals: number
-  status: "active" | "inactive" | "renting" | "pending"
+  status: "active" | "inactive" | "renting" | "pending" | "blocked"
   customerphoto: string[]
   cccdfront: string[]
   cccdback: string[]

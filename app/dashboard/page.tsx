@@ -366,7 +366,7 @@ export default function DashboardPage() {
           phone: newCustomerPhone.trim(),
           facebook: "",
           address: newCustomerAddress.trim(),
-          idcard: newCustomerCCCD.trim() || `CCCD_${Date.now()}`,
+          idcard: newCustomerCCCD.trim() || "",
           totalrentals: 0,
           status: "active",
           customerphoto,

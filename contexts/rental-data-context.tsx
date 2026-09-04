@@ -61,10 +61,16 @@ function enrichCustomersWithStatus(customers: Customer[], rentals: Rental[]): Cu
         (r) => r.customerId === customer.id && r.status === "pending"
       )
 
-      let status: Customer["status"] | "renting" | "pending" = "active"
-      if (activeRental) status = "renting" as Customer["status"]
-      else if (pendingRental) status = "pending" as Customer["status"]
-      else if (customer.status === "inactive") status = "inactive"
+      let status: Customer["status"] | "renting" | "pending" | "blocked" = "active"
+      if (customer.status === "blocked" || (customer.status as string) === "blacklist") {
+        status = "blocked"
+      } else if (activeRental) {
+        status = "renting" as Customer["status"]
+      } else if (pendingRental) {
+        status = "pending" as Customer["status"]
+      } else if (customer.status === "inactive") {
+        status = "inactive"
+      }
 
       const totalrentals = rentals.filter((r) => r.customerId === customer.id).length
 

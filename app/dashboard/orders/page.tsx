@@ -216,7 +216,7 @@ interface Customer {
   address?: string
   idcard: string
   totalrentals: number
-  status: "active" | "inactive" | "renting" | "pending"
+  status: "active" | "inactive" | "renting" | "pending" | "blocked"
   createdAt?: string
   created_at?: string
   customerphoto?: string[]
@@ -773,7 +773,7 @@ export default function OrdersPage() {
           phone: newCustomerPhone.trim(),
           facebook: "",
           address: newCustomerAddress.trim(),
-          idcard: newCustomerCCCD.trim() || `CCCD_${Date.now()}`,
+          idcard: newCustomerCCCD.trim() || "",
           totalrentals: 0,
           status: "active",
           customerphoto,
@@ -2970,7 +2970,14 @@ export default function OrdersPage() {
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
-                    <OrderStat label="Số CCCD / CMND" value={(cust.idcard || "").replace(/^CCCD_/i, "") || "—"} />
+                    <OrderStat
+                      label="Số CCCD / CMND"
+                      value={
+                        !cust.idcard || cust.idcard === "-" || cust.idcard === "—" || /^CCCD_/i.test(cust.idcard) || /^17\d{11}$/.test(cust.idcard) || /^18\d{11}$/.test(cust.idcard)
+                          ? "—"
+                          : cust.idcard
+                      }
+                    />
                     <OrderStat label="Tổng lần thuê" value={`${cust.totalrentals || custRentals.length} lượt`} />
                   </div>
 
