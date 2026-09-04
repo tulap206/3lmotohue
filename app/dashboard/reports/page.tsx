@@ -36,6 +36,7 @@ import { rentalTableHeadClass, RentalKpiCard } from "@/components/dashboard/rent
 import { formatDisplayDate } from "@/lib/format-date"
 import { ModulePagination, ModulePageShell, ModuleResponsiveTable, ModuleMobileCard, ModuleEmptyState, ModuleKpiGrid, ModuleSectionCard } from "@/components/dashboard/module-shell"
 import { MonthlyRevenueChart, ExpenseStructureChart } from "@/components/dashboard/rental-charts"
+import { FinancialReportA4Dialog } from "@/components/dashboard/financial-report-a4-dialog"
 
 interface ReportData {
   totalCustomers: number
@@ -87,6 +88,7 @@ export default function ReportsPage() {
   const [selectedHomeForDetail, setSelectedHomeForDetail] = useState<CommissionHomeRow | null>(null)
   const commissionItemsPerPage = 5
 
+  const [isA4PreviewOpen, setIsA4PreviewOpen] = useState(false)
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
@@ -805,6 +807,16 @@ export default function ReportsPage() {
   const cashOnHand = rentalOnly + totalIncome - totalExpense
   const formatPrice = (value: number) => `${value.toLocaleString("vi-VN")} đ`
 
+  const periodLabelText = filterPeriod === "this-month"
+    ? "Tháng này"
+    : filterPeriod === "last-month"
+    ? "Tháng trước"
+    : filterPeriod === "this-year"
+    ? "Năm nay"
+    : filterPeriod === "custom"
+    ? `Từ ${formatDisplayDate(startDate)} đến ${formatDisplayDate(endDate)}`
+    : "Toàn bộ thời gian"
+
   const stats = [
     {
       title: "Doanh thu",
@@ -896,62 +908,60 @@ export default function ReportsPage() {
 
   return (
     <ModulePageShell module="rental">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={handleManualRefresh}
-            disabled={isRefreshing || loading}
-            className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
-            title="Tải lại dữ liệu"
-            aria-label="Tải lại dữ liệu"
-          >
-            <RefreshCw className={cn("w-4 h-4 text-slate-600", isRefreshing && "animate-spin")} />
-          </Button>
+      <div className="flex flex-wrap items-center justify-end gap-2 w-full">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={handleManualRefresh}
+          disabled={isRefreshing || loading}
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+          title="Tải lại dữ liệu"
+          aria-label="Tải lại dữ liệu"
+        >
+          <RefreshCw className={cn("w-4 h-4 text-slate-600", isRefreshing && "animate-spin")} />
+        </Button>
 
-          <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
-            <SelectTrigger className="w-[180px] bg-white border-slate-300 rounded-[var(--radius-control)] h-11 text-body font-semibold">
-              <SelectValue placeholder="Chọn kỳ báo cáo" />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="this-month">Tháng này</SelectItem>
-              <SelectItem value="last-month">Tháng trước</SelectItem>
-              <SelectItem value="this-year">Năm nay</SelectItem>
-              <SelectItem value="custom">Tự chọn khoảng ngày</SelectItem>
-            </SelectContent>
-          </Select>
+        <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
+          <SelectTrigger className="w-[180px] bg-white border-slate-300 rounded-[var(--radius-control)] h-11 text-body font-semibold">
+            <SelectValue placeholder="Chọn kỳ báo cáo" />
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            <SelectItem value="all">Tất cả</SelectItem>
+            <SelectItem value="this-month">Tháng này</SelectItem>
+            <SelectItem value="last-month">Tháng trước</SelectItem>
+            <SelectItem value="this-year">Năm nay</SelectItem>
+            <SelectItem value="custom">Tự chọn khoảng ngày</SelectItem>
+          </SelectContent>
+        </Select>
 
-          {filterPeriod === "custom" && (
-            <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-[var(--radius-control)] px-2.5 h-11">
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
-              />
-              <span className="text-meta text-slate-400 font-bold">→</span>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
-              />
-            </div>
-          )}
+        {filterPeriod === "custom" && (
+          <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-[var(--radius-control)] px-2.5 h-11">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
+            />
+            <span className="text-meta text-slate-400 font-bold">→</span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
+            />
+          </div>
+        )}
 
-          <Button
-            type="button"
-            onClick={handleExportReport}
-            className="bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white rounded-[var(--radius-control)] h-11 px-4 font-semibold text-body shadow-sm ui-transition [&_svg]:!text-white"
-            title="Xuất dữ liệu báo cáo sang file Excel / CSV"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            <span>Xuất báo cáo</span>
-          </Button>
-        </div>
+        <Button
+          type="button"
+          onClick={() => setIsA4PreviewOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 !text-white hover:!text-white rounded-[var(--radius-control)] h-11 px-4 font-semibold text-body shadow-sm ui-transition [&_svg]:!text-white"
+          title="Xem và xuất báo cáo tài chính chuẩn A4"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          <span>Xuất báo cáo</span>
+        </Button>
       </div>
 
       {/* Delete Transaction Confirmation Dialog */}
@@ -2172,6 +2182,15 @@ export default function ReportsPage() {
           </div>
         )
       })()}
+
+      <FinancialReportA4Dialog
+        open={isA4PreviewOpen}
+        onOpenChange={setIsA4PreviewOpen}
+        reportData={reportData}
+        transactions={transactions}
+        periodLabel={periodLabelText}
+        onExportCsv={handleExportReport}
+      />
     </ModulePageShell>
   )
 }
