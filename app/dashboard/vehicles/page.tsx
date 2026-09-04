@@ -1142,18 +1142,6 @@ export default function VehiclesPage() {
         <Button
           type="button"
           variant="outline"
-          size="icon"
-          onClick={refresh}
-          disabled={isLoading}
-          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
-          title="Tải lại dữ liệu"
-          aria-label="Tải lại dữ liệu"
-        >
-          <RefreshCw className={cn("w-4 h-4 text-slate-600", isLoading && "animate-spin")} />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
           className="border-blue-200 text-blue-700 hover:bg-blue-50 bg-white rounded-[var(--radius-control)] h-11 font-semibold text-body transition-colors"
           onClick={handleSyncLiveLocations}
           disabled={isSyncingLocations}
@@ -1515,7 +1503,7 @@ export default function VehiclesPage() {
         title="Danh sách xe cho thuê"
         description={`Quản lý ${filteredVehicles.length} phương tiện trong hệ thống`}
         filters={
-          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <div className="relative flex-1 lg:w-48">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
@@ -1537,6 +1525,18 @@ export default function VehiclesPage() {
                 <SelectItem value="maintenance">Bảo trì</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={refresh}
+              disabled={isLoading}
+              className="h-10 w-10 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-300"
+              title="Tải lại dữ liệu"
+              aria-label="Tải lại dữ liệu"
+            >
+              <RefreshCw className={cn("w-4 h-4 text-slate-600", isLoading && "animate-spin")} />
+            </Button>
           </div>
         }
       >
