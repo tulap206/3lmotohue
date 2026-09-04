@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchTransactions, fetchUserDisplayNames, getUserDisplayName, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
@@ -29,7 +29,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X } from "lucide-react"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X, Home, Building2, Eye, Car } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { rentalTableHeadClass, RentalKpiCard } from "@/components/dashboard/rental-ui"
 import { formatDisplayDate } from "@/lib/format-date"
@@ -48,6 +48,8 @@ interface ReportData {
   /** Tổng HH Home đã trừ trong DT (đơn completed) */
   commissionHomeTotal: number
   commissionByHome: CommissionHomeRow[]
+  commissionHomeTotalAll: number
+  commissionByHomeAll: CommissionHomeRow[]
   fleetPerformance: Array<{ name: string; licensePlate: string; activeDays: number; revenue: number; utilizationRate: number }>
   expenseStructure: Array<{ name: string; value: number }>
 }
@@ -75,6 +77,14 @@ export default function ReportsPage() {
   const itemsPerPage = 5
   const [fleetPage, setFleetPage] = useState(1)
   const fleetItemsPerPage = 10
+
+  // Commission Table State
+  const [commissionSearchQuery, setCommissionSearchQuery] = useState("")
+  const [commissionStatusFilter, setCommissionStatusFilter] = useState<"completed" | "all">("completed")
+  const [commissionPage, setCommissionPage] = useState(1)
+  const [selectedHomeForDetail, setSelectedHomeForDetail] = useState<CommissionHomeRow | null>(null)
+  const commissionItemsPerPage = 5
+
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [isEditTransactionOpen, setIsEditTransactionOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
@@ -159,6 +169,34 @@ export default function ReportsPage() {
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex)
+
+  // Commission calculations
+  const activeCommissionRows = useMemo(() => {
+    if (!reportData) return []
+    const baseRows = commissionStatusFilter === "completed" 
+      ? (reportData.commissionByHome || [])
+      : (reportData.commissionByHomeAll || [])
+    
+    const q = commissionSearchQuery.toLowerCase().trim()
+    if (!q) return baseRows
+    return baseRows.filter((row) => row.name.toLowerCase().includes(q))
+  }, [reportData, commissionStatusFilter, commissionSearchQuery])
+
+  const totalCommissionPages = Math.max(1, Math.ceil(activeCommissionRows.length / commissionItemsPerPage))
+  const safeCommissionPage = Math.min(commissionPage, totalCommissionPages)
+  const paginatedCommissionRows = activeCommissionRows.slice(
+    (safeCommissionPage - 1) * commissionItemsPerPage,
+    safeCommissionPage * commissionItemsPerPage
+  )
+
+  const commissionTotals = useMemo(() => {
+    return {
+      homes: activeCommissionRows.length,
+      orders: activeCommissionRows.reduce((sum, r) => sum + r.count, 0),
+      days: activeCommissionRows.reduce((sum, r) => sum + r.totalDays, 0),
+      amount: activeCommissionRows.reduce((sum, r) => sum + r.total, 0),
+    }
+  }, [activeCommissionRows])
 
   // Reset to page 1 when search changes
   const handleSearchChange = (value: string) => {
@@ -573,6 +611,8 @@ export default function ReportsPage() {
 
       const commissionByHome = buildCommissionHomeReport(filteredRentals, { completedOnly: true })
       const commissionHomeTotal = sumCommissionRows(commissionByHome)
+      const commissionByHomeAll = buildCommissionHomeReport(filteredRentals, { completedOnly: false })
+      const commissionHomeTotalAll = sumCommissionRows(commissionByHomeAll)
 
       console.log("📈 Report ready:", { totalCustomers, totalVehicles, totalRevenue, commissionHomeTotal })
 
@@ -587,6 +627,8 @@ export default function ReportsPage() {
         monthlyRevenue,
         commissionHomeTotal,
         commissionByHome,
+        commissionHomeTotalAll,
+        commissionByHomeAll,
         fleetPerformance,
         expenseStructure,
       }
@@ -614,6 +656,8 @@ export default function ReportsPage() {
         ],
         commissionHomeTotal: 0,
         commissionByHome: [],
+        commissionHomeTotalAll: 0,
+        commissionByHomeAll: [],
         fleetPerformance: [],
         expenseStructure: [],
       })
@@ -1322,6 +1366,325 @@ export default function ReportsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bảng Báo Cáo Tiền Chi Hoa Hồng Homestay / Đối Tác */}
+      <Card className="border-slate-100 bg-white shadow-sm overflow-hidden rounded-[var(--radius-container)]">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-3 md:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] bg-amber-50 text-amber-700">
+                <Home className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <CardTitle className="text-title font-bold text-slate-800">
+                    Báo cáo Chi Hoa Hồng Homestay / Đối tác
+                  </CardTitle>
+                  <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-label font-bold text-amber-800">
+                    {commissionTotals.amount.toLocaleString("vi-VN")} đ
+                  </span>
+                </div>
+                <CardDescription className="text-meta text-slate-500 mt-0.5">
+                  Thống kê chi tiết tiền hoa hồng trả cho từng đơn vị homestay / đối tác giới thiệu thuê xe theo kỳ báo cáo
+                </CardDescription>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-meta">
+                <span className="text-slate-500">
+                  Đối tác: <strong className="text-slate-800 tabular-nums">{commissionTotals.homes}</strong>
+                </span>
+                <span className="text-slate-300">|</span>
+                <span className="text-slate-500">
+                  Lượt đơn: <strong className="text-slate-800 tabular-nums">{commissionTotals.orders}</strong>
+                </span>
+                <span className="text-slate-300">|</span>
+                <span className="text-slate-500">
+                  Ngày thuê: <strong className="text-slate-800 tabular-nums">{commissionTotals.days}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Status Filter */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Tìm kiếm theo tên Homestay, đối tác..."
+                value={commissionSearchQuery}
+                onChange={(e) => {
+                  setCommissionSearchQuery(e.target.value)
+                  setCommissionPage(1)
+                }}
+                className="pl-9 pr-9 border-slate-200 rounded-[var(--radius-control)] text-body h-10 bg-white"
+              />
+              {commissionSearchQuery && (
+                <button
+                  onClick={() => {
+                    setCommissionSearchQuery("")
+                    setCommissionPage(1)
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            <Select
+              value={commissionStatusFilter}
+              onValueChange={(v: "completed" | "all") => {
+                setCommissionStatusFilter(v)
+                setCommissionPage(1)
+              }}
+            >
+              <SelectTrigger className="h-10 w-full sm:w-[13rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
+                <SelectValue placeholder="Trạng thái đơn" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg">
+                <SelectItem value="completed">Chỉ đơn hoàn thành</SelectItem>
+                <SelectItem value="all">Tất cả đơn (gồm đang thuê)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-3 md:p-4">
+          {activeCommissionRows.length === 0 ? (
+            <ModuleEmptyState
+              title="Không có dữ liệu hoa hồng"
+              description="Không có đơn thuê nào có hoa hồng Homestay/Đối tác trong kỳ báo cáo này."
+            />
+          ) : (
+            <div className="space-y-3">
+              <ModuleResponsiveTable
+                desktop={
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="module-table-head border-b border-slate-100 bg-slate-50/50">
+                        <th className={cn(rentalTableHeadClass, "w-12 text-center")}>STT</th>
+                        <th className={rentalTableHeadClass}>Homestay / Đối tác</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Số lượt đơn</th>
+                        <th className={cn(rentalTableHeadClass, "text-center")}>Tổng ngày thuê</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Mức hoa hồng TB / ngày</th>
+                        <th className={cn(rentalTableHeadClass, "text-right")}>Tổng tiền hoa hồng</th>
+                        <th className={cn(rentalTableHeadClass, "text-center w-28")}>Chi tiết đơn</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 text-sm text-slate-700">
+                      {paginatedCommissionRows.map((row, index) => (
+                        <tr key={row.name} className="module-table-row hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3 px-4 text-center text-sm text-slate-400 font-medium tabular-nums">
+                            {(safeCommissionPage - 1) * commissionItemsPerPage + index + 1}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-50 text-amber-700">
+                                <Home className="w-3.5 h-3.5" />
+                              </div>
+                              <span className="font-bold text-slate-900 text-body">{row.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-meta font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                              {row.count} đơn
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-center font-medium tabular-nums text-slate-700">
+                            {row.totalDays} ngày
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium tabular-nums text-slate-600">
+                            {row.avgPerDay.toLocaleString("vi-VN")} đ/ngày
+                          </td>
+                          <td className="py-3 px-4 text-right font-bold tabular-nums text-amber-700 text-base">
+                            {row.total.toLocaleString("vi-VN")} đ
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedHomeForDetail(row)}
+                              className="h-8 px-2.5 text-label font-semibold rounded-[var(--radius-control)] border-amber-200 text-amber-800 hover:bg-amber-50 hover:text-amber-900"
+                            >
+                              <Eye className="w-3.5 h-3.5 mr-1" />
+                              Xem ({row.orders.length})
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="border-t-2 border-slate-200 bg-slate-50/90">
+                      <tr className="font-bold text-slate-800">
+                        <td colSpan={2} className="py-3 px-4 text-left">
+                          Tổng cộng ({commissionTotals.homes} đối tác)
+                        </td>
+                        <td className="py-3 px-4 text-center tabular-nums text-blue-700">
+                          {commissionTotals.orders} đơn
+                        </td>
+                        <td className="py-3 px-4 text-center tabular-nums text-slate-800">
+                          {commissionTotals.days} ngày
+                        </td>
+                        <td className="py-3 px-4 text-right text-slate-500 font-normal text-meta">
+                          —
+                        </td>
+                        <td className="py-3 px-4 text-right tabular-nums text-amber-800 text-base">
+                          {commissionTotals.amount.toLocaleString("vi-VN")} đ
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                }
+                mobile={
+                  <div className="space-y-2">
+                    {paginatedCommissionRows.map((row, index) => (
+                      <ModuleMobileCard key={row.name}>
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-meta text-slate-400 font-semibold tabular-nums">
+                              #{(safeCommissionPage - 1) * commissionItemsPerPage + index + 1}
+                            </span>
+                            <span className="font-bold text-slate-900 text-body">{row.name}</span>
+                          </div>
+                          <span className="font-bold text-base text-amber-700 tabular-nums">
+                            {row.total.toLocaleString("vi-VN")} đ
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-meta text-slate-600 my-1 bg-slate-50 p-2 rounded-lg">
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">Số đơn</span>
+                            <span className="font-semibold text-slate-800">{row.count} đơn</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">Tổng ngày</span>
+                            <span className="font-semibold text-slate-800">{row.totalDays} ngày</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">HH TB/ngày</span>
+                            <span className="font-semibold text-slate-800">{row.avgPerDay.toLocaleString("vi-VN")} đ</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-end pt-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedHomeForDetail(row)}
+                            className="h-8 px-3 text-label font-semibold rounded-[var(--radius-control)] border-amber-200 text-amber-800 hover:bg-amber-50"
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1.5" />
+                            Xem chi tiết {row.orders.length} đơn
+                          </Button>
+                        </div>
+                      </ModuleMobileCard>
+                    ))}
+
+                    <div className="rounded-lg bg-amber-50/70 border border-amber-200/80 p-3 flex justify-between items-center text-sm">
+                      <span className="font-bold text-amber-950">Tổng tiền hoa hồng ({commissionTotals.homes} đối tác)</span>
+                      <span className="font-bold text-base text-amber-800 tabular-nums">
+                        {commissionTotals.amount.toLocaleString("vi-VN")} đ
+                      </span>
+                    </div>
+                  </div>
+                }
+              />
+
+              {totalCommissionPages > 1 && (
+                <ModulePagination
+                  page={safeCommissionPage}
+                  totalPages={totalCommissionPages}
+                  totalItems={activeCommissionRows.length}
+                  itemLabel="đối tác"
+                  onPageChange={setCommissionPage}
+                  className="border-t border-slate-200 pt-3 mt-0 px-0 bg-transparent"
+                />
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Modal Dialog xem chi tiết danh sách đơn của 1 Home */}
+      <Dialog open={!!selectedHomeForDetail} onOpenChange={(open) => !open && setSelectedHomeForDetail(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-title">
+              <Home className="h-5 w-5 text-amber-600" />
+              Chi tiết đơn giới thiệu: {selectedHomeForDetail?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Danh sách các đơn thuê xe qua {selectedHomeForDetail?.name} trong kỳ báo cáo
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedHomeForDetail && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-3 gap-2 bg-amber-50/60 p-3 rounded-lg border border-amber-200/70 text-center">
+                <div>
+                  <p className="text-meta text-slate-500 font-medium">Tổng số đơn</p>
+                  <p className="text-body font-bold text-slate-900 mt-0.5">{selectedHomeForDetail.count} đơn</p>
+                </div>
+                <div>
+                  <p className="text-meta text-slate-500 font-medium">Tổng ngày thuê</p>
+                  <p className="text-body font-bold text-slate-900 mt-0.5">{selectedHomeForDetail.totalDays} ngày</p>
+                </div>
+                <div>
+                  <p className="text-meta text-slate-500 font-medium">Tổng tiền hoa hồng</p>
+                  <p className="text-body font-bold text-amber-800 mt-0.5">{selectedHomeForDetail.total.toLocaleString("vi-VN")} đ</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <table className="w-full text-left border-collapse text-meta">
+                  <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                    <tr>
+                      <th className="px-3 py-2 text-center">STT</th>
+                      <th className="px-3 py-2">Khách / Mã đơn</th>
+                      <th className="px-3 py-2">Xe thuê</th>
+                      <th className="px-3 py-2">Thời gian</th>
+                      <th className="px-3 py-2 text-right">Mức HH/ngày</th>
+                      <th className="px-3 py-2 text-right">Tiền HH</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {selectedHomeForDetail.orders.map((ord, idx) => (
+                      <tr key={ord.id} className="hover:bg-slate-50/60">
+                        <td className="px-3 py-2.5 text-center text-slate-400 font-medium tabular-nums">{idx + 1}</td>
+                        <td className="px-3 py-2.5">
+                          <p className="font-semibold text-slate-900">{ord.customerName}</p>
+                          {ord.rentalCode && <p className="font-mono text-slate-400 text-[11px]">{ord.rentalCode}</p>}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <p className="font-medium text-slate-800">{ord.vehicleName}</p>
+                          {ord.licensePlate && <p className="font-mono text-slate-500 text-[11px]">{ord.licensePlate}</p>}
+                        </td>
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          <p>{formatDisplayDate(ord.startDate)} - {formatDisplayDate(ord.endDate)}</p>
+                          <span className="text-[11px] text-slate-500 font-medium">({ord.totalDays} ngày)</span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right font-mono text-slate-600 tabular-nums">
+                          {ord.commissionHome.toLocaleString("vi-VN")} đ
+                        </td>
+                        <td className="px-3 py-2.5 text-right font-bold font-mono text-amber-700 tabular-nums">
+                          {ord.totalCommission.toLocaleString("vi-VN")} đ
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button variant="outline" onClick={() => setSelectedHomeForDetail(null)} className="h-10 px-5 font-semibold">
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Summary */}
       {(() => {
