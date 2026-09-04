@@ -2293,22 +2293,36 @@ export default function OrdersPage() {
                               )}
                             </td>
                             <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                              <span className={cn(orderStatusBadgeClass, rentalOrderStatusBadgeClass(order.status, isOverdue))}>
-                                {getRentalOrderStatusLabel(order.status, isOverdue)}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <div className="flex items-center justify-end gap-1 flex-nowrap">
+                              <div className="flex flex-col items-center justify-center gap-1.5">
+                                <span className={cn(orderStatusBadgeClass, rentalOrderStatusBadgeClass(order.status, isOverdue))}>
+                                  {getRentalOrderStatusLabel(order.status, isOverdue)}
+                                </span>
                                 {order.status === "pending" && (
-                                  <Button variant="ghost" size="sm" className={cn(orderQuickActionClass, "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50")} onClick={() => handleDeliverOrderClick(order)} title="Giao xe">
-                                    <Play className="w-3.5 h-3.5" />Giao
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200 rounded-[var(--radius-control)] gap-1"
+                                    onClick={() => handleDeliverOrderClick(order)}
+                                    title="Giao xe"
+                                  >
+                                    <Play className="w-3 h-3" />Giao
                                   </Button>
                                 )}
                                 {(order.status === "active" || isOrderOverdue(order)) && (
-                                  <Button variant="ghost" size="sm" className={cn(orderQuickActionClass, "text-blue-700 hover:text-blue-800 hover:bg-blue-50")} onClick={() => openCompleteWithLateFee(order.id)} title="Hoàn thành">
-                                    <CheckCircle className="w-3.5 h-3.5" />Xong
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 border border-blue-200 rounded-[var(--radius-control)] gap-1"
+                                    onClick={() => openCompleteWithLateFee(order.id)}
+                                    title="Hoàn thành đơn"
+                                  >
+                                    <CheckCircle className="w-3 h-3" />Xong
                                   </Button>
                                 )}
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center justify-end gap-1 flex-nowrap">
                                 <Button variant="outline" size="icon-sm" className={orderActionBtnClass} onClick={() => setViewingOrder(order)} title="Xem chi tiết">
                                   <Eye className="w-4 h-4" />
                                 </Button>
