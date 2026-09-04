@@ -1289,7 +1289,9 @@ export default function OrdersPage() {
         })
       )
 
-      if (user) logger.editRental(user.username, user.displayName, customer.name, vehicle.name)
+      if (user) {
+        logger.editRentalWithDiff(user.username, user.displayName, editingOrder, updatedOrder)
+      }
       showSuccess(
         isUnassigning
           ? `Đã huỷ gán xe cho đơn thuê ${editingOrder.customerName}. Đơn chuyển về chờ giao xe.`
@@ -1366,7 +1368,17 @@ export default function OrdersPage() {
 
       setOrders(orders.map((o) => (o.id === orderId ? { ...o, ...updateData, status: newStatus, revenue } : o)))
       const statusLabels: Record<string, string> = { pending: "Chờ giao xe", active: "Đang thuê", completed: "Hoàn thành", cancelled: "Đã hủy" }
-      if (user) logger.log(user.username, user.displayName, 'Chỉnh sửa', 'Đơn thuê', `Cập nhật đơn ${orderId}: ${statusLabels[newStatus]}`)
+      const oldStatusLabel = statusLabels[order.status] || order.status
+      const newStatusLabel = statusLabels[newStatus] || newStatus
+      const code = order.rentalCode || order.id
+      const revenueText = revenue > 0 ? ` (Doanh thu: ${revenue.toLocaleString("vi-VN")}đ)` : ""
+      if (user) {
+        if (newStatus === "completed") {
+          logger.returnRental(user.username, user.displayName, order.customerName, order.vehicleName, `Đơn ${code}: ${oldStatusLabel} → ${newStatusLabel}${revenueText}`)
+        } else {
+          logger.log(user.username, user.displayName, "Chỉnh sửa", "Đơn thuê", `Đổi trạng thái đơn ${code} (${order.customerName} - ${order.vehicleName}): ${oldStatusLabel} → ${newStatusLabel}${revenueText}`)
+        }
+      }
     } catch (error) {
       console.error("Exception updating rental status:", error)
       showError(`Lỗi cập nhật trạng thái đơn thuê`)

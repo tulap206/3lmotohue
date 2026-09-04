@@ -817,7 +817,7 @@ export default function VehiclesPage() {
             return dateB - dateA // DESC (newest first)
           })
           setVehicles(sorted)
-          if (user) logger.addVehicle(user.username, user.displayName, insertedVehicle.name, insertedVehicle.licensePlate)
+          if (user) logger.addVehicle(user.username, user.displayName, insertedVehicle.name, insertedVehicle.licensePlate, insertedVehicle.pricePerDay)
           setNewVehicle({ name: "", licensePlate: "", color: "", pricePerDay: "", current_km: "", purchasePrice: "", notes: "", status: "available", category: "bike", vehicleImages: [], documentImages: [] })
           setIsAddDialogOpen(false)
         } else {
@@ -955,12 +955,13 @@ export default function VehiclesPage() {
           showError(`Lỗi khi cập nhật: ${error.message}`)
         } else {
           // Sync with state
+          const originalVehicle = vehicles.find((v) => v.id === editingVehicle.id)
           const fullUpdatedVehicle = {
             ...editingVehicle,
             ...updateData,
           }
           setVehicles(vehicles.map((v) => (v.id === editingVehicle.id ? fullUpdatedVehicle : v)))
-          if (user) logger.editVehicle(user.username, user.displayName, editingVehicle.name, editingVehicle.licensePlate)
+          if (user) logger.editVehicleWithDiff(user.username, user.displayName, originalVehicle, fullUpdatedVehicle)
           setIsEditDialogOpen(false)
           setEditingVehicle(null)
         }

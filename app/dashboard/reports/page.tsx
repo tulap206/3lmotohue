@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchTransactions, fetchUserDisplayNames, getUserDisplayName, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
+import { logger } from "@/lib/logger"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { buildCommissionHomeReport, sumCommissionRows, type CommissionHomeRow } from "@/lib/commission-home"
@@ -197,7 +198,9 @@ export default function ReportsPage() {
       // Log action if user exists
       if (user?.username) {
         try {
-          addAccessLog("Thêm", "Thu/Chi", `${formData.type === "income" ? "Thu" : "Chi"}: ${formData.description}`)
+          const parsedAmount = parseMoneyInput(formData.amount)
+          const desc = withCapitalTag(formData.description, formData.isCapital)
+          logger.addTransaction(user.username, user.displayName, formData.type, desc, parsedAmount)
         } catch (logError) {
           console.error("Warning: Could not log action", logError)
         }
@@ -227,8 +230,16 @@ export default function ReportsPage() {
       await loadTransactions()
       
       setDeleteConfirmOpen(false)
+      if (user?.username) {
+        logger.deleteTransaction(
+          user.username,
+          user.displayName,
+          transactionToDelete.type as "income" | "expense",
+          transactionToDelete.description,
+          transactionToDelete.amount
+        )
+      }
       setTransactionToDelete(null)
-      addAccessLog("Xoá", "Thu/Chi", `Xoá: ${transactionToDelete.description}`)
     } catch (error) {
       console.error("Error deleting transaction:", error)
     }
@@ -267,19 +278,25 @@ export default function ReportsPage() {
     })
     
     try {
-      await updateTransaction(editingTransaction.id, {
+      const updatedTxData = {
         type: editFormData.type as "income" | "expense",
         description: nextDescription,
         amount: parsedAmount,
         timestamp: editFormData.timestamp ? new Date(editFormData.timestamp + "T12:00:00").toISOString() : editingTransaction.timestamp,
-      })
+      }
+      await updateTransaction(editingTransaction.id, updatedTxData)
       
       // Reload transactions from Supabase
       await loadTransactions()
       
       setIsEditTransactionOpen(false)
+      if (user?.username) {
+        logger.editTransactionWithDiff(user.username, user.displayName, editingTransaction, {
+          ...editingTransaction,
+          ...updatedTxData,
+        })
+      }
       setEditingTransaction(null)
-      addAccessLog("Sửa", "Thu/Chi", `Sửa: ${editFormData.description}`)
       
       console.log("✅ Edit completed successfully")
     } catch (error) {

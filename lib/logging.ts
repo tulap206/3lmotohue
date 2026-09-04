@@ -9,20 +9,27 @@ export type ActionType =
   | "Thêm mới" 
   | "Chỉnh sửa" 
   | "Xóa" 
+  | "Bảo trì"
+  | "Trả xe"
   | "Xem chi tiết" 
   | "Tìm kiếm" 
   | "Lọc dữ liệu"
   | "Xuất báo cáo"
+  | "Sao lưu dữ liệu"
+  | "Khôi phục dữ liệu"
   | "Đăng nhập"
   | "Đăng xuất"
 
 export type ModuleType = 
-  | "Quản lý khách hàng"
   | "Quản lý xe"
   | "Đơn thuê"
+  | "Quản lý khách hàng"
+  | "Bảo trì xe"
+  | "Thu / Chi"
   | "Báo cáo"
-  | "Lịch sử truy cập"
-  | "Hệ thống"
+  | "Quản lý tài khoản"
+  | "Cài đặt & Sao lưu"
+  | "Hệ thống & Đăng nhập"
 
 export interface LogEntry {
   action: ActionType
@@ -40,7 +47,7 @@ async function logToSupabase(username: string, displayName: string, action: stri
     await supabase.from("access_logs").insert([
       {
         username,
-        displayName,
+        displayname: displayName,
         action,
         module,
         details,

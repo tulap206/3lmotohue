@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { useRentalData } from "@/contexts/rental-data-context"
 import { markVehicleAsMaintained, calculateMaintenanceStatus, MaintenanceVehicle } from "@/lib/supabase"
+import { logger } from "@/lib/logger"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -129,7 +130,17 @@ export default function MaintenancePage() {
   const handleMaintained = async (vehicleId: string, vehicleName: string, currentKm: number) => {
     try {
       setMaintaining(vehicleId)
+      const targetVehicle = allVehicles.find((v) => v.id === vehicleId)
       await markVehicleAsMaintained(vehicleId, currentKm)
+      if (user) {
+        logger.maintainVehicle(
+          user.username,
+          user.displayName,
+          vehicleName,
+          targetVehicle?.licensePlate || "",
+          currentKm
+        )
+      }
       toast.success(`${vehicleName} đã bảo trì xong`)
       await refresh()
     } catch (error) {

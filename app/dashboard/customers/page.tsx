@@ -467,7 +467,13 @@ export default function CustomersPage() {
           throw error
         }
         console.log("✅ Customer updated successfully")
-        if (user) logger.editCustomer(user.username, user.displayName, formData.name)
+        if (user) {
+          logger.editCustomerWithDiff(user.username, user.displayName, editingCustomer, {
+            ...editingCustomer,
+            ...formData,
+            ...updateData,
+          })
+        }
       } else {
         // Check if phone already exists
         const existingCustomer = customers.find(

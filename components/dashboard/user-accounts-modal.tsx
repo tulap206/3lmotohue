@@ -323,10 +323,51 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || "Lỗi khi cập nhật tài khoản")
 
+        const changes: string[] = []
+        if (editingUser) {
+          if (editingUser.displayName !== formData.displayName) {
+            changes.push(`Tên: "${editingUser.displayName}" → "${formData.displayName}"`)
+          }
+          if (editingUser.role !== formData.role) {
+            changes.push(`Vai trò: ${editingUser.role === "admin" ? "Admin" : "Nhân viên"} → ${formData.role === "admin" ? "Admin" : "Nhân viên"}`)
+          }
+          if (formData.password) {
+            changes.push(`Đổi mật khẩu mới`)
+          }
+          const oldSubs = [
+            (editingUser.role === "admin" || editingUser.subModules?.dashboard) && "Trang chủ",
+            (editingUser.role === "admin" || editingUser.subModules?.vehicles) && "Xe",
+            (editingUser.role === "admin" || editingUser.subModules?.customers) && "Khách",
+            (editingUser.role === "admin" || editingUser.subModules?.orders) && "Đơn thuê",
+            (editingUser.role === "admin" || editingUser.subModules?.maintenance) && "Bảo trì",
+            (editingUser.role === "admin" || editingUser.subModules?.reports) && "Báo cáo",
+            (editingUser.role === "admin" || editingUser.subModules?.accessHistory) && "Lịch sử",
+          ].filter(Boolean) as string[]
+
+          const newSubs = [
+            (formData.role === "admin" || formData.subModules.dashboard) && "Trang chủ",
+            (formData.role === "admin" || formData.subModules.vehicles) && "Xe",
+            (formData.role === "admin" || formData.subModules.customers) && "Khách",
+            (formData.role === "admin" || formData.subModules.orders) && "Đơn thuê",
+            (formData.role === "admin" || formData.subModules.maintenance) && "Bảo trì",
+            (formData.role === "admin" || formData.subModules.reports) && "Báo cáo",
+            (formData.role === "admin" || formData.subModules.accessHistory) && "Lịch sử",
+          ].filter(Boolean) as string[]
+
+          const added = newSubs.filter(s => !oldSubs.includes(s))
+          const removed = oldSubs.filter(s => !newSubs.includes(s))
+          if (added.length > 0) changes.push(`Thêm quyền: ${added.join(', ')}`)
+          if (removed.length > 0) changes.push(`Bỏ quyền: ${removed.join(', ')}`)
+        }
+
+        const detailStr = changes.length > 0
+          ? `Cập nhật tài khoản ${formData.username} (${formData.displayName}) [${changes.join(', ')}]`
+          : `Cập nhật tài khoản ${formData.username} (${formData.displayName})`
+
         addAccessLog(
           "Chỉnh sửa",
-          "Cài đặt - Phân quyền người dùng",
-          `Cập nhật tài khoản và quyền phân hệ con: ${formData.username} (${formData.displayName})`
+          "Quản lý tài khoản",
+          detailStr
         )
       } else {
         const res = await fetch("/api/auth/users", {
@@ -357,8 +398,8 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
 
         addAccessLog(
           "Thêm mới",
-          "Cài đặt - Phân quyền người dùng",
-          `Tạo tài khoản mới: ${formData.username} (${formData.displayName})`
+          "Quản lý tài khoản",
+          `Tạo tài khoản mới: ${formData.username} (${formData.displayName}) - Vai trò: ${formData.role === "admin" ? "Admin" : "Nhân viên"}`
         )
       }
 
@@ -396,8 +437,8 @@ export function UserAccountsModal({ open: externalOpen, onOpenChange: externalOn
 
       addAccessLog(
         "Xóa",
-        "Cài đặt - Người dùng",
-        `Xóa tài khoản: ${userToDelete.username}`
+        "Quản lý tài khoản",
+        `Xóa tài khoản: ${userToDelete.username} (${userToDelete.displayName})`
       )
       await loadUsers()
     } catch (err: any) {

@@ -1,4 +1,13 @@
 import { supabase } from './supabase'
+import {
+  diffVehicle,
+  diffRental,
+  diffCustomer,
+  diffTransaction,
+  buildDiffDetailString,
+  formatVND,
+  formatKM,
+} from './audit-diff'
 
 // Development logging - only logs in development mode
 const isDev = typeof window !== 'undefined' && process.env.NODE_ENV === 'development'
@@ -116,28 +125,81 @@ export const logger = {
   logout: (u: string, d: string) => logger.log(u, d, 'Đăng xuất', 'Hệ thống', `${d} đăng xuất khỏi hệ thống`),
 
   // Vehicles
-  addVehicle: (u: string, d: string, name: string, plate: string) =>
-    logger.log(u, d, 'Thêm mới', 'Quản lý xe', `Thêm xe: ${name} (${plate})`),
+  addVehicle: (u: string, d: string, name: string, plate: string, pricePerDay?: number) => {
+    const priceStr = pricePerDay ? ` (Giá thuê: ${formatVND(pricePerDay)}/ngày)` : ''
+    return logger.log(u, d, 'Thêm mới', 'Quản lý xe', `Thêm xe: ${name} (${plate})${priceStr}`)
+  },
   editVehicle: (u: string, d: string, name: string, plate: string) =>
     logger.log(u, d, 'Chỉnh sửa', 'Quản lý xe', `Sửa xe: ${name} (${plate})`),
+  editVehicleWithDiff: (u: string, d: string, oldVehicle: any, newVehicle: any) => {
+    const changes = diffVehicle(oldVehicle, newVehicle)
+    const base = `Sửa xe: ${newVehicle.name || oldVehicle?.name} (${newVehicle.licensePlate || oldVehicle?.licensePlate})`
+    const detail = buildDiffDetailString(base, changes)
+    return logger.log(u, d, 'Chỉnh sửa', 'Quản lý xe', detail)
+  },
   deleteVehicle: (u: string, d: string, name: string, plate: string) =>
     logger.log(u, d, 'Xóa', 'Quản lý xe', `Xóa xe: ${name} (${plate})`),
 
   // Customers
   addCustomer: (u: string, d: string, name: string, phone: string) =>
-    logger.log(u, d, 'Thêm mới', 'Quản lý khách hàng', `Thêm khách: ${name} (${phone})`),
+    logger.log(u, d, 'Thêm mới', 'Quản lý khách hàng', `Thêm khách hàng: ${name} (${phone})`),
   editCustomer: (u: string, d: string, name: string) =>
-    logger.log(u, d, 'Chỉnh sửa', 'Quản lý khách hàng', `Sửa khách: ${name}`),
+    logger.log(u, d, 'Chỉnh sửa', 'Quản lý khách hàng', `Sửa khách hàng: ${name}`),
+  editCustomerWithDiff: (u: string, d: string, oldCustomer: any, newCustomer: any) => {
+    const changes = diffCustomer(oldCustomer, newCustomer)
+    const base = `Sửa khách hàng: ${newCustomer.name || oldCustomer?.name} (${newCustomer.phone || oldCustomer?.phone || '—'})`
+    const detail = buildDiffDetailString(base, changes)
+    return logger.log(u, d, 'Chỉnh sửa', 'Quản lý khách hàng', detail)
+  },
   deleteCustomer: (u: string, d: string, name: string) =>
-    logger.log(u, d, 'Xóa', 'Quản lý khách hàng', `Xóa khách: ${name}`),
+    logger.log(u, d, 'Xóa', 'Quản lý khách hàng', `Xóa khách hàng: ${name}`),
 
   // Rentals
-  addRental: (u: string, d: string, customer: string, vehicle: string) =>
-    logger.log(u, d, 'Thêm mới', 'Đơn thuê', `Tạo đơn thuê: ${customer} - ${vehicle}`),
+  addRental: (u: string, d: string, customer: string, vehicle: string, extraInfo?: string) => {
+    const extra = extraInfo ? ` [${extraInfo}]` : ''
+    return logger.log(u, d, 'Thêm mới', 'Đơn thuê', `Tạo đơn thuê: ${customer} - ${vehicle}${extra}`)
+  },
   editRental: (u: string, d: string, customer: string, vehicle: string) =>
     logger.log(u, d, 'Chỉnh sửa', 'Đơn thuê', `Sửa đơn thuê: ${customer} - ${vehicle}`),
-  deleteRental: (u: string, d: string, customer: string, vehicle: string) =>
-    logger.log(u, d, 'Xóa', 'Đơn thuê', `Xóa đơn thuê: ${customer} - ${vehicle}`),
-  returnRental: (u: string, d: string, customer: string, vehicle: string) =>
-    logger.log(u, d, 'Trả xe', 'Đơn thuê', `Trả xe: ${customer} - ${vehicle}`),
+  editRentalWithDiff: (u: string, d: string, oldRental: any, newRental: any) => {
+    const changes = diffRental(oldRental, newRental)
+    const code = newRental.rentalCode || oldRental?.rentalCode || ""
+    const base = `Sửa đơn thuê${code ? ' ' + code : ''}: ${newRental.customerName || oldRental?.customerName} - ${newRental.vehicleName || oldRental?.vehicleName}`
+    const detail = buildDiffDetailString(base, changes)
+    return logger.log(u, d, 'Chỉnh sửa', 'Đơn thuê', detail)
+  },
+  deleteRental: (u: string, d: string, customer: string, vehicle: string, code?: string) =>
+    logger.log(u, d, 'Xóa', 'Đơn thuê', `Xóa đơn thuê${code ? ' ' + code : ''}: ${customer} - ${vehicle}`),
+  returnRental: (u: string, d: string, customer: string, vehicle: string, extraDetail?: string) => {
+    const extra = extraDetail ? ` [${extraDetail}]` : ''
+    return logger.log(u, d, 'Trả xe', 'Đơn thuê', `Trả xe: ${customer} - ${vehicle}${extra}`)
+  },
+
+  // Maintenance
+  maintainVehicle: (u: string, d: string, vehicleName: string, plate: string, km: number, notes?: string) => {
+    const noteStr = notes ? ` - Ghi chú: ${notes}` : ''
+    return logger.log(
+      u,
+      d,
+      'Bảo trì',
+      'Bảo trì xe',
+      `Bảo dưỡng xe: ${vehicleName} (${plate}) tại mốc ${formatKM(km)}${noteStr}`
+    )
+  },
+
+  // Transactions (Thu/Chi)
+  addTransaction: (u: string, d: string, type: 'income' | 'expense', description: string, amount: number) => {
+    const typeLabel = type === 'income' ? 'khoản thu' : 'khoản chi'
+    return logger.log(u, d, 'Thêm mới', 'Thu/Chi', `Thêm ${typeLabel}: "${description}" - Số tiền: ${formatVND(amount)}`)
+  },
+  editTransactionWithDiff: (u: string, d: string, oldTx: any, newTx: any) => {
+    const changes = diffTransaction(oldTx, newTx)
+    const base = `Sửa giao dịch "${oldTx.description || newTx.description}"`
+    const detail = buildDiffDetailString(base, changes)
+    return logger.log(u, d, 'Chỉnh sửa', 'Thu/Chi', detail)
+  },
+  deleteTransaction: (u: string, d: string, type: 'income' | 'expense', description: string, amount: number) => {
+    const typeLabel = type === 'income' ? 'khoản thu' : 'khoản chi'
+    return logger.log(u, d, 'Xóa', 'Thu/Chi', `Xóa ${typeLabel}: "${description}" - Số tiền: ${formatVND(amount)}`)
+  },
 }

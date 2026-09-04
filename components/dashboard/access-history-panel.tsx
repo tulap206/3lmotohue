@@ -5,6 +5,12 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Search,
   History,
   LogIn,
@@ -23,6 +29,13 @@ import {
   Database,
   Wallet,
   ShieldAlert,
+  Wrench,
+  UserCheck,
+  Info,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDisplayDateTime } from "@/lib/format-date"
@@ -64,9 +77,9 @@ const MODULE_CONFIG: Record<
     accent: "blue",
     layout: "page",
     title: "Lịch sử truy cập",
-    description: "Theo dõi hoạt động phân hệ cho thuê",
+    description: "Theo dõi toàn bộ hoạt động và lịch sử chỉnh sửa hệ thống",
     scopeLabel: "Cho thuê xe",
-    hideModuleFilter: true,
+    hideModuleFilter: false,
   },
   sales: {
     accent: "blue",
@@ -74,7 +87,7 @@ const MODULE_CONFIG: Record<
     title: "Lịch sử truy cập",
     description: "Theo dõi hoạt động phân hệ mua bán xe",
     scopeLabel: "Mua bán xe",
-    hideModuleFilter: true,
+    hideModuleFilter: false,
   },
   pawnshop: {
     accent: "amber",
@@ -82,7 +95,7 @@ const MODULE_CONFIG: Record<
     title: "Lịch sử truy cập",
     description: "Theo dõi hoạt động phân hệ cầm đồ",
     scopeLabel: "Cầm đồ",
-    hideModuleFilter: true,
+    hideModuleFilter: false,
   },
   loan: {
     accent: "emerald",
@@ -90,7 +103,7 @@ const MODULE_CONFIG: Record<
     title: "Lịch sử truy cập",
     description: "Theo dõi hoạt động phân hệ cho vay",
     scopeLabel: "Cho vay",
-    hideModuleFilter: true,
+    hideModuleFilter: false,
   },
 }
 
@@ -128,39 +141,41 @@ const accentStyles: Record<
     icon: "text-emerald-600 bg-emerald-50",
   },
   violet: {
-    stripe: "from-violet-400 to-violet-650 to-violet-600",
+    stripe: "from-violet-400 to-violet-600",
     ring: "ring-violet-500/20",
-    badge: "bg-violet-50 text-violet-750 text-violet-700 border-violet-100",
+    badge: "bg-violet-50 text-violet-700 border-violet-100",
     icon: "text-violet-600 bg-violet-50",
   },
 }
 
 const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
-  "Đăng nhập": { icon: LogIn, color: "text-emerald-700", bg: "bg-emerald-50" },
-  "Đăng xuất": { icon: LogOut, color: "text-slate-600", bg: "bg-slate-100" },
-  "Thêm mới": { icon: Plus, color: "text-blue-700", bg: "bg-blue-50" },
-  "Chỉnh sửa": { icon: Pencil, color: "text-amber-700", bg: "bg-amber-50" },
-  "Xóa": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50" },
-  "Xoá": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50" },
-  "Sao lưu": { icon: Database, color: "text-slate-700", bg: "bg-slate-100" },
-  "Sao lưu dữ liệu": { icon: Database, color: "text-slate-700", bg: "bg-slate-100" },
-  "Sao lưu tự động": { icon: Database, color: "text-slate-700", bg: "bg-slate-100" },
-  "Khôi phục": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100" },
-  "Khôi phục dữ liệu": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100" },
-  "Xem": { icon: Eye, color: "text-slate-600", bg: "bg-slate-100" },
+  "Đăng nhập": { icon: LogIn, color: "text-emerald-700", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "Đăng xuất": { icon: LogOut, color: "text-slate-600", bg: "bg-slate-100 text-slate-700 border-slate-200" },
+  "Thêm mới": { icon: Plus, color: "text-blue-700", bg: "bg-blue-50 text-blue-700 border-blue-200" },
+  "Chỉnh sửa": { icon: Pencil, color: "text-amber-700", bg: "bg-amber-50 text-amber-800 border-amber-200" },
+  "Xóa": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50 text-rose-700 border-rose-200" },
+  "Xoá": { icon: Trash2, color: "text-rose-700", bg: "bg-rose-50 text-rose-700 border-rose-200" },
+  "Bảo trì": { icon: Wrench, color: "text-amber-700", bg: "bg-amber-50 text-amber-800 border-amber-200" },
+  "Trả xe": { icon: Car, color: "text-emerald-700", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "Sao lưu": { icon: Database, color: "text-slate-700", bg: "bg-slate-100 text-slate-700 border-slate-200" },
+  "Sao lưu dữ liệu": { icon: Database, color: "text-slate-700", bg: "bg-slate-100 text-slate-700 border-slate-200" },
+  "Sao lưu tự động": { icon: Database, color: "text-slate-700", bg: "bg-slate-100 text-slate-700 border-slate-200" },
+  "Khôi phục": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100 text-slate-700 border-slate-200" },
+  "Khôi phục dữ liệu": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100 text-slate-700 border-slate-200" },
+  "Xem": { icon: Eye, color: "text-slate-600", bg: "bg-slate-100 text-slate-600 border-slate-200" },
+  "Truy cập": { icon: Activity, color: "text-slate-600", bg: "bg-slate-100 text-slate-600 border-slate-200" },
 }
 
-const moduleIconMap: Record<string, { icon: React.ElementType; color: string }> = {
-  "Hệ thống": { icon: Settings, color: "text-slate-500" },
-  "Quản lý xe": { icon: Car, color: "text-rose-600" },
-  "Quản lý khách hàng": { icon: Users, color: "text-emerald-600" },
-  "Đơn thuê": { icon: ClipboardList, color: "text-amber-600" },
-  "Cho vay": { icon: Wallet, color: "text-emerald-600" },
-  "Cầm đồ": { icon: Wallet, color: "text-amber-600" },
-  "Mua bán xe": { icon: Car, color: "text-blue-600" },
-  "Báo cáo": { icon: FileText, color: "text-slate-600" },
-  "Lịch sử truy cập": { icon: History, color: "text-slate-600" },
-  "Quản lý người dùng": { icon: Users, color: "text-slate-600" },
+const moduleIconMap: Record<string, { icon: React.ElementType; color: string; badgeColor: string }> = {
+  "Quản lý xe": { icon: Car, color: "text-blue-600", badgeColor: "bg-blue-50 text-blue-700 border-blue-200" },
+  "Đơn thuê": { icon: ClipboardList, color: "text-violet-600", badgeColor: "bg-violet-50 text-violet-700 border-violet-200" },
+  "Quản lý khách hàng": { icon: Users, color: "text-emerald-600", badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "Bảo trì xe": { icon: Wrench, color: "text-amber-600", badgeColor: "bg-amber-50 text-amber-800 border-amber-200" },
+  "Thu / Chi": { icon: Wallet, color: "text-rose-600", badgeColor: "bg-rose-50 text-rose-700 border-rose-200" },
+  "Báo cáo": { icon: FileText, color: "text-indigo-600", badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  "Quản lý tài khoản": { icon: UserCheck, color: "text-cyan-600", badgeColor: "bg-cyan-50 text-cyan-700 border-cyan-200" },
+  "Cài đặt & Sao lưu": { icon: Database, color: "text-slate-600", badgeColor: "bg-slate-100 text-slate-700 border-slate-200" },
+  "Hệ thống & Đăng nhập": { icon: Settings, color: "text-slate-500", badgeColor: "bg-slate-100 text-slate-600 border-slate-200" },
 }
 
 function extractIpFromDetails(details: string): string | undefined {
@@ -197,43 +212,85 @@ function normalizeLog(log: AccessLogRecord): AccessLogRecord {
   }
 }
 
-function getModuleLabel(mod: string) {
-  const lower = mod.toLowerCase()
-  if (
-    lower === "rental" ||
-    lower.includes("thuê xe") ||
-    lower.includes("đơn thuê") ||
-    lower.includes("khách thuê") ||
-    lower.includes("quản lý xe") ||
-    lower.includes("quản lý khách hàng") ||
-    lower.includes("bảo trì") ||
-    lower.includes("báo cáo") ||
-    lower.includes("lịch sử") ||
-    lower.includes("thu/chi") ||
-    lower.includes("thu chi")
-  ) {
-    return "Cho thuê xe"
+/**
+ * Chuẩn hóa phân hệ thông minh, map dữ liệu cũ và mới vào nhóm phân hệ chính xác
+ */
+export function getModuleLabel(mod: string): string {
+  const lower = (mod || "").toLowerCase().trim()
+  if (lower.includes("bảo trì") || lower.includes("bảo dưỡng") || lower === "maintenance") {
+    return "Bảo trì xe"
   }
-  if (lower === "sales" || lower.includes("mua bán") || lower.includes("xe máy") || lower.includes("khách hàng")) return "Mua bán xe"
-  if (lower === "pawnshop" || lower.includes("cầm đồ") || lower.includes("đồ cầm") || lower.includes("khách cầm") || lower.includes("đơn cầm")) return "Cầm đồ"
-  if (lower === "loan" || lower.includes("cho vay") || lower.includes("khách vay") || lower.includes("đơn vay")) return "Cho vay"
-  if (lower === "system" || lower.includes("hệ thống") || lower.includes("tài khoản") || lower.includes("sao lưu") || lower.includes("cài đặt") || lower === "settings") return "Cài đặt hệ thống"
-  return "Cài đặt hệ thống"
+  if (
+    lower.includes("đơn thuê") ||
+    lower.includes("thuê xe") ||
+    lower.includes("hợp đồng") ||
+    lower.includes("đơn hàng") ||
+    lower === "rentals" ||
+    lower === "orders"
+  ) {
+    return "Đơn thuê"
+  }
+  if (lower.includes("khách hàng") || lower.includes("khách thuê") || lower === "customers") {
+    return "Quản lý khách hàng"
+  }
+  if (lower.includes("xe") || lower === "vehicles") {
+    return "Quản lý xe"
+  }
+  if (
+    lower.includes("thu/chi") ||
+    lower.includes("thu chi") ||
+    lower.includes("sổ quỹ") ||
+    lower.includes("giao dịch") ||
+    lower === "transactions"
+  ) {
+    return "Thu / Chi"
+  }
+  if (lower.includes("báo cáo") || lower.includes("thống kê") || lower === "reports") {
+    return "Báo cáo"
+  }
+  if (
+    lower.includes("người dùng") ||
+    lower.includes("tài khoản") ||
+    lower.includes("phân quyền") ||
+    lower.includes("user")
+  ) {
+    return "Quản lý tài khoản"
+  }
+  if (
+    lower.includes("sao lưu") ||
+    lower.includes("khôi phục") ||
+    lower.includes("cài đặt") ||
+    lower.includes("settings")
+  ) {
+    return "Cài đặt & Sao lưu"
+  }
+  if (
+    lower.includes("đăng nhập") ||
+    lower.includes("đăng xuất") ||
+    lower.includes("hệ thống") ||
+    lower.includes("trang chủ") ||
+    lower.includes("system")
+  ) {
+    return "Hệ thống & Đăng nhập"
+  }
+  return mod || "Hệ thống & Đăng nhập"
 }
 
-function getActionLabel(act: string) {
-  const lower = act.toLowerCase().trim()
+export function getActionLabel(act: string): string {
+  const lower = (act || "").toLowerCase().trim()
   if (lower.includes("đăng nhập") || lower === "login") return "Đăng nhập"
   if (lower.includes("đăng xuất") || lower === "logout") return "Đăng xuất"
   if (lower.includes("thêm") || lower.includes("tạo") || lower === "insert" || lower === "create") return "Thêm mới"
   if (lower.includes("sửa") || lower.includes("cập nhật") || lower === "edit" || lower === "update") return "Chỉnh sửa"
   if (lower.includes("xóa") || lower.includes("xoá") || lower === "delete" || lower === "remove") return "Xóa"
+  if (lower.includes("bảo trì") || lower.includes("bảo dưỡng")) return "Bảo trì"
+  if (lower.includes("trả xe")) return "Trả xe"
   if (lower.includes("sao lưu")) return "Sao lưu dữ liệu"
   if (lower.includes("khôi phục")) return "Khôi phục dữ liệu"
   if (lower.includes("gửi thông báo") || lower.includes("thông báo")) return "Gửi thông báo"
   if (lower === "xem" || lower.includes("xem chi tiết")) return "Xem"
   if (lower.includes("truy cập")) return "Truy cập"
-  return act
+  return act || "Thao tác"
 }
 
 function isNoiseActionLabel(label: string) {
@@ -247,6 +304,32 @@ function formatCompactDate(dateString: string) {
 function panelShellClass(layout: AccessHistoryLayout) {
   if (layout === "embedded") return "access-history-panel flex flex-col"
   return cn("access-history-panel flex min-h-0 flex-col", layoutHeight[layout])
+}
+
+/**
+ * Phân tích chuỗi chi tiết log để tách nội dung chính, danh sách thay đổi (diff) và thiết bị
+ */
+function parseLogDetails(rawDetails: string) {
+  let mainText = rawDetails || ""
+  let deviceText = ""
+  let diffItems: string[] = []
+
+  // Tách [Thiết bị: ...]
+  const deviceMatch = mainText.match(/\[Thiết bị:\s*(.*?)\]/i)
+  if (deviceMatch) {
+    deviceText = deviceMatch[1]
+    mainText = mainText.replace(/\[Thiết bị:\s*.*?\]/i, "").trim()
+  }
+
+  // Tách [thay đổi 1, thay đổi 2]
+  const diffMatch = mainText.match(/\[(.*?)\]$/)
+  if (diffMatch && diffMatch[1].includes("→")) {
+    const diffRaw = diffMatch[1]
+    diffItems = diffRaw.split(",").map((s) => s.trim()).filter(Boolean)
+    mainText = mainText.replace(/\[(.*?)\]$/, "").trim()
+  }
+
+  return { mainText, deviceText, diffItems }
 }
 
 export function AccessHistoryDenied({
@@ -312,11 +395,11 @@ export function AccessHistoryPanel({
   loading,
   onRefresh,
   title = "Lịch sử truy cập",
-  description = "Theo dõi hoạt động trong hệ thống",
+  description = "Theo dõi toàn bộ hoạt động và lịch sử chỉnh sửa hệ thống",
   scopeLabel,
   hideModuleFilter = false,
   layout = "page",
-  accent = "red",
+  accent = "blue",
   itemsPerPage: itemsPerPageProp,
   dbUsers = [],
 }: {
@@ -337,25 +420,17 @@ export function AccessHistoryPanel({
   const [filterModule, setFilterModule] = useState("all")
   const [filterAction, setFilterAction] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedLogForDetail, setSelectedLogForDetail] = useState<AccessLogRecord | null>(null)
 
   const styles = accentStyles[accent]
   const itemsPerPage = itemsPerPageProp ?? (layout === "page" ? PAGE_ROWS : EMBEDDED_ROWS)
-  
-  // Normalize và tự động lọc log theo phân hệ nếu hideModuleFilter là true
-  const normalizedLogs = useMemo(() => {
-    const baseLogs = logs.map(normalizeLog)
-    if (hideModuleFilter && scopeLabel) {
-      return baseLogs.filter((log) => {
-        const label = getModuleLabel(log.module)
-        if (label === scopeLabel) return true
-        // Trang cho thuê đã gắn phân hệ: vẫn giữ log đăng nhập / cài đặt của cùng app
-        return scopeLabel === "Cho thuê xe" && label === "Cài đặt hệ thống"
-      })
-    }
-    return baseLogs
-  }, [logs, hideModuleFilter, scopeLabel])
 
-  // Chỉ lấy tài khoản đang có trong dự án (auth_users), không lấy username cũ từ log
+  // Normalize logs
+  const normalizedLogs = useMemo(() => {
+    return logs.map(normalizeLog)
+  }, [logs])
+
+  // Lấy danh sách tài khoản từ DB (auth_users)
   const accounts = useMemo(() => {
     const seen = new Set<string>()
     const fromDb = dbUsers
@@ -378,14 +453,26 @@ export function AccessHistoryPanel({
     })
   }, [dbUsers])
 
-  // Danh sách các phân hệ chuẩn hóa tiếng Việt
+  // Danh sách phân hệ chuẩn hóa
   const modules = useMemo(() => {
-    const defaultModules = ["Cho thuê xe", "Mua bán xe", "Cầm đồ", "Cho vay", "Cài đặt hệ thống"]
-    const rawModules = Array.from(new Set(normalizedLogs.map((log) => getModuleLabel(log.module)))).filter(Boolean)
-    return defaultModules.filter((m) => (rawModules as string[]).includes(m))
+    const order = [
+      "Quản lý xe",
+      "Đơn thuê",
+      "Quản lý khách hàng",
+      "Bảo trì xe",
+      "Thu / Chi",
+      "Báo cáo",
+      "Quản lý tài khoản",
+      "Cài đặt & Sao lưu",
+      "Hệ thống & Đăng nhập",
+    ]
+    const presentModules = Array.from(new Set(normalizedLogs.map((log) => getModuleLabel(log.module)))).filter(Boolean)
+    const sorted = order.filter((m) => presentModules.includes(m))
+    const others = presentModules.filter((m) => !order.includes(m))
+    return [...sorted, ...others]
   }, [normalizedLogs])
 
-  // Lọc hành động động khớp với phân hệ đang lọc
+  // Lọc hành động động theo phân hệ đang chọn
   const actions = useMemo(() => {
     let filteredForAction = normalizedLogs
     if (filterModule !== "all") {
@@ -394,7 +481,18 @@ export function AccessHistoryPanel({
     const rawActions = Array.from(new Set(filteredForAction.map((log) => getActionLabel(log.action))))
       .filter((action) => Boolean(action) && !isNoiseActionLabel(action))
 
-    const priority = ["Đăng nhập", "Đăng xuất", "Thêm mới", "Chỉnh sửa", "Xóa", "Xem", "Truy cập", "Sao lưu dữ liệu", "Gửi thông báo"]
+    const priority = [
+      "Thêm mới",
+      "Chỉnh sửa",
+      "Xóa",
+      "Bảo trì",
+      "Trả xe",
+      "Đăng nhập",
+      "Đăng xuất",
+      "Xem",
+      "Sao lưu dữ liệu",
+      "Khôi phục dữ liệu",
+    ]
     return priority.filter((p) => rawActions.includes(p)).concat(rawActions.filter((a) => !priority.includes(a)))
   }, [normalizedLogs, filterModule])
 
@@ -402,8 +500,9 @@ export function AccessHistoryPanel({
     () =>
       normalizedLogs
         .filter((log) => {
-          const q = searchQuery.toLowerCase()
+          const q = searchQuery.toLowerCase().trim()
           const matchSearch =
+            !q ||
             log.details.toLowerCase().includes(q) ||
             log.username.toLowerCase().includes(q) ||
             log.displayName.toLowerCase().includes(q) ||
@@ -425,7 +524,6 @@ export function AccessHistoryPanel({
     (safePage - 1) * itemsPerPage,
     safePage * itemsPerPage
   )
-  const emptySlots = Math.max(0, itemsPerPage - paginatedLogs.length)
 
   const logStats = useMemo(() => {
     const today = new Date()
@@ -443,7 +541,7 @@ export function AccessHistoryPanel({
       logins: normalizedLogs.filter((l) => getActionLabel(l.action) === "Đăng nhập").length,
       changes: normalizedLogs.filter((l) => {
         const a = getActionLabel(l.action)
-        return a === "Thêm mới" || a === "Chỉnh sửa" || a === "Xóa"
+        return a === "Thêm mới" || a === "Chỉnh sửa" || a === "Xóa" || a === "Bảo trì" || a === "Trả xe"
       }).length,
     }
   }, [normalizedLogs])
@@ -466,14 +564,14 @@ export function AccessHistoryPanel({
       {layout === "page" && (
         <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "Tổng log", value: logStats.total },
+            { label: "Tổng nhật ký", value: logStats.total },
             { label: "Hôm nay", value: logStats.today },
             { label: "Đăng nhập", value: logStats.logins },
             { label: "Thay đổi dữ liệu", value: logStats.changes },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="rounded-[var(--radius-container)] border border-slate-100 bg-white px-3 py-2.5"
+              className="rounded-[var(--radius-container)] border border-slate-100 bg-white px-3 py-2.5 shadow-sm"
             >
               <p className="text-meta text-slate-500">{stat.label}</p>
               <p className="mt-0.5 text-lg font-semibold text-slate-900 money tabular-nums">{stat.value}</p>
@@ -481,6 +579,7 @@ export function AccessHistoryPanel({
           ))}
         </div>
       )}
+
       <div
         className={cn(
           "module-card relative flex flex-col overflow-hidden rounded-[var(--radius-container)] border border-slate-100 bg-white shadow-sm ring-1",
@@ -516,7 +615,7 @@ export function AccessHistoryPanel({
             <div className="relative w-full sm:min-w-[140px] sm:flex-1 sm:max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
-                placeholder="Tìm kiếm..."
+                placeholder="Tìm theo nội dung, biển số, IP..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
@@ -526,6 +625,7 @@ export function AccessHistoryPanel({
               />
             </div>
 
+            {/* Lọc theo tài khoản */}
             <Select
               value={filterAccount}
               onValueChange={(value) => {
@@ -534,20 +634,21 @@ export function AccessHistoryPanel({
               }}
             >
               <SelectTrigger className="h-11 w-full sm:w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
-                <SelectValue placeholder="Tài khoản" />
+                <SelectValue placeholder="Tất cả tài khoản" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
-                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="all">Tất cả tài khoản</SelectItem>
                 {accounts.map((account) => (
                   <SelectItem key={account.username} value={account.username}>
                     {account.displayName && account.displayName !== account.username
-                      ? `${account.displayName} (${account.username})`
-                      : account.username}
+                      ? `${account.displayName} (@${account.username})`
+                      : `@${account.username}`}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
+            {/* Lọc theo Phân hệ */}
             {!hideModuleFilter && (
               <Select
                 value={filterModule}
@@ -557,20 +658,28 @@ export function AccessHistoryPanel({
                   setCurrentPage(1)
                 }}
               >
-                <SelectTrigger className="h-11 w-full sm:w-[11rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
-                  <SelectValue placeholder="Phân hệ" />
+                <SelectTrigger className="h-11 w-full sm:w-[11.5rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
+                  <SelectValue placeholder="Tất cả phân hệ" />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  {modules.map((moduleName) => (
-                    <SelectItem key={moduleName} value={moduleName}>
-                      {moduleName}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">Tất cả phân hệ</SelectItem>
+                  {modules.map((moduleName) => {
+                    const modConfig = moduleIconMap[moduleName]
+                    const IconComp = modConfig?.icon || Settings
+                    return (
+                      <SelectItem key={moduleName} value={moduleName}>
+                        <div className="flex items-center gap-2">
+                          <IconComp className={cn("h-3.5 w-3.5", modConfig?.color || "text-slate-500")} />
+                          <span>{moduleName}</span>
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             )}
 
+            {/* Lọc theo Hành động */}
             <Select
               value={filterAction}
               onValueChange={(value) => {
@@ -579,15 +688,22 @@ export function AccessHistoryPanel({
               }}
             >
               <SelectTrigger className="h-11 w-full sm:w-[10rem] rounded-[var(--radius-control)] border-slate-200 bg-white text-body text-slate-800 font-medium">
-                <SelectValue placeholder="Hành động" />
+                <SelectValue placeholder="Tất cả hành động" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
-                <SelectItem value="all">Tất cả</SelectItem>
-                {actions.map((action) => (
-                  <SelectItem key={action} value={action}>
-                    {action}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Tất cả hành động</SelectItem>
+                {actions.map((action) => {
+                  const actConfig = actionIconMap[action]
+                  const IconComp = actConfig?.icon || Activity
+                  return (
+                    <SelectItem key={action} value={action}>
+                      <div className="flex items-center gap-2">
+                        <IconComp className={cn("h-3.5 w-3.5", actConfig?.color || "text-slate-600")} />
+                        <span>{action}</span>
+                      </div>
+                    </SelectItem>
+                  )
+                })}
               </SelectContent>
             </Select>
 
@@ -596,7 +712,7 @@ export function AccessHistoryPanel({
               variant="outline"
               size="icon"
               disabled={loading}
-              className="h-11 w-11 shrink-0 rounded-[var(--radius-control)] border-slate-200 self-end sm:self-auto"
+              className="h-11 w-11 shrink-0 rounded-[var(--radius-control)] border-slate-200 self-end sm:self-auto hover:bg-slate-100"
               title="Làm mới"
             >
               <RefreshCw className={cn("h-4 w-4 text-slate-500", loading && "animate-spin")} />
@@ -607,77 +723,139 @@ export function AccessHistoryPanel({
         {/* Table */}
         <div className={layout === "page" ? "min-h-0 flex-1 overflow-hidden" : ""}>
           {filteredLogs.length === 0 ? (
-            <div className="flex h-32 flex-col items-center justify-center text-center px-4">
-              <p className="text-title text-slate-600">Không có dữ liệu lịch sử</p>
-              <p className="text-meta mt-2 max-w-sm">Thử đổi từ khóa hoặc bộ lọc tài khoản / hành động.</p>
+            <div className="flex h-40 flex-col items-center justify-center text-center px-4">
+              <History className="h-10 w-10 text-slate-300 mb-2" />
+              <p className="text-title text-slate-600 font-semibold">Không có dữ liệu lịch sử</p>
+              <p className="text-meta mt-1 max-w-sm text-slate-400">
+                Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh bộ lọc tài khoản / phân hệ / hành động.
+              </p>
             </div>
           ) : (
             <div className={layout === "page" ? "md:h-full md:overflow-y-auto" : ""}>
               <ModuleResponsiveTable
                 desktop={
                   <table className="access-history-table w-full border-collapse text-left">
-                    <thead className="sticky top-0 z-10 bg-white">
-                      <tr className="border-b border-slate-100 text-label font-semibold text-slate-500">
-                        <th className="w-10 px-3 py-2 text-center">STT</th>
-                        <th className="w-[7.5rem] px-2 py-2">Thời gian</th>
-                        <th className="w-[8.5rem] px-2 py-2">Người dùng</th>
-                        <th className="w-[10.5rem] px-2 py-2">Hành động</th>
-                        <th className="px-3 py-2">Chi tiết</th>
+                    <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                      <tr className="border-b border-slate-200 text-label font-bold text-slate-600">
+                        <th className="w-12 px-3 py-2.5 text-center">STT</th>
+                        <th className="w-[8rem] px-2 py-2.5">Thời gian</th>
+                        <th className="w-[9.5rem] px-2 py-2.5">Người dùng</th>
+                        <th className="w-[11.5rem] px-2 py-2.5">Hành động & Phân hệ</th>
+                        <th className="px-3 py-2.5">Chi tiết thay đổi</th>
+                        <th className="w-12 px-2 py-2.5 text-center"></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50 text-body text-slate-700">
+                    <tbody className="divide-y divide-slate-100 text-body text-slate-700">
                       {paginatedLogs.map((log, index) => {
-                        const actionConfig = actionIconMap[log.action] || {
-                          icon: Activity,
-                          color: "text-slate-600",
-                          bg: "bg-slate-100",
-                        }
-                        const moduleConfig = moduleIconMap[log.module] || {
-                          icon: Settings,
-                          color: "text-slate-500",
-                        }
+                        const standardModule = getModuleLabel(log.module)
+                        const standardAction = getActionLabel(log.action)
+                        const actionConfig = actionIconMap[standardAction] ||
+                          actionIconMap[log.action] || {
+                            icon: Activity,
+                            color: "text-slate-600",
+                            bg: "bg-slate-100 text-slate-700 border-slate-200",
+                          }
+                        const moduleConfig = moduleIconMap[standardModule] ||
+                          moduleIconMap[log.module] || {
+                            icon: Settings,
+                            color: "text-slate-500",
+                            badgeColor: "bg-slate-100 text-slate-600 border-slate-200",
+                          }
                         const ActionIcon = actionConfig.icon
                         const ModuleIcon = moduleConfig.icon
 
+                        const { mainText, deviceText, diffItems } = parseLogDetails(log.details)
+
                         return (
-                          <tr key={log.id} className="access-history-row hover:bg-slate-50/70">
-                            <td className="px-3 py-3 text-center text-meta font-semibold text-slate-400">
+                          <tr
+                            key={log.id}
+                            className="access-history-row hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                            onClick={() => setSelectedLogForDetail(log)}
+                          >
+                            <td className="px-3 py-3 text-center text-meta font-semibold text-slate-400 tabular-nums">
                               {(safePage - 1) * itemsPerPage + index + 1}
                             </td>
-                            <td className="whitespace-nowrap px-2 py-3 font-mono text-meta text-slate-500 font-medium">
+                            <td className="whitespace-nowrap px-2 py-3 font-mono text-meta text-slate-600 font-medium">
                               {formatCompactDate(log.timestamp)}
                             </td>
                             <td className="px-2 py-3">
-                              <div className="truncate font-semibold text-slate-800 text-body" title={log.displayName}>
+                              <div className="truncate font-semibold text-slate-900 text-body" title={log.displayName}>
                                 {log.displayName}
                               </div>
                               <div className="truncate font-mono text-meta text-slate-400 mt-0.5">@{log.username}</div>
                             </td>
                             <td className="px-2 py-3">
-                              <div className="flex items-center gap-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
                                 <span
                                   className={cn(
-                                    "inline-flex max-w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-label font-semibold",
-                                    actionConfig.bg,
-                                    actionConfig.color
+                                    "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-label font-semibold",
+                                    actionConfig.bg
                                   )}
                                 >
                                   <ActionIcon className="h-3 w-3 shrink-0" />
-                                  <span className="truncate">{log.action}</span>
+                                  <span className="truncate">{standardAction}</span>
                                 </span>
                               </div>
-                              <div className="mt-1 flex items-center gap-1 truncate text-meta text-slate-500 font-medium">
-                                <ModuleIcon className={cn("h-3 w-3 shrink-0", moduleConfig.color)} />
-                                <span className="truncate">{log.module}</span>
+                              <div className="mt-1 flex items-center gap-1.5 truncate text-meta text-slate-600 font-medium">
+                                <ModuleIcon className={cn("h-3.5 w-3.5 shrink-0", moduleConfig.color)} />
+                                <span className="truncate">{standardModule}</span>
                               </div>
                             </td>
                             <td className="px-3 py-3">
-                              <p className="truncate text-slate-600 font-medium text-meta" title={log.details}>
-                                {log.details || "—"}
-                              </p>
-                              <p className="mt-0.5 font-mono text-meta font-semibold text-rose-600" title={log.ipAddress || undefined}>
-                                IP {log.ipAddress || "—"}
-                              </p>
+                              <div className="space-y-1">
+                                <p className="text-slate-800 font-semibold text-body leading-snug" title={mainText}>
+                                  {mainText || "—"}
+                                </p>
+
+                                {/* Hiển thị các trường thay đổi diff trực quan */}
+                                {diffItems.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                    {diffItems.map((diff, i) => (
+                                      <span
+                                        key={i}
+                                        className="inline-flex items-center gap-1 rounded-md bg-amber-50/90 border border-amber-200/80 px-2 py-0.5 text-meta text-amber-900 font-medium"
+                                      >
+                                        <span className="font-semibold text-amber-950">{diff.split("→")[0]}</span>
+                                        {diff.includes("→") && (
+                                          <>
+                                            <span className="text-amber-600 font-bold">→</span>
+                                            <span className="font-bold text-amber-900">{diff.split("→")[1]}</span>
+                                          </>
+                                        )}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="flex flex-wrap items-center gap-2 pt-0.5 text-meta">
+                                  {log.ipAddress && (
+                                    <span className="font-mono font-semibold text-rose-600 inline-flex items-center gap-1">
+                                      <Globe className="h-3 w-3 inline opacity-70" />
+                                      IP {log.ipAddress}
+                                    </span>
+                                  )}
+                                  {deviceText && (
+                                    <span className="text-slate-400 inline-flex items-center gap-1">
+                                      <Monitor className="h-3 w-3 inline opacity-70" />
+                                      {deviceText}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-2 py-3 text-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedLogForDetail(log)
+                                }}
+                                title="Xem đầy đủ"
+                              >
+                                <Info className="h-4 w-4" />
+                              </Button>
                             </td>
                           </tr>
                         )
@@ -686,49 +864,83 @@ export function AccessHistoryPanel({
                   </table>
                 }
                 mobile={
-                  <>
+                  <div className="space-y-2 p-2">
                     {paginatedLogs.map((log, index) => {
-                      const actionConfig = actionIconMap[log.action] || {
-                        icon: Activity,
-                        color: "text-slate-600",
-                        bg: "bg-slate-100",
-                      }
-                      const moduleConfig = moduleIconMap[log.module] || {
-                        icon: Settings,
-                        color: "text-slate-500",
-                      }
+                      const standardModule = getModuleLabel(log.module)
+                      const standardAction = getActionLabel(log.action)
+                      const actionConfig = actionIconMap[standardAction] ||
+                        actionIconMap[log.action] || {
+                          icon: Activity,
+                          color: "text-slate-600",
+                          bg: "bg-slate-100 text-slate-700 border-slate-200",
+                        }
+                      const moduleConfig = moduleIconMap[standardModule] ||
+                        moduleIconMap[log.module] || {
+                          icon: Settings,
+                          color: "text-slate-500",
+                          badgeColor: "bg-slate-100 text-slate-600 border-slate-200",
+                        }
                       const ActionIcon = actionConfig.icon
                       const ModuleIcon = moduleConfig.icon
+                      const { mainText, deviceText, diffItems } = parseLogDetails(log.details)
+
                       return (
-                        <ModuleMobileCard key={log.id}>
+                        <div key={log.id} onClick={() => setSelectedLogForDetail(log)} className="cursor-pointer">
+                          <ModuleMobileCard className="active:bg-slate-50 transition-colors">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-meta tabular-nums">#{(safePage - 1) * itemsPerPage + index + 1}</p>
-                            <p className="text-meta font-mono text-slate-500">{formatCompactDate(log.timestamp)}</p>
-                          </div>
-                          <p className="text-body font-semibold text-slate-800">{log.displayName}</p>
-                          <p className="text-meta font-mono">@{log.username}</p>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span
-                              className={cn(
-                                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-label font-semibold",
-                                actionConfig.bg,
-                                actionConfig.color
-                              )}
-                            >
-                              <ActionIcon className="h-3 w-3" />
-                              {log.action}
+                            <span className="text-meta font-semibold text-slate-400 tabular-nums">
+                              #{(safePage - 1) * itemsPerPage + index + 1}
                             </span>
-                            <span className="inline-flex items-center gap-1 text-meta text-slate-500">
-                              <ModuleIcon className={cn("h-3 w-3", moduleConfig.color)} />
-                              {log.module}
-                            </span>
+                            <span className="text-meta font-mono text-slate-500">{formatCompactDate(log.timestamp)}</span>
                           </div>
-                          <p className="text-body text-slate-600 break-words">{log.details || "—"}</p>
-                          <p className="font-mono text-meta font-semibold text-rose-600">IP {log.ipAddress || "—"}</p>
+
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-body font-bold text-slate-900">{log.displayName}</p>
+                              <p className="text-meta font-mono text-slate-400">@{log.username}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded border px-2 py-0.5 text-label font-semibold",
+                                  actionConfig.bg
+                                )}
+                              >
+                                <ActionIcon className="h-3 w-3" />
+                                {standardAction}
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-meta text-slate-500 font-medium">
+                                <ModuleIcon className={cn("h-3 w-3", moduleConfig.color)} />
+                                {standardModule}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg bg-slate-50 p-2.5 space-y-1.5 border border-slate-100">
+                            <p className="text-body text-slate-800 font-medium break-words leading-snug">{mainText || "—"}</p>
+                            {diffItems.length > 0 && (
+                              <div className="space-y-1 pt-1">
+                                {diffItems.map((diff, i) => (
+                                  <div
+                                    key={i}
+                                    className="rounded bg-amber-100/70 border border-amber-200 px-2 py-1 text-meta text-amber-900 font-medium break-words"
+                                  >
+                                    {diff}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-meta">
+                            <p className="font-mono font-bold text-rose-600">IP {log.ipAddress || "—"}</p>
+                            {deviceText && <p className="text-slate-400 truncate max-w-[180px]">{deviceText}</p>}
+                          </div>
                         </ModuleMobileCard>
-                      )
+                      </div>
+                    )
                     })}
-                  </>
+                  </div>
                 }
               />
             </div>
@@ -743,6 +955,127 @@ export function AccessHistoryPanel({
           onPageChange={setCurrentPage}
         />
       </div>
+
+      {/* Dialog xem chi tiết log đầy đủ */}
+      <Dialog open={!!selectedLogForDetail} onOpenChange={(open) => !open && setSelectedLogForDetail(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-title">
+              <History className="h-5 w-5 text-blue-600" />
+              Chi tiết nhật ký hoạt động
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedLogForDetail && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <div>
+                  <p className="text-label text-slate-500 font-medium">Người thực hiện</p>
+                  <p className="text-body font-bold text-slate-900 mt-0.5">{selectedLogForDetail.displayName}</p>
+                  <p className="text-meta font-mono text-slate-500">@{selectedLogForDetail.username}</p>
+                </div>
+                <div>
+                  <p className="text-label text-slate-500 font-medium">Thời gian</p>
+                  <p className="text-body font-semibold text-slate-900 mt-0.5 font-mono">
+                    {formatCompactDate(selectedLogForDetail.timestamp)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-label text-slate-500 font-medium">Phân hệ</p>
+                  <div className="flex items-center gap-1.5 mt-1 font-semibold text-body text-slate-800">
+                    {(() => {
+                      const mod = getModuleLabel(selectedLogForDetail.module)
+                      const cfg = moduleIconMap[mod]
+                      const Icon = cfg?.icon || Settings
+                      return (
+                        <>
+                          <Icon className={cn("h-4 w-4", cfg?.color)} />
+                          <span>{mod}</span>
+                        </>
+                      )
+                    })()}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-label text-slate-500 font-medium">Hành động</p>
+                  <div className="mt-1">
+                    {(() => {
+                      const act = getActionLabel(selectedLogForDetail.action)
+                      const cfg = actionIconMap[act] || {
+                        icon: Activity,
+                        bg: "bg-slate-100 text-slate-700 border-slate-200",
+                      }
+                      const Icon = cfg.icon
+                      return (
+                        <span className={cn("inline-flex items-center gap-1 rounded border px-2 py-0.5 text-label font-bold", cfg.bg)}>
+                          <Icon className="h-3.5 w-3.5" />
+                          {act}
+                        </span>
+                      )
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-label text-slate-700 font-bold mb-1.5">Nội dung chi tiết thay đổi</p>
+                {(() => {
+                  const { mainText, diffItems } = parseLogDetails(selectedLogForDetail.details)
+                  return (
+                    <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
+                      <p className="text-body text-slate-800 font-medium leading-relaxed">{mainText}</p>
+                      {diffItems.length > 0 && (
+                        <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                          <p className="text-label text-amber-900 font-bold">Các mục thay đổi:</p>
+                          {diffItems.map((diff, idx) => (
+                            <div
+                              key={idx}
+                              className="rounded bg-amber-50 border border-amber-200 p-2 text-body text-amber-950 font-medium"
+                            >
+                              {diff}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+              </div>
+
+              <div className="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-100 text-meta">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium flex items-center gap-1">
+                    <Globe className="h-3.5 w-3.5 text-rose-500" />
+                    Địa chỉ IP:
+                  </span>
+                  <span className="font-mono font-bold text-rose-600">
+                    {selectedLogForDetail.ipAddress || "Không xác định"}
+                  </span>
+                </div>
+                {(() => {
+                  const { deviceText } = parseLogDetails(selectedLogForDetail.details)
+                  if (!deviceText) return null
+                  return (
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                      <span className="text-slate-500 font-medium flex items-center gap-1">
+                        <Monitor className="h-3.5 w-3.5 text-slate-600" />
+                        Thiết bị & Trình duyệt:
+                      </span>
+                      <span className="font-medium text-slate-700">{deviceText}</span>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button variant="outline" onClick={() => setSelectedLogForDetail(null)} className="h-10 px-5 font-semibold">
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
