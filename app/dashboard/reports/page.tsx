@@ -29,11 +29,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X, Home, Building2, Eye, Car, RefreshCw } from "lucide-react"
+import { showSuccess, showError } from "@/lib/toast-utils"
+import { TrendingUp, Bike, Users, ClipboardList, DollarSign, Wallet, Plus, Trash2, Edit2, Search, X, Home, Building2, Eye, Car, RefreshCw, Download, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { rentalTableHeadClass, RentalKpiCard } from "@/components/dashboard/rental-ui"
 import { formatDisplayDate } from "@/lib/format-date"
-import { ModulePagination, ModulePageShell, ModuleSubpageHeader, ModuleResponsiveTable, ModuleMobileCard, ModuleEmptyState, ModuleKpiGrid, ModuleSectionCard } from "@/components/dashboard/module-shell"
+import { ModulePagination, ModulePageShell, ModuleResponsiveTable, ModuleMobileCard, ModuleEmptyState, ModuleKpiGrid, ModuleSectionCard } from "@/components/dashboard/module-shell"
 import { MonthlyRevenueChart, ExpenseStructureChart } from "@/components/dashboard/rental-charts"
 
 interface ReportData {
@@ -115,6 +116,103 @@ export default function ReportsPage() {
     } catch (error) {
       console.error("Failed to fetch transactions:", error)
       setTransactions([])
+    }
+  }
+
+  const handleExportReport = () => {
+    if (!reportData) {
+      showError("Chưa có dữ liệu báo cáo để xuất")
+      return
+    }
+
+    try {
+      const periodLabel = filterPeriod === "this-month"
+        ? "Tháng này"
+        : filterPeriod === "last-month"
+        ? "Tháng trước"
+        : filterPeriod === "this-year"
+        ? "Năm nay"
+        : filterPeriod === "custom"
+        ? `Từ ${startDate} đến ${endDate}`
+        : "Tất cả thời gian"
+
+      const salaryExpenses = transactions
+        .filter(isSalaryTransaction)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      const dividendExpenses = transactions
+        .filter(isDividendTransaction)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      const totalIncome = transactions
+        .filter((tx) => tx.type === 'income')
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      const totalExpense = transactions
+        .filter((tx) => tx.type === 'expense')
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      const rentalOnly = reportData.totalRevenue - transactions
+        .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      const cashOnHand = rentalOnly + totalIncome - totalExpense
+      const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses
+      const partnerShareTotal = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 2) : 0
+      const remainingToDistribute = reportData.totalProfit - dividendExpenses
+      const partnerShareRemaining = remainingToDistribute > 0 ? Math.floor(remainingToDistribute / 2) : 0
+
+      const rows: string[][] = [
+        ["BÁO CÁO TÀI CHÍNH & VẬN HÀNH - 3L MOTOHUE"],
+        [`Kỳ báo cáo: ${periodLabel}`],
+        [`Thời gian xuất: ${new Date().toLocaleString("vi-VN")}`],
+        [],
+        ["1. CHỈ SỐ HOẠT ĐỘNG CHỦ CHỐT"],
+        ["Chỉ số", "Giá trị"],
+        ["Tổng xe trong hệ thống", `${reportData.totalVehicles} xe`],
+        ["Tổng khách hàng", `${reportData.totalCustomers} khách`],
+        ["Tổng đơn thuê", `${reportData.totalRentals} đơn`],
+        ["Doanh thu thuê xe", `${reportData.totalRevenue.toLocaleString("vi-VN")} đ`],
+        ["Lợi nhuận ròng vận hành", `${reportData.totalProfit.toLocaleString("vi-VN")} đ`],
+        [],
+        ["2. HIỆU QUẢ KINH DOANH (P&L VẬN HÀNH)"],
+        ["Hạng mục", "Số tiền (VNĐ)", "Ghi chú"],
+        ["Doanh thu thuê xe", `${reportData.totalRevenue.toLocaleString("vi-VN")} đ`, "Đã trừ hoa hồng Homestay"],
+        ["Chiết khấu hoa hồng Homestay", `-${reportData.commissionHomeTotal.toLocaleString("vi-VN")} đ`, "Chiết khấu cho đối tác"],
+        ["LN vận hành (trước lương)", `${operatingProfitBeforeSalary.toLocaleString("vi-VN")} đ`, "Doanh thu trừ hoa hồng"],
+        ["Tổng chi lương nhân viên", `-${salaryExpenses.toLocaleString("vi-VN")} đ`, "Chi phí nhân sự"],
+        ["Lợi nhuận ròng vận hành", `${reportData.totalProfit.toLocaleString("vi-VN")} đ`, "Lợi nhuận thực tế sau chi phí"],
+        [],
+        ["3. DÒNG TIỀN THỰC TẾ & QUỸ TIỀN MẶT"],
+        ["Hạng mục", "Số tiền (VNĐ)", "Ghi chú"],
+        ["Tổng tiền thu vào (gồm cả vốn)", `+${(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ`, "Tiền thực thu"],
+        ["Tổng tiền chi ra (gồm cả lương/vốn)", `-${totalExpense.toLocaleString("vi-VN")} đ`, "Tiền thực chi"],
+        ["Cổ tức đã chia", `-${dividendExpenses.toLocaleString("vi-VN")} đ`, "Đã tạm ứng cho cổ đông"],
+        ["Tiền mặt tồn quỹ hiện có", `${cashOnHand.toLocaleString("vi-VN")} đ`, "Số dư khả dụng"],
+        [],
+        ["4. PHÂN CHIA CỔ ĐÔNG (50% - 50%)"],
+        ["Cổ đông", "Tỷ lệ", "Lợi nhuận được chia", "Đã nhận kỳ này", "Còn lại cần chi"],
+        ["Cổ đông Admin", "50%", `${partnerShareTotal.toLocaleString("vi-VN")} đ`, `-${Math.floor(dividendExpenses / 2).toLocaleString("vi-VN")} đ`, `${partnerShareRemaining.toLocaleString("vi-VN")} đ`],
+        ["Cổ đông Lộc A", "50%", `${partnerShareTotal.toLocaleString("vi-VN")} đ`, `-${Math.floor(dividendExpenses / 2).toLocaleString("vi-VN")} đ`, `${partnerShareRemaining.toLocaleString("vi-VN")} đ`],
+        ["Tổng cộng", "100%", `${reportData.totalProfit.toLocaleString("vi-VN")} đ`, `-${dividendExpenses.toLocaleString("vi-VN")} đ`, `${remainingToDistribute.toLocaleString("vi-VN")} đ`],
+        [],
+        ["5. BÁO CÁO HOA HỒNG HOMESTAY"],
+        ["Tên Homestay", "Số đơn thuê", "Tổng hoa hồng (VNĐ)"],
+        ...reportData.commissionByHome.map(h => [h.name, `${h.count}`, `${h.total.toLocaleString("vi-VN")} đ`]),
+        [],
+        ["6. HIỆU SUẤT ĐỘI XE"],
+        ["Tên xe", "Biển số", "Số ngày chạy", "Doanh thu (VNĐ)", "Tỷ lệ sử dụng"],
+        ...reportData.fleetPerformance.map(v => [v.name, v.licensePlate, `${v.activeDays} ngày`, `${v.revenue.toLocaleString("vi-VN")} đ`, `${v.utilizationRate}%`]),
+      ]
+
+      const csvContent = "\uFEFF" + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n")
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.setAttribute("href", url)
+      link.setAttribute("download", `Bao-cao-3LMotoHue-${new Date().toISOString().split("T")[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      showSuccess("Xuất báo cáo thành công!")
+    } catch (err) {
+      console.error("Export error:", err)
+      showError("Có lỗi xảy ra khi xuất báo cáo")
     }
   }
 
@@ -779,101 +877,62 @@ export default function ReportsPage() {
 
   return (
     <ModulePageShell module="rental">
-      <ModuleSubpageHeader
-        module="rental"
-        title="Báo cáo"
-        subtitle="Tổng hợp doanh thu, lợi nhuận, thu/chi và hoa hồng đối tác"
-        breadcrumbs={[
-          { label: "Cho thuê xe", href: "/dashboard" },
-          { label: "Báo cáo" },
-        ]}
-        actions={
-          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => loadReportData(true)}
-              disabled={loading}
-              className="h-10 w-10 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
-              title="Tải lại dữ liệu"
-              aria-label="Tải lại dữ liệu"
-            >
-              <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
-            </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => loadReportData(true)}
+            disabled={loading}
+            className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+            title="Tải lại dữ liệu"
+            aria-label="Tải lại dữ liệu"
+          >
+            <RefreshCw className={cn("w-4 h-4 text-slate-600", loading && "animate-spin")} />
+          </Button>
 
-            <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
-              <SelectTrigger className="w-[170px] bg-white border-slate-200 rounded-[var(--radius-control)] h-10">
-                <SelectValue placeholder="Chọn kỳ báo cáo" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="this-month">Tháng này</SelectItem>
-                <SelectItem value="last-month">Tháng trước</SelectItem>
-                <SelectItem value="this-year">Năm nay</SelectItem>
-                <SelectItem value="custom">Tự chọn khoảng ngày</SelectItem>
-              </SelectContent>
-            </Select>
+          <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
+            <SelectTrigger className="w-[180px] bg-white border-slate-300 rounded-[var(--radius-control)] h-11 text-body font-semibold">
+              <SelectValue placeholder="Chọn kỳ báo cáo" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="this-month">Tháng này</SelectItem>
+              <SelectItem value="last-month">Tháng trước</SelectItem>
+              <SelectItem value="this-year">Năm nay</SelectItem>
+              <SelectItem value="custom">Tự chọn khoảng ngày</SelectItem>
+            </SelectContent>
+          </Select>
 
-            {filterPeriod === "custom" && (
-              <div className="flex items-center gap-1">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-[140px] h-10 border-slate-200 rounded-[var(--radius-control)] text-sm bg-white"
-                />
-                <span className="text-meta text-slate-400 px-1">đến</span>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-[140px] h-10 border-slate-200 rounded-[var(--radius-control)] text-sm bg-white"
-                />
-              </div>
-            )}
-          </div>
-        }
-      />
+          {filterPeriod === "custom" && (
+            <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-[var(--radius-control)] px-2.5 h-11">
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
+              />
+              <span className="text-meta text-slate-400 font-bold">→</span>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
+              />
+            </div>
+          )}
 
-      {/* Quick Navigation Jump Bar */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100/90 rounded-xl border border-slate-200/80 text-meta">
-        <span className="text-slate-400 font-semibold px-2 text-[11px] uppercase tracking-wider">Xem nhanh:</span>
-        <button
-          type="button"
-          onClick={() => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" })}
-          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
-        >
-          📊 Biểu đồ DT
-        </button>
-        <button
-          type="button"
-          onClick={() => document.getElementById("fleet-section")?.scrollIntoView({ behavior: "smooth" })}
-          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
-        >
-          🛵 Đội xe
-        </button>
-        <button
-          type="button"
-          onClick={() => document.getElementById("transactions-section")?.scrollIntoView({ behavior: "smooth" })}
-          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
-        >
-          💰 Sổ quỹ Thu/Chi
-        </button>
-        <button
-          type="button"
-          onClick={() => document.getElementById("commission-section")?.scrollIntoView({ behavior: "smooth" })}
-          className="px-2.5 py-1 rounded-lg bg-amber-50 shadow-xs font-bold text-amber-800 hover:bg-amber-100 transition border border-amber-200"
-        >
-          🏠 Hoa hồng Homestay ({commissionTotals.homes})
-        </button>
-        <button
-          type="button"
-          onClick={() => document.getElementById("finance-summary-section")?.scrollIntoView({ behavior: "smooth" })}
-          className="px-2.5 py-1 rounded-lg bg-white shadow-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition border border-slate-200/60"
-        >
-          📈 Tài chính & Cổ đông
-        </button>
+          <Button
+            type="button"
+            onClick={handleExportReport}
+            className="bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white rounded-[var(--radius-control)] h-11 px-4 font-semibold text-body shadow-sm ui-transition [&_svg]:!text-white"
+            title="Xuất dữ liệu báo cáo sang file Excel / CSV"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            <span>Xuất báo cáo</span>
+          </Button>
+        </div>
       </div>
 
       {/* Delete Transaction Confirmation Dialog */}
@@ -1817,170 +1876,280 @@ export default function ReportsPage() {
         const partnerShareRemaining = remainingToDistribute > 0 ? Math.floor(remainingToDistribute / 2) : 0
         
         return (
-          <div id="finance-summary-section" className="grid grid-cols-1 lg:grid-cols-3 gap-4 scroll-mt-20">
-            <Card className="bg-blue-50 border-blue-200 lg:col-span-2">
-              <CardHeader className="pb-2 md:pb-4 p-3 md:p-4">
-                <CardTitle className="flex items-center gap-2 text-base md:text-lg text-blue-800">
-                  <TrendingUp className="w-5 h-5" />
-                  Tóm Tắt Báo Cáo Tài Chính
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-slate-700 space-y-4 p-3 md:p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-                  <div>
-                    <p className="text-meta text-slate-500 mb-1">Tổng xe</p>
-                    <p className="font-semibold text-base text-slate-800">{reportData.totalVehicles}</p>
+          <div id="finance-summary-section" className="grid grid-cols-1 lg:grid-cols-12 gap-5 scroll-mt-20">
+            {/* Cột trái: Tóm tắt Báo Cáo Tài Chính (7 cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden rounded-[var(--radius-container)]">
+                <CardHeader className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/60 flex flex-row items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-9 w-9 rounded-lg bg-blue-100/80 flex items-center justify-center text-blue-700">
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+                        Tóm Tắt Báo Cáo Tài Chính
+                      </CardTitle>
+                      <CardDescription className="text-meta text-slate-500">
+                        Hiệu quả kinh doanh và dòng tiền ngân quỹ thực tế
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-meta text-slate-500 mb-1">Tổng khách</p>
-                    <p className="font-semibold text-base text-slate-800">{reportData.totalCustomers}</p>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+                    {filterPeriod === "this-month"
+                      ? "Tháng này"
+                      : filterPeriod === "last-month"
+                      ? "Tháng trước"
+                      : filterPeriod === "this-year"
+                      ? "Năm nay"
+                      : filterPeriod === "custom"
+                      ? `${startDate} → ${endDate}`
+                      : "Toàn bộ"}
+                  </span>
+                </CardHeader>
+
+                <CardContent className="p-4 sm:p-5 space-y-5">
+                  {/* Quick KPI Strip */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60">
+                    <div>
+                      <p className="text-label text-slate-500">Quy mô xe</p>
+                      <p className="text-base font-bold text-slate-800 mt-0.5">{reportData.totalVehicles} <span className="text-xs font-normal text-slate-500">xe</span></p>
+                    </div>
+                    <div>
+                      <p className="text-label text-slate-500">Khách hàng</p>
+                      <p className="text-base font-bold text-slate-800 mt-0.5">{reportData.totalCustomers} <span className="text-xs font-normal text-slate-500">khách</span></p>
+                    </div>
+                    <div>
+                      <p className="text-label text-slate-500">Tổng đơn thuê</p>
+                      <p className="text-base font-bold text-slate-800 mt-0.5">{reportData.totalRentals} <span className="text-xs font-normal text-slate-500">đơn</span></p>
+                    </div>
+                    <div>
+                      <p className="text-label text-slate-500">Doanh thu thuê</p>
+                      <p className="text-base font-bold text-slate-900 money mt-0.5">{reportData.totalRevenue.toLocaleString("vi-VN")} đ</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-meta text-slate-500 mb-1">Tổng đơn</p>
-                    <p className="font-semibold text-base text-slate-800">{reportData.totalRentals}</p>
-                  </div>
-                  <div>
-                    <p className="text-meta text-slate-500 mb-1">Doanh thu thuê xe</p>
-                    <p className="font-semibold text-base text-slate-900 money break-words">{reportData.totalRevenue.toLocaleString("vi-VN")} đ</p>
-                  </div>
-                </div>
-                
-                <div className="border-t border-blue-200 pt-3 space-y-3">
-                  {/* Nhóm 1: Hiệu quả kinh doanh (P&L) */}
-                  <div className="bg-white/70 rounded-xl p-3 border border-blue-100">
-                    <p className="text-xs font-semibold text-blue-900 uppercase tracking-wider mb-2">1. Hiệu quả kinh doanh (P&L vận hành)</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                  {/* 2 Blocks: P&L vs Cash Flow */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Block 1: P&L Vận Hành */}
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4 flex flex-col justify-between space-y-3">
                       <div>
-                        <p className="text-meta text-slate-500 mb-0.5">LN vận hành (trước lương)</p>
-                        <p className="font-semibold text-base text-emerald-700 break-words">
-                          {operatingProfitBeforeSalary.toLocaleString("vi-VN")} đ
-                        </p>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <Coins className="w-3.5 h-3.5 text-blue-600" />
+                            1. P&L Vận Hành
+                          </span>
+                          <span className="text-[11px] font-medium text-blue-600 bg-blue-100/60 px-2 py-0.5 rounded-md">Kinh doanh</span>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between items-center text-slate-600">
+                            <span className="text-meta">LN trước lương:</span>
+                            <span className="font-semibold text-slate-800 tabular-nums">
+                              {operatingProfitBeforeSalary.toLocaleString("vi-VN")} đ
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-600">
+                            <span className="text-meta">Chi lương NV:</span>
+                            <span className="font-semibold text-rose-600 tabular-nums">
+                              -{salaryExpenses.toLocaleString("vi-VN")} đ
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-600">
+                            <span className="text-meta">Chiết khấu HH Home:</span>
+                            <span className="font-semibold text-amber-700 tabular-nums">
+                              -{reportData.commissionHomeTotal.toLocaleString("vi-VN")} đ
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-meta text-slate-500 mb-0.5">Tổng chi lương NV</p>
-                        <p className="font-semibold text-base text-rose-600 break-words">
-                          -{salaryExpenses.toLocaleString("vi-VN")} đ
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-meta text-slate-500 mb-0.5">Chi HH Home</p>
-                        <p className="font-semibold text-base text-amber-700 break-words">
-                          -{reportData.commissionHomeTotal.toLocaleString("vi-VN")} đ
-                        </p>
-                        <p className="text-[10px] text-slate-400">đã trừ trong doanh thu</p>
-                      </div>
-                      <div>
-                        <p className="text-meta text-slate-500 mb-0.5">Lợi nhuận ròng vận hành</p>
-                        <p className="font-bold text-base text-emerald-600 break-words">
+
+                      <div className="border-t border-blue-200/80 pt-2.5 flex justify-between items-baseline bg-white/80 p-2.5 rounded-lg border border-blue-100">
+                        <span className="font-bold text-slate-800 text-sm">Lợi nhuận ròng:</span>
+                        <span className="font-bold text-lg text-emerald-700 tabular-nums">
                           {reportData.totalProfit.toLocaleString("vi-VN")} đ
-                        </p>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Block 2: Dòng Tiền & Tồn Quỹ */}
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/30 p-4 flex flex-col justify-between space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+                            2. Quỹ Tiền Mặt
+                          </span>
+                          <span className="text-[11px] font-medium text-emerald-600 bg-emerald-100/60 px-2 py-0.5 rounded-md">Dòng tiền</span>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between items-center text-slate-600">
+                            <span className="text-meta">Tổng tiền thu vào:</span>
+                            <span className="font-semibold text-emerald-700 tabular-nums">
+                              +{(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-600">
+                            <span className="text-meta">Tổng tiền chi ra:</span>
+                            <span className="font-semibold text-rose-600 tabular-nums">
+                              -{totalExpense.toLocaleString("vi-VN")} đ
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-600">
+                            <span className="text-meta">Cổ tức đã chia:</span>
+                            <span className="font-semibold text-slate-700 tabular-nums">
+                              -{dividendExpenses.toLocaleString("vi-VN")} đ
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-emerald-200/80 pt-2.5 flex justify-between items-baseline bg-white/80 p-2.5 rounded-lg border border-emerald-100">
+                        <span className="font-bold text-slate-800 text-sm">Tiền mặt tồn quỹ:</span>
+                        <span className={cn("font-bold text-lg tabular-nums", cashOnHand >= 0 ? "text-slate-900" : "text-rose-600")}>
+                          {cashOnHand.toLocaleString("vi-VN")} đ
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Nhóm 2: Dòng tiền & Quỹ thực tế (Cashflow) */}
-                  <div className="bg-white/70 rounded-xl p-3 border border-blue-100">
-                    <p className="text-xs font-semibold text-blue-900 uppercase tracking-wider mb-2">2. Dòng tiền thực tế & Quỹ tiền mặt</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div>
-                        <p className="text-meta text-slate-500 mb-0.5">Tổng thu (bao gồm vốn)</p>
-                        <p className="font-semibold text-base text-emerald-600 break-words">
-                          +{(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-meta text-slate-500 mb-0.5">Tổng chi (gồm cả lương/vốn)</p>
-                        <p className="font-semibold text-base text-rose-600 break-words">
-                          -{totalExpense.toLocaleString("vi-VN")} đ
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-meta text-slate-500 mb-0.5">Cổ tức đã chia</p>
-                        <p className="font-semibold text-base text-slate-900 money break-words">
-                          -{dividendExpenses.toLocaleString("vi-VN")} đ
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-meta text-slate-500 mb-0.5">Tiền mặt hiện có</p>
-                        <p className={`font-bold text-base ${cashOnHand >= 0 ? 'text-slate-900 money' : 'text-rose-600 money'} break-words`}>
-                          {cashOnHand.toLocaleString("vi-VN")} đ
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
+                  {/* Homestay commission highlights */}
                   {reportData.commissionByHome.length > 0 && (
-                    <div className="mt-3 space-y-1.5 border-t border-blue-100 pt-3">
-                      <p className="text-meta font-semibold text-slate-500">Hoa hồng chi tiết theo Home</p>
-                      {reportData.commissionByHome.slice(0, 3).map((row) => (
-                        <div key={row.name} className="flex items-center justify-between gap-2 text-meta">
-                          <span className="text-slate-700 truncate">{row.name} · {row.count} đơn</span>
-                          <span className="font-semibold text-amber-700 tabular-nums shrink-0">
-                            {row.total.toLocaleString("vi-VN")} đ
-                          </span>
-                        </div>
-                      ))}
+                    <div className="pt-2 border-t border-slate-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Top hoa hồng Homestay</p>
+                        <span className="text-meta text-slate-400">{reportData.commissionByHome.length} đối tác</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {reportData.commissionByHome.slice(0, 3).map((row) => (
+                          <div key={row.name} className="flex items-center justify-between p-2 rounded-lg bg-amber-50/60 border border-amber-200/60 text-meta">
+                            <span className="text-slate-800 font-medium truncate">{row.name}</span>
+                            <span className="font-bold text-amber-800 tabular-nums shrink-0 ml-1">
+                              {row.total.toLocaleString("vi-VN")} đ
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card className="bg-slate-50 border-slate-200">
-              <CardHeader className="pb-2 p-3 md:p-4">
-                <CardTitle className="flex items-center gap-2 text-base md:text-lg text-slate-800">
-                  <Users className="w-5 h-5 text-slate-500" />
-                  Phân Chia Cổ Đông
-                </CardTitle>
-                <CardDescription className="text-meta text-slate-500">
-                  Bảng chia đề xuất 2 bên theo kết quả kỳ báo cáo
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-meta text-slate-700 p-3 md:p-4 space-y-4">
-                <div className="bg-white rounded-xl p-3 border border-slate-200/60 shadow-sm space-y-1.5">
-                  <div className="flex justify-between text-slate-500">
-                    <span>Lợi nhuận ròng vận hành:</span>
-                    <span className="font-bold text-slate-700">{reportData.totalProfit.toLocaleString("vi-VN")} đ</span>
-                  </div>
-                  <div className="flex justify-between text-slate-500">
-                    <span>Đã chia trong kỳ:</span>
-                    <span className="font-bold text-slate-900 money">-{dividendExpenses.toLocaleString("vi-VN")} đ</span>
-                  </div>
-                  <div className="flex justify-between border-t border-slate-100 pt-1.5 font-semibold text-slate-800">
-                    <span>Còn lại cần chia:</span>
-                    <span className={remainingToDistribute >= 0 ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>
-                      {remainingToDistribute.toLocaleString("vi-VN")} đ
+            {/* Cột phải: Phân Chia Cổ Đông (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <Card className="border-slate-200/80 bg-white shadow-sm overflow-hidden rounded-[var(--radius-container)] h-full flex flex-col justify-between">
+                <div>
+                  <CardHeader className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/60 flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-9 w-9 rounded-lg bg-indigo-100/80 flex items-center justify-center text-indigo-700">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+                          Phân Chia Cổ Đông
+                        </CardTitle>
+                        <CardDescription className="text-meta text-slate-500">
+                          Tỷ lệ đồng thuận 50% - 50% theo kết quả kỳ này
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                      50 / 50
                     </span>
-                  </div>
-                </div>
+                  </CardHeader>
 
-                <div className="space-y-2.5">
-                  <p className="font-semibold text-slate-600 text-meta">Phân chia theo tỷ lệ (Đề xuất 2 bên 50% - 50%):</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200/60 shadow-xs">
-                      <div>
-                        <p className="font-semibold text-slate-800">Cổ đông Admin</p>
-                        <p className="text-xs text-slate-400">Tỷ lệ: 50% (LN ròng: {partnerShareTotal.toLocaleString("vi-VN")} đ)</p>
+                  <CardContent className="p-4 sm:p-5 space-y-4">
+                    {/* Summary Card */}
+                    <div className="p-3.5 rounded-xl bg-indigo-50/40 border border-indigo-100/80 space-y-2">
+                      <div className="flex justify-between items-center text-sm text-slate-600">
+                        <span className="text-meta">LN ròng vận hành:</span>
+                        <span className="font-bold text-slate-800 tabular-nums">{reportData.totalProfit.toLocaleString("vi-VN")} đ</span>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-slate-400">Còn lại</p>
-                        <p className="font-bold text-emerald-700 tabular-nums">{partnerShareRemaining.toLocaleString("vi-VN")} đ</p>
+                      <div className="flex justify-between items-center text-sm text-slate-600">
+                        <span className="text-meta">Đã chia trong kỳ:</span>
+                        <span className="font-bold text-slate-700 tabular-nums">-{dividendExpenses.toLocaleString("vi-VN")} đ</span>
                       </div>
-                    </div>
-                    <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200/60 shadow-xs">
-                      <div>
-                        <p className="font-semibold text-slate-800">Cổ đông Lộc A</p>
-                        <p className="text-xs text-slate-400">Tỷ lệ: 50% (LN ròng: {partnerShareTotal.toLocaleString("vi-VN")} đ)</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-slate-400">Còn lại</p>
-                        <p className="font-bold text-emerald-700 tabular-nums">{partnerShareRemaining.toLocaleString("vi-VN")} đ</p>
+                      <div className="flex justify-between items-center pt-2 border-t border-indigo-200/60 font-semibold text-slate-900">
+                        <span className="text-sm">Tổng còn lại cần chia:</span>
+                        <span className={cn("text-base font-bold tabular-nums", remainingToDistribute >= 0 ? "text-emerald-700" : "text-rose-600")}>
+                          {remainingToDistribute.toLocaleString("vi-VN")} đ
+                        </span>
                       </div>
                     </div>
-                  </div>
+
+                    {/* Shareholder Breakdown */}
+                    <div className="space-y-3 pt-1">
+                      {/* Cổ đông Admin */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-300 transition-colors shadow-2xs space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                              AD
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 text-sm">Cổ đông Admin</p>
+                              <p className="text-xs text-slate-400">Tỷ lệ sở hữu 50%</p>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            50%
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-1 text-xs border-t border-slate-100">
+                          <div>
+                            <p className="text-slate-400 text-meta">Được hưởng (50% LN):</p>
+                            <p className="font-semibold text-slate-700 text-sm mt-0.5 tabular-nums">
+                              {partnerShareTotal.toLocaleString("vi-VN")} đ
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-slate-400 text-meta">Còn lại cần nhận:</p>
+                            <p className={cn("font-bold text-sm mt-0.5 tabular-nums", partnerShareRemaining >= 0 ? "text-emerald-700" : "text-rose-600")}>
+                              {partnerShareRemaining.toLocaleString("vi-VN")} đ
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cổ đông Lộc A */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-300 transition-colors shadow-2xs space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+                              LA
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 text-sm">Cổ đông Lộc A</p>
+                              <p className="text-xs text-slate-400">Tỷ lệ sở hữu 50%</p>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                            50%
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-1 text-xs border-t border-slate-100">
+                          <div>
+                            <p className="text-slate-400 text-meta">Được hưởng (50% LN):</p>
+                            <p className="font-semibold text-slate-700 text-sm mt-0.5 tabular-nums">
+                              {partnerShareTotal.toLocaleString("vi-VN")} đ
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-slate-400 text-meta">Còn lại cần nhận:</p>
+                            <p className={cn("font-bold text-sm mt-0.5 tabular-nums", partnerShareRemaining >= 0 ? "text-emerald-700" : "text-rose-600")}>
+                              {partnerShareRemaining.toLocaleString("vi-VN")} đ
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
                 </div>
-              </CardContent>
-            </Card>
+              </Card>
+            </div>
           </div>
         )
       })()}
