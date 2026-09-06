@@ -43,13 +43,31 @@ function isNewerTimestamp(incomingTs?: string, existingTs?: string): boolean {
   return incomingDate.getTime() > existingDate.getTime()
 }
 
+function cleanLocationAddress(rawAddress?: string): string {
+  if (!rawAddress) return ""
+  let addr = rawAddress.trim()
+  // Loại bỏ khoảng cách thừa như ", 10 km", ", 9 km", "14 km"
+  addr = addr.replace(/,\s*\d+(\.\d+)?\s*(km|m)\b/gi, "")
+  addr = addr.replace(/\b\d+(\.\d+)?\s*(km|m)\b/gi, "")
+  addr = addr.replace(/^,\s*/, "").replace(/,\s*$/, "").trim()
+  return addr
+}
+
 async function getDetailedReverseGeocode(lat: number, lng: number, inputAddress?: string): Promise<string> {
-  const cleanInput = (inputAddress || "").trim()
+  const cleanInput = cleanLocationAddress(inputAddress)
   const lower = cleanInput.toLowerCase()
-  if (cleanInput && cleanInput.length > 15 && !["tp. huế", "thừa thiên huế", "tp huế", "huế", "tp. huế, thừa thiên huế"].includes(lower)) {
+  
+  // Nếu đã có địa chỉ cụ thể từ Find My (không phải rỗng hoặc chỉ chữ chung chung "tp. huế"), ưu tiên giữ nguyên
+  if (
+    cleanInput &&
+    cleanInput.length >= 3 &&
+    !["tp. huế", "thừa thiên huế", "tp huế", "huế", "tp. huế, thừa thiên huế", "vietnam", "việt nam"].includes(lower) &&
+    !/^\d+(\.\d+)?\s*(km|m)?$/i.test(cleanInput)
+  ) {
     return cleanInput
   }
 
+  // Fallback: Tìm địa chỉ chi tiết qua tọa độ GPS nếu chưa có địa chỉ cụ thể
   try {
     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=vi`, {
       headers: { "User-Agent": "3lmotohue-location-service/1.0" }

@@ -126,19 +126,20 @@ func geocodeAddress(_ address: String) -> (lat: Double, lng: Double) {
 func ensureFindMyRunning() -> NSRunningApplication? {
     let openProc = Process()
     openProc.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-    openProc.arguments = ["-b", "com.apple.findmy"]
+    openProc.arguments = ["/System/Applications/FindMy.app"]
     try? openProc.run()
     openProc.waitUntilExit()
 
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
     process.arguments = [
-        "-e", "tell application id \"com.apple.findmy\" to activate",
-        "-e", "tell application id \"com.apple.findmy\" to reopen"
+        "-e", "tell application \"/System/Applications/FindMy.app\" to activate",
+        "-e", "tell application \"/System/Applications/FindMy.app\" to reopen",
+        "-e", "tell application \"System Events\" to set frontmost of (every process whose bundle identifier is \"com.apple.findmy\") to true"
     ]
     try? process.run()
     process.waitUntilExit()
-    Thread.sleep(forTimeInterval: 2.0)
+    Thread.sleep(forTimeInterval: 1.5)
 
     let apps = NSWorkspace.shared.runningApplications
     return apps.first(where: { $0.bundleIdentifier == "com.apple.findmy" })
@@ -185,29 +186,54 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         return []
     }
     
-    let axApp = AXUIElementCreateApplication(findmy.processIdentifier)
-    var windowsRef: AnyObject?
-    var res = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
-    var windows = windowsRef as? [AXUIElement]
+    var win: AXUIElement? = nil
     
-    if res != .success || windows == nil || windows!.isEmpty {
-        logMsg("⚠️ Cửa sổ FindMy chưa sẵn sàng, đang mở lại cửa sổ...")
+    for attempt in 1...6 {
+        let currentApp = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.findmy" }) ?? findmy
+        let axApp = AXUIElementCreateApplication(currentApp.processIdentifier)
+        
+        var windowsRef: AnyObject?
+        let res = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
+        if res == .success, let validWindows = windowsRef as? [AXUIElement], let first = validWindows.first {
+            win = first
+            break
+        }
+        
+        var mainWinRef: AnyObject?
+        if AXUIElementCopyAttributeValue(axApp, kAXMainWindowAttribute as CFString, &mainWinRef) == .success,
+           let mw = mainWinRef {
+            win = (mw as! AXUIElement)
+            break
+        }
+        
+        var focusedWinRef: AnyObject?
+        if AXUIElementCopyAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, &focusedWinRef) == .success,
+           let fw = focusedWinRef {
+            win = (fw as! AXUIElement)
+            break
+        }
+        
+        if attempt == 1 {
+            logMsg("⚠️ Cửa sổ FindMy chưa sẵn sàng, đang mở lại cửa sổ...")
+        }
+        
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        p.arguments = ["-e", "tell application id \"com.apple.findmy\" to activate", "-e", "tell application id \"com.apple.findmy\" to reopen"]
+        p.arguments = [
+            "-e", "tell application \"/System/Applications/FindMy.app\" to activate",
+            "-e", "tell application \"/System/Applications/FindMy.app\" to reopen",
+            "-e", "tell application \"System Events\" to set frontmost of (every process whose bundle identifier is \"com.apple.findmy\") to true"
+        ]
         try? p.run()
         p.waitUntilExit()
-        Thread.sleep(forTimeInterval: 2.0)
-        
-        windowsRef = nil
-        res = AXUIElementCopyAttributeValue(axApp, kAXWindowsAttribute as CFString, &windowsRef)
-        windows = windowsRef as? [AXUIElement]
+        Thread.sleep(forTimeInterval: 1.0)
     }
     
-    guard res == .success, let validWindows = windows, let win = validWindows.first else {
-        logMsg("❌ Không tìm thấy cửa sổ ứng dụng FindMy!")
+    guard let validWin = win else {
+        logMsg("❌ Không tìm thấy cửa sổ ứng dụng FindMy sau 6 lần thử!")
         return []
     }
+    let winRef = validWin
     
     // Đảm bảo đang ở tab "Vật dụng" (Items)
     func clickItemsTab(_ elem: AXUIElement) {
@@ -224,7 +250,7 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
             for child in children { clickItemsTab(child) }
         }
     }
-    clickItemsTab(win)
+    clickItemsTab(winRef)
     Thread.sleep(forTimeInterval: 0.3)
     
     var allRawTexts = Set<String>()
@@ -248,7 +274,7 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
                 for child in children { scan(child) }
             }
         }
-        scan(win)
+        scan(winRef)
     }
     
     // Tìm thanh cuộn danh sách
@@ -268,7 +294,7 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         return nil
     }
     
-    if let scroller = findScroller(win) {
+    if let scroller = findScroller(winRef) {
         // Cuộn lên đầu trang
         for _ in 0..<15 {
             AXUIElementPerformAction(scroller, "AXScrollUpByPage" as CFString)
@@ -337,17 +363,22 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
                 continue
             }
             
-            // 2. Kiểm tra nếu segment là tiêu đề tên xe / biển số
+            // 2. Kiểm tra nếu segment là khoảng cách (vd: "10 km", "9 km", "14 km", "400 m")
+            if lower.range(of: #"^\d+([.,]\d+)?\s*(km|m)$"#, options: .regularExpression) != nil {
+                continue
+            }
+            
+            // 3. Kiểm tra nếu segment là tiêu đề tên xe / biển số
             if segment.contains(plate) || lower.contains("ab ") || lower.contains("vision") || lower.contains("wave") || lower.contains("sh ") {
                 continue
             }
             
-            // 3. Kiểm tra nếu segment là trạng thái lỗi / chia sẻ
+            // 4. Kiểm tra nếu segment là trạng thái lỗi / chia sẻ
             if lower.contains("không tìm") || lower.contains("đã chia sẻ") || lower.contains("đã tạm dừng") || lower.contains("pin yếu") {
                 continue
             }
             
-            // 4. Các đoạn còn lại chính là thành phần địa chỉ
+            // 5. Các đoạn còn lại chính là thành phần địa chỉ
             if segment.count >= 2 {
                 addressSegments.append(segment)
             }
@@ -357,10 +388,18 @@ func extractVehiclesFromFindMy() -> [ParsedVehicle] {
         
         var extractedAddress: String? = nil
         if !addressSegments.isEmpty {
-            extractedAddress = addressSegments.joined(separator: ", ")
+            var rawAddr = addressSegments.joined(separator: ", ")
+            // Xóa phần khoảng cách đuôi nếu có
+            if let distRegex = try? NSRegularExpression(pattern: #",?\s*\d+([.,]\d+)?\s*(km|m)\b"#, options: [.caseInsensitive]) {
+                rawAddr = distRegex.stringByReplacingMatches(in: rawAddr, options: [], range: NSRange(location: 0, length: (rawAddr as NSString).length), withTemplate: "")
+            }
+            rawAddr = rawAddr.trimmingCharacters(in: CharacterSet(charactersIn: " ,."))
+            if !rawAddr.isEmpty && rawAddr.count >= 3 {
+                extractedAddress = rawAddr
+            }
         }
         
-        // Chỉ ghi nhận xe có địa chỉ hoặc được tìm thấy từ Find My
+        // Ghi nhận xe có địa chỉ thật từ Find My, hoặc fallback từ khu vực đã biết
         if let extractedAddress = extractedAddress {
             vehicleMap[plate] = ParsedVehicle(licensePlate: plate, rawText: text, address: extractedAddress, timestamp: isoTimestamp)
         } else if vehicleMap[plate] == nil {
@@ -390,7 +429,8 @@ func sendPayloadToWebsite(reports: [ParsedVehicle]) {
             "lat": coords.lat,
             "lng": coords.lng,
             "address": r.address,
-            "timestamp": r.timestamp
+            "timestamp": r.timestamp,
+            "force": true
         ])
     }
     
