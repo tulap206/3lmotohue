@@ -456,46 +456,12 @@ export default function VehiclesPage() {
       let bridgeSucceeded = false
       let syncResultMsg = ""
 
-      // 1. Kích hoạt đồng bộ qua Cloud Trigger API (Hỗ trợ HTTPS 3lmotohue.com mà không bị chặn Mixed Content)
-      try {
-        const triggerRes = await fetch("/api/vehicles/sync-trigger", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "request" }),
-        })
-
-        if (triggerRes.ok) {
-          const triggerData = await triggerRes.json()
-          const requestId = triggerData.requestId
-
-          if (requestId) {
-            // Chờ Mac Bridge nhận lệnh, mở Tìm và gửi kết quả về (Polling tối đa 30s)
-            const startTime = Date.now()
-            while (Date.now() - startTime < 30000) {
-              await new Promise((r) => setTimeout(r, 1500))
-              const statusRes = await fetch(`/api/vehicles/sync-trigger?action=status&requestId=${requestId}`)
-              if (statusRes.ok) {
-                const statusData = await statusRes.json()
-                if (statusData.status === "completed") {
-                  bridgeSucceeded = true
-                  syncResultMsg = "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
-                  break
-                } else if (statusData.status === "failed") {
-                  break
-                }
-              }
-            }
-          }
-        }
-      } catch (cloudErr) {
-        console.log("Cloud trigger error:", cloudErr)
-      }
-
-      // 2. Dự phòng: Thử trực tiếp localhost:3333 nếu đang chạy trên localhost
-      if (!bridgeSucceeded && typeof window !== "undefined" && window.location.hostname === "localhost") {
+      // 1. Thử trực tiếp localhost:3333 nếu đang ở môi trường cục bộ (localhost hoặc 127.0.0.1)
+      const isLocalHost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+      if (isLocalHost) {
         try {
           const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 15000)
+          const timeoutId = setTimeout(() => controller.abort(), 12000)
           const res = await fetch("http://localhost:3333/api/sync", {
             method: "POST",
             signal: controller.signal,
@@ -504,10 +470,49 @@ export default function VehiclesPage() {
 
           if (res.ok) {
             const data = await res.json()
-            bridgeSucceeded = true
-            syncResultMsg = data.message || "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
+            if (data.success) {
+              bridgeSucceeded = true
+              syncResultMsg = data.message || "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
+            }
           }
         } catch (_) {}
+      }
+
+      // 2. Kích hoạt đồng bộ qua Cloud Trigger API (Hỗ trợ khi duyệt qua HTTPS 3lmotohue.com)
+      if (!bridgeSucceeded) {
+        try {
+          const triggerRes = await fetch("/api/vehicles/sync-trigger", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "request" }),
+          })
+
+          if (triggerRes.ok) {
+            const triggerData = await triggerRes.json()
+            const requestId = triggerData.requestId
+
+            if (requestId) {
+              // Chờ Mac Bridge nhận lệnh và báo hoàn tất (Polling tối đa 25s)
+              const startTime = Date.now()
+              while (Date.now() - startTime < 25000) {
+                await new Promise((r) => setTimeout(r, 1200))
+                const statusRes = await fetch(`/api/vehicles/sync-trigger?action=status&requestId=${requestId}`)
+                if (statusRes.ok) {
+                  const statusData = await statusRes.json()
+                  if (statusData.status === "completed") {
+                    bridgeSucceeded = true
+                    syncResultMsg = "Đã mở Tìm trên Mac và đồng bộ vị trí xe thành công!"
+                    break
+                  } else if (statusData.status === "failed") {
+                    break
+                  }
+                }
+              }
+            }
+          }
+        } catch (cloudErr) {
+          console.log("Cloud trigger error:", cloudErr)
+        }
       }
 
       // 3. Tải lại danh sách xe mới nhất từ CSDL Supabase

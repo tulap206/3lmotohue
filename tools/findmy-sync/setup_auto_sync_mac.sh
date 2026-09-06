@@ -4,7 +4,8 @@
 
 PLIST_PATH="$HOME/Library/LaunchAgents/com.3lmotohue.local-bridge.plist"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT_PATH="$DIR/local_mac_bridge.py"
+SERVICE_DIR="$HOME/findmy-sync-service"
+SCRIPT_PATH="$SERVICE_DIR/local_mac_bridge.py"
 PYTHON_PATH=$(which python3)
 
 echo "⚙️ Đang thiết lập dịch vụ Mac Find My Bridge cho 3LMoto..."
@@ -12,11 +13,18 @@ echo "⚙️ Đang thiết lập dịch vụ Mac Find My Bridge cho 3LMoto..."
 # Xóa các dịch vụ tự động định kỳ cũ nếu có
 launchctl unload "$HOME/Library/LaunchAgents/com.3lmotohue.findmysync.plist" 2>/dev/null
 launchctl unload "$HOME/Library/LaunchAgents/com.3lmotohue.findmy-sync.plist" 2>/dev/null
+launchctl unload "$PLIST_PATH" 2>/dev/null
+pkill -f "local_mac_bridge.py" 2>/dev/null
+
 rm -f "$HOME/Library/LaunchAgents/com.3lmotohue.findmysync.plist"
 rm -f "$HOME/Library/LaunchAgents/com.3lmotohue.findmy-sync.plist"
 
 mkdir -p "$HOME/Library/LaunchAgents"
-mkdir -p "$HOME/findmy-sync-service"
+mkdir -p "$SERVICE_DIR"
+
+# Sao chép các script đồng bộ vào thư mục service ở home directory để không bị hạn chế quyền TCC sandbox của ~/Desktop
+cp -f "$DIR"/* "$SERVICE_DIR/" 2>/dev/null || true
+chmod +x "$SERVICE_DIR"/*.sh "$SERVICE_DIR"/*.py 2>/dev/null || true
 
 cat <<PLIST_EOF > "$PLIST_PATH"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -35,9 +43,9 @@ cat <<PLIST_EOF > "$PLIST_PATH"
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>$HOME/findmy-sync-service/bridge.log</string>
+    <string>$SERVICE_DIR/bridge.log</string>
     <key>StandardErrorPath</key>
-    <string>$HOME/findmy-sync-service/bridge_error.log</string>
+    <string>$SERVICE_DIR/bridge_error.log</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>HOME</key>
@@ -51,8 +59,7 @@ cat <<PLIST_EOF > "$PLIST_PATH"
 </plist>
 PLIST_EOF
 
-chmod +x "$SCRIPT_PATH"
-launchctl unload "$PLIST_PATH" 2>/dev/null
+chmod 644 "$PLIST_PATH"
 launchctl load "$PLIST_PATH"
 
 echo "✅ ĐÃ THIẾT LẬP THÀNH CÔNG!"
