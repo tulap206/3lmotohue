@@ -163,13 +163,14 @@ const actionIconMap: Record<string, { icon: React.ElementType; color: string; bg
   "Khôi phục": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100 text-slate-700 border-slate-200" },
   "Khôi phục dữ liệu": { icon: RefreshCw, color: "text-slate-700", bg: "bg-slate-100 text-slate-700 border-slate-200" },
   "Xem": { icon: Eye, color: "text-slate-600", bg: "bg-slate-100 text-slate-600 border-slate-200" },
-  "Truy cập": { icon: Activity, color: "text-slate-600", bg: "bg-slate-100 text-slate-600 border-slate-200" },
+  "Truy cập": { icon: Globe, color: "text-cyan-700", bg: "bg-cyan-50 text-cyan-700 border-cyan-200" },
 }
 
 const moduleIconMap: Record<string, { icon: React.ElementType; color: string; badgeColor: string }> = {
   "Quản lý xe": { icon: Car, color: "text-blue-600", badgeColor: "bg-blue-50 text-blue-700 border-blue-200" },
   "Đơn thuê": { icon: ClipboardList, color: "text-violet-600", badgeColor: "bg-violet-50 text-violet-700 border-violet-200" },
   "Quản lý khách hàng": { icon: Users, color: "text-emerald-600", badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "Khách truy cập Website": { icon: Globe, color: "text-cyan-600", badgeColor: "bg-cyan-50 text-cyan-700 border-cyan-200" },
   "Bảo trì xe": { icon: Wrench, color: "text-amber-600", badgeColor: "bg-amber-50 text-amber-800 border-amber-200" },
   "Thu / Chi": { icon: Wallet, color: "text-rose-600", badgeColor: "bg-rose-50 text-rose-700 border-rose-200" },
   "Báo cáo": { icon: FileText, color: "text-indigo-600", badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200" },
@@ -239,6 +240,16 @@ export function isTelegramLog(log: AccessLogRecord): boolean {
  */
 export function getModuleLabel(mod: string): string {
   const lower = (mod || "").toLowerCase().trim()
+  if (
+    lower.includes("landing") ||
+    lower.includes("khách truy cập") ||
+    lower.includes("visitor") ||
+    lower.includes("website") ||
+    lower === "trang chủ" ||
+    lower === "homepage"
+  ) {
+    return "Khách truy cập Website"
+  }
   if (lower.includes("bảo trì") || lower.includes("bảo dưỡng") || lower === "maintenance") {
     return "Bảo trì xe"
   }
@@ -290,7 +301,6 @@ export function getModuleLabel(mod: string): string {
     lower.includes("đăng nhập") ||
     lower.includes("đăng xuất") ||
     lower.includes("hệ thống") ||
-    lower.includes("trang chủ") ||
     lower.includes("system")
   ) {
     return "Hệ thống & Đăng nhập"
@@ -438,6 +448,7 @@ export function AccessHistoryPanel({
   dbUsers?: any[]
 }) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [quickFilter, setQuickFilter] = useState<"all" | "visitors" | "internal">("all")
   const [filterAccount, setFilterAccount] = useState("all")
   const [filterModule, setFilterModule] = useState("all")
   const [filterAction, setFilterAction] = useState("all")
@@ -452,28 +463,41 @@ export function AccessHistoryPanel({
     return logs.filter((log) => !isTelegramLog(log)).map(normalizeLog)
   }, [logs])
 
-  // Lấy danh sách tài khoản từ DB (auth_users)
+  // Lấy danh sách tài khoản từ DB (auth_users) kết hợp tài khoản xuất hiện trong logs (như visitor)
   const accounts = useMemo(() => {
     const seen = new Set<string>()
-    const fromDb = dbUsers
-      .map((u) => {
-        const username = String(u.username || "").trim()
-        const displayName = String(u.displayName || u.displayname || username).trim()
-        return { username, displayName }
-      })
-      .filter((u) => {
-        const key = u.username.toLowerCase()
-        if (!u.username || key === "system" || seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
+    const list: { username: string; displayName: string }[] = []
 
-    return fromDb.sort((a, b) => {
+    // 1. From dbUsers
+    dbUsers.forEach((u) => {
+      const username = String(u.username || "").trim()
+      const displayName = String(u.displayName || u.displayname || username).trim()
+      const key = username.toLowerCase()
+      if (username && key !== "system" && !seen.has(key)) {
+        seen.add(key)
+        list.push({ username, displayName })
+      }
+    })
+
+    // 2. From logs (để visitor & các tài khoản phát sinh đều xuất hiện)
+    normalizedLogs.forEach((log) => {
+      const username = String(log.username || "").trim()
+      const displayName = String(log.displayName || log.displayname || username).trim()
+      const key = username.toLowerCase()
+      if (username && key !== "system" && !seen.has(key)) {
+        seen.add(key)
+        list.push({ username, displayName })
+      }
+    })
+
+    return list.sort((a, b) => {
       if (a.username.toLowerCase() === "admin") return -1
       if (b.username.toLowerCase() === "admin") return 1
+      if (a.username.toLowerCase() === "visitor") return 1
+      if (b.username.toLowerCase() === "visitor") return -1
       return a.username.localeCompare(b.username)
     })
-  }, [dbUsers])
+  }, [dbUsers, normalizedLogs])
 
   // Danh sách phân hệ chuẩn hóa
   const modules = useMemo(() => {
@@ -481,6 +505,7 @@ export function AccessHistoryPanel({
       "Quản lý xe",
       "Đơn thuê",
       "Quản lý khách hàng",
+      "Khách truy cập Website",
       "Bảo trì xe",
       "Thu / Chi",
       "Báo cáo",
@@ -492,6 +517,15 @@ export function AccessHistoryPanel({
     const sorted = order.filter((m) => presentModules.includes(m))
     const others = presentModules.filter((m) => !order.includes(m))
     return [...sorted, ...others]
+  }, [normalizedLogs])
+
+  // Số lượng thống kê nhanh
+  const visitorCount = useMemo(() => {
+    return normalizedLogs.filter((log) => getModuleLabel(log.module) === "Khách truy cập Website" || log.username.toLowerCase() === "visitor").length
+  }, [normalizedLogs])
+
+  const internalCount = useMemo(() => {
+    return normalizedLogs.filter((log) => getModuleLabel(log.module) !== "Khách truy cập Website" && log.username.toLowerCase() !== "visitor").length
   }, [normalizedLogs])
 
   // Lọc hành động động theo phân hệ đang chọn
@@ -512,6 +546,7 @@ export function AccessHistoryPanel({
       "Đăng nhập",
       "Đăng xuất",
       "Xem",
+      "Truy cập",
       "Sao lưu dữ liệu",
       "Khôi phục dữ liệu",
     ]
@@ -522,6 +557,10 @@ export function AccessHistoryPanel({
     () =>
       normalizedLogs
         .filter((log) => {
+          const isVisitor = getModuleLabel(log.module) === "Khách truy cập Website" || log.username.toLowerCase() === "visitor"
+          if (quickFilter === "visitors" && !isVisitor) return false
+          if (quickFilter === "internal" && isVisitor) return false
+
           const q = searchQuery.toLowerCase().trim()
           const matchSearch =
             !q ||
@@ -537,7 +576,7 @@ export function AccessHistoryPanel({
           return matchSearch && matchAccount && matchModule && matchAction
         })
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
-    [normalizedLogs, searchQuery, filterAccount, filterModule, filterAction]
+    [normalizedLogs, quickFilter, searchQuery, filterAccount, filterModule, filterAction]
   )
 
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / itemsPerPage))
@@ -571,7 +610,76 @@ export function AccessHistoryPanel({
         <div className={cn("absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r", styles.stripe)} />
 
         {/* Toolbar */}
-        <div className="shrink-0 border-b border-slate-100 bg-slate-50/60 px-3 py-3 md:px-4">
+        <div className="shrink-0 border-b border-slate-100 bg-slate-50/60 px-3 py-3 md:px-4 space-y-3">
+          {/* Quick Scope Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setQuickFilter("all")
+                setFilterAccount("all")
+                setFilterModule("all")
+                setCurrentPage(1)
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label font-semibold transition-all border",
+                quickFilter === "all"
+                  ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+              )}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Tất cả</span>
+              <span className={cn("ml-1 px-1.5 py-0.5 text-[11px] rounded-full font-mono", quickFilter === "all" ? "bg-slate-700 text-white" : "bg-slate-100 text-slate-600")}>
+                {normalizedLogs.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setQuickFilter("visitors")
+                setFilterAccount("all")
+                setFilterModule("all")
+                setCurrentPage(1)
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label font-semibold transition-all border",
+                quickFilter === "visitors"
+                  ? "bg-cyan-600 text-white border-cyan-600 shadow-sm"
+                  : "bg-white text-cyan-800 border-cyan-200 hover:bg-cyan-50"
+              )}
+            >
+              <Globe className="w-3.5 h-3.5 text-current" />
+              <span>Khách xem Landing Page</span>
+              <span className={cn("ml-1 px-1.5 py-0.5 text-[11px] rounded-full font-mono", quickFilter === "visitors" ? "bg-cyan-700 text-white" : "bg-cyan-100 text-cyan-800 font-bold")}>
+                {visitorCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setQuickFilter("internal")
+                setFilterAccount("all")
+                if (filterModule === "Khách truy cập Website") setFilterModule("all")
+                setCurrentPage(1)
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label font-semibold transition-all border",
+                quickFilter === "internal"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                  : "bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
+              )}
+            >
+              <Users className="w-3.5 h-3.5 text-current" />
+              <span>Nhân viên & Hệ thống</span>
+              <span className={cn("ml-1 px-1.5 py-0.5 text-[11px] rounded-full font-mono", quickFilter === "internal" ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-800 font-bold")}>
+                {internalCount}
+              </span>
+            </button>
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
             <div className="relative w-full sm:min-w-[180px] sm:flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
       username: 'visitor',
       displayname: 'Khách truy cập',
       action: 'Truy cập',
-      module: 'Trang chủ',
-      details: `Thiết bị: ${deviceName}`,
+      module: 'Khách truy cập Website',
+      details: `Khách xem Landing Page [Thiết bị: ${deviceName}]`,
       ip_address: ip,
       timestamp: new Date().toISOString()
     }])
