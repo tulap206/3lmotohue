@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fpiupgmknsydqrihqdbo.supabase.co"
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwaXVwZ21rbnN5ZHFyaWhxZGJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTYzNzAsImV4cCI6MjA5NDYzMjM3MH0.0YK7DmgpA8YuWEaIt1wh07dOQXW5GFlQzo3JydfFaL8"
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Endpoint secret token for security
 const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
@@ -24,7 +29,7 @@ function notifyWaiters() {
   if (globalThis.__globalSyncResolvers) {
     const list = [...globalThis.__globalSyncResolvers]
     globalThis.__globalSyncResolvers = []
-    list.forEach(resolve => {
+    list.forEach((resolve) => {
       try {
         resolve()
       } catch (_) {}
@@ -39,16 +44,72 @@ export async function GET(req: Request) {
 
   // 1. Kiểm tra trạng thái yêu cầu từ Frontend
   if (action === "status") {
+    // Ưu tiên kiểm tra in-memory
     const current = globalThis.__globalSyncRequest
-    if (!current || (requestId && current.id !== requestId)) {
-      return NextResponse.json({ status: "not_found" })
+    if (current && (!requestId || current.id === requestId)) {
+      return NextResponse.json({
+        status: current.status,
+        requestId: current.id,
+        result: current.result,
+        age: Date.now() - current.requestedAt,
+      })
     }
-    return NextResponse.json({
-      status: current.status,
-      requestId: current.id,
-      result: current.result,
-      age: Date.now() - current.requestedAt,
-    })
+
+    // Fallback: Kiểm tra qua Supabase access_logs (Hỗ trợ Vercel Serverless multi-instance)
+    if (requestId) {
+      try {
+        const { data: logs } = await supabase
+          .from("access_logs")
+          .select("*")
+          .eq("module", "location_sync_trigger")
+          .order("timestamp", { ascending: false })
+          .limit(10)
+
+        if (logs && logs.length > 0) {
+          for (const log of logs) {
+            try {
+              const parsed = JSON.parse(log.details || "{}")
+              if (parsed.requestId === requestId) {
+                if (log.action === "SYNC_COMPLETED") {
+                  return NextResponse.json({
+                    status: "completed",
+                    requestId,
+                    result: parsed.result,
+                    age: Date.now() - (parsed.requestedAt || 0),
+                  })
+                }
+                if (log.action === "SYNC_FAILED") {
+                  return NextResponse.json({
+                    status: "failed",
+                    requestId,
+                    result: parsed.result,
+                    age: Date.now() - (parsed.requestedAt || 0),
+                  })
+                }
+                if (log.action === "SYNC_PROCESSING") {
+                  return NextResponse.json({
+                    status: "processing",
+                    requestId,
+                    age: Date.now() - (parsed.requestedAt || 0),
+                  })
+                }
+                if (log.action === "SYNC_REQUEST") {
+                  return NextResponse.json({
+                    status: parsed.status || "pending",
+                    requestId,
+                    age: Date.now() - (parsed.requestedAt || 0),
+                  })
+                }
+              }
+            } catch (_) {}
+          }
+        }
+      } catch (dbErr) {
+        console.warn("Error querying sync status from DB:", dbErr)
+      }
+    }
+
+    return NextResponse.json({ status: "not_found" })
   }
 
   // 2. Long-polling từ Mac Bridge
@@ -58,8 +119,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // 2.1 Kiểm tra in-memory request trước
     const current = globalThis.__globalSyncRequest
-    const isRecent = current && current.status === "pending" && (Date.now() - current.requestedAt < 60000)
+    const isRecent = current && current.status === "pending" && Date.now() - current.requestedAt < 60000
 
     if (isRecent && current) {
       current.status = "processing"
@@ -69,7 +131,45 @@ export async function GET(req: Request) {
       })
     }
 
-    // Long-poll wait up to 20 seconds
+    // 2.2 Kiểm tra Supabase access_logs
+    try {
+      const { data: logs } = await supabase
+        .from("access_logs")
+        .select("*")
+        .eq("module", "location_sync_trigger")
+        .eq("action", "SYNC_REQUEST")
+        .order("timestamp", { ascending: false })
+        .limit(1)
+
+      if (logs && logs.length > 0) {
+        const latestLog = logs[0]
+        try {
+          const parsed = JSON.parse(latestLog.details || "{}")
+          const logAge = Date.now() - (parsed.requestedAt || new Date(latestLog.timestamp).getTime())
+          if (parsed.status === "pending" && logAge < 60000) {
+            // Đánh dấu processing trong DB
+            await supabase.from("access_logs").insert([
+              {
+                action: "SYNC_PROCESSING",
+                module: "location_sync_trigger",
+                userId: "mac_bridge",
+                details: JSON.stringify({ ...parsed, status: "processing", processingAt: Date.now() }),
+                timestamp: new Date().toISOString(),
+              },
+            ])
+
+            return NextResponse.json({
+              trigger: true,
+              requestId: parsed.requestId,
+            })
+          }
+        } catch (_) {}
+      }
+    } catch (dbErr) {
+      console.warn("DB poll check error:", dbErr)
+    }
+
+    // 2.3 Long-poll wait up to 10 seconds
     const triggered = await new Promise<boolean>((resolve) => {
       let settled = false
       const onTrigger = () => {
@@ -86,11 +186,11 @@ export async function GET(req: Request) {
           settled = true
           resolve(false)
         }
-      }, 20000)
+      }, 10000)
     })
 
     const pendingNow = globalThis.__globalSyncRequest
-    if (triggered && pendingNow && pendingNow.status === "pending" && (Date.now() - pendingNow.requestedAt < 60000)) {
+    if (triggered && pendingNow && pendingNow.status === "pending" && Date.now() - pendingNow.requestedAt < 60000) {
       pendingNow.status = "processing"
       return NextResponse.json({
         trigger: true,
@@ -123,8 +223,27 @@ export async function POST(req: Request) {
         status: "pending",
       }
 
-      // Đánh thức tất cả Mac bridge đang long-poll
+      // Đánh thức tất cả Mac bridge đang long-poll in-memory
       notifyWaiters()
+
+      // Lưu vào Supabase access_logs để mọi serverless instance & bridge đều nhận được
+      try {
+        await supabase.from("access_logs").insert([
+          {
+            action: "SYNC_REQUEST",
+            module: "location_sync_trigger",
+            userId: "web_client",
+            details: JSON.stringify({
+              requestId: newId,
+              status: "pending",
+              requestedAt: Date.now(),
+            }),
+            timestamp: new Date().toISOString(),
+          },
+        ])
+      } catch (dbErr) {
+        console.warn("Error persisting sync request to DB:", dbErr)
+      }
 
       return NextResponse.json({
         success: true,
@@ -133,7 +252,7 @@ export async function POST(req: Request) {
       })
     }
 
-    // 2. Mac bridge báo cáo hoàn tất
+    // 2. Mac bridge báo cáo hoàn tất hoặc thất bại
     if (action === "complete" || action === "fail") {
       const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
       if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
@@ -146,9 +265,29 @@ export async function POST(req: Request) {
         globalThis.__globalSyncRequest.result = result || {}
       }
 
+      // Lưu kết quả vào Supabase access_logs
+      try {
+        await supabase.from("access_logs").insert([
+          {
+            action: action === "complete" ? "SYNC_COMPLETED" : "SYNC_FAILED",
+            module: "location_sync_trigger",
+            userId: "mac_bridge",
+            details: JSON.stringify({
+              requestId,
+              status: action === "complete" ? "completed" : "failed",
+              result: result || {},
+              completedAt: Date.now(),
+            }),
+            timestamp: new Date().toISOString(),
+          },
+        ])
+      } catch (dbErr) {
+        console.warn("Error logging sync result to DB:", dbErr)
+      }
+
       return NextResponse.json({
         success: true,
-        status: globalThis.__globalSyncRequest?.status || "unknown",
+        status: action === "complete" ? "completed" : "failed",
       })
     }
 

@@ -3,7 +3,8 @@
 # KHÔNG tự động mở Find My định kỳ, không làm gián đoạn công việc trên Mac.
 
 PLIST_PATH="$HOME/Library/LaunchAgents/com.3lmotohue.local-bridge.plist"
-SCRIPT_PATH="$HOME/Desktop/Code/3lmotohue/local_mac_bridge.py"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PATH="$DIR/local_mac_bridge.py"
 PYTHON_PATH=$(which python3)
 
 echo "⚙️ Đang thiết lập dịch vụ Mac Find My Bridge cho 3LMoto..."

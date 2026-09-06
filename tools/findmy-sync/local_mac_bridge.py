@@ -16,6 +16,7 @@ SYNC_BINARY_PATH = Path.home() / "findmy-sync-service" / "sync_findmy_live"
 SYNC_SWIFT_SCRIPT = WORKSPACE_DIR / "sync_findmy_live.swift"
 SYNC_UI_SCRIPT = WORKSPACE_DIR / "sync_from_findmy_ui.py"
 SYNC_AUTO_SCRIPT = WORKSPACE_DIR / "sync_auto_findmy.py"
+SYNC_MAC_SCRIPT = WORKSPACE_DIR / "sync_mac_findmy.py"
 
 API_BASE_URL = "https://3lmotohue.com/api/vehicles/sync-trigger"
 SYNC_SECRET = "3lmotohue-sync-secret-2026"
@@ -28,17 +29,21 @@ def execute_mac_sync() -> tuple[bool, str, str]:
     if SYNC_BINARY_PATH.exists() and os.access(SYNC_BINARY_PATH, os.X_OK):
         candidates.append(("sync_findmy_live", [str(SYNC_BINARY_PATH)]))
 
-    # 2. Python UI Script (rất ổn định qua AppleScript / PyObjC)
-    if SYNC_UI_SCRIPT.exists():
-        candidates.append(("sync_from_findmy_ui.py", [sys.executable, str(SYNC_UI_SCRIPT)]))
-
-    # 3. Swift Runner Script
+    # 2. Swift Runner Script
     if SYNC_SWIFT_SCRIPT.exists():
         candidates.append(("sync_findmy_live.swift", ["swift", str(SYNC_SWIFT_SCRIPT)]))
+
+    # 3. Python UI Script (rất ổn định qua AppleScript / PyObjC)
+    if SYNC_UI_SCRIPT.exists():
+        candidates.append(("sync_from_findmy_ui.py", [sys.executable, str(SYNC_UI_SCRIPT)]))
 
     # 4. Auto FindMy Script
     if SYNC_AUTO_SCRIPT.exists():
         candidates.append(("sync_auto_findmy.py", [sys.executable, str(SYNC_AUTO_SCRIPT)]))
+
+    # 5. Mac direct sync
+    if SYNC_MAC_SCRIPT.exists():
+        candidates.append(("sync_mac_findmy.py", [sys.executable, str(SYNC_MAC_SCRIPT)]))
 
     if not candidates:
         return False, "none", "Không tìm thấy script đồng bộ nào."
