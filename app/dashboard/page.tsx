@@ -28,6 +28,7 @@ import {
   Lock,
   LockOpen,
   RefreshCw,
+  UserCheck,
 } from "lucide-react"
 import { fetchBookingLockStatus, setBookingLockStatus } from "@/lib/booking-lock"
 import { DailySummaryDialog } from "@/components/dashboard/daily-summary-dialog"
@@ -218,11 +219,9 @@ export default function DashboardPage() {
     commissionHome: "",
     homeName: "",
   })
-  const [customerSearch, setCustomerSearch] = useState("")
   const [vehicleSearch, setVehicleSearch] = useState("")
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
-  const [isNewCustomer, setIsNewCustomer] = useState(true)
   const [newCustomerName, setNewCustomerName] = useState("")
   const [newCustomerPhone, setNewCustomerPhone] = useState("")
   const [newCustomerAddress, setNewCustomerAddress] = useState("")
@@ -231,11 +230,38 @@ export default function DashboardPage() {
   const [newCustomerCCCDFront, setNewCustomerCCCDFront] = useState<File | null>(null)
   const [hasCommission, setHasCommission] = useState(false)
 
-  const filteredCustomersForSelect = customers.filter(c => 
-    c.name.toLowerCase().includes(customerSearch.toLowerCase()) || 
-    (c.phone && c.phone.toLowerCase().includes(customerSearch.toLowerCase())) || 
-    c.id.toLowerCase().includes(customerSearch.toLowerCase())
-  )
+  const normalizeSearchText = (str: string) => {
+    return (str || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+  }
+
+  const matchedCustomers = useMemo(() => {
+    const q = normalizeSearchText(newCustomerName)
+    if (!q) return []
+    return customers.filter(c => {
+      const name = normalizeSearchText(c.name || "")
+      const phone = (c.phone || "").replace(/\D/g, "")
+      const cccd = (c.idcard || "").toLowerCase().replace(/^cccd_/, "")
+      return name.includes(q) || (phone.length >= 3 && phone.includes(q)) || (cccd.length >= 3 && cccd.includes(q))
+    }).slice(0, 8)
+  }, [customers, newCustomerName])
+
+  const selectedCustomer = useMemo(() => {
+    if (!formData.customerId) return null
+    return customers.find(c => c.id === formData.customerId) || null
+  }, [customers, formData.customerId])
+
+  const handleSelectCustomer = (c: typeof customers[0]) => {
+    setFormData(prev => ({ ...prev, customerId: c.id }))
+    setNewCustomerName(c.name || "")
+    setNewCustomerPhone(c.phone || "")
+    setNewCustomerAddress(c.address || "")
+    setNewCustomerCCCD(c.idcard ? c.idcard.replace(/^CCCD_/i, "") : "")
+    setShowCustomerDropdown(false)
+  }
 
   const filteredVehiclesForSelect = vehicles.filter(v => 
     (v.name.toLowerCase().includes(vehicleSearch.toLowerCase()) || 
@@ -265,15 +291,14 @@ export default function DashboardPage() {
 
   const resetForm = () => {
     setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", pickupTime: "08:00", returnTime: "12:00", deposit: "0", notes: "", commissionHome: "", homeName: "" })
-    setIsNewCustomer(true)
     setNewCustomerName("")
     setNewCustomerPhone("")
     setNewCustomerAddress("")
     setNewCustomerCCCD("")
     setNewCustomerPhoto(null)
     setNewCustomerCCCDFront(null)
+    setShowCustomerDropdown(false)
     setHasCommission(false)
-    setCustomerSearch("")
     setVehicleSearch("")
     setUnassignedQuantity("1")
     setUnassignedPricePerDay("120.000")
@@ -337,86 +362,79 @@ export default function DashboardPage() {
     let customerName = ""
 
     try {
-      if (isNewCustomer) {
-        if (!newCustomerName.trim()) {
-          alert("⚠️ Vui lòng nhập tên khách hàng!")
-          return
-        }
-        if (!newCustomerPhone.trim()) {
-          alert("⚠️ Vui lòng nhập số điện thoại khách hàng!")
-          return
-        }
-        if (!newCustomerAddress.trim()) {
-          alert("⚠️ Vui lòng nhập địa chỉ khách hàng!")
-          return
-        }
+      if (!newCustomerName.trim()) {
+        alert("⚠️ Vui lòng nhập tên khách hàng!")
+        return
+      }
+      if (!newCustomerPhone.trim()) {
+        alert("⚠️ Vui lòng nhập số điện thoại khách hàng!")
+        return
+      }
+      if (!newCustomerAddress.trim()) {
+        alert("⚠️ Vui lòng nhập địa chỉ khách hàng!")
+        return
+      }
 
-        let customerphoto: string[] = []
-        let cccdfront: string[] = []
+      let customerphoto: string[] = []
+      let cccdfront: string[] = []
 
-        if (newCustomerPhoto) {
-          const url = await uploadImage(newCustomerPhoto, "customer-documents", "customer-photos")
-          if (url) customerphoto = [url]
-        }
-        if (newCustomerCCCDFront) {
-          const url = await uploadImage(newCustomerCCCDFront, "customer-documents", "cccd-front")
-          if (url) cccdfront = [url]
-        }
+      if (newCustomerPhoto) {
+        const url = await uploadImage(newCustomerPhoto, "customer-documents", "customer-photos")
+        if (url) customerphoto = [url]
+      }
+      if (newCustomerCCCDFront) {
+        const url = await uploadImage(newCustomerCCCDFront, "customer-documents", "cccd-front")
+        if (url) cccdfront = [url]
+      }
 
-        const normPhone = newCustomerPhone.replace(/\D/g, "")
-        const existingCust = (customers || []).find((c) => {
+      const normPhone = newCustomerPhone.replace(/\D/g, "")
+      let existingCust = customerId ? (customers || []).find((c) => c.id === customerId) : null
+      if (!existingCust && normPhone.length >= 9) {
+        existingCust = (customers || []).find((c) => {
           const cp = (c.phone || "").replace(/\D/g, "")
-          return normPhone.length >= 9 && cp === normPhone
+          return cp === normPhone
         })
+      }
 
-        if (existingCust) {
-          customerId = existingCust.id
-          customerName = existingCust.name || newCustomerName.trim()
-          const updatePayload: any = {}
-          if (customerphoto.length > 0 && (!existingCust.customerphoto || existingCust.customerphoto.length === 0)) {
-            updatePayload.customerphoto = customerphoto
-          }
-          if (cccdfront.length > 0 && (!existingCust.cccdfront || existingCust.cccdfront.length === 0)) {
-            updatePayload.cccdfront = cccdfront
-          }
-          if (newCustomerCCCD.trim() && (!existingCust.idcard || existingCust.idcard.startsWith("CCCD_"))) {
-            updatePayload.idcard = newCustomerCCCD.trim()
-          }
-          if (Object.keys(updatePayload).length > 0) {
-            await supabase.from('customers').update(updatePayload).eq('id', existingCust.id)
-          }
-        } else {
-          const newCust = await insertCustomer({
-            name: newCustomerName.trim(),
-            phone: newCustomerPhone.trim(),
-            facebook: "",
-            address: newCustomerAddress.trim(),
-            idcard: newCustomerCCCD.trim() || "",
-            totalrentals: 0,
-            status: "active",
-            customerphoto,
-            cccdfront,
-            cccdback: [],
-            licensefront: [],
-            licenseback: []
-          })
-
-          if (!newCust) {
-            alert("❌ Không thể tạo khách hàng mới")
-            return
-          }
-
-          customerId = newCust.id
-          customerName = newCust.name
+      if (existingCust) {
+        customerId = existingCust.id
+        customerName = existingCust.name || newCustomerName.trim()
+        const updatePayload: any = {}
+        if (customerphoto.length > 0 && (!existingCust.customerphoto || existingCust.customerphoto.length === 0)) {
+          updatePayload.customerphoto = customerphoto
+        }
+        if (cccdfront.length > 0 && (!existingCust.cccdfront || existingCust.cccdfront.length === 0)) {
+          updatePayload.cccdfront = cccdfront
+        }
+        if (newCustomerCCCD.trim() && (!existingCust.idcard || existingCust.idcard.startsWith("CCCD_"))) {
+          updatePayload.idcard = newCustomerCCCD.trim()
+        }
+        if (Object.keys(updatePayload).length > 0) {
+          await supabase.from('customers').update(updatePayload).eq('id', existingCust.id)
         }
       } else {
-        const customer = customers.find((c) => c.id === formData.customerId)
-        if (!customer) {
-          alert("⚠️ Vui lòng chọn khách hàng!")
+        const newCust = await insertCustomer({
+          name: newCustomerName.trim(),
+          phone: newCustomerPhone.trim(),
+          facebook: "",
+          address: newCustomerAddress.trim(),
+          idcard: newCustomerCCCD.trim() || "",
+          totalrentals: 0,
+          status: "active",
+          customerphoto,
+          cccdfront,
+          cccdback: [],
+          licensefront: [],
+          licenseback: []
+        })
+
+        if (!newCust) {
+          alert("❌ Không thể tạo khách hàng mới")
           return
         }
-        customerId = customer.id
-        customerName = customer.name
+
+        customerId = newCust.id
+        customerName = newCust.name
       }
 
       const totalDays = calculateTotalDays(formData.startDate, formData.endDate)
@@ -1649,9 +1667,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-title truncate">
-                    {isNewCustomer
-                      ? (newCustomerName.trim() || "Khách mới")
-                      : (customerSearch.trim() || "Chưa chọn khách")}
+                    {newCustomerName.trim() || "Chưa nhập khách"}
                   </p>
                   <p className="text-meta truncate">
                     {formData.vehicleIds.length > 0
@@ -1666,137 +1682,161 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <EntityFormSection title="Khách thuê" description="Khách cũ hoặc hồ sơ mới">
-                <EntityFormToggle
-                  value={isNewCustomer ? "new" : "existing"}
-                  onChange={(val) => setIsNewCustomer(val === "new")}
-                  options={[
-                    { value: "existing", label: "Khách cũ" },
-                    { value: "new", label: "Khách mới" },
-                  ]}
-                />
+              <EntityFormSection title="Khách thuê" description="Gõ tên để tìm khách cũ hoặc nhập hồ sơ mới">
+                <div className="space-y-3">
+                  {selectedCustomer && (
+                    <div className="flex items-center justify-between rounded-[var(--radius-control)] border border-blue-200 bg-blue-50/80 px-3 py-2 text-xs text-blue-800">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <UserCheck className="w-4 h-4 shrink-0 text-blue-600" />
+                        <span className="truncate">
+                          Đã chọn khách cũ: <strong>{selectedCustomer.name}</strong> · {selectedCustomer.phone || "Không SĐT"} {selectedCustomer.totalrentals ? `(${selectedCustomer.totalrentals} lần thuê)` : ""}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, customerId: "" }))}
+                        className="ml-2 shrink-0 font-medium text-slate-500 hover:text-slate-800 underline"
+                      >
+                        Lưu như khách mới
+                      </button>
+                    </div>
+                  )}
 
-                {!isNewCustomer ? (
-                    <div className="space-y-2 relative">
-                      <EntityFormField label="Tìm khách hàng" required>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="relative">
+                      <EntityFormField label="Họ và tên" required>
                         <Input
-                          placeholder="Tên hoặc số điện thoại"
-                          value={customerSearch}
+                          placeholder="Nguyễn Văn A"
+                          autoComplete="off"
+                          value={newCustomerName}
                           onChange={(e) => {
-                            setCustomerSearch(e.target.value)
+                            const val = e.target.value
+                            setNewCustomerName(val)
                             setShowCustomerDropdown(true)
-                            setFormData(prev => ({ ...prev, customerId: "" }))
+                            if (formData.customerId && selectedCustomer && val.trim() !== selectedCustomer.name.trim()) {
+                              setFormData(prev => ({ ...prev, customerId: "" }))
+                            }
                           }}
-                          onFocus={() => setShowCustomerDropdown(true)}
+                          onFocus={() => {
+                            if (newCustomerName.trim().length > 0) {
+                              setShowCustomerDropdown(true)
+                            }
+                          }}
                           className={entityFormInputClass}
-                          required={!isNewCustomer}
+                          required
                         />
                       </EntityFormField>
-                      {showCustomerDropdown && (
+
+                      {showCustomerDropdown && matchedCustomers.length > 0 && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => setShowCustomerDropdown(false)} />
-                          <div className="absolute z-50 w-full bg-white border border-slate-200 rounded-[var(--radius-control)] shadow-lg max-h-60 overflow-y-auto mt-1">
-                            {filteredCustomersForSelect.length === 0 ? (
-                              <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy khách hàng</div>
-                            ) : (
-                              filteredCustomersForSelect.map((customer) => (
-                                <div
-                                  key={customer.id}
-                                  onClick={() => {
-                                    setFormData(prev => ({ ...prev, customerId: customer.id }))
-                                    setCustomerSearch(`${customer.name} (${customer.phone || "Không SĐT"})`)
-                                    setShowCustomerDropdown(false)
-                                  }}
-                                  className="p-3 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer ui-transition border-b border-slate-50 last:border-0"
-                                >
-                                  <span className="font-semibold">{customer.name}</span>
-                                  {customer.phone ? ` · ${customer.phone}` : ""}
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setShowCustomerDropdown(false)}
+                          />
+                          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-[var(--radius-control)] border border-slate-200 bg-white shadow-xl">
+                            <div className="bg-slate-50/90 px-3 py-1.5 text-[11px] font-medium text-slate-500 border-b border-slate-100">
+                              Gợi ý khách cũ ({matchedCustomers.length})
+                            </div>
+                            {matchedCustomers.map((customer) => (
+                              <div
+                                key={customer.id}
+                                onMouseDown={(e) => {
+                                  e.preventDefault()
+                                  handleSelectCustomer(customer)
+                                }}
+                                className="flex items-center justify-between gap-2 border-b border-slate-100 p-2.5 text-xs text-slate-700 hover:bg-blue-50/80 cursor-pointer transition-colors last:border-0"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-semibold text-slate-900">{customer.name}</span>
+                                    {customer.phone && (
+                                      <span className="font-mono text-slate-500">· {customer.phone}</span>
+                                    )}
+                                  </div>
+                                  {customer.address && (
+                                    <p className="text-[11px] text-slate-400 truncate max-w-[280px]">
+                                      {customer.address}
+                                    </p>
+                                  )}
                                 </div>
-                              ))
-                            )}
+                                <div className="shrink-0 flex items-center gap-1.5">
+                                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                                    {customer.totalrentals || 0} đơn
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </>
                       )}
-                      <input type="hidden" name="customerId" value={formData.customerId} required={!isNewCustomer} />
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-meta">Điền * để tạo hồ sơ khách cùng lúc với đơn.</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <EntityFormField label="Họ và tên" required>
-                          <Input
-                            placeholder="Nguyễn Văn A"
-                            autoComplete="name"
-                            value={newCustomerName}
-                            onChange={(e) => setNewCustomerName(e.target.value)}
-                            className={entityFormInputClass}
-                            required={isNewCustomer}
-                          />
-                        </EntityFormField>
-                        <EntityFormField label="Số điện thoại" required>
-                          <Input
-                            type="tel"
-                            inputMode="tel"
-                            placeholder="0901234567"
-                            autoComplete="tel"
-                            value={newCustomerPhone}
-                            onChange={(e) => setNewCustomerPhone(e.target.value)}
-                            className={cn(entityFormInputClass, "tabular-nums")}
-                            required={isNewCustomer}
-                          />
-                        </EntityFormField>
-                        <EntityFormField label="Địa chỉ" required>
-                          <Input
-                            placeholder="Tây Lộc, TP. Huế"
-                            autoComplete="street-address"
-                            value={newCustomerAddress}
-                            onChange={(e) => setNewCustomerAddress(e.target.value)}
-                            className={entityFormInputClass}
-                            required={isNewCustomer}
-                          />
-                        </EntityFormField>
-                        <EntityFormField label="Số CCCD / CMND">
-                          <Input
-                            inputMode="numeric"
-                            placeholder="079123456789"
-                            value={newCustomerCCCD}
-                            onChange={(e) => setNewCustomerCCCD(e.target.value.replace(/^CCCD_/i, ""))}
-                            className={cn(entityFormInputClass, "font-mono")}
-                          />
-                        </EntityFormField>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: "Ảnh khách", file: newCustomerPhoto, set: setNewCustomerPhoto },
-                          { label: "CCCD mặt trước", file: newCustomerCCCDFront, set: setNewCustomerCCCDFront },
-                        ].map((slot) => (
-                          <div key={slot.label} className="space-y-1.5 min-w-0">
-                            <p className="text-label">{slot.label}</p>
-                            <div className={cn(
-                              "relative aspect-[4/3] overflow-hidden rounded-[var(--radius-control)]",
-                              slot.file ? "border border-slate-200" : "border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/50"
-                            )}>
-                              <div className="flex h-full flex-col items-center justify-center gap-1 px-2">
-                                <Upload className="h-5 w-5 text-slate-400" />
-                                <span className="text-meta text-center truncate w-full px-1">{slot.file ? slot.file.name : "Thêm ảnh"}</span>
-                              </div>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-                                onClick={markPickingFile}
-                                onChange={(e) => {
-                                  slot.set(e.target.files?.[0] || null)
-                                  e.target.value = ""
-                                }}
-                              />
-                            </div>
+
+                    <EntityFormField label="Số điện thoại" required>
+                      <Input
+                        type="tel"
+                        inputMode="tel"
+                        placeholder="0901234567"
+                        autoComplete="tel"
+                        value={newCustomerPhone}
+                        onChange={(e) => setNewCustomerPhone(e.target.value)}
+                        className={cn(entityFormInputClass, "tabular-nums")}
+                        required
+                      />
+                    </EntityFormField>
+
+                    <EntityFormField label="Địa chỉ" required>
+                      <Input
+                        placeholder="Tây Lộc, TP. Huế"
+                        autoComplete="street-address"
+                        value={newCustomerAddress}
+                        onChange={(e) => setNewCustomerAddress(e.target.value)}
+                        className={entityFormInputClass}
+                        required
+                      />
+                    </EntityFormField>
+
+                    <EntityFormField label="Số CCCD / CMND">
+                      <Input
+                        inputMode="numeric"
+                        placeholder="079123456789"
+                        value={newCustomerCCCD}
+                        onChange={(e) => setNewCustomerCCCD(e.target.value.replace(/^CCCD_/i, ""))}
+                        className={cn(entityFormInputClass, "font-mono")}
+                      />
+                    </EntityFormField>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Ảnh khách", file: newCustomerPhoto, set: setNewCustomerPhoto },
+                      { label: "CCCD mặt trước", file: newCustomerCCCDFront, set: setNewCustomerCCCDFront },
+                    ].map((slot) => (
+                      <div key={slot.label} className="space-y-1.5 min-w-0">
+                        <p className="text-label">{slot.label}</p>
+                        <div className={cn(
+                          "relative aspect-[4/3] overflow-hidden rounded-[var(--radius-control)]",
+                          slot.file ? "border border-slate-200" : "border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/50"
+                        )}>
+                          <div className="flex h-full flex-col items-center justify-center gap-1 px-2">
+                            <Upload className="h-5 w-5 text-slate-400" />
+                            <span className="text-meta text-center truncate w-full px-1">{slot.file ? slot.file.name : "Thêm ảnh"}</span>
                           </div>
-                        ))}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                            onClick={markPickingFile}
+                            onChange={(e) => {
+                              slot.set(e.target.files?.[0] || null)
+                              e.target.value = ""
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </EntityFormSection>
+                    ))}
+                  </div>
+                </div>
+              </EntityFormSection>
 
                 <EntityFormSection title="Xe thuê" description="Chọn xe sẵn sàng hoặc để trống, gán lúc giao">
                   <div className="space-y-3 relative">
