@@ -134,6 +134,9 @@ export function diffRental(oldR: any, newR: any): string[] {
   if (Number(oldR.extraFees || 0) !== Number(newR.extraFees || 0)) {
     changes.push(`Phụ thu/phí trễ: ${formatVND(oldR.extraFees)} → ${formatVND(newR.extraFees)}`)
   }
+  if (Number(oldR.discount || 0) !== Number(newR.discount || 0)) {
+    changes.push(`Giảm giá: ${formatVND(oldR.discount)} → ${formatVND(newR.discount)}`)
+  }
   if (Number(oldR.commissionHome || 0) !== Number(newR.commissionHome || 0)) {
     changes.push(`Hoa hồng Home: ${formatVND(oldR.commissionHome)} → ${formatVND(newR.commissionHome)}`)
   }

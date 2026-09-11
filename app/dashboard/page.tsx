@@ -215,6 +215,7 @@ export default function DashboardPage() {
     pickupTime: "08:00",
     returnTime: "12:00",
     deposit: "0",
+    discount: "",
     notes: "",
     commissionHome: "",
     homeName: "",
@@ -290,7 +291,7 @@ export default function DashboardPage() {
   }
 
   const resetForm = () => {
-    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", pickupTime: "08:00", returnTime: "12:00", deposit: "0", notes: "", commissionHome: "", homeName: "" })
+    setFormData({ customerId: "", vehicleIds: [], startDate: "", endDate: "", pickupTime: "08:00", returnTime: "12:00", deposit: "0", discount: "", notes: "", commissionHome: "", homeName: "" })
     setNewCustomerName("")
     setNewCustomerPhone("")
     setNewCustomerAddress("")
@@ -441,9 +442,12 @@ export default function DashboardPage() {
       const startDateVN = toStoredDateValue(formData.startDate)
       const now = new Date().toISOString()
 
-      // Split deposit and commission equally among target vehicles
+      // Split deposit, discount and commission equally among target vehicles
       const totalDeposit = parseMoneyInput(formData.deposit) || 0
       const dividedDeposit = Math.round(totalDeposit / targetVehicles.length)
+
+      const totalDiscount = parseMoneyInput(formData.discount) || 0
+      const dividedDiscount = Math.round(totalDiscount / targetVehicles.length)
 
       const totalCommission = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
       const dividedCommission = Math.round(totalCommission / targetVehicles.length)
@@ -467,6 +471,7 @@ export default function DashboardPage() {
           totalPrice,
           deposit: dividedDeposit,
           extraFees: 0,
+          discount: dividedDiscount,
           notes: notesWithTime,
           revenue: 0,
           status: "pending",
@@ -482,8 +487,8 @@ export default function DashboardPage() {
         .insert(insertPayloads)
         .select()
 
-      if (error && /rentalTerm/i.test(error.message || "")) {
-        const withoutCols = insertPayloads.map(({ rentalTerm: _omit, ...rest }) => ({
+      if (error && (/discount/i.test(error.message || "") || /rentalTerm/i.test(error.message || ""))) {
+        const withoutCols = insertPayloads.map(({ rentalTerm: _omit, discount: _omitDisc, ...rest }) => ({
           ...rest,
           notes: buildRentalTermPayload("short", notesWithTime).notes
         }))
@@ -2008,21 +2013,38 @@ export default function DashboardPage() {
                     </EntityFormField>
                   </div>
 
-                  <EntityFormField label="Tiền đặt cọc" required>
-                    <Input
-                      id="deposit"
-                      type="text"
-                      inputMode="numeric"
-                      value={formData.deposit}
-                      onChange={(e) => {
-                        const formatted = formatMoneyInput(e.target.value)
-                        setFormData({ ...formData, deposit: formatted })
-                      }}
-                      placeholder="500.000"
-                      className={cn(entityFormInputClass, "font-mono")}
-                      required
-                    />
-                  </EntityFormField>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <EntityFormField label="Tiền đặt cọc" required>
+                      <Input
+                        id="deposit"
+                        type="text"
+                        inputMode="numeric"
+                        value={formData.deposit}
+                        onChange={(e) => {
+                          const formatted = formatMoneyInput(e.target.value)
+                          setFormData({ ...formData, deposit: formatted })
+                        }}
+                        placeholder="500.000"
+                        className={cn(entityFormInputClass, "font-mono")}
+                        required
+                      />
+                    </EntityFormField>
+
+                    <EntityFormField label="Giảm giá (nếu có)">
+                      <Input
+                        id="discount"
+                        type="text"
+                        inputMode="numeric"
+                        value={formData.discount}
+                        onChange={(e) => {
+                          const formatted = formatMoneyInput(e.target.value)
+                          setFormData({ ...formData, discount: formatted })
+                        }}
+                        placeholder="0"
+                        className={cn(entityFormInputClass, "font-mono text-rose-600 font-medium")}
+                      />
+                    </EntityFormField>
+                  </div>
 
                   <EntityFormField label="Ghi chú">
                     <Textarea

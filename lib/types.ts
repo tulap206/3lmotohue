@@ -105,6 +105,7 @@ export interface Rental {
   totalPrice: number
   deposit: number
   extraFees: number
+  discount?: number
   notes?: string
   revenue: number
   status: RentalStatus

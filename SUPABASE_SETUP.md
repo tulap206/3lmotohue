@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS rentals (
   "totalPrice" INTEGER NOT NULL,
   deposit INTEGER DEFAULT 0,
   "extraFees" INTEGER DEFAULT 0,
+  discount INTEGER DEFAULT 0,
   notes TEXT,
   revenue INTEGER DEFAULT 0,
   status TEXT DEFAULT 'pending', -- 'pending' | 'active' | 'completed' | 'cancelled'

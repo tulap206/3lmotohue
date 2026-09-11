@@ -197,6 +197,7 @@ interface RentalOrder {
   totalPrice: number
   deposit: number
   extraFees: number
+  discount?: number
   notes: string
   revenue: number // Doanh thu: cancelled = deposit (mất cọc), completed = totalPrice (trả cọc)
   status: "pending" | "active" | "completed" | "cancelled"
@@ -391,6 +392,7 @@ export default function OrdersPage() {
     pickupTime: "13:00",
     returnTime: "12:00",
     deposit: "0",
+    discount: "",
     notes: "",
     commissionHome: "",
     homeName: "",
@@ -405,6 +407,7 @@ export default function OrdersPage() {
     returnTime: "12:00",
     deposit: "",
     extraFees: "",
+    discount: "",
     notes: "",
     status: "pending" as RentalOrder["status"],
     commissionHome: "",
@@ -655,7 +658,7 @@ export default function OrdersPage() {
         return order.revenue
       }
       const commissionTotal = (order.commissionHome || 0) * (order.totalDays || 0)
-      return Math.max(0, (order.totalPrice || 0) + (order.extraFees || 0) - commissionTotal)
+      return Math.max(0, (order.totalPrice || 0) + (order.extraFees || 0) - (order.discount || 0) - commissionTotal)
     }
     return null
   }
@@ -845,9 +848,12 @@ export default function OrdersPage() {
       const startDateVN = toStoredDateValue(formData.startDate)
       const now = new Date().toISOString()
 
-      // Split deposit and commission equally among target vehicles
+      // Split deposit, discount and commission equally among target vehicles
       const totalDeposit = parseMoneyInput(formData.deposit) || 0
       const dividedDeposit = Math.round(totalDeposit / targetVehicles.length)
+
+      const totalDiscount = parseMoneyInput(formData.discount) || 0
+      const dividedDiscount = Math.round(totalDiscount / targetVehicles.length)
 
       const totalCommission = hasCommission ? (parseMoneyInput(formData.commissionHome) || 0) : 0
       const dividedCommission = Math.round(totalCommission / targetVehicles.length)
@@ -875,6 +881,7 @@ export default function OrdersPage() {
           totalPrice,
           deposit: dividedDeposit,
           extraFees: 0,
+          discount: dividedDiscount,
           notes: termPayload.notes,
           revenue: 0,
           status: "pending",
@@ -890,8 +897,8 @@ export default function OrdersPage() {
         .insert(insertPayloads)
         .select()
 
-      if (error && /rentalTerm/i.test(error.message || "")) {
-        const withoutCols = insertPayloads.map(({ rentalTerm: _omit, ...rest }) => rest)
+      if (error && (/discount/i.test(error.message || "") || /rentalTerm/i.test(error.message || ""))) {
+        const withoutCols = insertPayloads.map(({ rentalTerm: _omit, discount: _omitDisc, ...rest }) => rest)
         ;({ data, error } = await supabase.from('rentals').insert(withoutCols).select())
       }
 
@@ -904,7 +911,7 @@ export default function OrdersPage() {
       if (data && data.length > 0) {
         const ordersWithCode = data.map((newRental) => {
           const rentalCode = generateRentalCodeFromUUID(customerName, newRental.licensePlate, startDateVN, newRental.id)
-          return { ...newRental, rentalCode, rentalTerm: formData.rentalTerm }
+          return { ...newRental, discount: dividedDiscount, rentalCode, rentalTerm: formData.rentalTerm }
         })
         setOrders([...ordersWithCode, ...orders])
 
@@ -931,6 +938,7 @@ export default function OrdersPage() {
       pickupTime: "13:00",
       returnTime: "12:00",
       deposit: "0",
+      discount: "",
       notes: "",
       commissionHome: "",
       homeName: "",
@@ -1044,6 +1052,7 @@ export default function OrdersPage() {
       pickupTime: "13:00",
       returnTime: "12:00",
       deposit: "0",
+      discount: "",
       notes: "",
       commissionHome: "",
       homeName: "",
@@ -1150,6 +1159,7 @@ export default function OrdersPage() {
       returnTime: times.returnTime,
       deposit: formatMoneyInput(order.deposit.toString()),
       extraFees: formatMoneyInput(order.extraFees.toString()),
+      discount: formatMoneyInput((order.discount || 0).toString()),
       notes: stripRentalTermFromNotes(order.notes).replace(TIME_TAG_RE, "").trim(),
       status: order.status,
       commissionHome: formatMoneyInput((order.commissionHome || 0).toString()),
@@ -1223,6 +1233,7 @@ export default function OrdersPage() {
 
     try {
       const newExtraFees = parseMoneyInput(editFormData.extraFees)
+      const newDiscount = parseMoneyInput(editFormData.discount)
       const newDeposit = parseMoneyInput(editFormData.deposit)
       const newCommissionHome = parseMoneyInput(editFormData.commissionHome) || 0
       const newHomeName = editFormData.homeName.trim()
@@ -1235,11 +1246,11 @@ export default function OrdersPage() {
       const totalDays = calculateTotalDays(editFormData.startDate, editFormData.endDate)
       const totalPrice = totalDays * vehicle.pricePerDay
       
-      // Recalculate revenue based on current status + new extraFees - home commission
+      // Recalculate revenue based on current status + new extraFees - discount - home commission
       const commissionTotal = newCommissionHome * totalDays
       let newRevenue = editingOrder.revenue || 0
       if (editFormData.status === "completed") {
-        newRevenue = totalPrice + newExtraFees - commissionTotal
+        newRevenue = Math.max(0, totalPrice + newExtraFees - newDiscount - commissionTotal)
       } else if (editFormData.status === "cancelled") {
         newRevenue = newDeposit + newExtraFees
       }
@@ -1265,6 +1276,7 @@ export default function OrdersPage() {
           totalPrice,
           deposit: newDeposit,
           extraFees: newExtraFees,
+          discount: newDiscount,
           notes: termPayload.notes,
           status: nextStatus,
           revenue: newRevenue,
@@ -1281,6 +1293,10 @@ export default function OrdersPage() {
         .update(updatePayload)
         .eq('id', editingOrder.id)
 
+      if (error && /discount/i.test(error.message || "")) {
+        const { discount: _omitDisc, ...withoutDiscount } = updatePayload
+        ;({ error } = await supabase.from('rentals').update(withoutDiscount).eq('id', editingOrder.id))
+      }
       if (error && /rentalTerm/i.test(error.message || "")) {
         const { rentalTerm: _omit, ...withoutCol } = updatePayload
         ;({ error } = await supabase.from('rentals').update(withoutCol).eq('id', editingOrder.id))
@@ -1311,6 +1327,7 @@ export default function OrdersPage() {
         totalPrice,
         deposit: newDeposit,
         extraFees: newExtraFees,
+        discount: newDiscount,
         notes: termPayload.notes,
         status: nextStatus,
         revenue: newRevenue,
@@ -1407,8 +1424,8 @@ export default function OrdersPage() {
         // Hủy đơn: khách mất cọc + chi phí phát sinh -> doanh thu = tiền cọc + extraFees
         revenue = order.deposit + extraFees
       } else if (newStatus === "completed") {
-        // Hoàn thành: trả cọc, thu tiền thuê + chi phí phát sinh - hoa hồng -> doanh thu = tiền thuê + extraFees - commissionTotal
-        revenue = order.totalPrice + extraFees - commissionTotal
+        // Hoàn thành: trả cọc, thu tiền thuê + chi phí phát sinh - giảm giá - hoa hồng -> doanh thu = tiền thuê + extraFees - discount - commissionTotal
+        revenue = Math.max(0, order.totalPrice + extraFees - (order.discount || 0) - commissionTotal)
       }
       // pending và active chưa có doanh thu
       
@@ -2017,21 +2034,38 @@ export default function OrdersPage() {
                     </EntityFormField>
                   </div>
 
-                  <EntityFormField label="Tiền đặt cọc" required>
-                    <Input
-                      id="deposit"
-                      type="text"
-                      inputMode="numeric"
-                      value={formData.deposit}
-                      onChange={(e) => {
-                        const formatted = formatMoneyInput(e.target.value)
-                        setFormData({ ...formData, deposit: formatted })
-                      }}
-                      placeholder="500.000"
-                      className={cn(entityFormInputClass, "font-mono")}
-                      required
-                    />
-                  </EntityFormField>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <EntityFormField label="Tiền đặt cọc" required>
+                      <Input
+                        id="deposit"
+                        type="text"
+                        inputMode="numeric"
+                        value={formData.deposit}
+                        onChange={(e) => {
+                          const formatted = formatMoneyInput(e.target.value)
+                          setFormData({ ...formData, deposit: formatted })
+                        }}
+                        placeholder="500.000"
+                        className={cn(entityFormInputClass, "font-mono")}
+                        required
+                      />
+                    </EntityFormField>
+
+                    <EntityFormField label="Giảm giá (nếu có)">
+                      <Input
+                        id="discount"
+                        type="text"
+                        inputMode="numeric"
+                        value={formData.discount}
+                        onChange={(e) => {
+                          const formatted = formatMoneyInput(e.target.value)
+                          setFormData({ ...formData, discount: formatted })
+                        }}
+                        placeholder="0"
+                        className={cn(entityFormInputClass, "font-mono text-rose-600 font-medium")}
+                      />
+                    </EntityFormField>
+                  </div>
 
                   <EntityFormField label="Ghi chú">
                     <Textarea
@@ -2341,7 +2375,17 @@ export default function OrdersPage() {
                             <td className="py-3.5 px-4 text-right">
                               <div className="font-bold money text-sm tabular-nums text-slate-900 whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</div>
                               <div className="text-meta text-slate-500 mt-0.5 whitespace-nowrap">{order.pricePerDay.toLocaleString("vi-VN")} đ/ngày</div>
-                              <div className="flex items-center justify-end mt-0.5">
+                              <div className="flex flex-col items-end gap-0.5 mt-0.5">
+                                {(order.extraFees || 0) > 0 && (
+                                  <span className="text-[11px] font-semibold text-emerald-700 tabular-nums whitespace-nowrap">
+                                    +{(order.extraFees || 0).toLocaleString("vi-VN")}đ phát sinh
+                                  </span>
+                                )}
+                                {(order.discount || 0) > 0 && (
+                                  <span className="text-[11px] font-semibold text-rose-600 tabular-nums whitespace-nowrap">
+                                    -{(order.discount || 0).toLocaleString("vi-VN")}đ giảm giá
+                                  </span>
+                                )}
                                 {order.deposit > 0 ? (
                                   <span className="text-sm font-semibold px-1.5 py-0.5 rounded-[var(--radius-badge)] bg-emerald-50 text-emerald-700 border border-emerald-100 whitespace-nowrap">Đã cọc {order.deposit.toLocaleString("vi-VN")}đ</span>
                                 ) : (
@@ -2518,6 +2562,16 @@ export default function OrdersPage() {
                         </div>
                         <div className="text-right">
                           <span className="font-bold text-slate-900 money tabular-nums text-sm block whitespace-nowrap">{order.totalPrice.toLocaleString("vi-VN")} đ</span>
+                          {(order.extraFees || 0) > 0 && (
+                            <span className="text-[11px] font-semibold text-emerald-700 tabular-nums block whitespace-nowrap">
+                              +{(order.extraFees || 0).toLocaleString("vi-VN")}đ phụ thu
+                            </span>
+                          )}
+                          {(order.discount || 0) > 0 && (
+                            <span className="text-[11px] font-semibold text-rose-600 tabular-nums block whitespace-nowrap">
+                              -{(order.discount || 0).toLocaleString("vi-VN")}đ giảm
+                            </span>
+                          )}
                           {(() => {
                             const netProfit = getOrderNetProfit(order)
                             if (netProfit !== null) {
@@ -2581,7 +2635,7 @@ export default function OrdersPage() {
             const term = getRentalTerm(o)
             const notesClean = stripRentalTermFromNotes(o.notes)
             const commissionTotal = (o.commissionHome || 0) * (o.totalDays || 0)
-            const payable = o.totalPrice + (o.extraFees || 0)
+            const payable = Math.max(0, o.totalPrice + (o.extraFees || 0) - (o.discount || 0))
             const modalNetProfit = getOrderNetProfit(o)
             return (
               <>
@@ -2671,7 +2725,10 @@ export default function OrdersPage() {
                     <OrderStat label="Số ngày" value={`${o.totalDays} ngày`} />
                     <OrderStat label="Giá/ngày" value={formatPrice(o.pricePerDay)} />
                     {o.extraFees > 0 && (
-                      <OrderStat label="Phí phát sinh" value={formatPrice(o.extraFees)} tone="amber" />
+                      <OrderStat label="Phí phát sinh" value={`+${formatPrice(o.extraFees)}`} tone="amber" />
+                    )}
+                    {(o.discount || 0) > 0 && (
+                      <OrderStat label="Giảm giá" value={`-${formatPrice(o.discount || 0)}`} tone="rose" />
                     )}
                     {commissionTotal > 0 && (
                       <OrderStat
@@ -2704,6 +2761,12 @@ export default function OrdersPage() {
                               <div className="flex justify-between gap-3 text-body">
                                 <span className="text-slate-500">Phí phát sinh</span>
                                 <span className="font-semibold text-emerald-600 tabular-nums shrink-0">+{formatPrice(o.extraFees)}</span>
+                              </div>
+                            )}
+                            {(o.discount || 0) > 0 && (
+                              <div className="flex justify-between gap-3 text-body">
+                                <span className="text-slate-500">Giảm giá cho khách</span>
+                                <span className="font-semibold text-rose-600 tabular-nums shrink-0">-{formatPrice(o.discount || 0)}</span>
                               </div>
                             )}
                             {commissionTotal > 0 && (
@@ -2959,7 +3022,7 @@ export default function OrdersPage() {
             </div>
             </EntityFormSection>
 
-            <EntityFormSection title="Tài chính" description="Cọc, phí phát sinh và hoa hồng">
+            <EntityFormSection title="Tài chính" description="Cọc, phí phát sinh, giảm giá và hoa hồng">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <EntityFormField label="Tiền đặt cọc">
               <Input
@@ -2976,7 +3039,7 @@ export default function OrdersPage() {
               />
             </EntityFormField>
 
-            <EntityFormField label="Phí phát sinh">
+            <EntityFormField label="Phí phát sinh (+)">
               <Input
                 id="edit-extraFees"
                 type="text"
@@ -2986,21 +3049,27 @@ export default function OrdersPage() {
                   const formatted = formatMoneyInput(e.target.value)
                   setEditFormData({ ...editFormData, extraFees: formatted })
                 }}
-                className={cn(entityFormInputClass, "font-mono")}
+                className={cn(entityFormInputClass, "font-mono text-emerald-600 font-medium")}
                 placeholder="0"
               />
             </EntityFormField>
-              <EntityFormField label="Tên Home">
+
+            <EntityFormField label="Giảm giá (-)">
               <Input
-                  id="edit-homeName"
-                  type="text"
-                  value={editFormData.homeName}
-                  onChange={(e) => setEditFormData({ ...editFormData, homeName: e.target.value })}
-                  placeholder="Home ABC"
-                  className={entityFormInputClass}
-                />
+                id="edit-discount"
+                type="text"
+                inputMode="numeric"
+                value={editFormData.discount}
+                onChange={(e) => {
+                  const formatted = formatMoneyInput(e.target.value)
+                  setEditFormData({ ...editFormData, discount: formatted })
+                }}
+                className={cn(entityFormInputClass, "font-mono text-rose-600 font-medium")}
+                placeholder="0"
+              />
             </EntityFormField>
-              <EntityFormField label="Hoa hồng / ngày">
+
+            <EntityFormField label="Hoa hồng / ngày">
               <Input
                   id="edit-commissionHome"
                   type="text"
@@ -3014,7 +3083,70 @@ export default function OrdersPage() {
                   className={cn(entityFormInputClass, "font-mono")}
                 />
             </EntityFormField>
+
+            <div className="sm:col-span-2">
+              <EntityFormField label="Tên Home">
+              <Input
+                  id="edit-homeName"
+                  type="text"
+                  value={editFormData.homeName}
+                  onChange={(e) => setEditFormData({ ...editFormData, homeName: e.target.value })}
+                  placeholder="Home ABC"
+                  className={entityFormInputClass}
+                />
+              </EntityFormField>
             </div>
+            </div>
+
+            {/* Xem trước thanh toán trực quan */}
+            {editingOrder && (() => {
+              const targetVehicle = vehicles.find((v) => v.id === editFormData.vehicleId) || { pricePerDay: editingOrder.pricePerDay }
+              const days = calculateTotalDays(editFormData.startDate, editFormData.endDate) || editingOrder.totalDays || 1
+              const baseRent = days * (targetVehicle.pricePerDay || 0)
+              const extra = parseMoneyInput(editFormData.extraFees) || 0
+              const disc = parseMoneyInput(editFormData.discount) || 0
+              const commPerDay = parseMoneyInput(editFormData.commissionHome) || 0
+              const totalComm = commPerDay * days
+              const totalPayable = Math.max(0, baseRent + extra - disc)
+              const estProfit = Math.max(0, totalPayable - totalComm)
+
+              return (
+                <div className="mt-3 rounded-[var(--radius-control)] border border-slate-200 bg-slate-50 p-3 space-y-1.5 text-xs text-slate-600">
+                  <div className="flex justify-between items-center font-medium">
+                    <span>Tiền thuê ({days} ngày):</span>
+                    <span className="font-mono text-slate-800">{baseRent.toLocaleString("vi-VN")}đ</span>
+                  </div>
+                  {extra > 0 && (
+                    <div className="flex justify-between items-center text-emerald-700">
+                      <span>Phụ thu / phí phát sinh:</span>
+                      <span className="font-mono font-semibold">+{extra.toLocaleString("vi-VN")}đ</span>
+                    </div>
+                  )}
+                  {disc > 0 && (
+                    <div className="flex justify-between items-center text-rose-600">
+                      <span>Giảm giá khách:</span>
+                      <span className="font-mono font-semibold">-{disc.toLocaleString("vi-VN")}đ</span>
+                    </div>
+                  )}
+                  {totalComm > 0 && (
+                    <div className="flex justify-between items-center text-amber-700">
+                      <span>Hoa hồng Home:</span>
+                      <span className="font-mono">-{totalComm.toLocaleString("vi-VN")}đ</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-1.5 border-t border-slate-200 text-sm font-bold text-slate-900">
+                    <span>Khách cần trả (Tổng thu):</span>
+                    <span className="text-blue-600 font-mono">{totalPayable.toLocaleString("vi-VN")}đ</span>
+                  </div>
+                  {totalComm > 0 && (
+                    <div className="flex justify-between items-center text-xs font-semibold text-emerald-700">
+                      <span>Lợi nhuận ròng dự kiến:</span>
+                      <span className="font-mono">{estProfit.toLocaleString("vi-VN")}đ</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             <EntityFormField label="Ghi chú">
               <Textarea
