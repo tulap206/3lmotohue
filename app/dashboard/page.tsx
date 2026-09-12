@@ -2174,32 +2174,6 @@ export default function DashboardPage() {
                       autoFocus
                     />
                   </EntityFormField>
-
-                  {/* Quick Preset Tags */}
-                  <div className="space-y-1.5">
-                    <p className="text-meta text-xs text-slate-500 font-medium">Gợi ý lý do nhanh:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[
-                        "Hiện tại toàn bộ xe đã được đặt kín",
-                        "Cửa hàng tạm ngưng phục vụ đợt lễ",
-                        "Tạm ngưng nhận thêm đơn hôm nay",
-                      ].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => setLockReason(preset)}
-                          className={cn(
-                            "text-xs px-2.5 py-1 rounded-[var(--radius-control)] border ui-transition",
-                            lockReason === preset
-                              ? "bg-rose-50 border-rose-300 text-rose-700 font-medium shadow-xs"
-                              : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                          )}
-                        >
-                          {preset}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </>
               ) : (
                 <div className="flex items-start gap-3 rounded-[var(--radius-control)] border border-emerald-200 bg-emerald-50/80 p-3.5">
