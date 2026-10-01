@@ -62,6 +62,7 @@ import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCa
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { Textarea } from "@/components/ui/textarea"
 import { buildRentalTermPayload } from "@/lib/rental-term"
+import { embedRentalDiscountInNotes } from "@/lib/rental-discount"
 import { extractRentalTimes, embedRentalTimes } from "@/lib/vehicle-timeline"
 import { useAuth } from "@/contexts/auth-context"
 import { logger } from "@/lib/logger"
@@ -455,6 +456,10 @@ export default function DashboardPage() {
       const homeNameVal = hasCommission ? formData.homeName.trim() : ""
       const rawNotes = formData.notes ? formData.notes.trim() : ""
       const notesWithTime = embedRentalTimes(rawNotes, formData.pickupTime || "08:00", formData.returnTime || "12:00")
+      const termNotesWithDiscount = buildRentalTermPayload(
+        "short",
+        embedRentalDiscountInNotes(notesWithTime, dividedDiscount)
+      ).notes
 
       const insertPayloads = targetVehicles.map((vehicle) => {
         const totalPrice = totalDays * vehicle.pricePerDay
@@ -472,7 +477,7 @@ export default function DashboardPage() {
           deposit: dividedDeposit,
           extraFees: 0,
           discount: dividedDiscount,
-          notes: notesWithTime,
+          notes: termNotesWithDiscount,
           revenue: 0,
           status: "pending",
           created_at: now,
@@ -488,10 +493,7 @@ export default function DashboardPage() {
         .select()
 
       if (error && (/discount/i.test(error.message || "") || /rentalTerm/i.test(error.message || ""))) {
-        const withoutCols = insertPayloads.map(({ rentalTerm: _omit, discount: _omitDisc, ...rest }) => ({
-          ...rest,
-          notes: buildRentalTermPayload("short", notesWithTime).notes
-        }))
+        const withoutCols = insertPayloads.map(({ rentalTerm: _omit, discount: _omitDisc, ...rest }) => rest)
         ;({ data, error } = await supabase.from('rentals').insert(withoutCols).select())
       }
 

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { getRentalTerm, buildRentalTermPayload, embedRentalTermInNotes } from '@/lib/rental-term'
+import { embedRentalDiscountInNotes, normalizeRentalDiscount } from '@/lib/rental-discount'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -190,7 +191,7 @@ export const fetchRentals = async () => {
     console.error('Error fetching rentals:', error)
     return []
   }
-  return data || []
+  return (data || []).map(normalizeRentalDiscount)
 }
 
 export const fetchAccessLogs = async () => {
@@ -209,7 +210,8 @@ export const fetchAccessLogs = async () => {
 // Insert/Update Rentals
 export const insertRental = async (rental: Omit<Rental, 'id' | 'created_at' | 'createdAt'>) => {
   const term = getRentalTerm(rental)
-  const termPayload = buildRentalTermPayload(term, rental.notes)
+  const notesWithDiscount = embedRentalDiscountInNotes(rental.notes, rental.discount)
+  const termPayload = buildRentalTermPayload(term, notesWithDiscount)
   const rentalWithTerm = { ...rental, ...termPayload }
 
   const { data, error } = await supabase
@@ -218,29 +220,32 @@ export const insertRental = async (rental: Omit<Rental, 'id' | 'created_at' | 'c
     .select()
 
   if (error) {
-    if (/rentalTerm/i.test(error.message || "")) {
-      const { rentalTerm: _omit, ...withoutCol } = rentalWithTerm
+    if (/rentalTerm|discount/i.test(error.message || "")) {
+      const { rentalTerm: _omitTerm, discount: _omitDiscount, ...withoutCols } = rentalWithTerm
       const { data: data2, error: error2 } = await supabase
         .from('rentals')
-        .insert([{ ...withoutCol, notes: embedRentalTermInNotes(rental.notes, term) }])
+        .insert([withoutCols])
         .select()
       if (error2) {
         console.error('Error inserting rental:', error2)
         throw error2
       }
-      return data2?.[0]
+      return data2?.[0] ? normalizeRentalDiscount(data2[0]) : data2?.[0]
     }
     console.error('Error inserting rental:', error)
     throw error
   }
-  return data?.[0]
+  return data?.[0] ? normalizeRentalDiscount(data[0]) : data?.[0]
 }
 
 export const updateRental = async (id: string, rental: Partial<Rental>) => {
   let payload = { ...rental }
+  if (rental.discount !== undefined && rental.notes !== undefined) {
+    payload.notes = embedRentalDiscountInNotes(rental.notes ?? "", rental.discount)
+  }
   if (rental.rentalTerm || rental.notes !== undefined) {
-    const term = getRentalTerm({ rentalTerm: rental.rentalTerm, notes: rental.notes })
-    const termPayload = buildRentalTermPayload(term, rental.notes ?? "")
+    const term = getRentalTerm({ rentalTerm: rental.rentalTerm, notes: payload.notes ?? rental.notes })
+    const termPayload = buildRentalTermPayload(term, payload.notes ?? rental.notes ?? "")
     payload = { ...payload, ...termPayload }
   }
 
@@ -251,24 +256,24 @@ export const updateRental = async (id: string, rental: Partial<Rental>) => {
     .select()
 
   if (error) {
-    if (/rentalTerm/i.test(error.message || "") && payload.rentalTerm) {
-      const { rentalTerm: _omit, ...withoutCol } = payload
-      const term = getRentalTerm({ rentalTerm: rental.rentalTerm, notes: rental.notes })
+    if (/rentalTerm|discount/i.test(error.message || "") && (payload.rentalTerm || payload.discount !== undefined)) {
+      const { rentalTerm: _omitTerm, discount: _omitDiscount, ...withoutCols } = payload
+      const term = getRentalTerm({ rentalTerm: rental.rentalTerm, notes: withoutCols.notes as string | undefined })
       const { data: data2, error: error2 } = await supabase
         .from('rentals')
-        .update({ ...withoutCol, notes: embedRentalTermInNotes(rental.notes, term) })
+        .update({ ...withoutCols, notes: embedRentalTermInNotes(withoutCols.notes as string | undefined, term) })
         .eq('id', id)
         .select()
       if (error2) {
         console.error('Error updating rental:', error2)
         throw error2
       }
-      return data2?.[0]
+      return data2?.[0] ? normalizeRentalDiscount(data2[0]) : data2?.[0]
     }
     console.error('Error updating rental:', error)
     throw error
   }
-  return data?.[0]
+  return data?.[0] ? normalizeRentalDiscount(data[0]) : data?.[0]
 }
 
 export const deleteRental = async (id: string) => {
