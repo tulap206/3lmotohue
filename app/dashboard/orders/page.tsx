@@ -64,6 +64,12 @@ import {
   stripRentalTermFromNotes,
   buildRentalTermPayload,
 } from "@/lib/rental-term"
+import {
+  embedRentalDiscountInNotes,
+  getRentalDiscount,
+  normalizeRentalDiscount,
+  stripRentalDiscountFromNotes,
+} from "@/lib/rental-discount"
 import { FleetTimelineView } from "@/components/dashboard/fleet-timeline-view"
 import { TodayHandoverSchedule } from "@/components/dashboard/today-handover-schedule"
 import { QuickAssignVehiclePopover } from "@/components/dashboard/quick-assign-vehicle-popover"
@@ -80,7 +86,11 @@ const WEB_BOOKING_NOTE_RE = /đặt trực tuyến từ website|\[source:web\]/i
 const UNASSIGNED_VEHICLE_ID = "00000000-0000-0000-0000-000000000000"
 
 function isWebBookingOrder(notes?: string | null): boolean {
-  return WEB_BOOKING_NOTE_RE.test(stripRentalTermFromNotes(notes))
+  return WEB_BOOKING_NOTE_RE.test(stripRentalDiscountFromNotes(stripRentalTermFromNotes(notes)))
+}
+
+function stripRentalMetadataFromNotes(notes?: string | null): string {
+  return stripRentalDiscountFromNotes(stripRentalTermFromNotes(notes)).replace(TIME_TAG_RE, "").trim()
 }
 
 function isUnassignedVehicle(order: { vehicleId?: string; licensePlate?: string }) {
@@ -658,7 +668,7 @@ export default function OrdersPage() {
         return order.revenue
       }
       const commissionTotal = (order.commissionHome || 0) * (order.totalDays || 0)
-      return Math.max(0, (order.totalPrice || 0) + (order.extraFees || 0) - (order.discount || 0) - commissionTotal)
+      return Math.max(0, (order.totalPrice || 0) + (order.extraFees || 0) - getRentalDiscount(order) - commissionTotal)
     }
     return null
   }
@@ -731,7 +741,7 @@ export default function OrdersPage() {
         const { data } = await supabase.from("rentals").select("*")
           .or(`customerName.ilike.%${t}%,vehicleName.ilike.%${t}%,licensePlate.ilike.%${t}%,rentalCode.ilike.%${t}%`)
           .limit(100)
-        setServerSearchOrders(data as RentalOrder[] || [])
+        setServerSearchOrders(((data || []).map(normalizeRentalDiscount) as RentalOrder[]))
       } catch { setServerSearchOrders(null) }
     }, 400)
   }
@@ -882,7 +892,7 @@ export default function OrdersPage() {
           deposit: dividedDeposit,
           extraFees: 0,
           discount: dividedDiscount,
-          notes: termPayload.notes,
+          notes: embedRentalDiscountInNotes(termPayload.notes, dividedDiscount),
           revenue: 0,
           status: "pending",
           created_at: now,
@@ -911,7 +921,7 @@ export default function OrdersPage() {
       if (data && data.length > 0) {
         const ordersWithCode = data.map((newRental) => {
           const rentalCode = generateRentalCodeFromUUID(customerName, newRental.licensePlate, startDateVN, newRental.id)
-          return { ...newRental, discount: dividedDiscount, rentalCode, rentalTerm: formData.rentalTerm }
+          return normalizeRentalDiscount({ ...newRental, discount: dividedDiscount, rentalCode, rentalTerm: formData.rentalTerm })
         })
         setOrders([...ordersWithCode, ...orders])
 
@@ -1159,8 +1169,8 @@ export default function OrdersPage() {
       returnTime: times.returnTime,
       deposit: formatMoneyInput(order.deposit.toString()),
       extraFees: formatMoneyInput(order.extraFees.toString()),
-      discount: formatMoneyInput((order.discount || 0).toString()),
-      notes: stripRentalTermFromNotes(order.notes).replace(TIME_TAG_RE, "").trim(),
+      discount: formatMoneyInput(getRentalDiscount(order).toString()),
+      notes: stripRentalMetadataFromNotes(order.notes),
       status: order.status,
       commissionHome: formatMoneyInput((order.commissionHome || 0).toString()),
       homeName: order.homeName || "",
@@ -1261,6 +1271,7 @@ export default function OrdersPage() {
         editFormData.returnTime
       )
       const termPayload = buildRentalTermPayload(editFormData.rentalTerm, notesWithTimes)
+      const notesWithDiscount = embedRentalDiscountInNotes(termPayload.notes, newDiscount)
       const nextStatus: RentalOrder["status"] =
         isUnassigning && editFormData.status === "active" ? "pending" : editFormData.status
       const updatePayload: Record<string, unknown> = {
@@ -1277,7 +1288,7 @@ export default function OrdersPage() {
           deposit: newDeposit,
           extraFees: newExtraFees,
           discount: newDiscount,
-          notes: termPayload.notes,
+          notes: notesWithDiscount,
           status: nextStatus,
           revenue: newRevenue,
           commissionHome: newCommissionHome,
@@ -1293,13 +1304,9 @@ export default function OrdersPage() {
         .update(updatePayload)
         .eq('id', editingOrder.id)
 
-      if (error && /discount/i.test(error.message || "")) {
-        const { discount: _omitDisc, ...withoutDiscount } = updatePayload
-        ;({ error } = await supabase.from('rentals').update(withoutDiscount).eq('id', editingOrder.id))
-      }
-      if (error && /rentalTerm/i.test(error.message || "")) {
-        const { rentalTerm: _omit, ...withoutCol } = updatePayload
-        ;({ error } = await supabase.from('rentals').update(withoutCol).eq('id', editingOrder.id))
+      if (error && /discount|rentalTerm/i.test(error.message || "")) {
+        const { discount: _omitDisc, rentalTerm: _omitTerm, ...withoutOptionalCols } = updatePayload
+        ;({ error } = await supabase.from('rentals').update(withoutOptionalCols).eq('id', editingOrder.id))
       }
       if (error && /received_at/i.test(error.message || "")) {
         const { received_at: _omitReceived, ...withoutReceived } = updatePayload
@@ -1328,7 +1335,7 @@ export default function OrdersPage() {
         deposit: newDeposit,
         extraFees: newExtraFees,
         discount: newDiscount,
-        notes: termPayload.notes,
+        notes: stripRentalDiscountFromNotes(notesWithDiscount),
         status: nextStatus,
         revenue: newRevenue,
         commissionHome: newCommissionHome,
@@ -1425,7 +1432,7 @@ export default function OrdersPage() {
         revenue = order.deposit + extraFees
       } else if (newStatus === "completed") {
         // Hoàn thành: trả cọc, thu tiền thuê + chi phí phát sinh - giảm giá - hoa hồng -> doanh thu = tiền thuê + extraFees - discount - commissionTotal
-        revenue = Math.max(0, order.totalPrice + extraFees - (order.discount || 0) - commissionTotal)
+        revenue = Math.max(0, order.totalPrice + extraFees - getRentalDiscount(order) - commissionTotal)
       }
       // pending và active chưa có doanh thu
       
@@ -2381,9 +2388,9 @@ export default function OrdersPage() {
                                     +{(order.extraFees || 0).toLocaleString("vi-VN")}đ phát sinh
                                   </span>
                                 )}
-                                {(order.discount || 0) > 0 && (
+                                {getRentalDiscount(order) > 0 && (
                                   <span className="text-[11px] font-semibold text-rose-600 tabular-nums whitespace-nowrap">
-                                    -{(order.discount || 0).toLocaleString("vi-VN")}đ giảm giá
+                                    -{getRentalDiscount(order).toLocaleString("vi-VN")}đ giảm giá
                                   </span>
                                 )}
                                 {order.deposit > 0 ? (
@@ -2567,9 +2574,9 @@ export default function OrdersPage() {
                               +{(order.extraFees || 0).toLocaleString("vi-VN")}đ phụ thu
                             </span>
                           )}
-                          {(order.discount || 0) > 0 && (
+                          {getRentalDiscount(order) > 0 && (
                             <span className="text-[11px] font-semibold text-rose-600 tabular-nums block whitespace-nowrap">
-                              -{(order.discount || 0).toLocaleString("vi-VN")}đ giảm
+                              -{getRentalDiscount(order).toLocaleString("vi-VN")}đ giảm
                             </span>
                           )}
                           {(() => {
@@ -2633,9 +2640,10 @@ export default function OrdersPage() {
             const o = viewingOrder
             const overdue = isOrderOverdue(o)
             const term = getRentalTerm(o)
-            const notesClean = stripRentalTermFromNotes(o.notes)
+            const notesClean = stripRentalMetadataFromNotes(o.notes)
+            const discount = getRentalDiscount(o)
             const commissionTotal = (o.commissionHome || 0) * (o.totalDays || 0)
-            const payable = Math.max(0, o.totalPrice + (o.extraFees || 0) - (o.discount || 0))
+            const payable = Math.max(0, o.totalPrice + (o.extraFees || 0) - discount)
             const modalNetProfit = getOrderNetProfit(o)
             return (
               <>
@@ -2727,8 +2735,8 @@ export default function OrdersPage() {
                     {o.extraFees > 0 && (
                       <OrderStat label="Phí phát sinh" value={`+${formatPrice(o.extraFees)}`} tone="amber" />
                     )}
-                    {(o.discount || 0) > 0 && (
-                      <OrderStat label="Giảm giá" value={`-${formatPrice(o.discount || 0)}`} tone="rose" />
+                    {discount > 0 && (
+                      <OrderStat label="Giảm giá" value={`-${formatPrice(discount)}`} tone="rose" />
                     )}
                     {commissionTotal > 0 && (
                       <OrderStat
@@ -2763,10 +2771,10 @@ export default function OrdersPage() {
                                 <span className="font-semibold text-emerald-600 tabular-nums shrink-0">+{formatPrice(o.extraFees)}</span>
                               </div>
                             )}
-                            {(o.discount || 0) > 0 && (
+                            {discount > 0 && (
                               <div className="flex justify-between gap-3 text-body">
                                 <span className="text-slate-500">Giảm giá cho khách</span>
-                                <span className="font-semibold text-rose-600 tabular-nums shrink-0">-{formatPrice(o.discount || 0)}</span>
+                                <span className="font-semibold text-rose-600 tabular-nums shrink-0">-{formatPrice(discount)}</span>
                               </div>
                             )}
                             {commissionTotal > 0 && (
