@@ -1,0 +1,15 @@
+---
+description: An toàn MCP và dữ liệu production trên toàn bộ dự án Desktop/Code
+alwaysApply: true
+---
+
+# An toàn MCP / production
+
+Tất cả dự án đang chạy dữ liệu thật.
+
+- Supabase MCP: chỉ `read_only=true`, đúng `project_ref` của repo đang mở; không cấu hình write ở user-level.
+- Không `apply_migration` / SQL ghi qua MCP trừ khi user yêu cầu rõ từng thao tác.
+- Không trộn DB thương hiệu cầm đồ; không dùng project PC02/DTV cho app cầm đồ.
+- Tiền tệ (đóng lãi, chuộc, quỹ, tất toán): Transaction/RPC trong app — không SQL tay.
+- Vercel MCP: ưu tiên đọc logs; không promote/đổi env nhạy cảm nếu user không yêu cầu.
+- Nghi ngờ → dừng, hỏi user, mặc định chỉ đọc.
