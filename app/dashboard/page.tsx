@@ -59,6 +59,7 @@ import { Input } from "@/components/ui/input"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, parseDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
+import { calcCashOnHand } from "@/lib/finance/cash-on-hand"
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { Textarea } from "@/components/ui/textarea"
 import { buildRentalTermPayload } from "@/lib/rental-term"
@@ -602,18 +603,8 @@ export default function DashboardPage() {
       const totalRevenue = calcOperatingRevenue(rentalRevenue, transactions)
       const totalProfit = calcOperatingProfit(rentalRevenue, transactions)
 
-      // Tiền quỹ còn lại = Doanh thu thuê + Tổng thu khác - Tổng chi khác
-      const totalIncome = transactions
-        .filter((tx: any) => tx.type === 'income')
-        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-      const totalExpense = transactions
-        .filter((tx: any) => tx.type === 'expense')
-        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-      
-      const rentalOnly = totalRevenue - transactions
-        .filter((tx: any) => tx.type === 'income' && !isCapitalTransaction(tx))
-        .reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0)
-      const cashOnHand = rentalOnly + totalIncome - totalExpense
+      // Tiền quỹ còn lại = DT thuê tích lũy + mọi thu − mọi chi (single source)
+      const cashOnHand = calcCashOnHand(rentalRevenue, transactions)
 
       setStats({
         totalVehicles: vehicles.length,

@@ -7,6 +7,7 @@ import { supabase, fetchTransactions, fetchUserDisplayNames, getUserDisplayName,
 import { logger } from "@/lib/logger"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
+import { calcCashOnHand, sumCompletedRentalRevenue } from "@/lib/finance/cash-on-hand"
 import { buildCommissionHomeReport, sumCommissionRows, type CommissionHomeRow } from "@/lib/commission-home"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -153,8 +154,7 @@ export default function ReportsPage() {
       const totalExpense = transactions
         .filter((tx) => tx.type === 'expense')
         .reduce((sum, tx) => sum + tx.amount, 0)
-      // Quỹ = DT thuê tích lũy + mọi thu − mọi chi (không dùng DT theo kỳ lọc)
-      const cashOnHand = reportData.allTimeRentalRevenue + totalIncome - totalExpense
+      const cashOnHand = calcCashOnHand(reportData.allTimeRentalRevenue, transactions)
       const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses
       const partnerShareTotal = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 2) : 0
       const remainingToDistribute = reportData.totalProfit - dividendExpenses
@@ -572,9 +572,7 @@ export default function ReportsPage() {
         .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
 
       // Quỹ tích lũy luôn theo toàn bộ đơn hoàn tất (không phụ thuộc bộ lọc kỳ)
-      const allTimeRentalRevenue = (rentals as any[])
-        .filter((r: any) => r.status === "completed")
-        .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+      const allTimeRentalRevenue = sumCompletedRentalRevenue(rentals as any[])
       
       // P&L vận hành: bỏ qua góp vốn / mua xe
       const totalRevenue = calcOperatingRevenue(rentalRevenue, filteredTx)
@@ -808,8 +806,7 @@ export default function ReportsPage() {
     .filter((tx) => tx.type === 'expense')
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  // Quỹ tích lũy luôn all-time — khớp card Tổng quan (không bị kỳ lọc kéo âm)
-  const cashOnHand = reportData.allTimeRentalRevenue + totalIncome - totalExpense
+  const cashOnHand = calcCashOnHand(reportData.allTimeRentalRevenue, transactions)
   const formatPrice = (value: number) => `${value.toLocaleString("vi-VN")} đ`
 
   const periodLabelText = filterPeriod === "this-month"
@@ -1885,9 +1882,7 @@ export default function ReportsPage() {
           .filter(isDividendTransaction)
           .reduce((sum, tx) => sum + tx.amount, 0)
         
-        // NOTE: reportData.totalRevenue/Profit = P&L vận hành theo kỳ lọc
-        // Quỹ tích lũy dùng allTimeRentalRevenue để khớp Tổng quan
-        const cashOnHand = reportData.allTimeRentalRevenue + totalIncome - totalExpense
+        const cashOnHand = calcCashOnHand(reportData.allTimeRentalRevenue, transactions)
         
         // Operating profit before salaries (Gross Operating Profit)
         const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses

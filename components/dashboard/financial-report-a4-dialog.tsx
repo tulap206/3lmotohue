@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { QUY79_BUSINESS } from "@/lib/business-info"
 import { Printer, Download, X, Building2, TrendingUp, DollarSign, Wallet, Users, Bike, CheckCircle2, ShieldCheck } from "lucide-react"
 import { isSalaryTransaction, isDividendTransaction, isCapitalTransaction } from "@/lib/transaction-finance"
+import { calcCashOnHand } from "@/lib/finance/cash-on-hand"
 import type { Transaction } from "@/lib/supabase"
 import type { CommissionHomeRow } from "@/lib/commission-home"
 
@@ -91,7 +92,7 @@ export function FinancialReportA4Dialog({
       }
     })
 
-  const cashOnHand = (reportData.allTimeRentalRevenue || 0) + totalIncome - totalExpense
+  const cashOnHand = calcCashOnHand(reportData.allTimeRentalRevenue || 0, transactions)
   const totalOperatingExpenses = salaryExpenses + maintenanceExp + fuelExp + otherOperatingExp
 
   const partnerShareTotal = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 2) : 0
