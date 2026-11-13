@@ -183,7 +183,7 @@ export default function ReportsPage() {
         [],
         ["3. DÒNG TIỀN THỰC TẾ & QUỸ TIỀN MẶT"],
         ["Hạng mục", "Số tiền (VNĐ)", "Ghi chú"],
-        ["Tổng tiền thu vào (gồm cả vốn)", `+${(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ`, "Tiền thực thu"],
+        ["Tổng tiền thu vào (gồm cả vốn)", `+${(reportData.allTimeRentalRevenue + totalIncome).toLocaleString("vi-VN")} đ`, "Tiền thực thu"],
         ["Tổng tiền chi ra (gồm cả lương/vốn)", `-${totalExpense.toLocaleString("vi-VN")} đ`, "Tiền thực chi"],
         ["Cổ tức đã chia", `-${dividendExpenses.toLocaleString("vi-VN")} đ`, "Đã tạm ứng cho cổ đông"],
         ["Tiền mặt tồn quỹ hiện có", `${cashOnHand.toLocaleString("vi-VN")} đ`, "Số dư khả dụng"],
@@ -2008,7 +2008,7 @@ export default function ReportsPage() {
                           <div className="flex justify-between items-center text-slate-600">
                             <span className="text-meta">Tổng tiền thu vào:</span>
                             <span className="font-semibold text-emerald-700 tabular-nums">
-                              +{(rentalOnly + totalIncome).toLocaleString("vi-VN")} đ
+                              +{(reportData.allTimeRentalRevenue + totalIncome).toLocaleString("vi-VN")} đ
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-slate-600">

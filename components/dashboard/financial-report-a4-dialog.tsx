@@ -397,7 +397,7 @@ export function FinancialReportA4Dialog({
                 <div className="border border-slate-200 rounded-lg p-3 bg-slate-50/50 text-xs space-y-2">
                   <div className="flex justify-between items-center text-slate-600">
                     <span>Tổng tiền thu vào (Thuê + Khác):</span>
-                    <span className="font-bold text-emerald-700">+{formatMoney(rentalOnly + totalIncome)}</span>
+                    <span className="font-bold text-emerald-700">+{formatMoney((reportData.allTimeRentalRevenue || 0) + totalIncome)}</span>
                   </div>
                   <div className="flex justify-between items-center text-slate-600">
                     <span>Tổng tiền chi ra (Chi phí + Vốn + Cổ tức):</span>
