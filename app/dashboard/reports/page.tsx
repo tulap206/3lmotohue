@@ -6,8 +6,10 @@ import { useAuth } from "@/contexts/auth-context"
 import { supabase, fetchTransactions, fetchUserDisplayNames, getUserDisplayName, insertTransaction, deleteTransaction, updateTransaction, Transaction } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
-import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
-import { calcCashOnHand, sumCompletedRentalRevenue } from "@/lib/finance/cash-on-hand"
+import { isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
+import { calcCashOnHand } from "@/lib/finance/cash-on-hand"
+import { calcReportFinanceKpis } from "@/lib/domain/finance/report-kpis"
+import { parseVietnamDate } from "@/lib/format-date"
 import { debounce } from "@/lib/debounce"
 import { buildCommissionHomeReport, sumCommissionRows, type CommissionHomeRow } from "@/lib/commission-home"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -477,49 +479,22 @@ export default function ReportsPage() {
         transactions: fetchedTransactions.length,
       })
 
-      // Calculate date ranges
-      const getPeriodDateRange = (period: string, customStart: string, customEnd: string) => {
-        const now = new Date()
-        let start = new Date(0)
-        let end = new Date(2100, 0, 1)
-
-        if (period === "this-month") {
-          start = new Date(now.getFullYear(), now.getMonth(), 1)
-          start.setHours(0, 0, 0, 0)
-          end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-          end.setHours(23, 59, 59, 999)
-        } else if (period === "last-month") {
-          start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-          start.setHours(0, 0, 0, 0)
-          end = new Date(now.getFullYear(), now.getMonth(), 0)
-          end.setHours(23, 59, 59, 999)
-        } else if (period === "this-year") {
-          start = new Date(now.getFullYear(), 0, 1)
-          start.setHours(0, 0, 0, 0)
-          end = new Date(now.getFullYear(), 11, 31)
-          end.setHours(23, 59, 59, 999)
-        } else if (period === "custom") {
-          if (customStart) {
-            start = new Date(customStart + "T00:00:00")
-          }
-          if (customEnd) {
-            end = new Date(customEnd + "T23:59:59")
-          }
-        }
-        return { start, end }
-      }
-
-      // Helper to parse DD/MM/YYYY format
-      const parseVietnamDate = (dateStr: string): Date => {
-        if (!dateStr) return new Date(0)
-        const parts = dateStr.split("/")
-        if (parts.length === 3) {
-          return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-        }
-        return new Date(dateStr)
-      }
-
-      const { start, end } = getPeriodDateRange(filterPeriod, startDate, endDate)
+      const {
+        start,
+        end,
+        filteredRentals,
+        filteredTx,
+        rentalRevenue,
+        allTimeRentalRevenue,
+        totalRevenue,
+        totalProfit,
+      } = calcReportFinanceKpis(
+        rentals as any[],
+        fetchedTransactions,
+        filterPeriod,
+        startDate,
+        endDate
+      )
 
       // Cửa sổ lấp đầy: không dùng 1970→2100 (lọc "Tất cả") vì mẫu số quá lớn → luôn ra 0%.
       const todayEnd = new Date()
@@ -544,33 +519,10 @@ export default function ReportsPage() {
         Math.round((utilEnd.getTime() - utilStart.getTime()) / msPerDay) + 1
       )
 
-      // Filter rentals & transactions in this period
-      const filteredRentals = rentals.filter((r: any) => {
-        const rDate = parseVietnamDate(r.endDate || r.startDate)
-        return rDate >= start && rDate <= end
-      })
-
-      const filteredTx = fetchedTransactions.filter((tx: any) => {
-        const txDate = new Date(tx.timestamp || tx.created_at || "")
-        return txDate >= start && txDate <= end
-      })
-
       // Calculate statistics
       const totalCustomers = customers.length || 0
       const totalVehicles = vehicles.length || 0
       const totalRentals = filteredRentals.length || 0
-
-      // Rental revenue (completed orders; prefer revenue field)
-      const rentalRevenue = filteredRentals
-        .filter((r: any) => r.status === "completed")
-        .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
-
-      // Quỹ tích lũy luôn theo toàn bộ đơn hoàn tất (không phụ thuộc bộ lọc kỳ)
-      const allTimeRentalRevenue = sumCompletedRentalRevenue(rentals as any[])
-      
-      // P&L vận hành: bỏ qua góp vốn / mua xe
-      const totalRevenue = calcOperatingRevenue(rentalRevenue, filteredTx)
-      const totalProfit = calcOperatingProfit(rentalRevenue, filteredTx)
       
       const totalIncomeFromTransactions = filteredTx
         .filter((tx: any) => tx.type === 'income')
