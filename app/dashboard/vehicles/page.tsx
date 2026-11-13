@@ -2445,17 +2445,21 @@ export default function VehiclesPage() {
 
         return (
           <Dialog open={!!selectedMapVehicle} onOpenChange={(open) => !open && setSelectedMapVehicle(null)}>
-            <DialogContent className="w-[95vw] sm:max-w-xl p-0 overflow-hidden rounded-[var(--radius-container)] bg-white shadow-2xl border-0">
-              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-rose-500 animate-pulse" />
-                    <DialogTitle className="font-bold text-lg text-white">{selectedMapVehicle.name}</DialogTitle>
+            <DialogContent className="w-[95vw] sm:max-w-xl p-0 max-h-[min(92dvh,calc(100dvh-1rem))] overflow-y-auto rounded-[var(--radius-container)] bg-white shadow-2xl border-0">
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 flex items-center justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <MapPin className="w-5 h-5 text-rose-500 animate-pulse shrink-0" />
+                    <DialogTitle className="font-bold text-lg text-white truncate">{selectedMapVehicle.name}</DialogTitle>
                     <span className="text-xs px-2 py-0.5 rounded-md bg-white/10 border border-white/15 font-mono">{selectedMapVehicle.licensePlate}</span>
                   </div>
                   <p className="text-xs text-slate-300">Định vị & Bản đồ vị trí xe hiện tại</p>
                 </div>
-                <button onClick={() => setSelectedMapVehicle(null)} className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition">
+                <button
+                  onClick={() => setSelectedMapVehicle(null)}
+                  className="h-11 w-11 touch-target inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition shrink-0"
+                  aria-label="Đóng"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>

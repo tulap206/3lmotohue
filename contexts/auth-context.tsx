@@ -16,6 +16,14 @@ export interface User {
     canDelete: boolean
     canBackup?: boolean
     canViewAccessHistory?: boolean
+    canAccessDashboard?: boolean
+    canAccessVehicles?: boolean
+    canAccessCustomers?: boolean
+    canAccessOrders?: boolean
+    canAccessMaintenance?: boolean
+    canAccessReports?: boolean
+    canAccessSettings?: boolean
+    canManageUsers?: boolean
   }
 }
 

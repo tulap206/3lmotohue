@@ -56,7 +56,7 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 relative bg-slate-950 overflow-hidden font-sans"
+      className="min-h-[100dvh] flex items-center justify-center px-safe py-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-6 relative bg-slate-950 overflow-hidden font-sans"
     >
       {/* Unified Background from Landing Page */}
       <div className="absolute inset-0 z-0">
@@ -65,7 +65,7 @@ export default function LoginPage() {
           alt="3L Moto Background"
           fill
           priority
-          className="object-cover opacity-35 filter brightness-[0.6] scale-102"
+          className="object-cover opacity-35 filter brightness-[0.6] scale-[1.02]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950" />
         
@@ -82,7 +82,7 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="flex flex-col items-center mb-8"
         >
-          <div className="relative w-22 h-22 mb-4 group">
+          <div className="relative size-20 mb-4 group">
             <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl group-hover:bg-blue-500/30 transition-all duration-300" />
             <Image
               src="/logo.jpg"
@@ -143,9 +143,10 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-11 w-11 touch-target inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>

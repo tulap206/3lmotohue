@@ -2129,15 +2129,17 @@ export default function OrdersPage() {
         </Dialog>
 
         {viewMode === "timeline" ? (
-          <FleetTimelineView
-            vehicles={vehicles}
-            rentals={orders}
-            onSelectOrder={(rental) => {
-              const fullOrder = orders.find((o) => o.id === rental.id) || (rental as RentalOrder)
-              openEditDialog(fullOrder)
-            }}
-            onQuickBookVehicle={handleQuickBookFromTimeline}
-          />
+          <div className="min-w-0 max-w-full overflow-x-clip">
+            <FleetTimelineView
+              vehicles={vehicles}
+              rentals={orders}
+              onSelectOrder={(rental) => {
+                const fullOrder = orders.find((o) => o.id === rental.id) || (rental as RentalOrder)
+                openEditDialog(fullOrder)
+              }}
+              onQuickBookVehicle={handleQuickBookFromTimeline}
+            />
+          </div>
         ) : (
           <div className="space-y-4">
             <ModuleKpiGrid columns={5}>

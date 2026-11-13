@@ -139,9 +139,9 @@ export function FleetTimelineView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-w-0 max-w-full">
       {/* 1. Header Toolbar & Thống kê nhanh */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-4">
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-4 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -179,7 +179,7 @@ export function FleetTimelineView({
                 placeholder="Tìm tên xe, biển số..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs rounded-xl bg-slate-50"
+                className="pl-9 h-11 text-body rounded-xl bg-slate-50"
               />
             </div>
 
@@ -209,7 +209,7 @@ export function FleetTimelineView({
               variant="outline"
               size="sm"
               onClick={handleGoToday}
-              className="h-9 px-3 rounded-xl text-xs font-bold border-slate-300 hover:bg-blue-50 hover:text-blue-700 transition"
+              className="h-11 px-3 rounded-xl text-label font-bold border-slate-300 hover:bg-blue-50 hover:text-blue-700 transition"
             >
               Hôm nay
             </Button>
@@ -219,7 +219,7 @@ export function FleetTimelineView({
                 variant="outline"
                 size="icon"
                 onClick={handlePrevPeriod}
-                className="h-9 w-9 rounded-xl border-slate-300"
+                className="h-11 w-11 rounded-xl border-slate-300 touch-target"
                 title="Lùi 7 ngày"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -232,7 +232,7 @@ export function FleetTimelineView({
                 variant="outline"
                 size="icon"
                 onClick={handleNextPeriod}
-                className="h-9 w-9 rounded-xl border-slate-300"
+                className="h-11 w-11 rounded-xl border-slate-300 touch-target"
                 title="Tiến 7 ngày"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -243,8 +243,8 @@ export function FleetTimelineView({
       </div>
 
       {/* 2. Timeline Grid Matrix */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto max-h-[650px] relative">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-w-0 max-w-full">
+        <div className="overflow-x-auto overscroll-x-contain max-h-[min(650px,70dvh)] relative min-w-0">
           <table className="w-full border-collapse text-xs select-none">
             {/* Header: Dates */}
             <thead className="sticky top-0 z-30 bg-slate-900 text-white shadow-md">
@@ -434,7 +434,7 @@ export function FleetTimelineView({
       {/* 3. Modal xem chi tiết đơn khi bấm vào thanh Gantt */}
       {selectedRental && (
         <Dialog open={Boolean(selectedRental)} onOpenChange={(open) => !open && setSelectedRental(null)}>
-          <DialogContent className="sm:max-w-md p-5 rounded-2xl bg-white shadow-2xl">
+          <DialogContent className="w-[95vw] sm:max-w-md p-5 rounded-2xl bg-white shadow-2xl max-h-[85dvh] overflow-y-auto">
             <DialogHeader className="pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <span

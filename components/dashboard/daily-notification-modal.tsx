@@ -106,12 +106,12 @@ export function DailyNotificationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[95vw] sm:max-w-2xl p-0 overflow-hidden rounded-[var(--radius-container)] bg-white shadow-2xl border-0">
+      <DialogContent className="w-[95vw] sm:max-w-2xl p-0 max-h-[min(90dvh,calc(100dvh-1rem))] overflow-y-auto rounded-[var(--radius-container)] bg-white shadow-2xl border-0">
         {/* Banner Top Header */}
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-5 sm:p-6 relative overflow-hidden">
           <div className="absolute -right-8 -top-8 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="relative z-10 flex items-start justify-between gap-4">
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-blue-200">
                 <Bell className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
                 <span>Nhắc nhở công việc ngày {todayStr}</span>
@@ -125,8 +125,9 @@ export function DailyNotificationModal({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition"
+              className="h-11 w-11 touch-target inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition shrink-0"
               title="Đóng"
+              aria-label="Đóng"
             >
               <X className="w-4 h-4" />
             </button>

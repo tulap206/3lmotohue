@@ -20,7 +20,7 @@ import {
   Camera,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Dialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -58,6 +58,18 @@ export function DashboardSidebar({ children }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const prevHtml = document.documentElement.style.overflow
+    const prevBody = document.body.style.overflow
+    document.documentElement.style.overflow = "hidden"
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.documentElement.style.overflow = prevHtml
+      document.body.style.overflow = prevBody
+    }
+  }, [mobileOpen])
 
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -147,15 +159,15 @@ export function DashboardSidebar({ children }: SidebarProps) {
 
   const visibleItems = menuItems.filter((item) => {
     if (user?.role === "admin") return true
-    const perms = (user?.permissions || {}) as any
+    const perms = user?.permissions
 
-    if (item.href === "/dashboard") return perms.canAccessDashboard !== false
-    if (item.href === "/dashboard/vehicles") return perms.canAccessVehicles !== false
-    if (item.href === "/dashboard/customers") return perms.canAccessCustomers !== false
-    if (item.href === "/dashboard/orders") return perms.canAccessOrders !== false
-    if (item.href === "/dashboard/maintenance") return perms.canAccessMaintenance !== false
-    if (item.href === "/dashboard/reports") return perms.canAccessReports !== false
-    if (item.href === "/dashboard/access-history") return !!perms.canViewAccessHistory
+    if (item.href === "/dashboard") return perms?.canAccessDashboard !== false
+    if (item.href === "/dashboard/vehicles") return perms?.canAccessVehicles !== false
+    if (item.href === "/dashboard/customers") return perms?.canAccessCustomers !== false
+    if (item.href === "/dashboard/orders") return perms?.canAccessOrders !== false
+    if (item.href === "/dashboard/maintenance") return perms?.canAccessMaintenance !== false
+    if (item.href === "/dashboard/reports") return perms?.canAccessReports !== false
+    if (item.href === "/dashboard/access-history") return !!perms?.canViewAccessHistory
 
     return !("adminOnly" in item && item.adminOnly)
   })
@@ -283,7 +295,7 @@ export function DashboardSidebar({ children }: SidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 p-0 rounded-[var(--radius-control)] hover:bg-slate-100 touch-target shrink-0 text-slate-700"
+              className="h-11 w-11 min-h-11 min-w-11 p-0 rounded-[var(--radius-control)] hover:bg-slate-100 touch-target shrink-0 text-slate-700"
               onClick={() => setMobileOpen(true)}
               aria-label="Mở menu"
             >
@@ -304,10 +316,10 @@ export function DashboardSidebar({ children }: SidebarProps) {
             <button
               type="button"
               onClick={() => setIsProfileOpen(true)}
-              className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 ui-transition shrink-0 touch-target"
+              className="flex items-center justify-center h-11 w-11 min-h-11 min-w-11 p-0 rounded-full hover:bg-slate-100 ui-transition shrink-0 touch-target"
               aria-label="Xem thông tin cá nhân"
             >
-              <Avatar className="h-8 w-8 shrink-0 border border-slate-200">
+              <Avatar className="h-9 w-9 shrink-0 border border-slate-200">
                 {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover" />}
                 <AvatarFallback className="bg-blue-600 text-white text-[11px] font-bold uppercase">
                   {user.displayName.charAt(0)}

@@ -649,7 +649,7 @@ export function ModulePagination({
         >
           Trước
         </Button>
-        <div className="flex items-center gap-1 overflow-x-auto max-w-[calc(100vw-135px)] sm:max-w-none scrollbar-none py-0.5">
+        <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0 max-w-full scrollbar-none py-0.5">
           {pages.map((p, idx) =>
             p === "ellipsis" ? (
               <span key={`e-${idx}`} className="text-slate-400 text-meta px-1 select-none">

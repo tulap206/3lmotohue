@@ -1334,14 +1334,14 @@ export default function DashboardPage() {
                                 <div className="flex gap-1 justify-center">
                                   <button
                                     onClick={() => handleEditTx(tx)}
-                                    className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-[var(--radius-control)] transition"
+                                    className="h-11 w-11 touch-target inline-flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-[var(--radius-control)] transition"
                                     title="Sửa"
                                   >
                                     <Edit2 className="w-4 h-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteTx(tx)}
-                                    className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[var(--radius-control)] transition"
+                                    className="h-11 w-11 touch-target inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[var(--radius-control)] transition"
                                     title="Xoá"
                                   >
                                     <Trash2 className="w-4 h-4" />

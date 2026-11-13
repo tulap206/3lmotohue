@@ -856,9 +856,14 @@ export default function ReportsPage() {
 
   return (
     <ModulePageShell module="rental">
-      <div className="flex flex-wrap items-center justify-end gap-2 w-full">
-        <Select value={filterPeriod} onValueChange={(val) => setFilterPeriod(val as any)}>
-          <SelectTrigger className="w-[180px] bg-white border-slate-300 rounded-[var(--radius-control)] h-11 text-body font-semibold">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-end gap-2 w-full min-w-0">
+        <Select
+          value={filterPeriod}
+          onValueChange={(val) =>
+            setFilterPeriod(val as "all" | "this-month" | "last-month" | "this-year" | "custom")
+          }
+        >
+          <SelectTrigger className="w-full sm:w-[180px] bg-white border-slate-300 rounded-[var(--radius-control)] h-11 text-body font-semibold">
             <SelectValue placeholder="Chọn kỳ báo cáo" />
           </SelectTrigger>
           <SelectContent className="bg-white">
@@ -871,19 +876,19 @@ export default function ReportsPage() {
         </Select>
 
         {filterPeriod === "custom" && (
-          <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-[var(--radius-control)] px-2.5 h-11">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 bg-white border border-slate-300 rounded-[var(--radius-control)] px-2.5 py-1.5 sm:py-0 sm:h-11 w-full sm:w-auto min-w-0">
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
+              className="w-full min-w-0 sm:w-[135px] h-11 sm:h-8 border-0 p-0 text-body bg-transparent focus-visible:ring-0"
             />
-            <span className="text-meta text-slate-400 font-bold">→</span>
+            <span className="text-meta text-slate-400 font-bold text-center sm:text-left">→</span>
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-[135px] h-8 border-0 p-0 text-sm bg-transparent focus-visible:ring-0"
+              className="w-full min-w-0 sm:w-[135px] h-11 sm:h-8 border-0 p-0 text-body bg-transparent focus-visible:ring-0"
             />
           </div>
         )}
@@ -894,7 +899,7 @@ export default function ReportsPage() {
           size="icon"
           onClick={handleManualRefresh}
           disabled={isRefreshing || loading}
-          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
+          className="h-11 w-11 p-0 flex items-center justify-center shrink-0 self-end sm:self-auto bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-[var(--radius-control)] shadow-sm ui-transition hover:border-slate-400"
           title="Tải lại dữ liệu"
           aria-label="Tải lại dữ liệu"
         >
@@ -1366,14 +1371,14 @@ export default function ReportsPage() {
                               <div className="flex gap-1 justify-center">
                                 <button
                                   onClick={() => handleEditTransaction(tx)}
-                                  className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-[var(--radius-control)] transition"
+                                  className="h-11 w-11 touch-target inline-flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-[var(--radius-control)] transition"
                                   title="Sửa"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteTransaction(tx)}
-                                  className="h-9 w-9 inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[var(--radius-control)] transition"
+                                  className="h-11 w-11 touch-target inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[var(--radius-control)] transition"
                                   title="Xoá"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
