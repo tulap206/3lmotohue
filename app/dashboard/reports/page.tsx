@@ -44,6 +44,8 @@ interface ReportData {
   totalRentals: number
   totalRevenue: number
   totalProfit: number
+  /** Doanh thu thuê tích lũy (mọi kỳ) — dùng cho số dư quỹ, khớp Tổng quan */
+  allTimeRentalRevenue: number
   activeRentals: number
   vehiclesInMaintenance: number
   monthlyRevenue: Array<{ month: string; revenue: number }>
@@ -151,10 +153,8 @@ export default function ReportsPage() {
       const totalExpense = transactions
         .filter((tx) => tx.type === 'expense')
         .reduce((sum, tx) => sum + tx.amount, 0)
-      const rentalOnly = reportData.totalRevenue - transactions
-        .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
-        .reduce((sum, tx) => sum + tx.amount, 0)
-      const cashOnHand = rentalOnly + totalIncome - totalExpense
+      // Quỹ = DT thuê tích lũy + mọi thu − mọi chi (không dùng DT theo kỳ lọc)
+      const cashOnHand = reportData.allTimeRentalRevenue + totalIncome - totalExpense
       const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses
       const partnerShareTotal = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 2) : 0
       const remainingToDistribute = reportData.totalProfit - dividendExpenses
@@ -570,6 +570,11 @@ export default function ReportsPage() {
       const rentalRevenue = filteredRentals
         .filter((r: any) => r.status === "completed")
         .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
+
+      // Quỹ tích lũy luôn theo toàn bộ đơn hoàn tất (không phụ thuộc bộ lọc kỳ)
+      const allTimeRentalRevenue = (rentals as any[])
+        .filter((r: any) => r.status === "completed")
+        .reduce((sum: number, r: any) => sum + (r.revenue || r.totalPrice || 0), 0)
       
       // P&L vận hành: bỏ qua góp vốn / mua xe
       const totalRevenue = calcOperatingRevenue(rentalRevenue, filteredTx)
@@ -723,6 +728,7 @@ export default function ReportsPage() {
         totalRentals,
         totalRevenue,
         totalProfit,
+        allTimeRentalRevenue,
         activeRentals,
         vehiclesInMaintenance,
         monthlyRevenue,
@@ -745,6 +751,7 @@ export default function ReportsPage() {
         totalRentals: 0,
         totalRevenue: 0,
         totalProfit: 0,
+        allTimeRentalRevenue: 0,
         activeRentals: 0,
         vehiclesInMaintenance: 0,
         monthlyRevenue: [
@@ -801,10 +808,8 @@ export default function ReportsPage() {
     .filter((tx) => tx.type === 'expense')
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const rentalOnly = reportData.totalRevenue - transactions
-    .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
-    .reduce((sum, tx) => sum + tx.amount, 0)
-  const cashOnHand = rentalOnly + totalIncome - totalExpense
+  // Quỹ tích lũy luôn all-time — khớp card Tổng quan (không bị kỳ lọc kéo âm)
+  const cashOnHand = reportData.allTimeRentalRevenue + totalIncome - totalExpense
   const formatPrice = (value: number) => `${value.toLocaleString("vi-VN")} đ`
 
   const periodLabelText = filterPeriod === "this-month"
@@ -1880,11 +1885,9 @@ export default function ReportsPage() {
           .filter(isDividendTransaction)
           .reduce((sum, tx) => sum + tx.amount, 0)
         
-        // NOTE: reportData.totalRevenue/Profit = P&L vận hành (không gồm góp vốn/mua xe/chia cổ tức)
-        const rentalOnly = reportData.totalRevenue - transactions
-          .filter((tx) => tx.type === 'income' && !isCapitalTransaction(tx))
-          .reduce((sum, tx) => sum + tx.amount, 0)
-        const cashOnHand = rentalOnly + totalIncome - totalExpense
+        // NOTE: reportData.totalRevenue/Profit = P&L vận hành theo kỳ lọc
+        // Quỹ tích lũy dùng allTimeRentalRevenue để khớp Tổng quan
+        const cashOnHand = reportData.allTimeRentalRevenue + totalIncome - totalExpense
         
         // Operating profit before salaries (Gross Operating Profit)
         const operatingProfitBeforeSalary = reportData.totalProfit + salaryExpenses

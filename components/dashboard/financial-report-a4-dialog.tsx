@@ -15,6 +15,7 @@ interface ReportData {
   totalRentals: number
   totalRevenue: number
   totalProfit: number
+  allTimeRentalRevenue: number
   activeRentals: number
   vehiclesInMaintenance: number
   monthlyRevenue: Array<{ month: string; revenue: number }>
@@ -90,13 +91,7 @@ export function FinancialReportA4Dialog({
       }
     })
 
-  const rentalOnly =
-    reportData.totalRevenue -
-    transactions
-      .filter((tx) => tx.type === "income" && !isCapitalTransaction(tx))
-      .reduce((sum, tx) => sum + (tx.amount || 0), 0)
-
-  const cashOnHand = rentalOnly + totalIncome - totalExpense
+  const cashOnHand = (reportData.allTimeRentalRevenue || 0) + totalIncome - totalExpense
   const totalOperatingExpenses = salaryExpenses + maintenanceExp + fuelExp + otherOperatingExp
 
   const partnerShareTotal = reportData.totalProfit > 0 ? Math.floor(reportData.totalProfit / 2) : 0
