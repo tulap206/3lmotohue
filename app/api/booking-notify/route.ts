@@ -38,16 +38,17 @@ export async function POST(request: NextRequest) {
 
     // 2. Send Telegram notification
     try {
-      const telegramDetails = `
-👤 <b>Khách hàng:</b> ${customerName}
-📞 <b>Số điện thoại:</b> ${phone}
-🏍️ <b>Xe đặt:</b> ${vehicleName} ${licensePlate ? `(${licensePlate})` : ''}
-📅 <b>Thời gian thuê:</b> ${startDate} ➔ ${endDate} (${totalDays} ngày)
-💰 <b>Tổng tiền tạm tính:</b> ${formatMoney(totalPrice)}
-📝 <b>Ghi chú:</b> ${notes || 'Đặt qua landing page 3L Moto'}
-`.trim()
+      // Dùng *bold* — sendTelegramNotification escape HTML rồi mới chuyển *…* → <b>
+      const telegramDetails = [
+        `Khách hàng: *${customerName}*`,
+        `Số điện thoại: *${phone || "—"}*`,
+        `Xe đặt: *${vehicleName}*${licensePlate ? ` (${licensePlate})` : ""}`,
+        `Thời gian thuê: *${startDate}* → *${endDate}* (${totalDays} ngày)`,
+        `Tổng tiền tạm tính: *${formatMoney(totalPrice)}*`,
+        `Ghi chú: ${notes || "Đặt qua landing page 3L Moto"}`,
+      ].join("\n")
 
-      await sendTelegramNotification('ĐƠN ĐẶT XE MỚI TỪ WEBSITE', telegramDetails)
+      await sendTelegramNotification("ĐƠN ĐẶT XE MỚI TỪ WEBSITE", telegramDetails)
     } catch (teleErr) {
       console.warn('Could not send Telegram notification for web booking:', teleErr)
     }

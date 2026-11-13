@@ -3,14 +3,15 @@ import { verifyJWT } from "@/lib/auth-jwt"
 import { sendTelegramNotification } from "@/lib/telegram-notify"
 
 function jwtSecret() {
-  return process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "fallback-secret-key-3lmoto"
+  return (
+    process.env.INTERNAL_API_SECRET ||
+    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
+    "fallback-secret-key-3lmoto"
+  )
 }
 
 function configuredInternalSecrets() {
-  return [
-    process.env.INTERNAL_API_SECRET,
-    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET,
-  ]
+  return [process.env.INTERNAL_API_SECRET, process.env.NEXT_PUBLIC_INTERNAL_API_SECRET]
     .map((value) => value?.trim())
     .filter((value): value is string => Boolean(value))
 }
@@ -34,9 +35,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 })
     }
 
-    const { event, details } = await req.json()
-    const result = await sendTelegramNotification(event, details)
+    let body: { event?: unknown; details?: unknown }
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
 
+    const event = typeof body.event === "string" ? body.event.trim() : ""
+    const details = typeof body.details === "string" ? body.details.trim() : ""
+    if (!event && !details) {
+      return NextResponse.json({ error: "Missing event/details" }, { status: 400 })
+    }
+
+    const result = await sendTelegramNotification(event || "Thông báo", details || "—")
     if (!result.ok) {
       return NextResponse.json(
         { error: result.error || "Failed to send Telegram notification" },
