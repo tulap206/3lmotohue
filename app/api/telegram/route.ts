@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyJWT } from "@/lib/auth-jwt"
+import { getAuthSecret } from "@/lib/auth-secret"
 import { sendTelegramNotification } from "@/lib/telegram-notify"
 
 function jwtSecret() {
-  return (
-    process.env.INTERNAL_API_SECRET ||
-    process.env.NEXT_PUBLIC_INTERNAL_API_SECRET ||
-    "fallback-secret-key-3lmoto"
-  )
+  return getAuthSecret()
 }
 
 function configuredInternalSecrets() {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyJWT } from '@/lib/auth-jwt'
+import { getAuthSecret } from '@/lib/auth-secret'
 import { hashPassword, generateSalt } from '@/lib/auth-crypto'
 
 export async function POST(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Chưa đăng nhập hoặc phiên hết hạn' }, { status: 401 })
     }
 
-    const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+    const secret = getAuthSecret()
     const decoded = await verifyJWT(token, secret)
     if (!decoded) {
       return NextResponse.json({ error: 'Phiên đăng nhập không hợp lệ' }, { status: 401 })

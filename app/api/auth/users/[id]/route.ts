@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { verifyJWT } from '@/lib/auth-jwt'
+import { getAuthSecret } from '@/lib/auth-secret'
 import { hashPassword, generateSalt } from '@/lib/auth-crypto'
 
 // Helper to verify admin role
@@ -8,7 +9,7 @@ async function verifyAdmin(request: NextRequest) {
   const token = request.cookies.get('3l_moto_session')?.value
   if (!token) return null
 
-  const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+  const secret = getAuthSecret()
   const decoded = await verifyJWT(token, secret)
   
   if (!decoded || decoded.role !== 'admin') return null

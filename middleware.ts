@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyJWT } from '@/lib/auth-jwt'
+import { getAuthSecret } from '@/lib/auth-secret'
 
 // Simple in-memory rate limiter store
 const ipRequestMap = new Map<string, { count: number; resetAt: number }>()
 
 const RATE_LIMITS: Record<string, { max: number; windowMs: number }> = {
-  '/api/telegram':     { max: 60,  windowMs: 60_000  },  // 60 req / minute
-  '/api/visitor-log':  { max: 5,   windowMs: 60_000  },  // 5 req / minute
-  '/api/backup':       { max: 3,   windowMs: 300_000 },  // 3 req / 5 minutes
-  '/login':            { max: 15,  windowMs: 300_000 },  // 15 attempts / 5 minutes
+  '/api/telegram':        { max: 60,  windowMs: 60_000  },
+  '/api/booking-notify':  { max: 10,  windowMs: 60_000  },
+  '/api/visitor-log':     { max: 5,   windowMs: 60_000  },
+  '/api/backup':          { max: 3,   windowMs: 300_000 },
+  '/login':               { max: 15,  windowMs: 300_000 },
 }
 
 function getClientIp(request: NextRequest): string {
@@ -64,8 +66,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
-    const decoded = await verifyJWT(sessionToken, secret)
+    const decoded = await verifyJWT(sessionToken, getAuthSecret())
 
     if (!decoded) {
       // Session invalid or expired, clear cookie and redirect

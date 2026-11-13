@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
 import { verifyJWT, signJWT } from "@/lib/auth-jwt"
+import { getAuthSecret } from "@/lib/auth-secret"
 import { getUserAvatarPublicUrl, USER_AVATAR_BUCKET, userAvatarStoragePath } from "@/lib/user-avatar"
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
 const MAX_BYTES = 5 * 1024 * 1024
 
 function sessionSecret() {
-  return process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || "fallback-secret-key-3lmoto"
+  return getAuthSecret()
 }
 
 export async function POST(request: NextRequest) {

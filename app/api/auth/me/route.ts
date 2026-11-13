@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyJWT } from '@/lib/auth-jwt'
+import { getAuthSecret } from '@/lib/auth-secret'
 import { getUserAvatarPublicUrl } from '@/lib/user-avatar'
 
 export async function GET(request: NextRequest) {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ authenticated: false })
     }
 
-    const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+    const secret = getAuthSecret()
     const decoded = await verifyJWT(token, secret)
 
     if (!decoded) {

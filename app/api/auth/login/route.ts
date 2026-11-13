@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { signJWT } from '@/lib/auth-jwt'
+import { getAuthSecret } from '@/lib/auth-secret'
 import { hashPassword, generateSalt } from '@/lib/auth-crypto'
 import { checkLoginAttempts, recordFailedLogin, resetLoginAttempts } from '@/lib/auth-guard'
 import { logger } from '@/lib/logger'
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
     await resetLoginAttempts(username)
 
     // 5. Create payload & Sign JWT
-    const secret = process.env.INTERNAL_API_SECRET || process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || 'fallback-secret-key-3lmoto'
+    const secret = getAuthSecret()
     const userData = {
       id: userRecord.id,
       username: userRecord.username,
