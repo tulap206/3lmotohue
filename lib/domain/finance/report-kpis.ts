@@ -51,6 +51,8 @@ export function getPeriodDateRange(
 export type RentalPeriodLike = RentalRevenueLike & {
   endDate?: string | null
   startDate?: string | null
+  start_date?: string | null
+  end_date?: string | null
 }
 
 export function filterRentalsInPeriod<T extends RentalPeriodLike>(

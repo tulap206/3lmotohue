@@ -659,9 +659,9 @@ export default function ReportsPage() {
         { name: "Chi phí khác", value: otherExp },
       ].filter(item => item.value > 0)
 
-      const commissionByHome = buildCommissionHomeReport(filteredRentals, { completedOnly: true })
+      const commissionByHome = buildCommissionHomeReport(filteredRentals as any[], { completedOnly: true })
       const commissionHomeTotal = sumCommissionRows(commissionByHome)
-      const commissionByHomeAll = buildCommissionHomeReport(filteredRentals, { completedOnly: false })
+      const commissionByHomeAll = buildCommissionHomeReport(filteredRentals as any[], { completedOnly: false })
       const commissionHomeTotalAll = sumCommissionRows(commissionByHomeAll)
 
       console.log("📈 Report ready:", { totalCustomers, totalVehicles, totalRevenue, commissionHomeTotal })
