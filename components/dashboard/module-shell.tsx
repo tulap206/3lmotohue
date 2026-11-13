@@ -380,12 +380,95 @@ export function ModuleEmptyState({
   className?: string
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center text-center py-12 px-4", className)}>
+    <div
+      role="status"
+      className={cn("flex flex-col items-center justify-center text-center py-12 px-4", className)}
+    >
       <p className="text-title text-slate-600">{title}</p>
       {description && <p className="text-meta mt-2 max-w-sm">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   )
+}
+
+/** Skeleton loading — chiều cao ổn định, tránh CLS. */
+export function ModuleLoadingState({
+  label = "Đang tải…",
+  className,
+}: {
+  label?: string
+  className?: string
+}) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className={cn("rounded-[var(--radius-container)] border border-slate-200 bg-white p-6", className)}
+    >
+      <span className="sr-only">{label}</span>
+      <div className="space-y-3 animate-pulse">
+        <div className="h-4 w-1/3 rounded bg-slate-200" />
+        <div className="h-10 w-full rounded bg-slate-100" />
+        <div className="h-10 w-full rounded bg-slate-100" />
+        <div className="h-10 w-2/3 rounded bg-slate-100" />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Boundary tải / lỗi / rỗng / nội dung — API rõ cho feature pages.
+ *
+ * @example
+ * <ModuleAsyncBoundary loading={loading} empty={!items.length} emptyTitle="Chưa có log">
+ *   <Table … />
+ * </ModuleAsyncBoundary>
+ */
+export function ModuleAsyncBoundary({
+  loading,
+  error,
+  empty,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
+  errorTitle = "Không tải được dữ liệu",
+  children,
+  className,
+}: {
+  loading?: boolean
+  error?: string | null
+  empty?: boolean
+  emptyTitle?: string
+  emptyDescription?: string
+  emptyAction?: React.ReactNode
+  errorTitle?: string
+  children: React.ReactNode
+  className?: string
+}) {
+  if (loading) {
+    return <ModuleLoadingState className={className} />
+  }
+  if (error) {
+    return (
+      <ModuleEmptyState
+        className={className}
+        title={errorTitle}
+        description={error}
+      />
+    )
+  }
+  if (empty) {
+    return (
+      <ModuleEmptyState
+        className={className}
+        title={emptyTitle}
+        description={emptyDescription}
+        action={emptyAction}
+      />
+    )
+  }
+  return <>{children}</>
 }
 
 export function ModuleSectionCard({

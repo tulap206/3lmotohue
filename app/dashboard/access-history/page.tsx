@@ -7,7 +7,8 @@ import {
   AccessHistoryModuleSection,
   type AccessLogRecord,
 } from "@/components/dashboard/access-history-panel"
-import { ModulePageShell } from "@/components/dashboard/module-shell"
+import { ModuleAsyncBoundary, ModulePageShell } from "@/components/dashboard/module-shell"
+import { debounce } from "@/lib/debounce"
 import { showSuccess, showError } from "@/lib/toast-utils"
 
 export default function AccessHistoryPage() {
@@ -15,6 +16,7 @@ export default function AccessHistoryPage() {
   const [accessLogs, setAccessLogs] = useState<AccessLogRecord[]>([])
   const [dbUsers, setDbUsers] = useState<{ username: string; displayname?: string; displayName?: string }[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadProjectUsers = useCallback(async () => {
     try {
@@ -45,12 +47,15 @@ export default function AccessHistoryPage() {
 
       if (error) {
         console.error("Error fetching logs:", error)
+        setLoadError(error.message || "Lỗi tải access_logs")
         setAccessLogs([])
       } else {
+        setLoadError(null)
         setAccessLogs(data || [])
       }
     } catch (error) {
       console.error("Failed to load access logs:", error)
+      setLoadError("Không tải được lịch sử truy cập")
       setAccessLogs([])
     } finally {
       if (showLoading) setLoading(false)
@@ -75,28 +80,39 @@ export default function AccessHistoryPage() {
   useEffect(() => {
     loadAccessLogs(true)
 
+    const scheduleReload = debounce(() => {
+      void loadAccessLogs(false)
+    }, 400)
+
     const channel = supabase
       .channel("access-logs-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "access_logs" }, () => {
-        loadAccessLogs(false)
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "access_logs" }, scheduleReload)
       .subscribe()
 
     return () => {
+      scheduleReload.cancel()
       supabase.removeChannel(channel)
     }
   }, [loadAccessLogs])
 
   return (
     <ModulePageShell module="rental">
-      <AccessHistoryModuleSection
-        module="rental"
-        logs={accessLogs}
-        loading={loading}
-        onRefresh={handleManualRefresh}
-        allowed={user?.role === "admin" || user?.permissions?.canViewAccessHistory || false}
-        dbUsers={dbUsers}
-      />
+      <ModuleAsyncBoundary
+        loading={loading && accessLogs.length === 0}
+        error={loadError}
+        empty={!loading && !loadError && accessLogs.length === 0}
+        emptyTitle="Chưa có lịch sử truy cập"
+        emptyDescription="Các thao tác đăng nhập và nghiệp vụ sẽ được ghi nhận tại đây."
+      >
+        <AccessHistoryModuleSection
+          module="rental"
+          logs={accessLogs}
+          loading={loading}
+          onRefresh={handleManualRefresh}
+          allowed={user?.role === "admin" || user?.permissions?.canViewAccessHistory || false}
+          dbUsers={dbUsers}
+        />
+      </ModuleAsyncBoundary>
     </ModulePageShell>
   )
 }
