@@ -8,6 +8,7 @@ import { logger } from "@/lib/logger"
 import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { calcCashOnHand, sumCompletedRentalRevenue } from "@/lib/finance/cash-on-hand"
+import { debounce } from "@/lib/debounce"
 import { buildCommissionHomeReport, sumCommissionRows, type CommissionHomeRow } from "@/lib/commission-home"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -223,28 +224,21 @@ export default function ReportsPage() {
     loadReportData(true)
     loadTransactions(true)
 
-    // Subscribe to real-time events for reports/transactions
+    const scheduleReload = debounce(() => {
+      void loadReportData(false)
+      void loadTransactions(false)
+    }, 400)
+
     const reportsChannel = supabase
       .channel('reports-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        loadReportData(false)
-        loadTransactions(false)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
-        loadReportData(false)
-        loadTransactions(false)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
-        loadReportData(false)
-        loadTransactions(false)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => {
-        loadReportData(false)
-        loadTransactions(false)
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, scheduleReload)
       .subscribe()
 
     return () => {
+      scheduleReload.cancel()
       supabase.removeChannel(reportsChannel)
     }
   }, [])

@@ -60,6 +60,7 @@ import { formatMoneyInput, parseMoneyInput } from "@/lib/format-money"
 import { formatDisplayDate, parseDisplayDate, toStoredDateValue } from "@/lib/format-date"
 import { calcOperatingProfit, calcOperatingRevenue, isCapitalTransaction, withCapitalTag, isSalaryTransaction, isDividendTransaction } from "@/lib/transaction-finance"
 import { calcCashOnHand } from "@/lib/finance/cash-on-hand"
+import { debounce } from "@/lib/debounce"
 import { buildCommissionHomeReport, sumCommissionRows } from "@/lib/commission-home"
 import { Textarea } from "@/components/ui/textarea"
 import { buildRentalTermPayload } from "@/lib/rental-term"
@@ -665,21 +666,19 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboardData(true)
 
-    // Subscribe to real-time events for rentals, vehicles, transactions
+    const scheduleReload = debounce(() => {
+      void loadDashboardData(false)
+    }, 400)
+
     const dashboardChannel = supabase
       .channel('dashboard-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, () => {
-        loadDashboardData(false)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
-        loadDashboardData(false)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        loadDashboardData(false)
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rentals' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, scheduleReload)
       .subscribe()
 
     return () => {
+      scheduleReload.cancel()
       supabase.removeChannel(dashboardChannel)
     }
   }, [loadDashboardData])

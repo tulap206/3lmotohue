@@ -11,6 +11,7 @@ import {
   Rental,
 } from "@/lib/supabase"
 import { formatDisplayDate, parseDisplayDate, parseVietnamDate } from "@/lib/format-date"
+import { debounce } from "@/lib/debounce"
 import { useAuth } from "@/contexts/auth-context"
 import { showSuccess } from "@/lib/toast-utils"
 
@@ -165,20 +166,19 @@ export function RentalDataProvider({ children }: { children: React.ReactNode }) 
   }, [user, loadAll])
 
   useEffect(() => {
+    const scheduleReload = debounce(() => {
+      void loadAll(false)
+    }, 400)
+
     const channel = supabase
       .channel("rental-data-shared")
-      .on("postgres_changes", { event: "*", schema: "public", table: "vehicles" }, () => {
-        loadAll(false)
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, () => {
-        loadAll(false)
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, () => {
-        loadAll(false)
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "vehicles" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers" }, scheduleReload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, scheduleReload)
       .subscribe()
 
     return () => {
+      scheduleReload.cancel()
       supabase.removeChannel(channel)
     }
   }, [loadAll])
