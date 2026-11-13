@@ -1,12 +1,24 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://fpiupgmknsydqrihqdbo.supabase.co"
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwaXVwZ21rbnN5ZHFyaWhxZGJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTYzNzAsImV4cCI6MjA5NDYzMjM3MH0.0YK7DmgpA8YuWEaIt1wh07dOQXW5GFlQzo3JydfFaL8"
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Endpoint secret token for security
-const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET || "3lmotohue-sync-secret-2026"
+const SYNC_SECRET = process.env.LOCATION_SYNC_SECRET?.trim() || ""
+
+function assertSyncAuthorized(req: Request): NextResponse | null {
+  if (!SYNC_SECRET) {
+    return NextResponse.json({ error: "Sync secret not configured" }, { status: 503 })
+  }
+  const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
+  if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return null
+}
 
 interface SyncRequest {
   id: string
@@ -114,10 +126,8 @@ export async function GET(req: Request) {
 
   // 2. Long-polling từ Mac Bridge
   if (action === "poll") {
-    const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
-    if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const denied = assertSyncAuthorized(req)
+    if (denied) return denied
 
     // 2.1 Kiểm tra in-memory request trước
     const current = globalThis.__globalSyncRequest
@@ -254,10 +264,8 @@ export async function POST(req: Request) {
 
     // 2. Mac bridge báo cáo hoàn tất hoặc thất bại
     if (action === "complete" || action === "fail") {
-      const authHeader = req.headers.get("authorization") || req.headers.get("x-sync-secret")
-      if (authHeader !== `Bearer ${SYNC_SECRET}` && authHeader !== SYNC_SECRET) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      }
+      const denied = assertSyncAuthorized(req)
+      if (denied) return denied
 
       const { requestId, result } = body
       if (globalThis.__globalSyncRequest && (!requestId || globalThis.__globalSyncRequest.id === requestId)) {
