@@ -10,7 +10,7 @@ import {
   Customer,
   Rental,
 } from "@/lib/supabase"
-import { formatDisplayDate, parseDisplayDate } from "@/lib/format-date"
+import { formatDisplayDate, parseDisplayDate, parseVietnamDate } from "@/lib/format-date"
 import { useAuth } from "@/contexts/auth-context"
 import { showSuccess } from "@/lib/toast-utils"
 
@@ -30,15 +30,6 @@ interface RentalDataContextValue {
 }
 
 const RentalDataContext = createContext<RentalDataContextValue | null>(null)
-
-function parseVietnamDate(dateStr: string): Date {
-  if (!dateStr) return new Date(0)
-  const parts = dateStr.split("/")
-  if (parts.length === 3) {
-    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
-  }
-  return new Date(dateStr)
-}
 
 function generateRentalCode(customerName: string, licensePlate: string, startDate: string, uuid: string): string {
   try {

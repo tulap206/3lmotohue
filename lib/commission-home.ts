@@ -4,6 +4,8 @@
  * Doanh thu đơn hoàn thành đã net khoản này trong field `revenue`.
  */
 
+import { parseDisplayDate } from "@/lib/format-date"
+
 export type CommissionOrderDetail = {
   id: string
   rentalCode?: string
@@ -50,13 +52,10 @@ export type CommissionHomeRow = {
   orders: CommissionOrderDetail[]
 }
 
+/** Invalid/empty → Invalid Date (giữ hành vi commission cũ). */
 function parseVietnamDate(dateStr: string): Date {
   if (!dateStr) return new Date(NaN)
-  const parts = dateStr.split("/")
-  if (parts.length === 3) {
-    return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10))
-  }
-  return new Date(dateStr)
+  return parseDisplayDate(dateStr) ?? new Date(NaN)
 }
 
 function extractOrderDays(order: CommissionOrderLike): number {

@@ -5,6 +5,15 @@ function pad2(n: number) {
   return String(n).padStart(2, "0")
 }
 
+/**
+ * Parse DD/MM/YYYY (và ISO) thành Date local — tương thích các chỗ từng copy parseVietnamDate.
+ * Chuỗi rỗng/invalid → epoch (giống helper cũ trong page/context).
+ */
+export function parseVietnamDate(dateStr: string | null | undefined): Date {
+  if (!dateStr) return new Date(0)
+  return parseDisplayDate(dateStr) ?? new Date(0)
+}
+
 /** Parse common stored date strings without timezone drift. */
 export function parseDisplayDate(value: string | Date | null | undefined): Date | null {
   if (value == null || value === "") return null

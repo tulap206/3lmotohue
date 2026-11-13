@@ -1,4 +1,8 @@
-import { supabase } from './supabase'
+/**
+ * @deprecated Dùng `logger` từ `@/lib/logger` (có IP/device + Telegram).
+ * File này giữ API cũ và ủy quyền sang logger để tránh lệch audit.
+ */
+import { logger } from "./logger"
 
 export interface ActivityLog {
   username: string
@@ -8,166 +12,95 @@ export interface ActivityLog {
   details: string
 }
 
-/**
- * Log user activity to access_logs table
- */
 export const logActivity = async (log: ActivityLog) => {
-  try {
-    const { error } = await supabase
-      .from('access_logs')
-      .insert([
-        {
-          username: log.username,
-          displayName: log.displayName,
-          action: log.action,
-          module: log.module,
-          details: log.details,
-          timestamp: new Date().toISOString(),
-        },
-      ])
-
-    if (error) {
-      console.error('Error logging activity:', error)
-    }
-  } catch (error) {
-    console.error('Failed to log activity:', error)
-  }
+  await logger.log(log.username, log.displayName, log.action, log.module, log.details)
 }
 
-/**
- * Log login activity
- */
 export const logLogin = async (username: string, displayName: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Đăng nhập',
-    module: 'Hệ thống',
-    details: `${displayName} đăng nhập vào hệ thống`,
-  })
+  await logger.login(username, displayName)
 }
 
-/**
- * Log logout activity
- */
 export const logLogout = async (username: string, displayName: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Đăng xuất',
-    module: 'Hệ thống',
-    details: `${displayName} đăng xuất khỏi hệ thống`,
-  })
+  await logger.logout(username, displayName)
 }
 
-/**
- * Log vehicle operations
- */
-export const logVehicleAdd = async (username: string, displayName: string, vehicleName: string, licensePlate: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Thêm mới',
-    module: 'Quản lý xe',
-    details: `Thêm xe: ${vehicleName} (${licensePlate})`,
-  })
+export const logVehicleAdd = async (
+  username: string,
+  displayName: string,
+  vehicleName: string,
+  licensePlate: string
+) => {
+  await logger.addVehicle(username, displayName, vehicleName, licensePlate)
 }
 
-export const logVehicleEdit = async (username: string, displayName: string, vehicleName: string, licensePlate: string, changes: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Chỉnh sửa',
-    module: 'Quản lý xe',
-    details: `Sửa xe: ${vehicleName} (${licensePlate}) - ${changes}`,
-  })
+export const logVehicleEdit = async (
+  username: string,
+  displayName: string,
+  vehicleName: string,
+  licensePlate: string,
+  _changes?: string
+) => {
+  await logger.editVehicle(username, displayName, vehicleName, licensePlate)
 }
 
-export const logVehicleDelete = async (username: string, displayName: string, vehicleName: string, licensePlate: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Xóa',
-    module: 'Quản lý xe',
-    details: `Xóa xe: ${vehicleName} (${licensePlate})`,
-  })
+export const logVehicleDelete = async (
+  username: string,
+  displayName: string,
+  vehicleName: string,
+  licensePlate: string
+) => {
+  await logger.deleteVehicle(username, displayName, vehicleName, licensePlate)
 }
 
-/**
- * Log customer operations
- */
-export const logCustomerAdd = async (username: string, displayName: string, customerName: string, phone: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Thêm mới',
-    module: 'Quản lý khách hàng',
-    details: `Thêm khách hàng: ${customerName} (${phone})`,
-  })
+export const logCustomerAdd = async (
+  username: string,
+  displayName: string,
+  name: string,
+  phone: string
+) => {
+  await logger.addCustomer(username, displayName, name, phone)
 }
 
-export const logCustomerEdit = async (username: string, displayName: string, customerName: string, changes: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Chỉnh sửa',
-    module: 'Quản lý khách hàng',
-    details: `Sửa khách hàng: ${customerName} - ${changes}`,
-  })
+export const logCustomerEdit = async (username: string, displayName: string, name: string) => {
+  await logger.editCustomer(username, displayName, name)
 }
 
-export const logCustomerDelete = async (username: string, displayName: string, customerName: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Xóa',
-    module: 'Quản lý khách hàng',
-    details: `Xóa khách hàng: ${customerName}`,
-  })
+export const logCustomerDelete = async (username: string, displayName: string, name: string) => {
+  await logger.deleteCustomer(username, displayName, name)
 }
 
-/**
- * Log rental operations
- */
-export const logRentalAdd = async (username: string, displayName: string, customerName: string, vehicleName: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Thêm mới',
-    module: 'Đơn thuê',
-    details: `Thêm đơn thuê: ${customerName} - ${vehicleName}`,
-  })
+export const logRentalAdd = async (
+  username: string,
+  displayName: string,
+  customer: string,
+  vehicle: string
+) => {
+  await logger.addRental(username, displayName, customer, vehicle)
 }
 
-export const logRentalEdit = async (username: string, displayName: string, rentalId: string, changes: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Chỉnh sửa',
-    module: 'Đơn thuê',
-    details: `Sửa đơn thuê #${rentalId} - ${changes}`,
-  })
+export const logRentalEdit = async (
+  username: string,
+  displayName: string,
+  customer: string,
+  vehicle: string
+) => {
+  await logger.editRental(username, displayName, customer, vehicle)
 }
 
-export const logRentalDelete = async (username: string, displayName: string, rentalId: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Xóa',
-    module: 'Đơn thuê',
-    details: `Xóa đơn thuê #${rentalId}`,
-  })
+export const logRentalDelete = async (
+  username: string,
+  displayName: string,
+  customer: string,
+  vehicle: string
+) => {
+  await logger.deleteRental(username, displayName, customer, vehicle)
 }
 
-/**
- * Log view operations
- */
-export const logView = async (username: string, displayName: string, module: string) => {
-  await logActivity({
-    username,
-    displayName,
-    action: 'Xem',
-    module: module,
-    details: `Xem ${module.toLowerCase()}`,
-  })
+export const logRentalReturn = async (
+  username: string,
+  displayName: string,
+  customer: string,
+  vehicle: string
+) => {
+  await logger.returnRental(username, displayName, customer, vehicle)
 }
